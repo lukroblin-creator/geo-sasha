@@ -1,32 +1,39 @@
 
-import worldData from 'world-atlas/countries-110m.json'
+import world110mData from 'world-atlas/countries-110m.json'
+import world50mData from 'world-atlas/countries-50m.json'
+import world10mData from 'world-atlas/countries-10m.json'
+
 import { feature } from 'topojson-client'
-import type { Topology, GeometryCollection } from 'topojson-specification'
-import type { FeatureCollection, Geometry } from 'geojson'
 
-// Chargement des données géographiques d'origine.
-const topology = worldData as unknown as Topology
+import type {
+  Topology,
+  GeometryCollection
+} from 'topojson-specification'
 
-const countriesObject = topology.objects.countries as GeometryCollection
+import type {
+  FeatureCollection,
+  Geometry
+} from 'geojson'
 
-// Conversion du TopoJSON en GeoJSON.
-const sourceCountries = feature(
-  topology,
-  countriesObject
-) as FeatureCollection<Geometry>
+import { getGeometryLinkBySourceFeature } from './geography/registry'
+
+// Les trois fichiers géographiques d'origine.
+const worldDatasets = {
+  '110m': world110mData,
+  '50m': world50mData,
+  '10m': world10mData
+}
 
 // Création d'un identifiant interne propre à World Atlas.
 function createWorldAtlasId(
+  scale: string,
   name: string,
   sourceId: string | number | undefined
 ): string {
-  // Si la source possède un identifiant, on le conserve
-  // en le plaçant dans notre propre espace d'identification.
   if (sourceId !== undefined && sourceId !== null) {
-    return `ne110m:${sourceId}`
+    return `ne${scale}:${sourceId}`
   }
 
-  // Sinon, on construit un identifiant à partir du nom.
   const slug = name
     .normalize('NFD')
     .replace(/[\u0300-\u036f]/g, '')
@@ -34,40 +41,80 @@ function createWorldAtlasId(
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/^-|-$/g, '')
 
-  return `ne110m:unidentified:${slug || 'unknown'}`
+  return `ne${scale}:unidentified:${slug || 'unknown'}`
 }
 
-// Chaque géométrie reçoit son identifiant interne.
-const countries: FeatureCollection<Geometry> = {
-  ...sourceCountries,
+// Conversion et préparation d'un jeu de données.
+function prepareWorldDataset(
+  scale: '110m' | '50m' | '10m',
+  worldData: unknown
+): FeatureCollection<Geometry> {
+  const topology = worldData as Topology
 
-  features: sourceCountries.features.map((country) => {
-    const properties = country.properties ?? {}
+  const countriesObject =
+    topology.objects.countries as GeometryCollection
 
-    const name =
-      typeof properties.name === 'string'
-        ? properties.name
-        : 'Unknown'
+  const sourceCountries = feature(
+    topology,
+    countriesObject
+  ) as FeatureCollection<Geometry>
 
-    const sourceId = country.id
+  return {
+    ...sourceCountries,
 
-    const worldAtlasId = createWorldAtlasId(name, sourceId)
+    features: sourceCountries.features.map((country) => {
+      const properties = country.properties ?? {}
 
-    return {
-      ...country,
+      const name =
+        typeof properties.name === 'string'
+          ? properties.name
+          : 'Unknown'
 
-      // Identifiant utilisé par World Atlas et MapLibre.
-      id: worldAtlasId,
+      const sourceId = country.id
 
-      properties: {
-        ...properties,
+      const geometryLink = getGeometryLinkBySourceFeature(
+        `natural-earth-${scale}`,
+        sourceId
+      )
 
-        // Informations conservées pour retrouver la source.
-        worldAtlasId,
-        sourceId: sourceId ?? null
+      const worldAtlasId = createWorldAtlasId(
+        scale,
+        name,
+        sourceId
+      )
+
+      return {
+        ...country,
+        id: worldAtlasId,
+
+        properties: {
+          ...properties,
+          worldAtlasId,
+          sourceId: sourceId ?? null,
+          sourceName: name,
+          entityId: geometryLink?.entityId ?? null,
+          resolution: scale
+        }
       }
-    }
-  })
+    })
+  }
 }
 
-export default countries
+// Préparation indépendante des trois résolutions.
+export const world110m = prepareWorldDataset(
+  '110m',
+  worldDatasets['110m']
+)
+
+export const world50m = prepareWorldDataset(
+  '50m',
+  worldDatasets['50m']
+)
+
+export const world10m = prepareWorldDataset(
+  '10m',
+  worldDatasets['10m']
+)
+
+// La résolution 110m reste la valeur par défaut.
+export default world110m
