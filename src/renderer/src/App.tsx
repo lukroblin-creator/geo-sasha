@@ -1,6 +1,7 @@
 
 import { useState } from 'react'
 import WorldMap from './components/WorldMap'
+import { flagQuestions } from './data/quiz/flagQuestions'
 
 type Mode = {
   id: string
@@ -42,8 +43,42 @@ function App(): React.JSX.Element {
   const [showRivers, setShowRivers] = useState(false)
   const [showMountains, setShowMountains] = useState(false)
   const [showLabels, setShowLabels] = useState(false)
+  const [questionIndex, setQuestionIndex] = useState(0)
+  const [score, setScore] = useState(0)
+  const [answerCorrect, setAnswerCorrect] = useState<boolean | null>(null)
+  const [quizComplete, setQuizComplete] = useState(false)
 
   const selectedMode = modes.find((mode) => mode.id === activeMode)!
+  const currentQuestion = flagQuestions[questionIndex]
+
+  const handleCountrySelected = (sourceFeatureId: string | number) => {
+    if (
+      activeMode !== 'flags' ||
+      answerCorrect === true ||
+      quizComplete ||
+      !currentQuestion
+    ) return
+    setAnswerCorrect(Number(sourceFeatureId) === currentQuestion.sourceFeatureId)
+    if (Number(sourceFeatureId) === currentQuestion.sourceFeatureId) {
+      setScore((currentScore) => currentScore + 1)
+    }
+  }
+
+  const advanceQuestion = () => {
+    if (questionIndex === flagQuestions.length - 1) {
+      setQuizComplete(true)
+    } else {
+      setQuestionIndex((currentIndex) => currentIndex + 1)
+      setAnswerCorrect(null)
+    }
+  }
+
+  const restartQuiz = () => {
+    setQuestionIndex(0)
+    setScore(0)
+    setAnswerCorrect(null)
+    setQuizComplete(false)
+  }
 
   return (
     <div className="app-shell">
@@ -138,9 +173,10 @@ function App(): React.JSX.Element {
 
             <div className="map-canvas">
               <WorldMap
-  showBorders={showBorders}
-  showLabels={showLabels}
-/>
+                showBorders={showBorders}
+                showLabels={showLabels}
+                onCountrySelected={handleCountrySelected}
+              />
 
               <div className="map-legend">
                 <span className="legend-dot" />
@@ -198,20 +234,55 @@ function App(): React.JSX.Element {
             <div className="quiz-content">
               <div className="quiz-mode-label">{selectedMode.description}</div>
 
-              <h2>Quel pays possède ce drapeau ?</h2>
-
-              <div className="flag-container">
-                <div className="flag">🇯🇵</div>
-              </div>
-
-              <div className="question-instruction">
-                Sélectionnez le territoire correspondant sur la carte.
-              </div>
-
-              <div className="answer-placeholder">
-                <span className="answer-placeholder-icon">⌖</span>
-                <span>En attente de sélection sur la carte</span>
-              </div>
+              {activeMode === 'flags' && quizComplete ? (
+                <>
+                  <h2>Quiz terminé !</h2>
+                  <div className="answer-placeholder" aria-live="polite">
+                    Ton score : {score} / {flagQuestions.length}
+                  </div>
+                  <button className="quiz-next-button" onClick={restartQuiz}>
+                    Rejouer le quiz
+                  </button>
+                </>
+              ) : activeMode === 'flags' ? (
+                <>
+                  <h2>Quel pays possède ce drapeau ?</h2>
+                  <div className="quiz-step">
+                    QUESTION {String(questionIndex + 1).padStart(2, '0')} / {flagQuestions.length}
+                  </div>
+                  <div className="flag-container">
+                    <div className="flag">{currentQuestion.flag}</div>
+                  </div>
+                  <div className="question-instruction">
+                    Sélectionnez le territoire correspondant sur la carte.
+                  </div>
+                  <div className="answer-placeholder" aria-live="polite">
+                    {answerCorrect === null ? (
+                      <>
+                        <span className="answer-placeholder-icon">⌖</span>
+                        <span>En attente de sélection sur la carte</span>
+                      </>
+                    ) : (
+                      <span>
+                        {answerCorrect
+                          ? `Bonne réponse : ${currentQuestion.countryName} !`
+                          : `Ce n’est pas ${currentQuestion.countryName}. Réessaie ou passe à la suite.`}
+                      </span>
+                    )}
+                  </div>
+                  {answerCorrect !== null && (
+                    <button className="quiz-next-button" onClick={advanceQuestion}>
+                      {questionIndex === flagQuestions.length - 1
+                        ? 'Voir le résultat'
+                        : 'Question suivante'}
+                    </button>
+                  )}
+                </>
+              ) : (
+                <div className="answer-placeholder">
+                  Ce mode sera ajouté après le premier quiz jouable.
+                </div>
+              )}
 
               <div className="quiz-divider" />
 
@@ -231,7 +302,9 @@ function App(): React.JSX.Element {
 
             <div className="quiz-footer">
               <div className="score-label">SCORE DE LA SESSION</div>
-              <div className="score-value">0 <span>/ 0</span></div>
+              <div className="score-value">
+                {score} <span>/ {quizComplete ? flagQuestions.length : questionIndex + (answerCorrect === null ? 0 : 1)}</span>
+              </div>
             </div>
           </aside>
         </div>

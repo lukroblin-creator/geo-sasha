@@ -32,6 +32,7 @@ import 'maplibre-gl/dist/maplibre-gl.css'
 type WorldMapProps = {
   showBorders: boolean
   showLabels: boolean
+  onCountrySelected?: (sourceFeatureId: string | number, name: string) => void
 }
 
 type LabelProperties = {
@@ -60,8 +61,11 @@ const mapStyle = {
   ]
 }
 
-function WorldMap({ showBorders, showLabels }: WorldMapProps) {
+function WorldMap({ showBorders, showLabels, onCountrySelected }: WorldMapProps) {
   const [selectedEntityIds, setSelectedEntityIds] = useState<string[]>([])
+  const [selectedSourceFeatureId, setSelectedSourceFeatureId] = useState<
+    string | number | null
+  >(null)
 
   const mapRef = useRef<MapRef>(null)
 
@@ -162,22 +166,27 @@ function WorldMap({ showBorders, showLabels }: WorldMapProps) {
     const feature = event.features?.[0]
     const name = feature?.properties?.name
     const entityId = feature?.properties?.entityId
+    const sourceFeatureId = feature?.properties?.sourceId
 
     if (name) {
       console.log(`Pays sélectionné : ${name}`)
     }
 
-    if (entityId) {
-      setSelectedEntityIds(getRelatedEntityIds(entityId))
+    setSelectedEntityIds(
+      entityId ? getRelatedEntityIds(entityId) : []
+    )
+    setSelectedSourceFeatureId(sourceFeatureId ?? null)
+    if (sourceFeatureId !== undefined && name) {
+      onCountrySelected?.(sourceFeatureId, String(name))
     }
   }
 
   const fillColor = [
     'case',
     [
-      'in',
-      ['get', 'entityId'],
-      ['literal', selectedEntityIds]
+      'any',
+      ['in', ['get', 'entityId'], ['literal', selectedEntityIds]],
+      ['==', ['get', 'sourceId'], selectedSourceFeatureId]
     ],
     '#e5a63b',
     '#263746'

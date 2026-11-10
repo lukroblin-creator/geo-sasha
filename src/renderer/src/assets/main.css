@@ -511,6 +511,23 @@ button {
   font-size: 16px;
 }
 
+.quiz-next-button {
+  width: 100%;
+  margin-top: 12px;
+  padding: 11px 14px;
+  border: 1px solid #456b8a;
+  border-radius: 6px;
+  background: #29445b;
+  color: #f1f5f9;
+  font: inherit;
+  font-size: 11px;
+  cursor: pointer;
+}
+
+.quiz-next-button:hover {
+  background: #355974;
+}
+
 .quiz-divider {
   height: 1px;
   margin: 24px 0;
