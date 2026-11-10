@@ -8,9 +8,11 @@
   "scripts": {
     "format": "prettier --write .",
     "lint": "eslint --cache .",
+    "typecheck:tests": "tsc --noEmit --target ES2022 --module NodeNext --moduleResolution NodeNext --allowImportingTsExtensions --types node --skipLibCheck --strict tests/quiz.test.mts",
+    "test": "npm run typecheck:tests && node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --experimental-strip-types --test tests/quiz.test.mts",
     "typecheck:node": "tsc --noEmit -p tsconfig.node.json --composite false",
     "typecheck:web": "tsc --noEmit -p tsconfig.web.json --composite false",
-    "typecheck": "npm run typecheck:node && npm run typecheck:web",
+    "typecheck": "npm run typecheck:node && npm run typecheck:web && npm run typecheck:tests",
     "start": "electron-vite preview",
     "dev": "electron-vite dev",
     "update:capital-data": "node scripts/update-country-capitals.mjs",

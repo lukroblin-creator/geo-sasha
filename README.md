@@ -32,3 +32,13 @@ $ npm run build:mac
 # For Linux
 $ npm run build:linux
 ```
+
+### Tests
+
+Run the offline quiz data and session checks with:
+
+```bash
+npm test
+```
+
+The test command uses Node's built-in TypeScript support and requires Node.js 22.6 or newer.
