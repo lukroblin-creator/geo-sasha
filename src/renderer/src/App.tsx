@@ -1,8 +1,34 @@
 
 import { useState } from 'react'
 import WorldMap from './components/WorldMap'
-import { flagQuestions } from './data/quiz/flagQuestions'
-import { loadQuizProgress, saveCompletedFlagQuiz } from './data/quiz/progress'
+import {
+  countryFlagQuestions,
+  type CountryFlagQuestion
+} from './data/quiz/countryQuestions'
+import {
+  loadQuizProgress,
+  saveCompletedCountryFlagQuiz
+} from './data/quiz/progress'
+
+function createRandomQuestionOrder(): CountryFlagQuestion[] {
+  const questions = [...countryFlagQuestions]
+
+  for (let index = questions.length - 1; index > 0; index--) {
+    const randomIndex = Math.floor(Math.random() * (index + 1))
+    ;[questions[index], questions[randomIndex]] = [
+      questions[randomIndex],
+      questions[index]
+    ]
+  }
+
+  return questions
+}
+
+function flagFromAlpha2(alpha2: string): string {
+  return String.fromCodePoint(
+    ...alpha2.split('').map((letter) => 0x1f1e6 + letter.charCodeAt(0) - 65)
+  )
+}
 
 type Mode = {
   id: string
@@ -48,27 +74,34 @@ function App(): React.JSX.Element {
   const [score, setScore] = useState(0)
   const [answerCorrect, setAnswerCorrect] = useState<boolean | null>(null)
   const [quizComplete, setQuizComplete] = useState(false)
+  const [questionOrder, setQuestionOrder] = useState(createRandomQuestionOrder)
   const [quizProgress, setQuizProgress] = useState(loadQuizProgress)
 
   const selectedMode = modes.find((mode) => mode.id === activeMode)!
-  const currentQuestion = flagQuestions[questionIndex]
+  const currentQuestion = questionOrder[questionIndex]
 
-  const handleCountrySelected = (sourceFeatureId: string | number) => {
+  const handleCountrySelected = (
+    sourceFeatureId: string | number,
+    name: string
+  ) => {
     if (
       activeMode !== 'flags' ||
       answerCorrect === true ||
       quizComplete ||
       !currentQuestion
     ) return
-    setAnswerCorrect(Number(sourceFeatureId) === currentQuestion.sourceFeatureId)
-    if (Number(sourceFeatureId) === currentQuestion.sourceFeatureId) {
+    const isCorrect =
+      Number(sourceFeatureId) === currentQuestion.sourceFeatureId &&
+      name === currentQuestion.countryName
+    setAnswerCorrect(isCorrect)
+    if (isCorrect) {
       setScore((currentScore) => currentScore + 1)
     }
   }
 
   const advanceQuestion = () => {
-    if (questionIndex === flagQuestions.length - 1) {
-      setQuizProgress(saveCompletedFlagQuiz(score))
+    if (questionIndex === countryFlagQuestions.length - 1) {
+      setQuizProgress(saveCompletedCountryFlagQuiz(score))
       setQuizComplete(true)
     } else {
       setQuestionIndex((currentIndex) => currentIndex + 1)
@@ -77,6 +110,7 @@ function App(): React.JSX.Element {
   }
 
   const restartQuiz = () => {
+    setQuestionOrder(createRandomQuestionOrder())
     setQuestionIndex(0)
     setScore(0)
     setAnswerCorrect(null)
@@ -126,10 +160,10 @@ function App(): React.JSX.Element {
 
             <div className="progress-caption">Commencez votre apprentissage</div>
               <div className="progress-caption">
-                Quiz terminés : {quizProgress.completedFlagSessions}
+                Quiz terminés : {quizProgress.completedCountryFlagSessions}
               </div>
               <div className="progress-caption">
-                Meilleur score : {quizProgress.bestFlagScore} / {flagQuestions.length}
+                Meilleur score : {quizProgress.bestCountryFlagScore} / {countryFlagQuestions.length}
               </div>
           </div>
         </div>
@@ -247,7 +281,7 @@ function App(): React.JSX.Element {
                 <>
                   <h2>Quiz terminé !</h2>
                   <div className="answer-placeholder" aria-live="polite">
-                    Ton score : {score} / {flagQuestions.length}
+                    Ton score : {score} / {countryFlagQuestions.length}
                   </div>
                   <button className="quiz-next-button" onClick={restartQuiz}>
                     Rejouer le quiz
@@ -257,10 +291,10 @@ function App(): React.JSX.Element {
                 <>
                   <h2>Quel pays possède ce drapeau ?</h2>
                   <div className="quiz-step">
-                    QUESTION {String(questionIndex + 1).padStart(2, '0')} / {flagQuestions.length}
+                    QUESTION {String(questionIndex + 1).padStart(2, '0')} / {countryFlagQuestions.length}
                   </div>
                   <div className="flag-container">
-                    <div className="flag">{currentQuestion.flag}</div>
+                    <div className="flag">{flagFromAlpha2(currentQuestion.alpha2)}</div>
                   </div>
                   <div className="question-instruction">
                     Sélectionnez le territoire correspondant sur la carte.
@@ -281,7 +315,7 @@ function App(): React.JSX.Element {
                   </div>
                   {answerCorrect !== null && (
                     <button className="quiz-next-button" onClick={advanceQuestion}>
-                      {questionIndex === flagQuestions.length - 1
+                      {questionIndex === countryFlagQuestions.length - 1
                         ? 'Voir le résultat'
                         : 'Question suivante'}
                     </button>
@@ -312,7 +346,7 @@ function App(): React.JSX.Element {
             <div className="quiz-footer">
               <div className="score-label">SCORE DE LA SESSION</div>
               <div className="score-value">
-                {score} <span>/ {quizComplete ? flagQuestions.length : questionIndex + (answerCorrect === null ? 0 : 1)}</span>
+                {score} <span>/ {quizComplete ? countryFlagQuestions.length : questionIndex + (answerCorrect === null ? 0 : 1)}</span>
               </div>
             </div>
           </aside>

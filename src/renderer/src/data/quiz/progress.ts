@@ -1,15 +1,15 @@
-const STORAGE_KEY = 'world-atlas:quiz-progress:v1'
+const STORAGE_KEY = 'world-atlas:quiz-progress:v2'
 
 export type QuizProgress = {
-  completedFlagSessions: number
-  bestFlagScore: number
-  lastFlagScore: number
+  completedCountryFlagSessions: number
+  bestCountryFlagScore: number
+  lastCountryFlagScore: number
 }
 
 const emptyProgress: QuizProgress = {
-  completedFlagSessions: 0,
-  bestFlagScore: 0,
-  lastFlagScore: 0
+  completedCountryFlagSessions: 0,
+  bestCountryFlagScore: 0,
+  lastCountryFlagScore: 0
 }
 
 export function loadQuizProgress(): QuizProgress {
@@ -22,29 +22,29 @@ export function loadQuizProgress(): QuizProgress {
 
     const progress = value as Partial<QuizProgress>
     if (
-      !Number.isInteger(progress.completedFlagSessions) ||
-      !Number.isInteger(progress.bestFlagScore) ||
-      !Number.isInteger(progress.lastFlagScore)
+      !Number.isInteger(progress.completedCountryFlagSessions) ||
+      !Number.isInteger(progress.bestCountryFlagScore) ||
+      !Number.isInteger(progress.lastCountryFlagScore)
     ) {
       return emptyProgress
     }
 
     return {
-      completedFlagSessions: Math.max(0, progress.completedFlagSessions!),
-      bestFlagScore: Math.max(0, progress.bestFlagScore!),
-      lastFlagScore: Math.max(0, progress.lastFlagScore!)
+      completedCountryFlagSessions: Math.max(0, progress.completedCountryFlagSessions!),
+      bestCountryFlagScore: Math.max(0, progress.bestCountryFlagScore!),
+      lastCountryFlagScore: Math.max(0, progress.lastCountryFlagScore!)
     }
   } catch {
     return emptyProgress
   }
 }
 
-export function saveCompletedFlagQuiz(score: number): QuizProgress {
+export function saveCompletedCountryFlagQuiz(score: number): QuizProgress {
   const previous = loadQuizProgress()
   const updated = {
-    completedFlagSessions: previous.completedFlagSessions + 1,
-    bestFlagScore: Math.max(previous.bestFlagScore, score),
-    lastFlagScore: score
+    completedCountryFlagSessions: previous.completedCountryFlagSessions + 1,
+    bestCountryFlagScore: Math.max(previous.bestCountryFlagScore, score),
+    lastCountryFlagScore: score
   }
 
   try {
