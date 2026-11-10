@@ -1,11 +1,23 @@
 
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 
 import Map, { Source, Layer } from 'react-map-gl/maplibre'
+
 import type {
   MapLayerMouseEvent,
   MapRef
 } from 'react-map-gl/maplibre'
+
+import type {
+  FillLayerSpecification,
+  LineLayerSpecification,
+  SymbolLayerSpecification
+} from 'maplibre-gl'
+
+import type {
+  FeatureCollection,
+  Point
+} from 'geojson'
 
 import {
   world110m,
@@ -15,13 +27,23 @@ import {
 
 import { getRelatedEntityIds } from '../data/geography/registry'
 
-import { createVisibleCountryLabels } from '../data/geography/labels'
-
 import 'maplibre-gl/dist/maplibre-gl.css'
 
 type WorldMapProps = {
   showBorders: boolean
   showLabels: boolean
+}
+
+type LabelProperties = {
+  name: string
+  sourceName: string
+  entityId: string | null
+  resolution: string
+}
+
+type WorkerResponse = {
+  type: 'ready' | 'labels'
+  labels?: FeatureCollection<Point, LabelProperties>
 }
 
 const mapStyle = {
@@ -43,14 +65,21 @@ function WorldMap({ showBorders, showLabels }: WorldMapProps) {
 
   const mapRef = useRef<MapRef>(null)
 
-  const [visibleLabels, setVisibleLabels] = useState(() =>
-    createVisibleCountryLabels(world10m, [-180, -85, 180, 85])
-  )
+  const workerRef = useRef<Worker | null>(null)
+  const workerReadyRef = useRef(false)
+
+  const [visibleLabels, setVisibleLabels] = useState<
+    FeatureCollection<Point, LabelProperties>
+  >({
+    type: 'FeatureCollection',
+    features: []
+  })
 
   const updateVisibleLabels = () => {
     const map = mapRef.current
+    const worker = workerRef.current
 
-    if (!map) return
+    if (!map || !worker || !workerReadyRef.current) return
 
     const bounds = map.getMap().getBounds()
 
@@ -64,18 +93,65 @@ function WorldMap({ showBorders, showLabels }: WorldMapProps) {
       northeast.lat
     ]
 
-    setVisibleLabels(
-      createVisibleCountryLabels(world10m, bbox)
-    )
+    worker.postMessage({
+      type: 'update',
+      bbox
+    })
   }
+
+  useEffect(() => {
+    const worker = new Worker(
+      new URL('../workers/labelWorker.ts', import.meta.url),
+      { type: 'module' }
+    )
+
+    workerRef.current = worker
+
+    
+    worker.onmessage = (event: MessageEvent<WorkerResponse>) => {
+      const message = event.data
+
+      if (message.type === 'ready') {
+        workerReadyRef.current = true
+        updateVisibleLabels()
+        return
+      }
+
+      if (message.type === 'labels' && message.labels) {
+        console.log(
+          'ÉTIQUETTES REÇUES :',
+          message.labels.features.length,
+          message.labels.features.slice(0, 5)
+        )
+
+        setVisibleLabels(message.labels)
+      }
+    }
+
+    worker.onerror = (error) => {
+      console.error('Erreur du Worker des étiquettes :', error)
+    }
+
+    worker.postMessage({
+      type: 'init',
+      countries: world10m
+    })
+
+    return () => {
+      workerReadyRef.current = false
+      workerRef.current = null
+      worker.terminate()
+    }
+  }, [])
 
   const lastLabelUpdate = useRef(0)
 
   const handleMapMove = () => {
     const now = Date.now()
 
-    // Limite les recalculs à environ 8 par seconde.
+    // Limite les demandes de recalcul à environ 8 par seconde.
     if (now - lastLabelUpdate.current < 120) return
+
 
     lastLabelUpdate.current = now
 
@@ -105,9 +181,9 @@ function WorldMap({ showBorders, showLabels }: WorldMapProps) {
     ],
     '#e5a63b',
     '#263746'
-  ] as const
+  ] as unknown as NonNullable<FillLayerSpecification['paint']>['fill-color']
 
-  const fillPaint110m = {
+  const fillPaint110m: FillLayerSpecification['paint'] = {
     'fill-color': fillColor,
     'fill-opacity': [
       'interpolate',
@@ -118,7 +194,7 @@ function WorldMap({ showBorders, showLabels }: WorldMapProps) {
     ]
   }
 
-  const fillPaint50m = {
+  const fillPaint50m: FillLayerSpecification['paint'] = {
     'fill-color': fillColor,
     'fill-opacity': [
       'interpolate',
@@ -131,7 +207,7 @@ function WorldMap({ showBorders, showLabels }: WorldMapProps) {
     ]
   }
 
-  const fillPaint10m = {
+  const fillPaint10m: FillLayerSpecification['paint'] = {
     'fill-color': fillColor,
     'fill-opacity': [
       'interpolate',
@@ -142,7 +218,7 @@ function WorldMap({ showBorders, showLabels }: WorldMapProps) {
     ]
   }
 
-  const borderPaint110m = {
+  const borderPaint110m: LineLayerSpecification['paint'] = {
     'line-color': '#64748b',
     'line-width': 0.7,
     'line-opacity': [
@@ -154,7 +230,7 @@ function WorldMap({ showBorders, showLabels }: WorldMapProps) {
     ]
   }
 
-  const borderPaint50m = {
+  const borderPaint50m: LineLayerSpecification['paint'] = {
     'line-color': '#64748b',
     'line-width': 0.7,
     'line-opacity': [
@@ -168,7 +244,7 @@ function WorldMap({ showBorders, showLabels }: WorldMapProps) {
     ]
   }
 
-  const borderPaint10m = {
+  const borderPaint10m: LineLayerSpecification['paint'] = {
     'line-color': '#64748b',
     'line-width': 0.7,
     'line-opacity': [
@@ -180,7 +256,7 @@ function WorldMap({ showBorders, showLabels }: WorldMapProps) {
     ]
   }
 
-  const labelLayout = {
+  const labelLayout: SymbolLayerSpecification['layout'] = {
     'text-field': ['get', 'name'],
     'text-size': 10,
     'text-font': ['Open Sans Regular'],
@@ -188,7 +264,7 @@ function WorldMap({ showBorders, showLabels }: WorldMapProps) {
     'text-ignore-placement': true
   }
 
-  const labelPaint = {
+  const labelPaint: SymbolLayerSpecification['paint'] = {
     'text-color': '#ffffff',
     'text-halo-color': '#101820',
     'text-halo-width': 1,

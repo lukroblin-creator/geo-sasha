@@ -36,4 +36,6 @@ export type GeographicGeometryLink = {
   entityId: string
   sourceId: string
   sourceFeatureId?: string | number
+  // Index du polygone dans le MultiPolygon source. Absent = géométrie entière.
+  sourcePolygonIndex?: number
 }

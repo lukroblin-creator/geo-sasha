@@ -15,7 +15,10 @@ import type {
   Geometry
 } from 'geojson'
 
-import { getGeometryLinkBySourceFeature } from './geography/registry'
+import {
+  getGeometryLinkBySourceFeature,
+  getGeometryLinksBySourceFeature
+} from './geography/registry'
 
 // Les trois fichiers géographiques d'origine.
 const worldDatasets = {
@@ -58,7 +61,6 @@ function prepareWorldDataset(
     topology,
     countriesObject
   ) as FeatureCollection<Geometry>
-
   return {
     ...sourceCountries,
 
@@ -73,6 +75,10 @@ function prepareWorldDataset(
       const sourceId = country.id
 
       const geometryLink = getGeometryLinkBySourceFeature(
+        `natural-earth-${scale}`,
+        sourceId
+      )
+      const geometryLinks = getGeometryLinksBySourceFeature(
         `natural-earth-${scale}`,
         sourceId
       )
@@ -93,6 +99,15 @@ function prepareWorldDataset(
           sourceId: sourceId ?? null,
           sourceName: name,
           entityId: geometryLink?.entityId ?? null,
+          polygonEntityIds: geometryLinks.reduce<Record<string, string>>(
+            (entitiesByPolygon, link) => {
+              if (link.sourcePolygonIndex !== undefined) {
+                entitiesByPolygon[String(link.sourcePolygonIndex)] = link.entityId
+              }
+              return entitiesByPolygon
+            },
+            {}
+          ),
           resolution: scale
         }
       }

@@ -1,3 +1,4 @@
+
 import { geographicEntities } from './entities'
 import { geographicDataSources } from './sources'
 import { geographicGeometryLinks } from './geometries'
@@ -44,6 +45,21 @@ export function getGeometryLinkBySourceFeature(
   }
 
   return geographicGeometryLinks.find(
+    (link) =>
+      link.sourceId === sourceId &&
+      String(link.sourceFeatureId) === String(sourceFeatureId) &&
+      link.sourcePolygonIndex === undefined
+  )
+}
+
+// Récupère les liens de toutes les entités d'une géométrie source.
+export function getGeometryLinksBySourceFeature(
+  sourceId: string,
+  sourceFeatureId: string | number | undefined
+) {
+  if (sourceFeatureId === undefined || sourceFeatureId === null) return []
+
+  return geographicGeometryLinks.filter(
     (link) =>
       link.sourceId === sourceId &&
       String(link.sourceFeatureId) === String(sourceFeatureId)
