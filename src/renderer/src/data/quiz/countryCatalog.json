@@ -1,0 +1,977 @@
+[
+  {
+    "sourceFeatureId": 4,
+    "alpha2": "AF",
+    "countryName": "Afghanistan"
+  },
+  {
+    "sourceFeatureId": 8,
+    "alpha2": "AL",
+    "countryName": "Albania"
+  },
+  {
+    "sourceFeatureId": 12,
+    "alpha2": "DZ",
+    "countryName": "Algeria"
+  },
+  {
+    "sourceFeatureId": 20,
+    "alpha2": "AD",
+    "countryName": "Andorra"
+  },
+  {
+    "sourceFeatureId": 24,
+    "alpha2": "AO",
+    "countryName": "Angola"
+  },
+  {
+    "sourceFeatureId": 28,
+    "alpha2": "AG",
+    "countryName": "Antigua and Barb."
+  },
+  {
+    "sourceFeatureId": 32,
+    "alpha2": "AR",
+    "countryName": "Argentina"
+  },
+  {
+    "sourceFeatureId": 51,
+    "alpha2": "AM",
+    "countryName": "Armenia"
+  },
+  {
+    "sourceFeatureId": 36,
+    "alpha2": "AU",
+    "countryName": "Australia"
+  },
+  {
+    "sourceFeatureId": 40,
+    "alpha2": "AT",
+    "countryName": "Austria"
+  },
+  {
+    "sourceFeatureId": 31,
+    "alpha2": "AZ",
+    "countryName": "Azerbaijan"
+  },
+  {
+    "sourceFeatureId": 44,
+    "alpha2": "BS",
+    "countryName": "Bahamas"
+  },
+  {
+    "sourceFeatureId": 48,
+    "alpha2": "BH",
+    "countryName": "Bahrain"
+  },
+  {
+    "sourceFeatureId": 50,
+    "alpha2": "BD",
+    "countryName": "Bangladesh"
+  },
+  {
+    "sourceFeatureId": 52,
+    "alpha2": "BB",
+    "countryName": "Barbados"
+  },
+  {
+    "sourceFeatureId": 112,
+    "alpha2": "BY",
+    "countryName": "Belarus"
+  },
+  {
+    "sourceFeatureId": 56,
+    "alpha2": "BE",
+    "countryName": "Belgium"
+  },
+  {
+    "sourceFeatureId": 84,
+    "alpha2": "BZ",
+    "countryName": "Belize"
+  },
+  {
+    "sourceFeatureId": 204,
+    "alpha2": "BJ",
+    "countryName": "Benin"
+  },
+  {
+    "sourceFeatureId": 64,
+    "alpha2": "BT",
+    "countryName": "Bhutan"
+  },
+  {
+    "sourceFeatureId": 68,
+    "alpha2": "BO",
+    "countryName": "Bolivia"
+  },
+  {
+    "sourceFeatureId": 70,
+    "alpha2": "BA",
+    "countryName": "Bosnia and Herz."
+  },
+  {
+    "sourceFeatureId": 72,
+    "alpha2": "BW",
+    "countryName": "Botswana"
+  },
+  {
+    "sourceFeatureId": 76,
+    "alpha2": "BR",
+    "countryName": "Brazil"
+  },
+  {
+    "sourceFeatureId": 96,
+    "alpha2": "BN",
+    "countryName": "Brunei"
+  },
+  {
+    "sourceFeatureId": 100,
+    "alpha2": "BG",
+    "countryName": "Bulgaria"
+  },
+  {
+    "sourceFeatureId": 854,
+    "alpha2": "BF",
+    "countryName": "Burkina Faso"
+  },
+  {
+    "sourceFeatureId": 108,
+    "alpha2": "BI",
+    "countryName": "Burundi"
+  },
+  {
+    "sourceFeatureId": 132,
+    "alpha2": "CV",
+    "countryName": "Cabo Verde"
+  },
+  {
+    "sourceFeatureId": 116,
+    "alpha2": "KH",
+    "countryName": "Cambodia"
+  },
+  {
+    "sourceFeatureId": 120,
+    "alpha2": "CM",
+    "countryName": "Cameroon"
+  },
+  {
+    "sourceFeatureId": 124,
+    "alpha2": "CA",
+    "countryName": "Canada"
+  },
+  {
+    "sourceFeatureId": 140,
+    "alpha2": "CF",
+    "countryName": "Central African Rep."
+  },
+  {
+    "sourceFeatureId": 148,
+    "alpha2": "TD",
+    "countryName": "Chad"
+  },
+  {
+    "sourceFeatureId": 152,
+    "alpha2": "CL",
+    "countryName": "Chile"
+  },
+  {
+    "sourceFeatureId": 156,
+    "alpha2": "CN",
+    "countryName": "China"
+  },
+  {
+    "sourceFeatureId": 170,
+    "alpha2": "CO",
+    "countryName": "Colombia"
+  },
+  {
+    "sourceFeatureId": 174,
+    "alpha2": "KM",
+    "countryName": "Comoros"
+  },
+  {
+    "sourceFeatureId": 178,
+    "alpha2": "CG",
+    "countryName": "Congo"
+  },
+  {
+    "sourceFeatureId": 188,
+    "alpha2": "CR",
+    "countryName": "Costa Rica"
+  },
+  {
+    "sourceFeatureId": 384,
+    "alpha2": "CI",
+    "countryName": "Côte d'Ivoire"
+  },
+  {
+    "sourceFeatureId": 191,
+    "alpha2": "HR",
+    "countryName": "Croatia"
+  },
+  {
+    "sourceFeatureId": 192,
+    "alpha2": "CU",
+    "countryName": "Cuba"
+  },
+  {
+    "sourceFeatureId": 196,
+    "alpha2": "CY",
+    "countryName": "Cyprus"
+  },
+  {
+    "sourceFeatureId": 203,
+    "alpha2": "CZ",
+    "countryName": "Czechia"
+  },
+  {
+    "sourceFeatureId": 408,
+    "alpha2": "KP",
+    "countryName": "North Korea"
+  },
+  {
+    "sourceFeatureId": 180,
+    "alpha2": "CD",
+    "countryName": "Dem. Rep. Congo"
+  },
+  {
+    "sourceFeatureId": 208,
+    "alpha2": "DK",
+    "countryName": "Denmark"
+  },
+  {
+    "sourceFeatureId": 262,
+    "alpha2": "DJ",
+    "countryName": "Djibouti"
+  },
+  {
+    "sourceFeatureId": 212,
+    "alpha2": "DM",
+    "countryName": "Dominica"
+  },
+  {
+    "sourceFeatureId": 214,
+    "alpha2": "DO",
+    "countryName": "Dominican Rep."
+  },
+  {
+    "sourceFeatureId": 218,
+    "alpha2": "EC",
+    "countryName": "Ecuador"
+  },
+  {
+    "sourceFeatureId": 818,
+    "alpha2": "EG",
+    "countryName": "Egypt"
+  },
+  {
+    "sourceFeatureId": 222,
+    "alpha2": "SV",
+    "countryName": "El Salvador"
+  },
+  {
+    "sourceFeatureId": 226,
+    "alpha2": "GQ",
+    "countryName": "Eq. Guinea"
+  },
+  {
+    "sourceFeatureId": 232,
+    "alpha2": "ER",
+    "countryName": "Eritrea"
+  },
+  {
+    "sourceFeatureId": 233,
+    "alpha2": "EE",
+    "countryName": "Estonia"
+  },
+  {
+    "sourceFeatureId": 748,
+    "alpha2": "SZ",
+    "countryName": "eSwatini"
+  },
+  {
+    "sourceFeatureId": 231,
+    "alpha2": "ET",
+    "countryName": "Ethiopia"
+  },
+  {
+    "sourceFeatureId": 242,
+    "alpha2": "FJ",
+    "countryName": "Fiji"
+  },
+  {
+    "sourceFeatureId": 246,
+    "alpha2": "FI",
+    "countryName": "Finland"
+  },
+  {
+    "sourceFeatureId": 250,
+    "alpha2": "FR",
+    "countryName": "France"
+  },
+  {
+    "sourceFeatureId": 266,
+    "alpha2": "GA",
+    "countryName": "Gabon"
+  },
+  {
+    "sourceFeatureId": 270,
+    "alpha2": "GM",
+    "countryName": "Gambia"
+  },
+  {
+    "sourceFeatureId": 268,
+    "alpha2": "GE",
+    "countryName": "Georgia"
+  },
+  {
+    "sourceFeatureId": 276,
+    "alpha2": "DE",
+    "countryName": "Germany"
+  },
+  {
+    "sourceFeatureId": 288,
+    "alpha2": "GH",
+    "countryName": "Ghana"
+  },
+  {
+    "sourceFeatureId": 300,
+    "alpha2": "GR",
+    "countryName": "Greece"
+  },
+  {
+    "sourceFeatureId": 308,
+    "alpha2": "GD",
+    "countryName": "Grenada"
+  },
+  {
+    "sourceFeatureId": 320,
+    "alpha2": "GT",
+    "countryName": "Guatemala"
+  },
+  {
+    "sourceFeatureId": 324,
+    "alpha2": "GN",
+    "countryName": "Guinea"
+  },
+  {
+    "sourceFeatureId": 624,
+    "alpha2": "GW",
+    "countryName": "Guinea-Bissau"
+  },
+  {
+    "sourceFeatureId": 328,
+    "alpha2": "GY",
+    "countryName": "Guyana"
+  },
+  {
+    "sourceFeatureId": 332,
+    "alpha2": "HT",
+    "countryName": "Haiti"
+  },
+  {
+    "sourceFeatureId": 340,
+    "alpha2": "HN",
+    "countryName": "Honduras"
+  },
+  {
+    "sourceFeatureId": 348,
+    "alpha2": "HU",
+    "countryName": "Hungary"
+  },
+  {
+    "sourceFeatureId": 352,
+    "alpha2": "IS",
+    "countryName": "Iceland"
+  },
+  {
+    "sourceFeatureId": 356,
+    "alpha2": "IN",
+    "countryName": "India"
+  },
+  {
+    "sourceFeatureId": 360,
+    "alpha2": "ID",
+    "countryName": "Indonesia"
+  },
+  {
+    "sourceFeatureId": 364,
+    "alpha2": "IR",
+    "countryName": "Iran"
+  },
+  {
+    "sourceFeatureId": 368,
+    "alpha2": "IQ",
+    "countryName": "Iraq"
+  },
+  {
+    "sourceFeatureId": 372,
+    "alpha2": "IE",
+    "countryName": "Ireland"
+  },
+  {
+    "sourceFeatureId": 376,
+    "alpha2": "IL",
+    "countryName": "Israel"
+  },
+  {
+    "sourceFeatureId": 380,
+    "alpha2": "IT",
+    "countryName": "Italy"
+  },
+  {
+    "sourceFeatureId": 388,
+    "alpha2": "JM",
+    "countryName": "Jamaica"
+  },
+  {
+    "sourceFeatureId": 392,
+    "alpha2": "JP",
+    "countryName": "Japan"
+  },
+  {
+    "sourceFeatureId": 400,
+    "alpha2": "JO",
+    "countryName": "Jordan"
+  },
+  {
+    "sourceFeatureId": 398,
+    "alpha2": "KZ",
+    "countryName": "Kazakhstan"
+  },
+  {
+    "sourceFeatureId": 404,
+    "alpha2": "KE",
+    "countryName": "Kenya"
+  },
+  {
+    "sourceFeatureId": 296,
+    "alpha2": "KI",
+    "countryName": "Kiribati"
+  },
+  {
+    "sourceFeatureId": 414,
+    "alpha2": "KW",
+    "countryName": "Kuwait"
+  },
+  {
+    "sourceFeatureId": 417,
+    "alpha2": "KG",
+    "countryName": "Kyrgyzstan"
+  },
+  {
+    "sourceFeatureId": 418,
+    "alpha2": "LA",
+    "countryName": "Laos"
+  },
+  {
+    "sourceFeatureId": 428,
+    "alpha2": "LV",
+    "countryName": "Latvia"
+  },
+  {
+    "sourceFeatureId": 422,
+    "alpha2": "LB",
+    "countryName": "Lebanon"
+  },
+  {
+    "sourceFeatureId": 426,
+    "alpha2": "LS",
+    "countryName": "Lesotho"
+  },
+  {
+    "sourceFeatureId": 430,
+    "alpha2": "LR",
+    "countryName": "Liberia"
+  },
+  {
+    "sourceFeatureId": 434,
+    "alpha2": "LY",
+    "countryName": "Libya"
+  },
+  {
+    "sourceFeatureId": 438,
+    "alpha2": "LI",
+    "countryName": "Liechtenstein"
+  },
+  {
+    "sourceFeatureId": 440,
+    "alpha2": "LT",
+    "countryName": "Lithuania"
+  },
+  {
+    "sourceFeatureId": 442,
+    "alpha2": "LU",
+    "countryName": "Luxembourg"
+  },
+  {
+    "sourceFeatureId": 450,
+    "alpha2": "MG",
+    "countryName": "Madagascar"
+  },
+  {
+    "sourceFeatureId": 454,
+    "alpha2": "MW",
+    "countryName": "Malawi"
+  },
+  {
+    "sourceFeatureId": 458,
+    "alpha2": "MY",
+    "countryName": "Malaysia"
+  },
+  {
+    "sourceFeatureId": 462,
+    "alpha2": "MV",
+    "countryName": "Maldives"
+  },
+  {
+    "sourceFeatureId": 466,
+    "alpha2": "ML",
+    "countryName": "Mali"
+  },
+  {
+    "sourceFeatureId": 470,
+    "alpha2": "MT",
+    "countryName": "Malta"
+  },
+  {
+    "sourceFeatureId": 584,
+    "alpha2": "MH",
+    "countryName": "Marshall Is."
+  },
+  {
+    "sourceFeatureId": 478,
+    "alpha2": "MR",
+    "countryName": "Mauritania"
+  },
+  {
+    "sourceFeatureId": 480,
+    "alpha2": "MU",
+    "countryName": "Mauritius"
+  },
+  {
+    "sourceFeatureId": 484,
+    "alpha2": "MX",
+    "countryName": "Mexico"
+  },
+  {
+    "sourceFeatureId": 583,
+    "alpha2": "FM",
+    "countryName": "Micronesia"
+  },
+  {
+    "sourceFeatureId": 492,
+    "alpha2": "MC",
+    "countryName": "Monaco"
+  },
+  {
+    "sourceFeatureId": 496,
+    "alpha2": "MN",
+    "countryName": "Mongolia"
+  },
+  {
+    "sourceFeatureId": 499,
+    "alpha2": "ME",
+    "countryName": "Montenegro"
+  },
+  {
+    "sourceFeatureId": 504,
+    "alpha2": "MA",
+    "countryName": "Morocco"
+  },
+  {
+    "sourceFeatureId": 508,
+    "alpha2": "MZ",
+    "countryName": "Mozambique"
+  },
+  {
+    "sourceFeatureId": 104,
+    "alpha2": "MM",
+    "countryName": "Myanmar"
+  },
+  {
+    "sourceFeatureId": 516,
+    "alpha2": "NA",
+    "countryName": "Namibia"
+  },
+  {
+    "sourceFeatureId": 520,
+    "alpha2": "NR",
+    "countryName": "Nauru"
+  },
+  {
+    "sourceFeatureId": 524,
+    "alpha2": "NP",
+    "countryName": "Nepal"
+  },
+  {
+    "sourceFeatureId": 528,
+    "alpha2": "NL",
+    "countryName": "Netherlands"
+  },
+  {
+    "sourceFeatureId": 554,
+    "alpha2": "NZ",
+    "countryName": "New Zealand"
+  },
+  {
+    "sourceFeatureId": 558,
+    "alpha2": "NI",
+    "countryName": "Nicaragua"
+  },
+  {
+    "sourceFeatureId": 562,
+    "alpha2": "NE",
+    "countryName": "Niger"
+  },
+  {
+    "sourceFeatureId": 566,
+    "alpha2": "NG",
+    "countryName": "Nigeria"
+  },
+  {
+    "sourceFeatureId": 807,
+    "alpha2": "MK",
+    "countryName": "Macedonia"
+  },
+  {
+    "sourceFeatureId": 578,
+    "alpha2": "NO",
+    "countryName": "Norway"
+  },
+  {
+    "sourceFeatureId": 512,
+    "alpha2": "OM",
+    "countryName": "Oman"
+  },
+  {
+    "sourceFeatureId": 586,
+    "alpha2": "PK",
+    "countryName": "Pakistan"
+  },
+  {
+    "sourceFeatureId": 585,
+    "alpha2": "PW",
+    "countryName": "Palau"
+  },
+  {
+    "sourceFeatureId": 591,
+    "alpha2": "PA",
+    "countryName": "Panama"
+  },
+  {
+    "sourceFeatureId": 598,
+    "alpha2": "PG",
+    "countryName": "Papua New Guinea"
+  },
+  {
+    "sourceFeatureId": 600,
+    "alpha2": "PY",
+    "countryName": "Paraguay"
+  },
+  {
+    "sourceFeatureId": 604,
+    "alpha2": "PE",
+    "countryName": "Peru"
+  },
+  {
+    "sourceFeatureId": 608,
+    "alpha2": "PH",
+    "countryName": "Philippines"
+  },
+  {
+    "sourceFeatureId": 616,
+    "alpha2": "PL",
+    "countryName": "Poland"
+  },
+  {
+    "sourceFeatureId": 620,
+    "alpha2": "PT",
+    "countryName": "Portugal"
+  },
+  {
+    "sourceFeatureId": 634,
+    "alpha2": "QA",
+    "countryName": "Qatar"
+  },
+  {
+    "sourceFeatureId": 410,
+    "alpha2": "KR",
+    "countryName": "South Korea"
+  },
+  {
+    "sourceFeatureId": 498,
+    "alpha2": "MD",
+    "countryName": "Moldova"
+  },
+  {
+    "sourceFeatureId": 642,
+    "alpha2": "RO",
+    "countryName": "Romania"
+  },
+  {
+    "sourceFeatureId": 643,
+    "alpha2": "RU",
+    "countryName": "Russia"
+  },
+  {
+    "sourceFeatureId": 646,
+    "alpha2": "RW",
+    "countryName": "Rwanda"
+  },
+  {
+    "sourceFeatureId": 659,
+    "alpha2": "KN",
+    "countryName": "St. Kitts and Nevis"
+  },
+  {
+    "sourceFeatureId": 662,
+    "alpha2": "LC",
+    "countryName": "Saint Lucia"
+  },
+  {
+    "sourceFeatureId": 670,
+    "alpha2": "VC",
+    "countryName": "St. Vin. and Gren."
+  },
+  {
+    "sourceFeatureId": 882,
+    "alpha2": "WS",
+    "countryName": "Samoa"
+  },
+  {
+    "sourceFeatureId": 674,
+    "alpha2": "SM",
+    "countryName": "San Marino"
+  },
+  {
+    "sourceFeatureId": 678,
+    "alpha2": "ST",
+    "countryName": "São Tomé and Principe"
+  },
+  {
+    "sourceFeatureId": 682,
+    "alpha2": "SA",
+    "countryName": "Saudi Arabia"
+  },
+  {
+    "sourceFeatureId": 686,
+    "alpha2": "SN",
+    "countryName": "Senegal"
+  },
+  {
+    "sourceFeatureId": 688,
+    "alpha2": "RS",
+    "countryName": "Serbia"
+  },
+  {
+    "sourceFeatureId": 690,
+    "alpha2": "SC",
+    "countryName": "Seychelles"
+  },
+  {
+    "sourceFeatureId": 694,
+    "alpha2": "SL",
+    "countryName": "Sierra Leone"
+  },
+  {
+    "sourceFeatureId": 702,
+    "alpha2": "SG",
+    "countryName": "Singapore"
+  },
+  {
+    "sourceFeatureId": 703,
+    "alpha2": "SK",
+    "countryName": "Slovakia"
+  },
+  {
+    "sourceFeatureId": 705,
+    "alpha2": "SI",
+    "countryName": "Slovenia"
+  },
+  {
+    "sourceFeatureId": 90,
+    "alpha2": "SB",
+    "countryName": "Solomon Is."
+  },
+  {
+    "sourceFeatureId": 706,
+    "alpha2": "SO",
+    "countryName": "Somalia"
+  },
+  {
+    "sourceFeatureId": 710,
+    "alpha2": "ZA",
+    "countryName": "South Africa"
+  },
+  {
+    "sourceFeatureId": 728,
+    "alpha2": "SS",
+    "countryName": "S. Sudan"
+  },
+  {
+    "sourceFeatureId": 724,
+    "alpha2": "ES",
+    "countryName": "Spain"
+  },
+  {
+    "sourceFeatureId": 144,
+    "alpha2": "LK",
+    "countryName": "Sri Lanka"
+  },
+  {
+    "sourceFeatureId": 729,
+    "alpha2": "SD",
+    "countryName": "Sudan"
+  },
+  {
+    "sourceFeatureId": 740,
+    "alpha2": "SR",
+    "countryName": "Suriname"
+  },
+  {
+    "sourceFeatureId": 752,
+    "alpha2": "SE",
+    "countryName": "Sweden"
+  },
+  {
+    "sourceFeatureId": 756,
+    "alpha2": "CH",
+    "countryName": "Switzerland"
+  },
+  {
+    "sourceFeatureId": 760,
+    "alpha2": "SY",
+    "countryName": "Syria"
+  },
+  {
+    "sourceFeatureId": 762,
+    "alpha2": "TJ",
+    "countryName": "Tajikistan"
+  },
+  {
+    "sourceFeatureId": 764,
+    "alpha2": "TH",
+    "countryName": "Thailand"
+  },
+  {
+    "sourceFeatureId": 626,
+    "alpha2": "TL",
+    "countryName": "Timor-Leste"
+  },
+  {
+    "sourceFeatureId": 768,
+    "alpha2": "TG",
+    "countryName": "Togo"
+  },
+  {
+    "sourceFeatureId": 776,
+    "alpha2": "TO",
+    "countryName": "Tonga"
+  },
+  {
+    "sourceFeatureId": 780,
+    "alpha2": "TT",
+    "countryName": "Trinidad and Tobago"
+  },
+  {
+    "sourceFeatureId": 788,
+    "alpha2": "TN",
+    "countryName": "Tunisia"
+  },
+  {
+    "sourceFeatureId": 792,
+    "alpha2": "TR",
+    "countryName": "Turkey"
+  },
+  {
+    "sourceFeatureId": 795,
+    "alpha2": "TM",
+    "countryName": "Turkmenistan"
+  },
+  {
+    "sourceFeatureId": 798,
+    "alpha2": "TV",
+    "countryName": "Tuvalu"
+  },
+  {
+    "sourceFeatureId": 800,
+    "alpha2": "UG",
+    "countryName": "Uganda"
+  },
+  {
+    "sourceFeatureId": 804,
+    "alpha2": "UA",
+    "countryName": "Ukraine"
+  },
+  {
+    "sourceFeatureId": 784,
+    "alpha2": "AE",
+    "countryName": "United Arab Emirates"
+  },
+  {
+    "sourceFeatureId": 826,
+    "alpha2": "GB",
+    "countryName": "United Kingdom"
+  },
+  {
+    "sourceFeatureId": 834,
+    "alpha2": "TZ",
+    "countryName": "Tanzania"
+  },
+  {
+    "sourceFeatureId": 840,
+    "alpha2": "US",
+    "countryName": "United States of America"
+  },
+  {
+    "sourceFeatureId": 858,
+    "alpha2": "UY",
+    "countryName": "Uruguay"
+  },
+  {
+    "sourceFeatureId": 860,
+    "alpha2": "UZ",
+    "countryName": "Uzbekistan"
+  },
+  {
+    "sourceFeatureId": 548,
+    "alpha2": "VU",
+    "countryName": "Vanuatu"
+  },
+  {
+    "sourceFeatureId": 862,
+    "alpha2": "VE",
+    "countryName": "Venezuela"
+  },
+  {
+    "sourceFeatureId": 704,
+    "alpha2": "VN",
+    "countryName": "Vietnam"
+  },
+  {
+    "sourceFeatureId": 887,
+    "alpha2": "YE",
+    "countryName": "Yemen"
+  },
+  {
+    "sourceFeatureId": 894,
+    "alpha2": "ZM",
+    "countryName": "Zambia"
+  },
+  {
+    "sourceFeatureId": 716,
+    "alpha2": "ZW",
+    "countryName": "Zimbabwe"
+  },
+  {
+    "sourceFeatureId": 336,
+    "alpha2": "VA",
+    "countryName": "Vatican"
+  },
+  {
+    "sourceFeatureId": 275,
+    "alpha2": "PS",
+    "countryName": "Palestine"
+  }
+]

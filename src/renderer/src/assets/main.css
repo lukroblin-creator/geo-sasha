@@ -495,6 +495,50 @@ button {
   line-height: 1.7;
 }
 
+.capital-choices {
+  display: grid;
+  gap: 8px;
+  margin-top: 18px;
+}
+
+.capital-option {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid #35485b;
+  border-radius: 6px;
+  background: #1b2a39;
+  color: #dfe8f1;
+  font-size: 11px;
+  text-align: left;
+  transition: 150ms ease;
+}
+
+.capital-option:hover:not(:disabled) {
+  border-color: #6386a5;
+  background: #263a4d;
+}
+
+.capital-option:disabled {
+  cursor: default;
+}
+
+.capital-option-correct {
+  border-color: #4d9978;
+  background: #1d3b34;
+}
+
+.capital-option-incorrect {
+  border-color: #a65b5b;
+  background: #402b32;
+}
+
+.capital-note {
+  margin-top: 10px;
+  color: #b2c1cf;
+  font-size: 10px;
+  line-height: 1.5;
+}
+
 .answer-placeholder {
   display: flex;
   align-items: center;

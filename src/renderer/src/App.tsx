@@ -1,37 +1,21 @@
 
 import { useState } from 'react'
 import WorldMap from './components/WorldMap'
+import { FlagsQuizPanel, CapitalsQuizPanel } from './components/QuizPanels'
+import { countryFlagQuestions } from './data/quiz/countryQuestions'
 import {
-  countryFlagQuestions,
-  type CountryFlagQuestion
-} from './data/quiz/countryQuestions'
+  createCountryCapitalQuestions,
+  type CountryCapitalQuestion
+} from './data/quiz/countryCapitals'
+import { useQuizSession } from './data/quiz/useQuizSession'
 import {
   loadQuizProgress,
-  saveCompletedCountryFlagQuiz
+  saveCompletedQuiz,
+  type QuizMode
 } from './data/quiz/progress'
 
-function createRandomQuestionOrder(): CountryFlagQuestion[] {
-  const questions = [...countryFlagQuestions]
-
-  for (let index = questions.length - 1; index > 0; index--) {
-    const randomIndex = Math.floor(Math.random() * (index + 1))
-    ;[questions[index], questions[randomIndex]] = [
-      questions[randomIndex],
-      questions[index]
-    ]
-  }
-
-  return questions
-}
-
-function flagFromAlpha2(alpha2: string): string {
-  return String.fromCodePoint(
-    ...alpha2.split('').map((letter) => 0x1f1e6 + letter.charCodeAt(0) - 65)
-  )
-}
-
 type Mode = {
-  id: string
+  id: QuizMode | 'countries' | 'physical'
   name: string
   description: string
   icon: string
@@ -65,57 +49,55 @@ const modes: Mode[] = [
 ]
 
 function App(): React.JSX.Element {
-  const [activeMode, setActiveMode] = useState('flags')
+  const [activeMode, setActiveMode] = useState<Mode['id']>('flags')
   const [showBorders, setShowBorders] = useState(true)
   const [showRivers, setShowRivers] = useState(false)
   const [showMountains, setShowMountains] = useState(false)
   const [showLabels, setShowLabels] = useState(false)
-  const [questionIndex, setQuestionIndex] = useState(0)
-  const [score, setScore] = useState(0)
-  const [answerCorrect, setAnswerCorrect] = useState<boolean | null>(null)
-  const [quizComplete, setQuizComplete] = useState(false)
-  const [questionOrder, setQuestionOrder] = useState(createRandomQuestionOrder)
   const [quizProgress, setQuizProgress] = useState(loadQuizProgress)
 
   const selectedMode = modes.find((mode) => mode.id === activeMode)!
-  const currentQuestion = questionOrder[questionIndex]
+
+  const recordCompletedQuiz = (
+    mode: QuizMode,
+    score: number
+  ): void => {
+    setQuizProgress(saveCompletedQuiz(mode, score))
+  }
+
+  const flagQuiz = useQuizSession({
+    mode: 'flags',
+    questionBank: () => countryFlagQuestions,
+    onCompleted: recordCompletedQuiz
+  })
+  const capitalQuiz = useQuizSession<CountryCapitalQuestion>({
+    mode: 'capitals',
+    questionBank: createCountryCapitalQuestions,
+    onCompleted: recordCompletedQuiz
+  })
 
   const handleCountrySelected = (
     sourceFeatureId: string | number,
     name: string
-  ) => {
+  ): void => {
     if (
       activeMode !== 'flags' ||
-      answerCorrect === true ||
-      quizComplete ||
-      !currentQuestion
+      flagQuiz.session.answerCorrect === true ||
+      flagQuiz.session.completed
     ) return
+    const question =
+      flagQuiz.session.questionOrder[flagQuiz.session.questionIndex]
     const isCorrect =
-      Number(sourceFeatureId) === currentQuestion.sourceFeatureId &&
-      name === currentQuestion.countryName
-    setAnswerCorrect(isCorrect)
-    if (isCorrect) {
-      setScore((currentScore) => currentScore + 1)
-    }
+      Number(sourceFeatureId) === question.sourceFeatureId &&
+      name === question.countryName
+    flagQuiz.answer(isCorrect, name)
   }
 
-  const advanceQuestion = () => {
-    if (questionIndex === countryFlagQuestions.length - 1) {
-      setQuizProgress(saveCompletedCountryFlagQuiz(score))
-      setQuizComplete(true)
-    } else {
-      setQuestionIndex((currentIndex) => currentIndex + 1)
-      setAnswerCorrect(null)
-    }
-  }
-
-  const restartQuiz = () => {
-    setQuestionOrder(createRandomQuestionOrder())
-    setQuestionIndex(0)
-    setScore(0)
-    setAnswerCorrect(null)
-    setQuizComplete(false)
-  }
+  const activeStats =
+    activeMode === 'capitals'
+      ? quizProgress.capitals
+      : quizProgress.flags
+  const activeQuizLength = countryFlagQuestions.length
 
   return (
     <div className="app-shell">
@@ -150,21 +132,21 @@ function App(): React.JSX.Element {
 
           <div className="progress-card">
             <div className="progress-heading">
-              <span>Pays maîtrisés</span>
-              <span className="progress-number">0 / 195</span>
+              <span>Pays au programme</span>
+              <span className="progress-number">195</span>
             </div>
 
             <div className="progress-track">
-              <div className="progress-fill" />
+              <div className="progress-fill" style={{ width: '100%' }} />
             </div>
 
-            <div className="progress-caption">Commencez votre apprentissage</div>
-              <div className="progress-caption">
-                Quiz terminés : {quizProgress.completedCountryFlagSessions}
-              </div>
-              <div className="progress-caption">
-                Meilleur score : {quizProgress.bestCountryFlagScore} / {countryFlagQuestions.length}
-              </div>
+            <div className="progress-caption">Catalogue intégré hors ligne</div>
+            <div className="progress-caption">
+              Quiz terminés : {activeStats.completedSessions}
+            </div>
+            <div className="progress-caption">
+              Meilleur score : {activeStats.bestScore} / {activeQuizLength}
+            </div>
           </div>
         </div>
 
@@ -268,88 +250,32 @@ function App(): React.JSX.Element {
             </div>
           </section>
 
-          <aside className="quiz-panel">
-            <div className="quiz-header">
-              <div className="section-label">SESSION D'APPRENTISSAGE</div>
-              <div className="quiz-step">QUESTION 01</div>
-            </div>
-
-            <div className="quiz-content">
-              <div className="quiz-mode-label">{selectedMode.description}</div>
-
-              {activeMode === 'flags' && quizComplete ? (
-                <>
-                  <h2>Quiz terminé !</h2>
-                  <div className="answer-placeholder" aria-live="polite">
-                    Ton score : {score} / {countryFlagQuestions.length}
-                  </div>
-                  <button className="quiz-next-button" onClick={restartQuiz}>
-                    Rejouer le quiz
-                  </button>
-                </>
-              ) : activeMode === 'flags' ? (
-                <>
-                  <h2>Quel pays possède ce drapeau ?</h2>
-                  <div className="quiz-step">
-                    QUESTION {String(questionIndex + 1).padStart(2, '0')} / {countryFlagQuestions.length}
-                  </div>
-                  <div className="flag-container">
-                    <div className="flag">{flagFromAlpha2(currentQuestion.alpha2)}</div>
-                  </div>
-                  <div className="question-instruction">
-                    Sélectionnez le territoire correspondant sur la carte.
-                  </div>
-                  <div className="answer-placeholder" aria-live="polite">
-                    {answerCorrect === null ? (
-                      <>
-                        <span className="answer-placeholder-icon">⌖</span>
-                        <span>En attente de sélection sur la carte</span>
-                      </>
-                    ) : (
-                      <span>
-                        {answerCorrect
-                          ? `Bonne réponse : ${currentQuestion.countryName} !`
-                          : `Ce n’est pas ${currentQuestion.countryName}. Réessaie ou passe à la suite.`}
-                      </span>
-                    )}
-                  </div>
-                  {answerCorrect !== null && (
-                    <button className="quiz-next-button" onClick={advanceQuestion}>
-                      {questionIndex === countryFlagQuestions.length - 1
-                        ? 'Voir le résultat'
-                        : 'Question suivante'}
-                    </button>
-                  )}
-                </>
-              ) : (
+          {activeMode === 'flags' ? (
+            <FlagsQuizPanel
+              session={flagQuiz.session}
+              onNext={flagQuiz.next}
+              onRestart={flagQuiz.restart}
+            />
+          ) : activeMode === 'capitals' ? (
+            <CapitalsQuizPanel
+              session={capitalQuiz.session}
+              onAnswer={capitalQuiz.answer}
+              onNext={capitalQuiz.next}
+              onRestart={capitalQuiz.restart}
+            />
+          ) : (
+            <aside className="quiz-panel">
+              <div className="quiz-header">
+                <div className="section-label">SESSION D’APPRENTISSAGE</div>
+              </div>
+              <div className="quiz-content">
+                <div className="quiz-mode-label">{selectedMode.description}</div>
                 <div className="answer-placeholder">
-                  Ce mode sera ajouté après le premier quiz jouable.
-                </div>
-              )}
-
-              <div className="quiz-divider" />
-
-              <div className="quiz-information">
-                <div className="info-label">ÉTAPE SUIVANTE</div>
-                <div className="next-step">
-                  <span className="next-step-number">02</span>
-                  <div>
-                    <div className="next-step-title">Identifier la capitale</div>
-                    <div className="next-step-description">
-                      Après avoir trouvé le pays
-                    </div>
-                  </div>
+                  Ce mode sera ajouté dans une prochaine étape.
                 </div>
               </div>
-            </div>
-
-            <div className="quiz-footer">
-              <div className="score-label">SCORE DE LA SESSION</div>
-              <div className="score-value">
-                {score} <span>/ {quizComplete ? countryFlagQuestions.length : questionIndex + (answerCorrect === null ? 0 : 1)}</span>
-              </div>
-            </div>
-          </aside>
+            </aside>
+          )}
         </div>
       </main>
     </div>

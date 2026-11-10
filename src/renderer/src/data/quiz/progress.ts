@@ -1,56 +1,108 @@
-const STORAGE_KEY = 'world-atlas:quiz-progress:v2'
+export type QuizMode = 'flags' | 'capitals'
 
-export type QuizProgress = {
-  completedCountryFlagSessions: number
-  bestCountryFlagScore: number
-  lastCountryFlagScore: number
+export type QuizStats = {
+  completedSessions: number
+  bestScore: number
+  lastScore: number
 }
 
-const emptyProgress: QuizProgress = {
-  completedCountryFlagSessions: 0,
-  bestCountryFlagScore: 0,
-  lastCountryFlagScore: 0
+export type QuizProgress = Record<QuizMode, QuizStats>
+
+const STORAGE_KEY = 'world-atlas:quiz-progress:v3'
+const PREVIOUS_STORAGE_KEYS = [
+  'world-atlas:quiz-progress:v2',
+  'world-atlas:quiz-progress:v1'
+]
+
+function emptyStats(): QuizStats {
+  return { completedSessions: 0, bestScore: 0, lastScore: 0 }
+}
+
+function emptyProgress(): QuizProgress {
+  return { flags: emptyStats(), capitals: emptyStats() }
+}
+
+function toStats(value: unknown): QuizStats | null {
+  if (!value || typeof value !== 'object') return null
+
+  const stats = value as Record<string, unknown>
+  const completedSessions = stats.completedSessions
+  const bestScore = stats.bestScore
+  const lastScore = stats.lastScore
+  if (
+    !Number.isInteger(completedSessions) ||
+    !Number.isInteger(bestScore) ||
+    !Number.isInteger(lastScore)
+  ) {
+    return null
+  }
+
+  return {
+    completedSessions: Math.max(0, completedSessions as number),
+    bestScore: Math.max(0, bestScore as number),
+    lastScore: Math.max(0, lastScore as number)
+  }
+}
+
+function migratePreviousProgress(value: unknown): QuizProgress | null {
+  if (!value || typeof value !== 'object') return null
+
+  const previous = value as Record<string, unknown>
+  const flags = toStats({
+    completedSessions:
+      previous.completedCountryFlagSessions ?? previous.completedFlagSessions,
+    bestScore: previous.bestCountryFlagScore ?? previous.bestFlagScore,
+    lastScore: previous.lastCountryFlagScore ?? previous.lastFlagScore
+  })
+
+  return flags ? { flags, capitals: emptyStats() } : null
 }
 
 export function loadQuizProgress(): QuizProgress {
   try {
-    const stored = localStorage.getItem(STORAGE_KEY)
-    if (!stored) return emptyProgress
-
-    const value: unknown = JSON.parse(stored)
-    if (!value || typeof value !== 'object') return emptyProgress
-
-    const progress = value as Partial<QuizProgress>
-    if (
-      !Number.isInteger(progress.completedCountryFlagSessions) ||
-      !Number.isInteger(progress.bestCountryFlagScore) ||
-      !Number.isInteger(progress.lastCountryFlagScore)
-    ) {
-      return emptyProgress
+    const current = localStorage.getItem(STORAGE_KEY)
+    if (current) {
+      const value: unknown = JSON.parse(current)
+      if (value && typeof value === 'object') {
+        const progress = value as Record<string, unknown>
+        const flags = toStats(progress.flags)
+        const capitals = toStats(progress.capitals)
+        if (flags && capitals) return { flags, capitals }
+      }
     }
 
-    return {
-      completedCountryFlagSessions: Math.max(0, progress.completedCountryFlagSessions!),
-      bestCountryFlagScore: Math.max(0, progress.bestCountryFlagScore!),
-      lastCountryFlagScore: Math.max(0, progress.lastCountryFlagScore!)
+    for (const key of PREVIOUS_STORAGE_KEYS) {
+      const previous = localStorage.getItem(key)
+      if (!previous) continue
+
+      const migrated = migratePreviousProgress(JSON.parse(previous))
+      if (migrated) return migrated
     }
   } catch {
-    return emptyProgress
+    // Une progression absente ou illisible n'empêche pas les quiz de fonctionner.
   }
+
+  return emptyProgress()
 }
 
-export function saveCompletedCountryFlagQuiz(score: number): QuizProgress {
+export function saveCompletedQuiz(
+  mode: QuizMode,
+  score: number
+): QuizProgress {
   const previous = loadQuizProgress()
-  const updated = {
-    completedCountryFlagSessions: previous.completedCountryFlagSessions + 1,
-    bestCountryFlagScore: Math.max(previous.bestCountryFlagScore, score),
-    lastCountryFlagScore: score
+  const updated: QuizProgress = {
+    ...previous,
+    [mode]: {
+      completedSessions: previous[mode].completedSessions + 1,
+      bestScore: Math.max(previous[mode].bestScore, score),
+      lastScore: score
+    }
   }
 
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(updated))
   } catch {
-    // Le quiz reste jouable même si le stockage local est indisponible.
+    // Les quiz restent jouables si le stockage local est indisponible.
   }
 
   return updated

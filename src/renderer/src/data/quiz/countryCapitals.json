@@ -1,0 +1,785 @@
+[
+  {
+    "sourceFeatureId": 4,
+    "capitalName": "Kabul"
+  },
+  {
+    "sourceFeatureId": 8,
+    "capitalName": "Tirana"
+  },
+  {
+    "sourceFeatureId": 12,
+    "capitalName": "Algiers"
+  },
+  {
+    "sourceFeatureId": 20,
+    "capitalName": "Andorra la Vella"
+  },
+  {
+    "sourceFeatureId": 24,
+    "capitalName": "Luanda"
+  },
+  {
+    "sourceFeatureId": 28,
+    "capitalName": "St John's"
+  },
+  {
+    "sourceFeatureId": 32,
+    "capitalName": "Buenos Aires"
+  },
+  {
+    "sourceFeatureId": 51,
+    "capitalName": "Yerevan"
+  },
+  {
+    "sourceFeatureId": 36,
+    "capitalName": "Canberra"
+  },
+  {
+    "sourceFeatureId": 40,
+    "capitalName": "Vienna"
+  },
+  {
+    "sourceFeatureId": 31,
+    "capitalName": "Baku"
+  },
+  {
+    "sourceFeatureId": 44,
+    "capitalName": "Nassau"
+  },
+  {
+    "sourceFeatureId": 48,
+    "capitalName": "Manama"
+  },
+  {
+    "sourceFeatureId": 50,
+    "capitalName": "Dhaka"
+  },
+  {
+    "sourceFeatureId": 52,
+    "capitalName": "Bridgetown"
+  },
+  {
+    "sourceFeatureId": 112,
+    "capitalName": "Minsk"
+  },
+  {
+    "sourceFeatureId": 56,
+    "capitalName": "Brussels"
+  },
+  {
+    "sourceFeatureId": 84,
+    "capitalName": "Belmopan"
+  },
+  {
+    "sourceFeatureId": 204,
+    "capitalName": "Porto-Novo"
+  },
+  {
+    "sourceFeatureId": 64,
+    "capitalName": "Thimphu"
+  },
+  {
+    "sourceFeatureId": 68,
+    "capitalName": "Sucre",
+    "note": "Sucre est la capitale constitutionnelle ; le gouvernement siège à La Paz."
+  },
+  {
+    "sourceFeatureId": 70,
+    "capitalName": "Sarajevo"
+  },
+  {
+    "sourceFeatureId": 72,
+    "capitalName": "Gaborone"
+  },
+  {
+    "sourceFeatureId": 76,
+    "capitalName": "Brasilia"
+  },
+  {
+    "sourceFeatureId": 96,
+    "capitalName": "Bandar Seri Begawan"
+  },
+  {
+    "sourceFeatureId": 100,
+    "capitalName": "Sofia"
+  },
+  {
+    "sourceFeatureId": 854,
+    "capitalName": "Ouagadougou"
+  },
+  {
+    "sourceFeatureId": 108,
+    "capitalName": "Gitega"
+  },
+  {
+    "sourceFeatureId": 132,
+    "capitalName": "Praia"
+  },
+  {
+    "sourceFeatureId": 116,
+    "capitalName": "Phnom Penh"
+  },
+  {
+    "sourceFeatureId": 120,
+    "capitalName": "Yaoundé"
+  },
+  {
+    "sourceFeatureId": 124,
+    "capitalName": "Ottawa"
+  },
+  {
+    "sourceFeatureId": 140,
+    "capitalName": "Bangui"
+  },
+  {
+    "sourceFeatureId": 148,
+    "capitalName": "N'Djamena"
+  },
+  {
+    "sourceFeatureId": 152,
+    "capitalName": "Santiago"
+  },
+  {
+    "sourceFeatureId": 156,
+    "capitalName": "Beijing"
+  },
+  {
+    "sourceFeatureId": 170,
+    "capitalName": "Bogota"
+  },
+  {
+    "sourceFeatureId": 174,
+    "capitalName": "Moroni"
+  },
+  {
+    "sourceFeatureId": 178,
+    "capitalName": "Brazzaville"
+  },
+  {
+    "sourceFeatureId": 188,
+    "capitalName": "San José"
+  },
+  {
+    "sourceFeatureId": 384,
+    "capitalName": "Yamoussoukro"
+  },
+  {
+    "sourceFeatureId": 191,
+    "capitalName": "Zagreb"
+  },
+  {
+    "sourceFeatureId": 192,
+    "capitalName": "Havana"
+  },
+  {
+    "sourceFeatureId": 196,
+    "capitalName": "Nicosia"
+  },
+  {
+    "sourceFeatureId": 203,
+    "capitalName": "Prague"
+  },
+  {
+    "sourceFeatureId": 408,
+    "capitalName": "Pyongyang"
+  },
+  {
+    "sourceFeatureId": 180,
+    "capitalName": "Kinshasa"
+  },
+  {
+    "sourceFeatureId": 208,
+    "capitalName": "Copenhagen"
+  },
+  {
+    "sourceFeatureId": 262,
+    "capitalName": "Djibouti"
+  },
+  {
+    "sourceFeatureId": 212,
+    "capitalName": "Roseau"
+  },
+  {
+    "sourceFeatureId": 214,
+    "capitalName": "Santo Domingo"
+  },
+  {
+    "sourceFeatureId": 218,
+    "capitalName": "Quito"
+  },
+  {
+    "sourceFeatureId": 818,
+    "capitalName": "Cairo"
+  },
+  {
+    "sourceFeatureId": 222,
+    "capitalName": "San Salvador"
+  },
+  {
+    "sourceFeatureId": 226,
+    "capitalName": "Malabo"
+  },
+  {
+    "sourceFeatureId": 232,
+    "capitalName": "Asmara"
+  },
+  {
+    "sourceFeatureId": 233,
+    "capitalName": "Tallinn"
+  },
+  {
+    "sourceFeatureId": 748,
+    "capitalName": "Mbabane"
+  },
+  {
+    "sourceFeatureId": 231,
+    "capitalName": "Addis Ababa"
+  },
+  {
+    "sourceFeatureId": 242,
+    "capitalName": "Suva"
+  },
+  {
+    "sourceFeatureId": 246,
+    "capitalName": "Helsinki"
+  },
+  {
+    "sourceFeatureId": 250,
+    "capitalName": "Paris"
+  },
+  {
+    "sourceFeatureId": 266,
+    "capitalName": "Libreville"
+  },
+  {
+    "sourceFeatureId": 270,
+    "capitalName": "Banjul"
+  },
+  {
+    "sourceFeatureId": 268,
+    "capitalName": "Tbilisi"
+  },
+  {
+    "sourceFeatureId": 276,
+    "capitalName": "Berlin"
+  },
+  {
+    "sourceFeatureId": 288,
+    "capitalName": "Accra"
+  },
+  {
+    "sourceFeatureId": 300,
+    "capitalName": "Athens"
+  },
+  {
+    "sourceFeatureId": 308,
+    "capitalName": "St George's"
+  },
+  {
+    "sourceFeatureId": 320,
+    "capitalName": "Guatemala City"
+  },
+  {
+    "sourceFeatureId": 324,
+    "capitalName": "Conakry"
+  },
+  {
+    "sourceFeatureId": 624,
+    "capitalName": "Bissau"
+  },
+  {
+    "sourceFeatureId": 328,
+    "capitalName": "Georgetown"
+  },
+  {
+    "sourceFeatureId": 332,
+    "capitalName": "Port-au-Prince"
+  },
+  {
+    "sourceFeatureId": 340,
+    "capitalName": "Tegucigalpa"
+  },
+  {
+    "sourceFeatureId": 348,
+    "capitalName": "Budapest"
+  },
+  {
+    "sourceFeatureId": 352,
+    "capitalName": "Reykjavik"
+  },
+  {
+    "sourceFeatureId": 356,
+    "capitalName": "New Delhi"
+  },
+  {
+    "sourceFeatureId": 360,
+    "capitalName": "Jakarta"
+  },
+  {
+    "sourceFeatureId": 364,
+    "capitalName": "Tehran"
+  },
+  {
+    "sourceFeatureId": 368,
+    "capitalName": "Baghdad"
+  },
+  {
+    "sourceFeatureId": 372,
+    "capitalName": "Dublin"
+  },
+  {
+    "sourceFeatureId": 376,
+    "capitalName": "Jerusalem",
+    "note": "Le statut international de Jérusalem est contesté."
+  },
+  {
+    "sourceFeatureId": 380,
+    "capitalName": "Rome"
+  },
+  {
+    "sourceFeatureId": 388,
+    "capitalName": "Kingston"
+  },
+  {
+    "sourceFeatureId": 392,
+    "capitalName": "Tokyo"
+  },
+  {
+    "sourceFeatureId": 400,
+    "capitalName": "Amman"
+  },
+  {
+    "sourceFeatureId": 398,
+    "capitalName": "Astana"
+  },
+  {
+    "sourceFeatureId": 404,
+    "capitalName": "Nairobi"
+  },
+  {
+    "sourceFeatureId": 296,
+    "capitalName": "Bairiki"
+  },
+  {
+    "sourceFeatureId": 414,
+    "capitalName": "Kuwait City"
+  },
+  {
+    "sourceFeatureId": 417,
+    "capitalName": "Bishkek"
+  },
+  {
+    "sourceFeatureId": 418,
+    "capitalName": "Vientiane"
+  },
+  {
+    "sourceFeatureId": 428,
+    "capitalName": "Riga"
+  },
+  {
+    "sourceFeatureId": 422,
+    "capitalName": "Beirut"
+  },
+  {
+    "sourceFeatureId": 426,
+    "capitalName": "Maseru"
+  },
+  {
+    "sourceFeatureId": 430,
+    "capitalName": "Monrovia"
+  },
+  {
+    "sourceFeatureId": 434,
+    "capitalName": "Tripoli"
+  },
+  {
+    "sourceFeatureId": 438,
+    "capitalName": "Vaduz"
+  },
+  {
+    "sourceFeatureId": 440,
+    "capitalName": "Vilnius"
+  },
+  {
+    "sourceFeatureId": 442,
+    "capitalName": "Luxembourg"
+  },
+  {
+    "sourceFeatureId": 450,
+    "capitalName": "Antananarivo"
+  },
+  {
+    "sourceFeatureId": 454,
+    "capitalName": "Lilongwe"
+  },
+  {
+    "sourceFeatureId": 458,
+    "capitalName": "Kuala Lumpur"
+  },
+  {
+    "sourceFeatureId": 462,
+    "capitalName": "Male'"
+  },
+  {
+    "sourceFeatureId": 466,
+    "capitalName": "Bamako"
+  },
+  {
+    "sourceFeatureId": 470,
+    "capitalName": "Valletta"
+  },
+  {
+    "sourceFeatureId": 584,
+    "capitalName": "Majuro"
+  },
+  {
+    "sourceFeatureId": 478,
+    "capitalName": "Nouakchott"
+  },
+  {
+    "sourceFeatureId": 480,
+    "capitalName": "Port Louis"
+  },
+  {
+    "sourceFeatureId": 484,
+    "capitalName": "Mexico City"
+  },
+  {
+    "sourceFeatureId": 583,
+    "capitalName": "Palikir"
+  },
+  {
+    "sourceFeatureId": 492,
+    "capitalName": "Monaco"
+  },
+  {
+    "sourceFeatureId": 496,
+    "capitalName": "Ulaanbaatar"
+  },
+  {
+    "sourceFeatureId": 499,
+    "capitalName": "Podgorica"
+  },
+  {
+    "sourceFeatureId": 504,
+    "capitalName": "Rabat"
+  },
+  {
+    "sourceFeatureId": 508,
+    "capitalName": "Maputo"
+  },
+  {
+    "sourceFeatureId": 104,
+    "capitalName": "Nay Pyi Taw"
+  },
+  {
+    "sourceFeatureId": 516,
+    "capitalName": "Windhoek"
+  },
+  {
+    "sourceFeatureId": 520,
+    "capitalName": "Yaren"
+  },
+  {
+    "sourceFeatureId": 524,
+    "capitalName": "Kathmandu"
+  },
+  {
+    "sourceFeatureId": 528,
+    "capitalName": "Amsterdam"
+  },
+  {
+    "sourceFeatureId": 554,
+    "capitalName": "Wellington"
+  },
+  {
+    "sourceFeatureId": 558,
+    "capitalName": "Managua"
+  },
+  {
+    "sourceFeatureId": 562,
+    "capitalName": "Niamey"
+  },
+  {
+    "sourceFeatureId": 566,
+    "capitalName": "Abuja"
+  },
+  {
+    "sourceFeatureId": 807,
+    "capitalName": "Skopje"
+  },
+  {
+    "sourceFeatureId": 578,
+    "capitalName": "Oslo"
+  },
+  {
+    "sourceFeatureId": 512,
+    "capitalName": "Muscat"
+  },
+  {
+    "sourceFeatureId": 586,
+    "capitalName": "Islamabad"
+  },
+  {
+    "sourceFeatureId": 585,
+    "capitalName": "Melekeok"
+  },
+  {
+    "sourceFeatureId": 591,
+    "capitalName": "Panama City"
+  },
+  {
+    "sourceFeatureId": 598,
+    "capitalName": "Port Moresby"
+  },
+  {
+    "sourceFeatureId": 600,
+    "capitalName": "Asunción"
+  },
+  {
+    "sourceFeatureId": 604,
+    "capitalName": "Lima"
+  },
+  {
+    "sourceFeatureId": 608,
+    "capitalName": "Manila"
+  },
+  {
+    "sourceFeatureId": 616,
+    "capitalName": "Warsaw"
+  },
+  {
+    "sourceFeatureId": 620,
+    "capitalName": "Lisbon"
+  },
+  {
+    "sourceFeatureId": 634,
+    "capitalName": "Doha"
+  },
+  {
+    "sourceFeatureId": 410,
+    "capitalName": "Seoul"
+  },
+  {
+    "sourceFeatureId": 498,
+    "capitalName": "Chisinau"
+  },
+  {
+    "sourceFeatureId": 642,
+    "capitalName": "Bucharest"
+  },
+  {
+    "sourceFeatureId": 643,
+    "capitalName": "Moscow"
+  },
+  {
+    "sourceFeatureId": 646,
+    "capitalName": "Kigali"
+  },
+  {
+    "sourceFeatureId": 659,
+    "capitalName": "Basseterre"
+  },
+  {
+    "sourceFeatureId": 662,
+    "capitalName": "Castries"
+  },
+  {
+    "sourceFeatureId": 670,
+    "capitalName": "Kingstown"
+  },
+  {
+    "sourceFeatureId": 882,
+    "capitalName": "Apia"
+  },
+  {
+    "sourceFeatureId": 674,
+    "capitalName": "San Marino"
+  },
+  {
+    "sourceFeatureId": 678,
+    "capitalName": "Sao Tome"
+  },
+  {
+    "sourceFeatureId": 682,
+    "capitalName": "Riyadh"
+  },
+  {
+    "sourceFeatureId": 686,
+    "capitalName": "Dakar"
+  },
+  {
+    "sourceFeatureId": 688,
+    "capitalName": "Belgrade"
+  },
+  {
+    "sourceFeatureId": 690,
+    "capitalName": "Victoria"
+  },
+  {
+    "sourceFeatureId": 694,
+    "capitalName": "Freetown"
+  },
+  {
+    "sourceFeatureId": 702,
+    "capitalName": "Singapore"
+  },
+  {
+    "sourceFeatureId": 703,
+    "capitalName": "Bratislava"
+  },
+  {
+    "sourceFeatureId": 705,
+    "capitalName": "Ljubljana"
+  },
+  {
+    "sourceFeatureId": 90,
+    "capitalName": "Honiara"
+  },
+  {
+    "sourceFeatureId": 706,
+    "capitalName": "Mogadishu"
+  },
+  {
+    "sourceFeatureId": 710,
+    "capitalName": "Pretoria"
+  },
+  {
+    "sourceFeatureId": 728,
+    "capitalName": "Juba"
+  },
+  {
+    "sourceFeatureId": 724,
+    "capitalName": "Madrid"
+  },
+  {
+    "sourceFeatureId": 144,
+    "capitalName": "Colombo"
+  },
+  {
+    "sourceFeatureId": 729,
+    "capitalName": "Khartoum"
+  },
+  {
+    "sourceFeatureId": 740,
+    "capitalName": "Paramaribo"
+  },
+  {
+    "sourceFeatureId": 752,
+    "capitalName": "Stockholm"
+  },
+  {
+    "sourceFeatureId": 756,
+    "capitalName": "Berne"
+  },
+  {
+    "sourceFeatureId": 760,
+    "capitalName": "Damascus"
+  },
+  {
+    "sourceFeatureId": 762,
+    "capitalName": "Dushanbe"
+  },
+  {
+    "sourceFeatureId": 764,
+    "capitalName": "Bangkok"
+  },
+  {
+    "sourceFeatureId": 626,
+    "capitalName": "Dili"
+  },
+  {
+    "sourceFeatureId": 768,
+    "capitalName": "Lomé"
+  },
+  {
+    "sourceFeatureId": 776,
+    "capitalName": "Nuku'alofa"
+  },
+  {
+    "sourceFeatureId": 780,
+    "capitalName": "Port of Spain"
+  },
+  {
+    "sourceFeatureId": 788,
+    "capitalName": "Tunis"
+  },
+  {
+    "sourceFeatureId": 792,
+    "capitalName": "Ankara"
+  },
+  {
+    "sourceFeatureId": 795,
+    "capitalName": "Ashgabat"
+  },
+  {
+    "sourceFeatureId": 798,
+    "capitalName": "Fongafale"
+  },
+  {
+    "sourceFeatureId": 800,
+    "capitalName": "Kampala"
+  },
+  {
+    "sourceFeatureId": 804,
+    "capitalName": "Kyiv"
+  },
+  {
+    "sourceFeatureId": 784,
+    "capitalName": "Abu Dhabi"
+  },
+  {
+    "sourceFeatureId": 826,
+    "capitalName": "London"
+  },
+  {
+    "sourceFeatureId": 834,
+    "capitalName": "Dodoma"
+  },
+  {
+    "sourceFeatureId": 840,
+    "capitalName": "Washington, D.C."
+  },
+  {
+    "sourceFeatureId": 858,
+    "capitalName": "Montevideo"
+  },
+  {
+    "sourceFeatureId": 860,
+    "capitalName": "Tashkent"
+  },
+  {
+    "sourceFeatureId": 548,
+    "capitalName": "Port Vila"
+  },
+  {
+    "sourceFeatureId": 862,
+    "capitalName": "Caracas"
+  },
+  {
+    "sourceFeatureId": 704,
+    "capitalName": "Hanoi"
+  },
+  {
+    "sourceFeatureId": 887,
+    "capitalName": "Sana'a"
+  },
+  {
+    "sourceFeatureId": 894,
+    "capitalName": "Lusaka"
+  },
+  {
+    "sourceFeatureId": 716,
+    "capitalName": "Harare"
+  },
+  {
+    "sourceFeatureId": 336,
+    "capitalName": "Vatican City"
+  },
+  {
+    "sourceFeatureId": 275,
+    "capitalName": "East Jerusalem",
+    "note": "Jérusalem-Est est revendiquée comme capitale ; Ramallah est le siège administratif."
+  }
+]
