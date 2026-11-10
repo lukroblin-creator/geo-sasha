@@ -2,6 +2,7 @@
 import { useState } from 'react'
 import WorldMap from './components/WorldMap'
 import { flagQuestions } from './data/quiz/flagQuestions'
+import { loadQuizProgress, saveCompletedFlagQuiz } from './data/quiz/progress'
 
 type Mode = {
   id: string
@@ -47,6 +48,7 @@ function App(): React.JSX.Element {
   const [score, setScore] = useState(0)
   const [answerCorrect, setAnswerCorrect] = useState<boolean | null>(null)
   const [quizComplete, setQuizComplete] = useState(false)
+  const [quizProgress, setQuizProgress] = useState(loadQuizProgress)
 
   const selectedMode = modes.find((mode) => mode.id === activeMode)!
   const currentQuestion = flagQuestions[questionIndex]
@@ -66,6 +68,7 @@ function App(): React.JSX.Element {
 
   const advanceQuestion = () => {
     if (questionIndex === flagQuestions.length - 1) {
+      setQuizProgress(saveCompletedFlagQuiz(score))
       setQuizComplete(true)
     } else {
       setQuestionIndex((currentIndex) => currentIndex + 1)
@@ -122,6 +125,12 @@ function App(): React.JSX.Element {
             </div>
 
             <div className="progress-caption">Commencez votre apprentissage</div>
+              <div className="progress-caption">
+                Quiz terminés : {quizProgress.completedFlagSessions}
+              </div>
+              <div className="progress-caption">
+                Meilleur score : {quizProgress.bestFlagScore} / {flagQuestions.length}
+              </div>
           </div>
         </div>
 
