@@ -83,6 +83,7 @@ function App(): React.JSX.Element {
     if (
       activeMode !== 'flags' ||
       flagQuiz.session.answerCorrect === true ||
+      flagQuiz.session.answerRevealed ||
       flagQuiz.session.completed
     ) return
     const question =
@@ -155,6 +156,12 @@ function App(): React.JSX.Element {
           <div>
             <div className="footer-title">Mode personnel</div>
             <div className="footer-subtitle">Progression locale</div>
+            <div
+              className="footer-subtitle"
+              title="GeoNames sous licence CC BY 4.0 ; Natural Earth dans le domaine public"
+            >
+              Sources cartographiques : GeoNames et Natural Earth
+            </div>
           </div>
           <span className="footer-version">v0.1</span>
         </div>
@@ -253,6 +260,7 @@ function App(): React.JSX.Element {
           {activeMode === 'flags' ? (
             <FlagsQuizPanel
               session={flagQuiz.session}
+              onRevealAnswer={flagQuiz.revealAnswer}
               onNext={flagQuiz.next}
               onRestart={flagQuiz.restart}
             />
@@ -260,6 +268,7 @@ function App(): React.JSX.Element {
             <CapitalsQuizPanel
               session={capitalQuiz.session}
               onAnswer={capitalQuiz.answer}
+              onRevealAnswer={capitalQuiz.revealAnswer}
               onNext={capitalQuiz.next}
               onRestart={capitalQuiz.restart}
             />

@@ -9,6 +9,7 @@ type QuizPanelFrameProps<Question> = {
   nextStepDescription: string
   session: QuizSession<Question>
   total: number
+  onRevealAnswer: () => void
   onNext: () => void
   onRestart: () => void
   children: ReactNode
@@ -20,12 +21,14 @@ function QuizPanelFrame<Question>({
   nextStepDescription,
   session,
   total,
+  onRevealAnswer,
   onNext,
   onRestart,
   children
 }: QuizPanelFrameProps<Question>): React.JSX.Element {
-  const answeredCount =
-    session.questionIndex + (session.answerCorrect === null ? 0 : 1)
+  const questionSettled =
+    session.answerCorrect !== null || session.answerRevealed
+  const answeredCount = session.questionIndex + (questionSettled ? 1 : 0)
 
   return (
     <aside className="quiz-panel">
@@ -52,7 +55,15 @@ function QuizPanelFrame<Question>({
         ) : (
           <>
             {children}
-            {session.answerCorrect !== null && (
+            {session.answerCorrect !== true && !session.answerRevealed && (
+              <button
+                className="quiz-reveal-button"
+                onClick={onRevealAnswer}
+              >
+                Voir la réponse
+              </button>
+            )}
+            {questionSettled && (
               <button className="quiz-next-button" onClick={onNext}>
                 {session.questionIndex === total - 1
                   ? 'Voir le résultat'
@@ -90,6 +101,7 @@ function QuizPanelFrame<Question>({
 
 type FlagsQuizPanelProps = {
   session: QuizSession<CountryFlagQuestion>
+  onRevealAnswer: () => void
   onNext: () => void
   onRestart: () => void
 }
@@ -102,6 +114,7 @@ function flagFromAlpha2(alpha2: string): string {
 
 export function FlagsQuizPanel({
   session,
+  onRevealAnswer,
   onNext,
   onRestart
 }: FlagsQuizPanelProps): React.JSX.Element {
@@ -114,6 +127,7 @@ export function FlagsQuizPanel({
       nextStepDescription="Après avoir trouvé le pays"
       session={session}
       total={session.questionOrder.length}
+      onRevealAnswer={onRevealAnswer}
       onNext={onNext}
       onRestart={onRestart}
     >
@@ -125,7 +139,7 @@ export function FlagsQuizPanel({
         Sélectionnez le pays correspondant sur la carte.
       </div>
       <div className="answer-placeholder" aria-live="polite">
-        {session.answerCorrect === null ? (
+        {session.answerCorrect === null && !session.answerRevealed ? (
           <>
             <span className="answer-placeholder-icon">⌖</span>
             <span>En attente de sélection sur la carte</span>
@@ -134,7 +148,9 @@ export function FlagsQuizPanel({
           <span>
             {session.answerCorrect
               ? `Bonne réponse : ${question.countryName} !`
-              : `Ce n’est pas ${question.countryName}. Réessaie ou passe à la suite.`}
+              : session.answerRevealed
+                ? `Réponse : ${question.countryName}.`
+                : 'Mauvaise réponse. Réessaie ou passe à la suite.'}
           </span>
         )}
       </div>
@@ -145,6 +161,7 @@ export function FlagsQuizPanel({
 type CapitalsQuizPanelProps = {
   session: QuizSession<CountryCapitalQuestion>
   onAnswer: (isCorrect: boolean, selectedAnswer: string) => void
+  onRevealAnswer: () => void
   onNext: () => void
   onRestart: () => void
 }
@@ -152,6 +169,7 @@ type CapitalsQuizPanelProps = {
 export function CapitalsQuizPanel({
   session,
   onAnswer,
+  onRevealAnswer,
   onNext,
   onRestart
 }: CapitalsQuizPanelProps): React.JSX.Element {
@@ -164,6 +182,7 @@ export function CapitalsQuizPanel({
       nextStepDescription="Après avoir appris les capitales"
       session={session}
       total={session.questionOrder.length}
+      onRevealAnswer={onRevealAnswer}
       onNext={onNext}
       onRestart={onRestart}
     >
@@ -182,7 +201,7 @@ export function CapitalsQuizPanel({
               key={choice}
               className={`capital-option${resultClass}`}
               onClick={() => onAnswer(choice === question.capitalName, choice)}
-              disabled={session.answerCorrect === true}
+              disabled={session.answerCorrect === true || session.answerRevealed}
               aria-pressed={selected}
             >
               {choice}
@@ -191,17 +210,19 @@ export function CapitalsQuizPanel({
         })}
       </div>
       <div className="answer-placeholder" aria-live="polite">
-        {session.answerCorrect === null ? (
+        {session.answerCorrect === null && !session.answerRevealed ? (
           <span>Choisis une réponse parmi les quatre propositions.</span>
         ) : (
           <span>
             {session.answerCorrect
               ? `Bonne réponse : ${question.capitalName} !`
-              : `Pas tout à fait. La capitale est ${question.capitalName}. Tu peux réessayer ou passer.`}
+              : session.answerRevealed
+                ? `Réponse : ${question.capitalName}.`
+                : 'Pas tout à fait. Réessaie ou passe à la suite.'}
           </span>
         )}
       </div>
-      {session.answerCorrect !== null && question.note && (
+      {(session.answerCorrect === true || session.answerRevealed) && question.note && (
         <p className="capital-note">{question.note}</p>
       )}
     </QuizPanelFrame>

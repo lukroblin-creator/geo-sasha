@@ -22,5 +22,12 @@ export const geographicDataSources: GeographicDataSource[] = [
     provider: 'Natural Earth',
     license: 'Public domain',
     scale: '1:10,000,000'
+  },
+  {
+    id: 'geonames-islands',
+    name: 'GeoNames island gazetteer',
+    provider: 'GeoNames',
+    license: 'Creative Commons Attribution 4.0 (CC BY 4.0)',
+    resolution: 'Curated island name and point subset for French overseas territories'
   }
 ]

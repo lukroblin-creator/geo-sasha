@@ -6,6 +6,7 @@ export type QuizSession<Question> = {
   questionIndex: number
   score: number
   answerCorrect: boolean | null
+  answerRevealed: boolean
   selectedAnswer: string | null
   completed: boolean
 }
@@ -32,6 +33,7 @@ export function createQuizSession<Question>(
     questionIndex: 0,
     score: 0,
     answerCorrect: null,
+    answerRevealed: false,
     selectedAnswer: null,
     completed: false
   }
@@ -42,7 +44,11 @@ export function submitQuizAnswer<Question>(
   isCorrect: boolean,
   selectedAnswer: string | null = null
 ): QuizSession<Question> {
-  if (session.completed || session.answerCorrect === true) return session
+  if (
+    session.completed ||
+    session.answerCorrect === true ||
+    session.answerRevealed
+  ) return session
 
   return {
     ...session,
@@ -52,10 +58,23 @@ export function submitQuizAnswer<Question>(
   }
 }
 
+export function revealQuizAnswer<Question>(
+  session: QuizSession<Question>
+): QuizSession<Question> {
+  if (session.completed || session.answerCorrect === true || session.answerRevealed) {
+    return session
+  }
+
+  return { ...session, answerRevealed: true }
+}
+
 export function advanceQuizSession<Question>(
   session: QuizSession<Question>
 ): QuizSession<Question> {
-  if (session.completed || session.answerCorrect === null) return session
+  if (
+    session.completed ||
+    (session.answerCorrect === null && !session.answerRevealed)
+  ) return session
 
   if (session.questionIndex === session.questionOrder.length - 1) {
     return { ...session, completed: true }
@@ -65,6 +84,7 @@ export function advanceQuizSession<Question>(
     ...session,
     questionIndex: session.questionIndex + 1,
     answerCorrect: null,
+    answerRevealed: false,
     selectedAnswer: null
   }
 }
@@ -78,6 +98,7 @@ type UseQuizSessionOptions<Question> = {
 type UseQuizSessionResult<Question> = {
   session: QuizSession<Question>
   answer: (isCorrect: boolean, selectedAnswer?: string | null) => void
+  revealAnswer: () => void
   next: () => void
   restart: () => void
 }
@@ -111,9 +132,13 @@ export function useQuizSession<Question>({
     setSession(updated)
   }
 
+  const revealAnswer = (): void => {
+    setSession((current) => revealQuizAnswer(current))
+  }
+
   const restart = (): void => {
     setSession(createQuizSession(questionBank()))
   }
 
-  return { session, answer, next, restart }
+  return { session, answer, revealAnswer, next, restart }
 }

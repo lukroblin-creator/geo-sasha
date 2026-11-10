@@ -568,6 +568,23 @@ button {
   cursor: pointer;
 }
 
+.quiz-reveal-button {
+  width: 100%;
+  margin-top: 12px;
+  padding: 9px 14px;
+  border: 1px solid #46586c;
+  border-radius: 6px;
+  background: transparent;
+  color: #b2c1cf;
+  font: inherit;
+  font-size: 11px;
+  cursor: pointer;
+}
+
+.quiz-reveal-button:hover {
+  background: #202e3b;
+}
+
 .quiz-next-button:hover {
   background: #355974;
 }

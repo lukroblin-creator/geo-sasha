@@ -15,6 +15,7 @@ import {
   loadQuizProgress,
   saveCompletedQuiz
 } from '../src/renderer/src/data/quiz/progress.ts'
+import { getLabelPrecision } from '../src/renderer/src/data/geography/labelPrecision.ts'
 
 const catalog = JSON.parse(
   await readFile(
@@ -165,4 +166,11 @@ test('la progression v1 des drapeaux reste lisible', (): void => {
     flags: { completedSessions: 2, bestScore: 15, lastScore: 9 },
     capitals: { completedSessions: 0, bestScore: 0, lastScore: 0 }
   })
+})
+
+test('la précision des étiquettes augmente avec le zoom', (): void => {
+  assert.equal(getLabelPrecision(1.5), 0.05)
+  assert.ok(getLabelPrecision(8) < getLabelPrecision(5))
+  assert.equal(getLabelPrecision(12), 0.00034332275390625)
+  assert.equal(getLabelPrecision(Number.NaN), 0.05)
 })

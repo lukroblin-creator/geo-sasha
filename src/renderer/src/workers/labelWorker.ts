@@ -22,10 +22,13 @@ type WorkerMessage =
   | {
       type: 'update'
       bbox: [number, number, number, number]
+      zoom: number
+      requestId: number
     }
 
 type WorkerResponse = {
   type: 'ready' | 'labels'
+  requestId?: number
   labels?: FeatureCollection<Point, LabelProperties>
 }
 
@@ -55,11 +58,13 @@ workerScope.onmessage = (event: MessageEvent<WorkerMessage>) => {
 
     const labels = createVisibleCountryLabels(
       countries,
-      message.bbox
+      message.bbox,
+      message.zoom
     )
 
     workerScope.postMessage({
       type: 'labels',
+      requestId: message.requestId,
       labels
     } satisfies WorkerResponse)
   }

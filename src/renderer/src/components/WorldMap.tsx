@@ -1,5 +1,6 @@
 
 import { useState, useRef, useEffect } from 'react'
+import type { JSX } from 'react'
 
 import Map, { Source, Layer } from 'react-map-gl/maplibre'
 
@@ -44,6 +45,7 @@ type LabelProperties = {
 
 type WorkerResponse = {
   type: 'ready' | 'labels'
+  requestId?: number
   labels?: FeatureCollection<Point, LabelProperties>
 }
 
@@ -61,7 +63,7 @@ const mapStyle = {
   ]
 }
 
-function WorldMap({ showBorders, showLabels, onCountrySelected }: WorldMapProps) {
+function WorldMap({ showBorders, showLabels, onCountrySelected }: WorldMapProps): JSX.Element {
   const [selectedEntityIds, setSelectedEntityIds] = useState<string[]>([])
   const [selectedSourceFeatureId, setSelectedSourceFeatureId] = useState<
     string | number | null
@@ -71,6 +73,7 @@ function WorldMap({ showBorders, showLabels, onCountrySelected }: WorldMapProps)
 
   const workerRef = useRef<Worker | null>(null)
   const workerReadyRef = useRef(false)
+  const latestLabelRequestId = useRef(0)
 
   const [visibleLabels, setVisibleLabels] = useState<
     FeatureCollection<Point, LabelProperties>
@@ -79,27 +82,47 @@ function WorldMap({ showBorders, showLabels, onCountrySelected }: WorldMapProps)
     features: []
   })
 
-  const updateVisibleLabels = () => {
+  const updateVisibleLabels = (): void => {
     const map = mapRef.current
     const worker = workerRef.current
 
     if (!map || !worker || !workerReadyRef.current) return
 
-    const bounds = map.getMap().getBounds()
+    const mapInstance = map.getMap()
+    const canvas = mapInstance.getCanvas()
+    const width = canvas.clientWidth
+    const height = canvas.clientHeight
+    if (width <= 0 || height <= 0) return
 
-    const southwest = bounds.getSouthWest()
-    const northeast = bounds.getNorthEast()
+    // Keep label anchors far enough from the canvas edge for their text to fit.
+    const horizontalInset = Math.min(60, width * 0.1)
+    const verticalInset = Math.min(24, height * 0.08)
+    const corners = [
+      mapInstance.unproject([horizontalInset, verticalInset]),
+      mapInstance.unproject([width - horizontalInset, verticalInset]),
+      mapInstance.unproject([
+        width - horizontalInset,
+        height - verticalInset
+      ]),
+      mapInstance.unproject([horizontalInset, height - verticalInset])
+    ]
+    const longitudes = corners.map((corner) => corner.lng)
+    const latitudes = corners.map((corner) => corner.lat)
 
     const bbox: [number, number, number, number] = [
-      southwest.lng,
-      southwest.lat,
-      northeast.lng,
-      northeast.lat
+      Math.min(...longitudes),
+      Math.min(...latitudes),
+      Math.max(...longitudes),
+      Math.max(...latitudes)
     ]
+    const requestId = latestLabelRequestId.current + 1
+    latestLabelRequestId.current = requestId
 
     worker.postMessage({
       type: 'update',
-      bbox
+      bbox,
+      zoom: map.getZoom(),
+      requestId
     })
   }
 
@@ -122,12 +145,7 @@ function WorldMap({ showBorders, showLabels, onCountrySelected }: WorldMapProps)
       }
 
       if (message.type === 'labels' && message.labels) {
-        console.log(
-          'ÉTIQUETTES REÇUES :',
-          message.labels.features.length,
-          message.labels.features.slice(0, 5)
-        )
-
+        if (message.requestId !== latestLabelRequestId.current) return
         setVisibleLabels(message.labels)
       }
     }
@@ -150,7 +168,7 @@ function WorldMap({ showBorders, showLabels, onCountrySelected }: WorldMapProps)
 
   const lastLabelUpdate = useRef(0)
 
-  const handleMapMove = () => {
+  const handleMapMove = (): void => {
     const now = Date.now()
 
     // Limite les demandes de recalcul à environ 8 par seconde.
@@ -162,7 +180,7 @@ function WorldMap({ showBorders, showLabels, onCountrySelected }: WorldMapProps)
     updateVisibleLabels()
   }
 
-  const handleCountryClick = (event: MapLayerMouseEvent) => {
+  const handleCountryClick = (event: MapLayerMouseEvent): void => {
     const feature = event.features?.[0]
     const name = feature?.properties?.name
     const entityId = feature?.properties?.entityId

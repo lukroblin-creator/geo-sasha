@@ -10,7 +10,9 @@ import type {
   MultiPolygon,
   Point
 } from 'geojson'
-import { getEntityById } from './registry'
+import { getEntityDisplayName } from './registry'
+import { getLabelPrecision } from './labelPrecision'
+import { overseasIslandLabels } from './overseasIslandLabels'
 
 type LabelProperties = {
   name: string
@@ -30,8 +32,25 @@ type CountryProperties = {
 
 type LabelFeature = Feature<Point, LabelProperties>
 
+const MAX_MERCATOR_LATITUDE = 85.05112878
+
+function toMercatorLatitude(latitude: number): number {
+  const limitedLatitude = Math.max(
+    -MAX_MERCATOR_LATITUDE,
+    Math.min(MAX_MERCATOR_LATITUDE, latitude)
+  )
+  const radians = (limitedLatitude * Math.PI) / 180
+  return (Math.log(Math.tan(Math.PI / 4 + radians / 2)) * 180) / Math.PI
+}
+
+function fromMercatorLatitude(latitude: number): number {
+  const radians = (latitude * Math.PI) / 180
+  return ((2 * Math.atan(Math.exp(radians)) - Math.PI / 2) * 180) / Math.PI
+}
+
 function findBestLabelPoint(
-  geometry: Polygon | MultiPolygon
+  geometry: Polygon | MultiPolygon,
+  precision: number
 ): [number, number] | null {
   const polygons =
     geometry.type === 'Polygon'
@@ -49,13 +68,19 @@ function findBestLabelPoint(
     }
 
     try {
+      const projectedCoordinates = coordinates.map((ring) =>
+        ring.map(([longitude, latitude]) => [
+          longitude,
+          toMercatorLatitude(latitude)
+        ])
+      )
       const result = polylabel(
-        coordinates as [number, number][][],
-        0.05
+        projectedCoordinates as [number, number][][],
+        precision
       )
 
       const longitude = result[0]
-      const latitude = result[1]
+      const latitude = fromMercatorLatitude(result[1])
       const distance = result.distance
 
       if (
@@ -77,9 +102,11 @@ function findBestLabelPoint(
 
 export function createVisibleCountryLabels(
   countries: FeatureCollection<Geometry>,
-  bbox: [number, number, number, number]
+  bbox: [number, number, number, number],
+  zoom = 1.5
 ): FeatureCollection<Point, LabelProperties> {
   const labels: LabelFeature[] = []
+  const precision = getLabelPrecision(zoom)
 
   for (const country of countries.features) {
     if (!country.geometry) continue
@@ -92,7 +119,7 @@ export function createVisibleCountryLabels(
       entityId: string | null,
       name: string,
       sourcePolygonIndex?: number
-    ) => {
+    ): void => {
       const clipped = bboxClip(
         { ...country, geometry } as Feature<Polygon | MultiPolygon>,
         bbox
@@ -103,7 +130,7 @@ export function createVisibleCountryLabels(
       ) {
         return
       }
-      const point = findBestLabelPoint(clipped.geometry)
+      const point = findBestLabelPoint(clipped.geometry, precision)
       if (!point) return
       labels.push({
         type: 'Feature',
@@ -127,7 +154,8 @@ export function createVisibleCountryLabels(
         Object.keys(polygonEntityIds).length > 0 &&
         geometry.type === 'MultiPolygon'
       ) {
-        const unlinkedPolygons = [] as MultiPolygon['coordinates']
+        const polygonsByEntity = new Map<string, MultiPolygon['coordinates']>()
+        const unlinkedPolygons: MultiPolygon['coordinates'] = []
 
         geometry.coordinates.forEach((coordinates, sourcePolygonIndex) => {
           const entityId = polygonEntityIds[String(sourcePolygonIndex)]
@@ -135,16 +163,24 @@ export function createVisibleCountryLabels(
             unlinkedPolygons.push(coordinates)
             return
           }
+
+          const entityPolygons = polygonsByEntity.get(entityId) ?? []
+          entityPolygons.push(coordinates)
+          polygonsByEntity.set(entityId, entityPolygons)
+        })
+
+        // Une entité peut être constituée de plusieurs îles. On calcule un
+        // seul point d'étiquette pour l'ensemble de ses polygones visibles.
+        for (const [entityId, polygons] of polygonsByEntity) {
           const entityName =
-            getEntityById(entityId)?.name ??
+            getEntityDisplayName(entityId) ??
             String(properties?.name ?? 'Unknown')
           addLabel(
-            { type: 'Polygon', coordinates },
+            { type: 'MultiPolygon', coordinates: polygons },
             entityId,
-            entityName,
-            sourcePolygonIndex
+            entityName
           )
-        })
+        }
 
         // Les polygones sans lien détaillé gardent l'étiquette habituelle du pays.
         if (unlinkedPolygons.length) {
@@ -156,11 +192,43 @@ export function createVisibleCountryLabels(
         }
       } else {
         if (geometry.type !== 'Polygon' && geometry.type !== 'MultiPolygon') continue
-        addLabel(geometry, properties?.entityId ?? null, String(properties?.name ?? 'Unknown'))
+        const entityId = properties?.entityId ?? null
+        const entityName = entityId ? getEntityDisplayName(entityId) : undefined
+        addLabel(
+          geometry,
+          entityId,
+          entityName ?? String(properties?.name ?? 'Unknown')
+        )
       }
     } catch {
       // Ignore les géométries impossibles à découper.
     }
+  }
+
+  // Les points d'îles apportent les noms qui manquent aux frontières
+  // nationales, surtout pour les archipels ultramarins.
+  for (const island of overseasIslandLabels) {
+    if (zoom < island.minZoom) continue
+    const [longitude, latitude] = [island.longitude, island.latitude]
+    const isLongitudeVisible =
+      bbox[0] <= bbox[2]
+        ? longitude >= bbox[0] && longitude <= bbox[2]
+        : longitude >= bbox[0] || longitude <= bbox[2]
+    if (!isLongitudeVisible || latitude < bbox[1] || latitude > bbox[3]) continue
+
+    labels.push({
+      type: 'Feature',
+      geometry: {
+        type: 'Point',
+        coordinates: [longitude, latitude]
+      },
+      properties: {
+        name: island.name,
+        sourceName: 'GeoNames',
+        entityId: island.territoryEntityId,
+        resolution: 'gazetteer'
+      }
+    })
   }
 
   return {

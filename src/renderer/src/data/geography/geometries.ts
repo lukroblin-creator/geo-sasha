@@ -45,5 +45,21 @@ export const geographicGeometryLinks: GeographicGeometryLink[] = [
     sourceId: 'natural-earth-10m',
     sourceFeatureId: 250,
     sourcePolygonIndex
+  })),
+  ...(
+    [
+      ['110m', 540, 'territory:nouvelle-caledonie'],
+      ['50m', 540, 'territory:nouvelle-caledonie'],
+      ['10m', 540, 'territory:nouvelle-caledonie'],
+      ['50m', 258, 'territory:polynesie-francaise'],
+      ['10m', 258, 'territory:polynesie-francaise'],
+      ['50m', 876, 'territory:wallis-et-futuna'],
+      ['10m', 876, 'territory:wallis-et-futuna']
+    ] as const
+  ).map(([scale, sourceFeatureId, entityId]) => ({
+    id: `geometry:natural-earth-${scale}:${entityId}`,
+    entityId,
+    sourceId: `natural-earth-${scale}`,
+    sourceFeatureId
   }))
 ]
