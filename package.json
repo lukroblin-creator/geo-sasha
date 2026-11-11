@@ -10,6 +10,7 @@
     "lint": "eslint --cache .",
     "typecheck:tests": "tsc --noEmit --target ES2022 --module NodeNext --moduleResolution NodeNext --allowImportingTsExtensions --types node --skipLibCheck --strict tests/quiz.test.mts",
     "test": "npm run typecheck:tests && node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --experimental-strip-types --test tests/quiz.test.mts",
+    "data:flag-metadata": "node scripts/generate-flag-metadata.mjs",
     "typecheck:node": "tsc --noEmit -p tsconfig.node.json --composite false",
     "typecheck:web": "tsc --noEmit -p tsconfig.web.json --composite false",
     "typecheck": "npm run typecheck:node && npm run typecheck:web && npm run typecheck:tests",
@@ -29,7 +30,6 @@
     "@turf/bbox-clip": "^7.4.0",
     "@turf/point-on-feature": "^7.4.0",
     "electron-updater": "^6.8.9",
-    "flag-icons": "^7.6.0",
     "leaflet": "^1.9.4",
     "maplibre-gl": "^6.16.0",
     "polylabel": "^2.1.0",
@@ -59,6 +59,7 @@
     "prettier": "^3.9.10",
     "react": "^19.3.0",
     "react-dom": "^19.3.0",
+    "svg-country-flags": "^1.2.10",
     "typescript": "^5.9.3",
     "vite": "^8.3.4"
   }

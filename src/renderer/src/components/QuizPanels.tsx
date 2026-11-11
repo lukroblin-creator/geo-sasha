@@ -429,7 +429,8 @@ function CountryQuizAnswerForm({
                 >
                   <img
                     src={getFlagImageSource(shape.exampleAlpha2)}
-                    className={`country-flag-shape-preview ${shape.id}`}
+                    className={`country-flag-shape-preview ${shape.kind}`}
+                    style={{ width: `${Math.min(48, Math.max(17, shape.ratio * 20))}px` }}
                     alt=""
                   />
                   {shape.label}

@@ -1186,10 +1186,12 @@ button {
 
 .country-flag-color-filter,
 .country-flag-shape-filters {
-  display: flex;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   align-items: center;
-  flex-wrap: wrap;
+  max-height: 150px;
   gap: 6px;
+  overflow-y: auto;
   color: #a1b2c2;
   font-size: 9px;
 }
@@ -1241,6 +1243,8 @@ button {
   display: flex;
   align-items: center;
   gap: 5px;
+  min-width: 0;
+  justify-content: flex-start;
 }
 
 .country-flag-shape-filter.selected {
@@ -1249,18 +1253,10 @@ button {
 }
 
 .country-flag-shape-preview {
-  width: 25px;
-  height: 18px;
+  height: 20px;
+  flex: 0 0 auto;
   object-fit: contain;
   background: #111a23;
-}
-
-.country-flag-shape-preview.square {
-  width: 18px;
-}
-
-.country-flag-shape-preview.pennant {
-  width: 21px;
 }
 
 .country-flag-no-results {

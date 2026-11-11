@@ -1,0 +1,3038 @@
+[
+  {
+    "alpha2": "AF",
+    "width": 900,
+    "height": 600,
+    "ratio": 1.5,
+    "ratioLabel": "3:2",
+    "shape": "rectangle",
+    "colors": [
+      "#D32011",
+      "#007A36",
+      "#FFFFFF"
+    ]
+  },
+  {
+    "alpha2": "AL",
+    "width": 980,
+    "height": 700,
+    "ratio": 1.4,
+    "ratioLabel": "7:5",
+    "shape": "rectangle",
+    "colors": [
+      "#FF0000"
+    ]
+  },
+  {
+    "alpha2": "DZ",
+    "width": 900,
+    "height": 600,
+    "ratio": 1.5,
+    "ratioLabel": "3:2",
+    "shape": "rectangle",
+    "colors": [
+      "#FFFFFF",
+      "#006233",
+      "#D21034"
+    ]
+  },
+  {
+    "alpha2": "AD",
+    "width": 1000,
+    "height": 700,
+    "ratio": 1.4285714285714286,
+    "ratioLabel": "10:7",
+    "shape": "rectangle",
+    "colors": [
+      "#D0103A",
+      "#FEDF00",
+      "#0018A8",
+      "#C7B37F",
+      "#703D29",
+      "#D52B1E",
+      "#FFFFFF",
+      "#FCD900",
+      "#0065BD"
+    ]
+  },
+  {
+    "alpha2": "AO",
+    "width": 900,
+    "height": 600,
+    "ratio": 1.5,
+    "ratioLabel": "3:2",
+    "shape": "rectangle",
+    "colors": [
+      "#CC092F",
+      "#FFCB00"
+    ]
+  },
+  {
+    "alpha2": "AG",
+    "width": 138,
+    "height": 92,
+    "ratio": 1.5,
+    "ratioLabel": "3:2",
+    "shape": "rectangle",
+    "colors": [
+      "#FFFFFF",
+      "#FCD116",
+      "#0072C6",
+      "#CE1126"
+    ]
+  },
+  {
+    "alpha2": "AR",
+    "width": 800,
+    "height": 500,
+    "ratio": 1.6,
+    "ratioLabel": "8:5",
+    "shape": "rectangle",
+    "colors": [
+      "#74ACDF",
+      "#FFFFFF",
+      "#85340A",
+      "#F6B40E",
+      "#843511"
+    ]
+  },
+  {
+    "alpha2": "AM",
+    "width": 1200,
+    "height": 600,
+    "ratio": 2,
+    "ratioLabel": "2:1",
+    "shape": "rectangle",
+    "colors": [
+      "#F2A800",
+      "#0033A0",
+      "#D90012"
+    ]
+  },
+  {
+    "alpha2": "AU",
+    "width": 10080,
+    "height": 5040,
+    "ratio": 2,
+    "ratioLabel": "2:1",
+    "shape": "rectangle",
+    "colors": [
+      "#012169",
+      "#FFFFFF",
+      "#E4002B"
+    ]
+  },
+  {
+    "alpha2": "AT",
+    "width": 900,
+    "height": 600,
+    "ratio": 1.5,
+    "ratioLabel": "3:2",
+    "shape": "rectangle",
+    "colors": [
+      "#ED2939",
+      "#FFFFFF"
+    ]
+  },
+  {
+    "alpha2": "AZ",
+    "width": 1200,
+    "height": 600,
+    "ratio": 2,
+    "ratioLabel": "2:1",
+    "shape": "rectangle",
+    "colors": [
+      "#3F9C35",
+      "#ED2939",
+      "#00B9E4",
+      "#FFFFFF"
+    ]
+  },
+  {
+    "alpha2": "BS",
+    "width": 600,
+    "height": 300,
+    "ratio": 2,
+    "ratioLabel": "2:1",
+    "shape": "rectangle",
+    "colors": [
+      "#00ABC9",
+      "#FAE042",
+      "#000000"
+    ]
+  },
+  {
+    "alpha2": "BH",
+    "width": 1500,
+    "height": 900,
+    "ratio": 1.6666666666666667,
+    "ratioLabel": "5:3",
+    "shape": "rectangle",
+    "colors": [
+      "#FFFFFF",
+      "#CE1126"
+    ]
+  },
+  {
+    "alpha2": "BD",
+    "width": 20,
+    "height": 12,
+    "ratio": 1.6666666666666667,
+    "ratioLabel": "5:3",
+    "shape": "rectangle",
+    "colors": [
+      "#006A4E",
+      "#F42A41"
+    ]
+  },
+  {
+    "alpha2": "BB",
+    "width": 24000,
+    "height": 16000,
+    "ratio": 1.5,
+    "ratioLabel": "3:2",
+    "shape": "rectangle",
+    "colors": [
+      "#00267F",
+      "#FFC726",
+      "#000000"
+    ]
+  },
+  {
+    "alpha2": "BY",
+    "width": 1098,
+    "height": 549,
+    "ratio": 2,
+    "ratioLabel": "2:1",
+    "shape": "rectangle",
+    "colors": [
+      "#C8313E",
+      "#4AA657",
+      "#FFFFFF"
+    ]
+  },
+  {
+    "alpha2": "BE",
+    "width": 450,
+    "height": 390,
+    "ratio": 1.1538461538461537,
+    "ratioLabel": "15:13",
+    "shape": "rectangle",
+    "colors": [
+      "#ED2939",
+      "#FAE042"
+    ]
+  },
+  {
+    "alpha2": "BZ",
+    "width": 1000,
+    "height": 600,
+    "ratio": 1.6666666666666667,
+    "ratioLabel": "5:3",
+    "shape": "rectangle",
+    "colors": [
+      "#D90F19",
+      "#171696",
+      "#FFFFFF",
+      "#66FF66",
+      "#006600",
+      "#D67C59",
+      "#000000",
+      "#338A00",
+      "#003300",
+      "#004B00",
+      "#9DC9E2",
+      "#FFE682",
+      "#006AC8",
+      "#E8E8E6",
+      "#CCB8C8",
+      "#4D4D4D",
+      "#358B03",
+      "#4D4B4D",
+      "#FFA54B",
+      "#AD7C59",
+      "#B68A6A",
+      "#653024",
+      "#075400",
+      "#AD7D5A",
+      "#5AC800"
+    ]
+  },
+  {
+    "alpha2": "BJ",
+    "width": 15,
+    "height": 10,
+    "ratio": 1.5,
+    "ratioLabel": "3:2",
+    "shape": "rectangle",
+    "colors": [
+      "#E8112D",
+      "#FCD116",
+      "#008751"
+    ]
+  },
+  {
+    "alpha2": "BT",
+    "width": 900,
+    "height": 600,
+    "ratio": 1.5,
+    "ratioLabel": "3:2",
+    "shape": "rectangle",
+    "colors": [
+      "#FFD520",
+      "#FF4E12",
+      "#000000",
+      "#FFFFFF"
+    ]
+  },
+  {
+    "alpha2": "BO",
+    "width": 291.042,
+    "height": 198.438,
+    "ratio": 1.4666646509237142,
+    "ratioLabel": "22:15",
+    "shape": "rectangle",
+    "colors": [
+      "#00702D",
+      "#F0E53C",
+      "#D32011",
+      "#473125",
+      "#000000",
+      "#CACACA",
+      "#292723",
+      "#CED0D1",
+      "#272425",
+      "#FFFFFF",
+      "#1B402F",
+      "#00A0E1",
+      "#D9C753",
+      "#B2AA00",
+      "#C8D700",
+      "#0079C7",
+      "#74B500",
+      "#CBCBC9",
+      "#A4A5A8",
+      "#211915",
+      "#040006",
+      "#59595B",
+      "#909294",
+      "#F4AC64"
+    ]
+  },
+  {
+    "alpha2": "BA",
+    "width": 16,
+    "height": 8,
+    "ratio": 2,
+    "ratioLabel": "2:1",
+    "shape": "rectangle",
+    "colors": [
+      "#002395",
+      "#FECB00",
+      "#FFFFFF"
+    ]
+  },
+  {
+    "alpha2": "BW",
+    "width": 36,
+    "height": 24,
+    "ratio": 1.5,
+    "ratioLabel": "3:2",
+    "shape": "rectangle",
+    "colors": [
+      "#75AADB",
+      "#FFFFFF"
+    ]
+  },
+  {
+    "alpha2": "BR",
+    "width": 4200,
+    "height": 2940,
+    "ratio": 1.4285714285714286,
+    "ratioLabel": "10:7",
+    "shape": "rectangle",
+    "colors": [
+      "#FFFFFF",
+      "#009B3A",
+      "#FEDF00",
+      "#002776"
+    ]
+  },
+  {
+    "alpha2": "BN",
+    "width": 1440,
+    "height": 720,
+    "ratio": 2,
+    "ratioLabel": "2:1",
+    "shape": "rectangle",
+    "colors": [
+      "#F7E017",
+      "#FFFFFF",
+      "#000000",
+      "#CF1126"
+    ]
+  },
+  {
+    "alpha2": "BG",
+    "width": 5,
+    "height": 3,
+    "ratio": 1.6666666666666667,
+    "ratioLabel": "5:3",
+    "shape": "rectangle",
+    "colors": [
+      "#FFFFFF",
+      "#00966E",
+      "#D62612"
+    ]
+  },
+  {
+    "alpha2": "BF",
+    "width": 900,
+    "height": 600,
+    "ratio": 1.5,
+    "ratioLabel": "3:2",
+    "shape": "rectangle",
+    "colors": [
+      "#009E49",
+      "#EF2B2D",
+      "#FCD116"
+    ]
+  },
+  {
+    "alpha2": "BI",
+    "width": 500,
+    "height": 300,
+    "ratio": 1.6666666666666667,
+    "ratioLabel": "5:3",
+    "shape": "rectangle",
+    "colors": [
+      "#1EB53A",
+      "#CE1126",
+      "#FFFFFF"
+    ]
+  },
+  {
+    "alpha2": "CV",
+    "width": 510,
+    "height": 300,
+    "ratio": 1.7,
+    "ratioLabel": "17:10",
+    "shape": "rectangle",
+    "colors": [
+      "#003893",
+      "#FFFFFF",
+      "#CF2027",
+      "#F7D116"
+    ]
+  },
+  {
+    "alpha2": "KH",
+    "width": 625,
+    "height": 400,
+    "ratio": 1.5625,
+    "ratioLabel": "25:16",
+    "shape": "rectangle",
+    "colors": [
+      "#032EA1",
+      "#E00025",
+      "#FFFFFF",
+      "#000000"
+    ]
+  },
+  {
+    "alpha2": "CM",
+    "width": 90,
+    "height": 60,
+    "ratio": 1.5,
+    "ratioLabel": "3:2",
+    "shape": "rectangle",
+    "colors": [
+      "#007A5E",
+      "#CE1126",
+      "#FCD116"
+    ]
+  },
+  {
+    "alpha2": "CA",
+    "width": 9600,
+    "height": 4800,
+    "ratio": 2,
+    "ratioLabel": "2:1",
+    "shape": "rectangle",
+    "colors": [
+      "#D52B1E",
+      "#FFFFFF"
+    ]
+  },
+  {
+    "alpha2": "CF",
+    "width": 450,
+    "height": 300,
+    "ratio": 1.5,
+    "ratioLabel": "3:2",
+    "shape": "rectangle",
+    "colors": [
+      "#FFCE00",
+      "#289728",
+      "#FFFFFF",
+      "#003082",
+      "#D21034"
+    ]
+  },
+  {
+    "alpha2": "TD",
+    "width": 450,
+    "height": 300,
+    "ratio": 1.5,
+    "ratioLabel": "3:2",
+    "shape": "rectangle",
+    "colors": [
+      "#C60C30",
+      "#FECB00",
+      "#002664"
+    ]
+  },
+  {
+    "alpha2": "CL",
+    "width": 24,
+    "height": 16,
+    "ratio": 1.5,
+    "ratioLabel": "3:2",
+    "shape": "rectangle",
+    "colors": [
+      "#D52B1E",
+      "#FFFFFF",
+      "#0039A6"
+    ]
+  },
+  {
+    "alpha2": "CN",
+    "width": 30,
+    "height": 20,
+    "ratio": 1.5,
+    "ratioLabel": "3:2",
+    "shape": "rectangle",
+    "colors": [
+      "#FFDE00",
+      "#DE2910"
+    ]
+  },
+  {
+    "alpha2": "CO",
+    "width": 6,
+    "height": 4,
+    "ratio": 1.5,
+    "ratioLabel": "3:2",
+    "shape": "rectangle",
+    "colors": [
+      "#CE1126",
+      "#003893",
+      "#FCD116"
+    ]
+  },
+  {
+    "alpha2": "KM",
+    "width": 500,
+    "height": 300,
+    "ratio": 1.6666666666666667,
+    "ratioLabel": "5:3",
+    "shape": "rectangle",
+    "colors": [
+      "#3A75C4",
+      "#CE1126",
+      "#FFFFFF",
+      "#FFC61E",
+      "#3D8E33"
+    ]
+  },
+  {
+    "alpha2": "CG",
+    "width": 3,
+    "height": 2,
+    "ratio": 1.5,
+    "ratioLabel": "3:2",
+    "shape": "rectangle",
+    "colors": [
+      "#009543",
+      "#FBDE4A",
+      "#DC241F"
+    ]
+  },
+  {
+    "alpha2": "CR",
+    "width": 1000,
+    "height": 600,
+    "ratio": 1.6666666666666667,
+    "ratioLabel": "5:3",
+    "shape": "rectangle",
+    "colors": [
+      "#FBD55F",
+      "#CB8E32",
+      "#002B7F",
+      "#FFFFFF",
+      "#CE1126",
+      "#000000",
+      "#CEA849",
+      "#DCA842",
+      "#825123",
+      "#89C5E3",
+      "#FCDD09",
+      "#0F47AF",
+      "#509164",
+      "#034418",
+      "#078930",
+      "#865800",
+      "#704D25",
+      "#00009E",
+      "#FF0016"
+    ]
+  },
+  {
+    "alpha2": "CI",
+    "width": 450,
+    "height": 300,
+    "ratio": 1.5,
+    "ratioLabel": "3:2",
+    "shape": "rectangle",
+    "colors": [
+      "#009E60",
+      "#FFFFFF",
+      "#F77F00"
+    ]
+  },
+  {
+    "alpha2": "HR",
+    "width": 1200,
+    "height": 600,
+    "ratio": 2,
+    "ratioLabel": "2:1",
+    "shape": "rectangle",
+    "colors": [
+      "#171796",
+      "#FFFFFF",
+      "#FF0000",
+      "#0093DD",
+      "#000000",
+      "#F7DB17"
+    ]
+  },
+  {
+    "alpha2": "CU",
+    "width": 800,
+    "height": 400,
+    "ratio": 2,
+    "ratioLabel": "2:1",
+    "shape": "rectangle",
+    "colors": [
+      "#002A8F",
+      "#FFFFFF",
+      "#CF142B"
+    ]
+  },
+  {
+    "alpha2": "CY",
+    "width": 900,
+    "height": 600,
+    "ratio": 1.5,
+    "ratioLabel": "3:2",
+    "shape": "rectangle",
+    "colors": [
+      "#FFFFFF",
+      "#4E5B31",
+      "#D57800"
+    ]
+  },
+  {
+    "alpha2": "CZ",
+    "width": 900,
+    "height": 600,
+    "ratio": 1.5,
+    "ratioLabel": "3:2",
+    "shape": "rectangle",
+    "colors": [
+      "#D7141A",
+      "#FFFFFF",
+      "#11457E"
+    ]
+  },
+  {
+    "alpha2": "KP",
+    "width": 72,
+    "height": 36,
+    "ratio": 2,
+    "ratioLabel": "2:1",
+    "shape": "rectangle",
+    "colors": [
+      "#024FA2",
+      "#FFFFFF",
+      "#ED1C27"
+    ]
+  },
+  {
+    "alpha2": "CD",
+    "width": 800,
+    "height": 600,
+    "ratio": 1.3333333333333333,
+    "ratioLabel": "4:3",
+    "shape": "rectangle",
+    "colors": []
+  },
+  {
+    "alpha2": "DK",
+    "width": 370,
+    "height": 280,
+    "ratio": 1.3214285714285714,
+    "ratioLabel": "37:28",
+    "shape": "rectangle",
+    "colors": [
+      "#C60C30",
+      "#FFFFFF"
+    ]
+  },
+  {
+    "alpha2": "DJ",
+    "width": 15,
+    "height": 10,
+    "ratio": 1.5,
+    "ratioLabel": "3:2",
+    "shape": "rectangle",
+    "colors": []
+  },
+  {
+    "alpha2": "DM",
+    "width": 1200,
+    "height": 600,
+    "ratio": 2,
+    "ratioLabel": "2:1",
+    "shape": "rectangle",
+    "colors": [
+      "#006B3F",
+      "#FCD116",
+      "#FFFFFF",
+      "#D41C30",
+      "#000000",
+      "#9C4A00",
+      "#9461C9"
+    ]
+  },
+  {
+    "alpha2": "DO",
+    "width": 900,
+    "height": 600,
+    "ratio": 1.5,
+    "ratioLabel": "3:2",
+    "shape": "rectangle",
+    "colors": [
+      "#FFFFFF",
+      "#002D62",
+      "#CE1126",
+      "#201B18",
+      "#EAC102",
+      "#006300",
+      "#FFFF00",
+      "#008F4C",
+      "#00873F",
+      "#FF0000",
+      "#00863D",
+      "#000000",
+      "#AA241E"
+    ]
+  },
+  {
+    "alpha2": "EC",
+    "width": 1440,
+    "height": 960,
+    "ratio": 1.5,
+    "ratioLabel": "3:2",
+    "shape": "rectangle",
+    "colors": [
+      "#FFFFFF",
+      "#1EA8D1",
+      "#C1D3E8",
+      "#88B0D5",
+      "#5998C6",
+      "#2C87BC",
+      "#007DB5",
+      "#0077B0",
+      "#0075AF",
+      "#ED1C24",
+      "#034EA2",
+      "#FFDD00",
+      "#000000",
+      "#B1BABF",
+      "#E8B909",
+      "#39B54A",
+      "#FFDF4F",
+      "#DE2126",
+      "#009C4F",
+      "#C0CAD0",
+      "#EBC900",
+      "#023F88",
+      "#452C25",
+      "#C69024",
+      "#B87510",
+      "#B76E11",
+      "#AC620E",
+      "#A2550B",
+      "#D3DCE0",
+      "#395054",
+      "#006C3C",
+      "#6DBE45",
+      "#557176",
+      "#99AFCA",
+      "#4F91C5",
+      "#007638",
+      "#999B9E",
+      "#949699",
+      "#5C5342",
+      "#858D8D",
+      "#755338",
+      "#A37853",
+      "#616264",
+      "#A3A5A8",
+      "#797A7D",
+      "#939598",
+      "#442C13",
+      "#A48B58",
+      "#696161",
+      "#84848A",
+      "#453717",
+      "#6A5E46",
+      "#2F2311",
+      "#866D46",
+      "#ACACAD",
+      "#895F33",
+      "#FFE600",
+      "#565759",
+      "#9B7E39",
+      "#D0C9CE",
+      "#2F3B30",
+      "#64472D",
+      "#080101",
+      "#D9C0B9",
+      "#BD8759",
+      "#DCDDDE",
+      "#5E3F17",
+      "#DBA05F",
+      "#C6262C",
+      "#842116",
+      "#7A2E26",
+      "#574F4C"
+    ]
+  },
+  {
+    "alpha2": "EG",
+    "width": 900,
+    "height": 600,
+    "ratio": 1.5,
+    "ratioLabel": "3:2",
+    "shape": "rectangle",
+    "colors": [
+      "#000000",
+      "#FFFFFF",
+      "#CE1126",
+      "#C09300"
+    ]
+  },
+  {
+    "alpha2": "SV",
+    "width": 1005,
+    "height": 567,
+    "ratio": 1.7724867724867726,
+    "ratioLabel": "39:22",
+    "shape": "rectangle",
+    "colors": [
+      "#FFFFFF",
+      "#0047AB",
+      "#FFCC00",
+      "#009900",
+      "#000000",
+      "#E60000",
+      "#004BB3",
+      "#000033",
+      "#00004B",
+      "#000066",
+      "#00056B",
+      "#000B73",
+      "#001178",
+      "#00167C",
+      "#001E85",
+      "#002289",
+      "#00288F",
+      "#002D93",
+      "#00359C",
+      "#0039A0",
+      "#003EA6",
+      "#0046AD",
+      "#00066D",
+      "#00187E",
+      "#002086",
+      "#002B91",
+      "#003399",
+      "#0045AB",
+      "#003CA2",
+      "#00258B",
+      "#000F75",
+      "#00004F",
+      "#000053",
+      "#000056",
+      "#000058",
+      "#00005C",
+      "#000060",
+      "#000062",
+      "#00096F",
+      "#001379",
+      "#001C82",
+      "#00389E",
+      "#0042A8",
+      "#0049AF",
+      "#000051",
+      "#00005E",
+      "#000268",
+      "#002F96",
+      "#00A8FF",
+      "#009EFF",
+      "#0096FF",
+      "#008BFF",
+      "#0082FF",
+      "#0079FF",
+      "#006FFF",
+      "#1609FF",
+      "#1316FF",
+      "#1120FF",
+      "#0F2DFF",
+      "#0938FF",
+      "#0645FF",
+      "#054FFF",
+      "#025CFF",
+      "#FF0500",
+      "#FF0B00",
+      "#FF1100",
+      "#FF1800",
+      "#FF1E00",
+      "#FF2500",
+      "#FF2D00",
+      "#FF3300",
+      "#FF3900",
+      "#FF3E00",
+      "#FF4500",
+      "#FFF500",
+      "#FFEB00",
+      "#FFE000",
+      "#FFD600",
+      "#FFCF00",
+      "#FFC500",
+      "#FFB900",
+      "#FFAF00",
+      "#FFA600",
+      "#FF9C00",
+      "#FF9100",
+      "#FF8600",
+      "#FF7C00",
+      "#FF7500",
+      "#FF6B00",
+      "#FF6000",
+      "#FF5600",
+      "#EBFF00",
+      "#D6FF00",
+      "#C2FF00",
+      "#ADFF00",
+      "#99FF00",
+      "#85FF00",
+      "#6FFF00",
+      "#5CFF00",
+      "#46FF00",
+      "#05B9E2",
+      "#09C5C6",
+      "#11CCAB",
+      "#16D38F",
+      "#1CDE6F",
+      "#20E653",
+      "#28ED38",
+      "#2DF81C",
+      "#FF0000",
+      "#1800FF",
+      "#00B3FF",
+      "#0066FF",
+      "#FFFF00",
+      "#FF4B00",
+      "#33FF00",
+      "#0088E8",
+      "#00CCB3",
+      "#FFF3F3",
+      "#FFF3EF",
+      "#FFEFEF",
+      "#FFEFED",
+      "#FFEDEB",
+      "#FFEBE8",
+      "#FFEBE6",
+      "#FFE8E6",
+      "#FFE8E2",
+      "#FFE6E0",
+      "#FFE6DE",
+      "#FFE2DE",
+      "#FFE2DC",
+      "#FFE0D9",
+      "#FFDED6",
+      "#FFDED3",
+      "#FFDCD3",
+      "#FFDCD1",
+      "#FFD9CF",
+      "#FFD6CC",
+      "#FFD6C9",
+      "#FFD3C9",
+      "#FFD3C6",
+      "#FFD1C5",
+      "#FFD1C2",
+      "#FFCFC2",
+      "#FFCFBE",
+      "#FFCCBC",
+      "#FFC9B9",
+      "#FFC9B8",
+      "#FFC6B8",
+      "#FFC6B5",
+      "#FFC5B3",
+      "#FFC2AF",
+      "#FFC2AD",
+      "#FFBEAD",
+      "#FFBEAB",
+      "#FFBCA8",
+      "#FFBCA6",
+      "#FFB9A6",
+      "#FFB9A2",
+      "#FFB8A0",
+      "#FFB59E",
+      "#FFB59C",
+      "#FFB39C",
+      "#FFB399",
+      "#00B300",
+      "#FFE6D9"
+    ]
+  },
+  {
+    "alpha2": "GQ",
+    "width": 3600,
+    "height": 2400,
+    "ratio": 1.5,
+    "ratioLabel": "3:2",
+    "shape": "rectangle",
+    "colors": [
+      "#E32118",
+      "#FFFFFF",
+      "#3E9A00",
+      "#0073CE",
+      "#000000",
+      "#73452B",
+      "#A36629",
+      "#009A3B",
+      "#FFD700"
+    ]
+  },
+  {
+    "alpha2": "ER",
+    "width": 1000,
+    "height": 500,
+    "ratio": 2,
+    "ratioLabel": "2:1",
+    "shape": "rectangle",
+    "colors": [
+      "#EA0437",
+      "#4189DD",
+      "#12AD2B",
+      "#FFC726"
+    ]
+  },
+  {
+    "alpha2": "EE",
+    "width": 33,
+    "height": 21,
+    "ratio": 1.5714285714285714,
+    "ratioLabel": "11:7",
+    "shape": "rectangle",
+    "colors": [
+      "#FFFFFF",
+      "#4891D9"
+    ]
+  },
+  {
+    "alpha2": "SZ",
+    "width": 900,
+    "height": 600,
+    "ratio": 1.5,
+    "ratioLabel": "3:2",
+    "shape": "rectangle",
+    "colors": [
+      "#3E5EB9",
+      "#FFD900",
+      "#B10C0C",
+      "#000000",
+      "#FFFFFF",
+      "#A70000",
+      "#3D5DA7"
+    ]
+  },
+  {
+    "alpha2": "ET",
+    "width": 720,
+    "height": 360,
+    "ratio": 2,
+    "ratioLabel": "2:1",
+    "shape": "rectangle",
+    "colors": [
+      "#DA121A",
+      "#FCDD09",
+      "#078930",
+      "#0F47AF"
+    ]
+  },
+  {
+    "alpha2": "FJ",
+    "width": 1200,
+    "height": 600,
+    "ratio": 2,
+    "ratioLabel": "2:1",
+    "shape": "rectangle",
+    "colors": [
+      "#012169",
+      "#FFFFFF",
+      "#C8102E",
+      "#69B3E7",
+      "#000000",
+      "#FEDD00",
+      "#00AD50",
+      "#862633"
+    ]
+  },
+  {
+    "alpha2": "FI",
+    "width": 1800,
+    "height": 1100,
+    "ratio": 1.6363636363636365,
+    "ratioLabel": "18:11",
+    "shape": "rectangle",
+    "colors": [
+      "#FFFFFF",
+      "#003580"
+    ]
+  },
+  {
+    "alpha2": "FR",
+    "width": 3,
+    "height": 2,
+    "ratio": 1.5,
+    "ratioLabel": "3:2",
+    "shape": "rectangle",
+    "colors": [
+      "#ED2939",
+      "#FFFFFF",
+      "#002395"
+    ]
+  },
+  {
+    "alpha2": "GA",
+    "width": 400,
+    "height": 300,
+    "ratio": 1.3333333333333333,
+    "ratioLabel": "4:3",
+    "shape": "rectangle",
+    "colors": [
+      "#3A75C4",
+      "#FCD116",
+      "#009E60"
+    ]
+  },
+  {
+    "alpha2": "GM",
+    "width": 27,
+    "height": 18,
+    "ratio": 1.5,
+    "ratioLabel": "3:2",
+    "shape": "rectangle",
+    "colors": [
+      "#3A7728",
+      "#0C1C8C",
+      "#CE1126",
+      "#FFFFFF"
+    ]
+  },
+  {
+    "alpha2": "GE",
+    "width": 300,
+    "height": 200,
+    "ratio": 1.5,
+    "ratioLabel": "3:2",
+    "shape": "rectangle",
+    "colors": [
+      "#FF0000"
+    ]
+  },
+  {
+    "alpha2": "DE",
+    "width": 5,
+    "height": 3,
+    "ratio": 1.6666666666666667,
+    "ratioLabel": "5:3",
+    "shape": "rectangle",
+    "colors": [
+      "#000000",
+      "#DD0000",
+      "#FFCE00"
+    ]
+  },
+  {
+    "alpha2": "GH",
+    "width": 450,
+    "height": 300,
+    "ratio": 1.5,
+    "ratioLabel": "3:2",
+    "shape": "rectangle",
+    "colors": [
+      "#006B3F",
+      "#FCD116",
+      "#CE1126",
+      "#000000"
+    ]
+  },
+  {
+    "alpha2": "GR",
+    "width": 27,
+    "height": 18,
+    "ratio": 1.5,
+    "ratioLabel": "3:2",
+    "shape": "rectangle",
+    "colors": [
+      "#0D5EAF",
+      "#FFFFFF"
+    ]
+  },
+  {
+    "alpha2": "GD",
+    "width": 500,
+    "height": 300,
+    "ratio": 1.6666666666666667,
+    "ratioLabel": "5:3",
+    "shape": "rectangle",
+    "colors": [
+      "#FCD116",
+      "#CE1126",
+      "#007A5E"
+    ]
+  },
+  {
+    "alpha2": "GT",
+    "width": 960,
+    "height": 600,
+    "ratio": 1.6,
+    "ratioLabel": "8:5",
+    "shape": "rectangle",
+    "colors": [
+      "#F9F0AA",
+      "#B07E09",
+      "#A50A0A",
+      "#4C0505",
+      "#FFFFFF",
+      "#4997D0",
+      "#24420E",
+      "#406325",
+      "#67923D",
+      "#BA1F3E",
+      "#511124",
+      "#8C959D",
+      "#485654",
+      "#6C301E",
+      "#351710",
+      "#B2B6BA",
+      "#FAB81C",
+      "#999270",
+      "#448127",
+      "#34541F",
+      "#EAC102",
+      "#A08307",
+      "#000000"
+    ]
+  },
+  {
+    "alpha2": "GN",
+    "width": 3,
+    "height": 2,
+    "ratio": 1.5,
+    "ratioLabel": "3:2",
+    "shape": "rectangle",
+    "colors": [
+      "#CE1126",
+      "#FCD116",
+      "#009460"
+    ]
+  },
+  {
+    "alpha2": "GW",
+    "width": 12,
+    "height": 6,
+    "ratio": 2,
+    "ratioLabel": "2:1",
+    "shape": "rectangle",
+    "colors": [
+      "#CE1126",
+      "#FCD116",
+      "#009E49",
+      "#000000"
+    ]
+  },
+  {
+    "alpha2": "GY",
+    "width": 500,
+    "height": 300,
+    "ratio": 1.6666666666666667,
+    "ratioLabel": "5:3",
+    "shape": "rectangle",
+    "colors": [
+      "#009E49",
+      "#FFFFFF",
+      "#FCD116",
+      "#000000",
+      "#CE1126"
+    ]
+  },
+  {
+    "alpha2": "HT",
+    "width": 500,
+    "height": 300,
+    "ratio": 1.6666666666666667,
+    "ratioLabel": "5:3",
+    "shape": "rectangle",
+    "colors": [
+      "#D21034",
+      "#00209F",
+      "#F1B517",
+      "#000000",
+      "#FFFFFF",
+      "#016A16",
+      "#0A328C",
+      "#D20014",
+      "#503200"
+    ]
+  },
+  {
+    "alpha2": "HN",
+    "width": 72,
+    "height": 36,
+    "ratio": 2,
+    "ratioLabel": "2:1",
+    "shape": "rectangle",
+    "colors": [
+      "#0073CF"
+    ]
+  },
+  {
+    "alpha2": "HU",
+    "width": 6,
+    "height": 3,
+    "ratio": 2,
+    "ratioLabel": "2:1",
+    "shape": "rectangle",
+    "colors": [
+      "#436F4D",
+      "#FFFFFF",
+      "#CD2A3E"
+    ]
+  },
+  {
+    "alpha2": "IS",
+    "width": 2500,
+    "height": 1800,
+    "ratio": 1.3888888888888888,
+    "ratioLabel": "25:18",
+    "shape": "rectangle",
+    "colors": [
+      "#003897",
+      "#FFFFFF",
+      "#D72828"
+    ]
+  },
+  {
+    "alpha2": "IN",
+    "width": 225,
+    "height": 150,
+    "ratio": 1.5,
+    "ratioLabel": "3:2",
+    "shape": "rectangle",
+    "colors": [
+      "#FF9933",
+      "#FFFFFF",
+      "#128807",
+      "#000088"
+    ]
+  },
+  {
+    "alpha2": "ID",
+    "width": 3,
+    "height": 2,
+    "ratio": 1.5,
+    "ratioLabel": "3:2",
+    "shape": "rectangle",
+    "colors": [
+      "#FFFFFF",
+      "#CE1126"
+    ]
+  },
+  {
+    "alpha2": "IR",
+    "width": 630,
+    "height": 360,
+    "ratio": 1.75,
+    "ratioLabel": "7:4",
+    "shape": "rectangle",
+    "colors": [
+      "#DA0000",
+      "#FFFFFF",
+      "#239F40"
+    ]
+  },
+  {
+    "alpha2": "IQ",
+    "width": 900,
+    "height": 600,
+    "ratio": 1.5,
+    "ratioLabel": "3:2",
+    "shape": "rectangle",
+    "colors": [
+      "#CE1126",
+      "#FFFFFF",
+      "#007A3D"
+    ]
+  },
+  {
+    "alpha2": "IE",
+    "width": 600,
+    "height": 300,
+    "ratio": 2,
+    "ratioLabel": "2:1",
+    "shape": "rectangle",
+    "colors": []
+  },
+  {
+    "alpha2": "IL",
+    "width": 1100,
+    "height": 800,
+    "ratio": 1.375,
+    "ratioLabel": "11:8",
+    "shape": "rectangle",
+    "colors": [
+      "#FFFFFF",
+      "#0038B8"
+    ]
+  },
+  {
+    "alpha2": "IT",
+    "width": 3,
+    "height": 2,
+    "ratio": 1.5,
+    "ratioLabel": "3:2",
+    "shape": "rectangle",
+    "colors": [
+      "#009246",
+      "#FFFFFF",
+      "#CE2B37"
+    ]
+  },
+  {
+    "alpha2": "JM",
+    "width": 12,
+    "height": 6,
+    "ratio": 2,
+    "ratioLabel": "2:1",
+    "shape": "rectangle",
+    "colors": [
+      "#009B3A",
+      "#FED100"
+    ]
+  },
+  {
+    "alpha2": "JP",
+    "width": 900,
+    "height": 600,
+    "ratio": 1.5,
+    "ratioLabel": "3:2",
+    "shape": "rectangle",
+    "colors": [
+      "#FFFFFF",
+      "#BC002D"
+    ]
+  },
+  {
+    "alpha2": "JO",
+    "width": 840,
+    "height": 420,
+    "ratio": 2,
+    "ratioLabel": "2:1",
+    "shape": "rectangle",
+    "colors": [
+      "#007A3D",
+      "#FFFFFF",
+      "#000000",
+      "#CE1126"
+    ]
+  },
+  {
+    "alpha2": "KZ",
+    "width": 2000,
+    "height": 1000,
+    "ratio": 2,
+    "ratioLabel": "2:1",
+    "shape": "rectangle",
+    "colors": [
+      "#00AFCA",
+      "#FEC50C"
+    ]
+  },
+  {
+    "alpha2": "KE",
+    "width": 240,
+    "height": 160,
+    "ratio": 1.5,
+    "ratioLabel": "3:2",
+    "shape": "rectangle",
+    "colors": [
+      "#FFFFFF",
+      "#006600",
+      "#000000",
+      "#BB0000"
+    ]
+  },
+  {
+    "alpha2": "KI",
+    "width": 600,
+    "height": 300,
+    "ratio": 2,
+    "ratioLabel": "2:1",
+    "shape": "rectangle",
+    "colors": [
+      "#C81010",
+      "#F8D000",
+      "#000000",
+      "#183070",
+      "#FFFFFF"
+    ]
+  },
+  {
+    "alpha2": "KW",
+    "width": 12,
+    "height": 6,
+    "ratio": 2,
+    "ratioLabel": "2:1",
+    "shape": "rectangle",
+    "colors": [
+      "#007A3D",
+      "#FFFFFF",
+      "#CE1126"
+    ]
+  },
+  {
+    "alpha2": "KG",
+    "width": 1000,
+    "height": 600,
+    "ratio": 1.6666666666666667,
+    "ratioLabel": "5:3",
+    "shape": "rectangle",
+    "colors": [
+      "#FF0000",
+      "#FFFF00"
+    ]
+  },
+  {
+    "alpha2": "LA",
+    "width": 600,
+    "height": 400,
+    "ratio": 1.5,
+    "ratioLabel": "3:2",
+    "shape": "rectangle",
+    "colors": [
+      "#CE1126",
+      "#002868",
+      "#FFFFFF"
+    ]
+  },
+  {
+    "alpha2": "LV",
+    "width": 1200,
+    "height": 600,
+    "ratio": 2,
+    "ratioLabel": "2:1",
+    "shape": "rectangle",
+    "colors": [
+      "#9E3039",
+      "#FFFFFF"
+    ]
+  },
+  {
+    "alpha2": "LB",
+    "width": 750,
+    "height": 500,
+    "ratio": 1.5,
+    "ratioLabel": "3:2",
+    "shape": "rectangle",
+    "colors": [
+      "#ED1C24",
+      "#FFFFFF",
+      "#00A651"
+    ]
+  },
+  {
+    "alpha2": "LS",
+    "width": 450,
+    "height": 300,
+    "ratio": 1.5,
+    "ratioLabel": "3:2",
+    "shape": "rectangle",
+    "colors": [
+      "#009543",
+      "#FFFFFF",
+      "#00209F",
+      "#000000"
+    ]
+  },
+  {
+    "alpha2": "LR",
+    "width": 209,
+    "height": 110,
+    "ratio": 1.9,
+    "ratioLabel": "19:10",
+    "shape": "rectangle",
+    "colors": [
+      "#BF0A30",
+      "#FFFFFF",
+      "#002868"
+    ]
+  },
+  {
+    "alpha2": "LY",
+    "width": 960,
+    "height": 480,
+    "ratio": 2,
+    "ratioLabel": "2:1",
+    "shape": "rectangle",
+    "colors": [
+      "#239E46",
+      "#000000",
+      "#E70013",
+      "#FFFFFF"
+    ]
+  },
+  {
+    "alpha2": "LI",
+    "width": 1000,
+    "height": 600,
+    "ratio": 1.6666666666666667,
+    "ratioLabel": "5:3",
+    "shape": "rectangle",
+    "colors": [
+      "#002B7F",
+      "#CE1126",
+      "#FFD83D",
+      "#000000"
+    ]
+  },
+  {
+    "alpha2": "LT",
+    "width": 5,
+    "height": 3,
+    "ratio": 1.6666666666666667,
+    "ratioLabel": "5:3",
+    "shape": "rectangle",
+    "colors": [
+      "#C1272D",
+      "#006A44",
+      "#FDB913"
+    ]
+  },
+  {
+    "alpha2": "LU",
+    "width": 1000,
+    "height": 600,
+    "ratio": 1.6666666666666667,
+    "ratioLabel": "5:3",
+    "shape": "rectangle",
+    "colors": [
+      "#00A1DE",
+      "#ED2939",
+      "#FFFFFF"
+    ]
+  },
+  {
+    "alpha2": "MG",
+    "width": 900,
+    "height": 600,
+    "ratio": 1.5,
+    "ratioLabel": "3:2",
+    "shape": "rectangle",
+    "colors": [
+      "#007E3A",
+      "#FC3D32",
+      "#FFFFFF"
+    ]
+  },
+  {
+    "alpha2": "MW",
+    "width": 450,
+    "height": 300,
+    "ratio": 1.5,
+    "ratioLabel": "3:2",
+    "shape": "rectangle",
+    "colors": [
+      "#CE1126",
+      "#339E35"
+    ]
+  },
+  {
+    "alpha2": "MY",
+    "width": 2800,
+    "height": 1400,
+    "ratio": 2,
+    "ratioLabel": "2:1",
+    "shape": "rectangle",
+    "colors": []
+  },
+  {
+    "alpha2": "MV",
+    "width": 720,
+    "height": 480,
+    "ratio": 1.5,
+    "ratioLabel": "3:2",
+    "shape": "rectangle",
+    "colors": [
+      "#D21034",
+      "#007E3A",
+      "#FFFFFF"
+    ]
+  },
+  {
+    "alpha2": "ML",
+    "width": 450,
+    "height": 300,
+    "ratio": 1.5,
+    "ratioLabel": "3:2",
+    "shape": "rectangle",
+    "colors": [
+      "#CE1126",
+      "#FCD116",
+      "#14B53A"
+    ]
+  },
+  {
+    "alpha2": "MT",
+    "width": 900,
+    "height": 600,
+    "ratio": 1.5,
+    "ratioLabel": "3:2",
+    "shape": "rectangle",
+    "colors": [
+      "#CF142B",
+      "#FFFFFF",
+      "#E60D2E",
+      "#96877D",
+      "#CCCCCC",
+      "#D0D0D0",
+      "#000000"
+    ]
+  },
+  {
+    "alpha2": "MH",
+    "width": 570,
+    "height": 300,
+    "ratio": 1.9,
+    "ratioLabel": "19:10",
+    "shape": "rectangle",
+    "colors": [
+      "#003893",
+      "#FFFFFF",
+      "#DD7500"
+    ]
+  },
+  {
+    "alpha2": "MR",
+    "width": 144,
+    "height": 96,
+    "ratio": 1.5,
+    "ratioLabel": "3:2",
+    "shape": "rectangle",
+    "colors": [
+      "#CD2A3E",
+      "#006233",
+      "#FFC400"
+    ]
+  },
+  {
+    "alpha2": "MU",
+    "width": 6,
+    "height": 4,
+    "ratio": 1.5,
+    "ratioLabel": "3:2",
+    "shape": "rectangle",
+    "colors": [
+      "#00A551",
+      "#FFD500",
+      "#1A206D",
+      "#EA2839"
+    ]
+  },
+  {
+    "alpha2": "MX",
+    "width": 980,
+    "height": 560,
+    "ratio": 1.75,
+    "ratioLabel": "7:4",
+    "shape": "rectangle",
+    "colors": [
+      "#FFFFFF",
+      "#F15770",
+      "#CE1126",
+      "#006847",
+      "#FCCA3E",
+      "#AA8C30",
+      "#9CA168",
+      "#717732",
+      "#016848",
+      "#CD202A",
+      "#30C2DC",
+      "#0872A7",
+      "#F8C83C",
+      "#F9AA51",
+      "#953220",
+      "#231F20",
+      "#8CBEBF",
+      "#04534E",
+      "#0C8489",
+      "#E92736",
+      "#F7E204",
+      "#78732E",
+      "#A8AC71",
+      "#F1A720",
+      "#C6C7A6",
+      "#1C242F",
+      "#977C2E",
+      "#AF7029",
+      "#816C2A",
+      "#FCCA3D",
+      "#6F5B24",
+      "#404118",
+      "#D2A567",
+      "#AB6D29",
+      "#4D2A15",
+      "#8F4620",
+      "#202020",
+      "#202220",
+      "#4B4139",
+      "#904720",
+      "#803F1D",
+      "#B07229",
+      "#5C3A1D",
+      "#8B441F",
+      "#312317",
+      "#1E2121",
+      "#5C3818",
+      "#171717",
+      "#45392D",
+      "#DBAD6C",
+      "#874F20",
+      "#B27129",
+      "#6C3F18",
+      "#F16E16",
+      "#000000",
+      "#D5D3CA",
+      "#6C4119",
+      "#F9C83A",
+      "#BF802D",
+      "#FCF3D8",
+      "#FDEAAF",
+      "#513625",
+      "#8B5122"
+    ]
+  },
+  {
+    "alpha2": "FM",
+    "width": 38,
+    "height": 20,
+    "ratio": 1.9,
+    "ratioLabel": "19:10",
+    "shape": "rectangle",
+    "colors": [
+      "#75B2DD",
+      "#FFFFFF"
+    ]
+  },
+  {
+    "alpha2": "MC",
+    "width": 750,
+    "height": 600,
+    "ratio": 1.25,
+    "ratioLabel": "5:4",
+    "shape": "rectangle",
+    "colors": [
+      "#FFFFFF",
+      "#CE1126"
+    ]
+  },
+  {
+    "alpha2": "MN",
+    "width": 4800,
+    "height": 2400,
+    "ratio": 2,
+    "ratioLabel": "2:1",
+    "shape": "rectangle",
+    "colors": [
+      "#F9CF02",
+      "#C4272F",
+      "#015197"
+    ]
+  },
+  {
+    "alpha2": "ME",
+    "width": 640,
+    "height": 320,
+    "ratio": 2,
+    "ratioLabel": "2:1",
+    "shape": "rectangle",
+    "colors": [
+      "#D3AE3B",
+      "#C40308",
+      "#B96B29",
+      "#D4AF3A",
+      "#1D5E91",
+      "#6D8C3E",
+      "#C52126"
+    ]
+  },
+  {
+    "alpha2": "MA",
+    "width": 900,
+    "height": 600,
+    "ratio": 1.5,
+    "ratioLabel": "3:2",
+    "shape": "rectangle",
+    "colors": []
+  },
+  {
+    "alpha2": "MZ",
+    "width": 900,
+    "height": 600,
+    "ratio": 1.5,
+    "ratioLabel": "3:2",
+    "shape": "rectangle",
+    "colors": [
+      "#000000",
+      "#FFFFFF",
+      "#007168",
+      "#FCE100",
+      "#D21034"
+    ]
+  },
+  {
+    "alpha2": "MM",
+    "width": 18,
+    "height": 12,
+    "ratio": 1.5,
+    "ratioLabel": "3:2",
+    "shape": "rectangle",
+    "colors": [
+      "#FECB00",
+      "#EA2839",
+      "#34B233",
+      "#FFFFFF"
+    ]
+  },
+  {
+    "alpha2": "NA",
+    "width": 90,
+    "height": 60,
+    "ratio": 1.5,
+    "ratioLabel": "3:2",
+    "shape": "rectangle",
+    "colors": [
+      "#003580",
+      "#009543",
+      "#FFFFFF",
+      "#D21034",
+      "#FFCE00"
+    ]
+  },
+  {
+    "alpha2": "NR",
+    "width": 600,
+    "height": 300,
+    "ratio": 2,
+    "ratioLabel": "2:1",
+    "shape": "rectangle",
+    "colors": [
+      "#002B7F",
+      "#FFC61E",
+      "#FFFFFF"
+    ]
+  },
+  {
+    "alpha2": "NP",
+    "width": 71.571,
+    "height": 87.246,
+    "ratio": 0.8203356027783509,
+    "ratioLabel": null,
+    "shape": "pennant",
+    "colors": [
+      "#003893",
+      "#DC143C",
+      "#FFFFFF"
+    ]
+  },
+  {
+    "alpha2": "NL",
+    "width": 9,
+    "height": 6,
+    "ratio": 1.5,
+    "ratioLabel": "3:2",
+    "shape": "rectangle",
+    "colors": [
+      "#21468B",
+      "#FFFFFF",
+      "#AE1C28"
+    ]
+  },
+  {
+    "alpha2": "NZ",
+    "width": 1200,
+    "height": 600,
+    "ratio": 2,
+    "ratioLabel": "2:1",
+    "shape": "rectangle",
+    "colors": [
+      "#012169",
+      "#FFFFFF",
+      "#C8102E"
+    ]
+  },
+  {
+    "alpha2": "NI",
+    "width": 1000,
+    "height": 600,
+    "ratio": 1.6666666666666667,
+    "ratioLabel": "5:3",
+    "shape": "rectangle",
+    "colors": [
+      "#510000",
+      "#8A0000",
+      "#AA0000",
+      "#FF2A2A",
+      "#FF0000",
+      "#F5F549",
+      "#97C924",
+      "#002255",
+      "#0044AA",
+      "#000000",
+      "#0067C6",
+      "#FFFFFF",
+      "#C8A400",
+      "#17C0EB",
+      "#FF6600",
+      "#FFFF00",
+      "#00FF00",
+      "#00CCFF",
+      "#0000FF",
+      "#800080",
+      "#910000",
+      "#FF3A3A",
+      "#CCD11E",
+      "#EDE71F",
+      "#C6CB24",
+      "#9ECB34",
+      "#93BC30"
+    ]
+  },
+  {
+    "alpha2": "NE",
+    "width": 700,
+    "height": 600,
+    "ratio": 1.1666666666666667,
+    "ratioLabel": "7:6",
+    "shape": "rectangle",
+    "colors": [
+      "#0DB02B",
+      "#FFFFFF",
+      "#E05206"
+    ]
+  },
+  {
+    "alpha2": "NG",
+    "width": 6,
+    "height": 3,
+    "ratio": 2,
+    "ratioLabel": "2:1",
+    "shape": "rectangle",
+    "colors": [
+      "#008751",
+      "#FFFFFF"
+    ]
+  },
+  {
+    "alpha2": "MK",
+    "width": 56,
+    "height": 28,
+    "ratio": 2,
+    "ratioLabel": "2:1",
+    "shape": "rectangle",
+    "colors": [
+      "#D20000",
+      "#FFE600"
+    ]
+  },
+  {
+    "alpha2": "NO",
+    "width": 1100,
+    "height": 800,
+    "ratio": 1.375,
+    "ratioLabel": "11:8",
+    "shape": "rectangle",
+    "colors": [
+      "#EF2B2D",
+      "#FFFFFF",
+      "#002868"
+    ]
+  },
+  {
+    "alpha2": "OM",
+    "width": 1200,
+    "height": 600,
+    "ratio": 2,
+    "ratioLabel": "2:1",
+    "shape": "rectangle",
+    "colors": [
+      "#DB161B",
+      "#FFFFFF",
+      "#008000"
+    ]
+  },
+  {
+    "alpha2": "PK",
+    "width": 120,
+    "height": 80,
+    "ratio": 1.5,
+    "ratioLabel": "3:2",
+    "shape": "rectangle",
+    "colors": [
+      "#FFFFFF",
+      "#01411C"
+    ]
+  },
+  {
+    "alpha2": "PW",
+    "width": 800,
+    "height": 500,
+    "ratio": 1.6,
+    "ratioLabel": "8:5",
+    "shape": "rectangle",
+    "colors": [
+      "#4AADD6",
+      "#FFDE00"
+    ]
+  },
+  {
+    "alpha2": "PA",
+    "width": 36,
+    "height": 24,
+    "ratio": 1.5,
+    "ratioLabel": "3:2",
+    "shape": "rectangle",
+    "colors": [
+      "#FFFFFF",
+      "#005293",
+      "#D21034"
+    ]
+  },
+  {
+    "alpha2": "PG",
+    "width": 768,
+    "height": 576,
+    "ratio": 1.3333333333333333,
+    "ratioLabel": "4:3",
+    "shape": "rectangle",
+    "colors": [
+      "#000000",
+      "#CE1126",
+      "#FCD116",
+      "#FFFFFF"
+    ]
+  },
+  {
+    "alpha2": "PY",
+    "width": 600,
+    "height": 330,
+    "ratio": 1.8181818181818181,
+    "ratioLabel": "20:11",
+    "shape": "rectangle",
+    "colors": [
+      "#0038A8",
+      "#FFFFFF",
+      "#D52B1E",
+      "#000000",
+      "#009B3A",
+      "#FEDF00"
+    ]
+  },
+  {
+    "alpha2": "PE",
+    "width": 900,
+    "height": 600,
+    "ratio": 1.5,
+    "ratioLabel": "3:2",
+    "shape": "rectangle",
+    "colors": [
+      "#D91023",
+      "#FFFFFF",
+      "#D4AF37",
+      "#00A854",
+      "#007EA8",
+      "#947245",
+      "#E3E4E5",
+      "#D18219",
+      "#D39044",
+      "#E7CA00",
+      "#008F4C",
+      "#9EAB05",
+      "#75B52B",
+      "#EAC102",
+      "#CAB313",
+      "#005000",
+      "#ED1C24"
+    ]
+  },
+  {
+    "alpha2": "PH",
+    "width": 180,
+    "height": 90,
+    "ratio": 2,
+    "ratioLabel": "2:1",
+    "shape": "rectangle",
+    "colors": [
+      "#0038A8",
+      "#CE1126",
+      "#FFFFFF",
+      "#FCD116"
+    ]
+  },
+  {
+    "alpha2": "PL",
+    "width": 16,
+    "height": 10,
+    "ratio": 1.6,
+    "ratioLabel": "8:5",
+    "shape": "rectangle",
+    "colors": [
+      "#FFFFFF",
+      "#DC143C"
+    ]
+  },
+  {
+    "alpha2": "PT",
+    "width": 600,
+    "height": 400,
+    "ratio": 1.5,
+    "ratioLabel": "3:2",
+    "shape": "rectangle",
+    "colors": [
+      "#FF0000",
+      "#006600",
+      "#FFFF00",
+      "#000000",
+      "#FFFFFF",
+      "#003399"
+    ]
+  },
+  {
+    "alpha2": "QA",
+    "width": 1400,
+    "height": 550,
+    "ratio": 2.5454545454545454,
+    "ratioLabel": "28:11",
+    "shape": "rectangle",
+    "colors": [
+      "#8D1B3D",
+      "#FFFFFF"
+    ]
+  },
+  {
+    "alpha2": "KR",
+    "width": 72,
+    "height": 48,
+    "ratio": 1.5,
+    "ratioLabel": "3:2",
+    "shape": "rectangle",
+    "colors": [
+      "#FFFFFF",
+      "#000000",
+      "#CD2E3A",
+      "#0047A0"
+    ]
+  },
+  {
+    "alpha2": "MD",
+    "width": 1800,
+    "height": 900,
+    "ratio": 2,
+    "ratioLabel": "2:1",
+    "shape": "rectangle",
+    "colors": [
+      "#CC092F",
+      "#FFD200",
+      "#0046AE",
+      "#000000",
+      "#F5D402",
+      "#B07F55",
+      "#D10429",
+      "#097754",
+      "#0B45BB"
+    ]
+  },
+  {
+    "alpha2": "RO",
+    "width": 3,
+    "height": 2,
+    "ratio": 1.5,
+    "ratioLabel": "3:2",
+    "shape": "rectangle",
+    "colors": [
+      "#002B7F",
+      "#FCD116",
+      "#CE1126"
+    ]
+  },
+  {
+    "alpha2": "RU",
+    "width": 9,
+    "height": 6,
+    "ratio": 1.5,
+    "ratioLabel": "3:2",
+    "shape": "rectangle",
+    "colors": [
+      "#FFFFFF",
+      "#D52B1E",
+      "#0039A6"
+    ]
+  },
+  {
+    "alpha2": "RW",
+    "width": 1080,
+    "height": 720,
+    "ratio": 1.5,
+    "ratioLabel": "3:2",
+    "shape": "rectangle",
+    "colors": [
+      "#20603D",
+      "#FAD201",
+      "#00A1DE",
+      "#E5BE01"
+    ]
+  },
+  {
+    "alpha2": "KN",
+    "width": 750,
+    "height": 500,
+    "ratio": 1.5,
+    "ratioLabel": "3:2",
+    "shape": "rectangle",
+    "colors": [
+      "#009E49",
+      "#CE1126",
+      "#FCD116",
+      "#000000",
+      "#FFFFFF"
+    ]
+  },
+  {
+    "alpha2": "LC",
+    "width": 600,
+    "height": 300,
+    "ratio": 2,
+    "ratioLabel": "2:1",
+    "shape": "rectangle",
+    "colors": [
+      "#66CCFF",
+      "#FFFFFF",
+      "#FCD116"
+    ]
+  },
+  {
+    "alpha2": "VC",
+    "width": 72,
+    "height": 48,
+    "ratio": 1.5,
+    "ratioLabel": "3:2",
+    "shape": "rectangle",
+    "colors": [
+      "#009E60",
+      "#FCD116",
+      "#0072C6"
+    ]
+  },
+  {
+    "alpha2": "WS",
+    "width": 2880,
+    "height": 1440,
+    "ratio": 2,
+    "ratioLabel": "2:1",
+    "shape": "rectangle",
+    "colors": [
+      "#CE1126",
+      "#002B7F",
+      "#FFFFFF"
+    ]
+  },
+  {
+    "alpha2": "SM",
+    "width": 800,
+    "height": 600,
+    "ratio": 1.3333333333333333,
+    "ratioLabel": "4:3",
+    "shape": "rectangle",
+    "colors": [
+      "#5EB6E4",
+      "#FFFFFF",
+      "#000000",
+      "#F1BF31",
+      "#D99F31",
+      "#F1F1F2",
+      "#A0CFEB",
+      "#94BB79",
+      "#658D5C",
+      "#4C819A",
+      "#BDBFC1",
+      "#466343",
+      "#A48253"
+    ]
+  },
+  {
+    "alpha2": "ST",
+    "width": 2800,
+    "height": 1400,
+    "ratio": 2,
+    "ratioLabel": "2:1",
+    "shape": "rectangle",
+    "colors": [
+      "#12AD2B",
+      "#FFCE00",
+      "#D21034",
+      "#000000"
+    ]
+  },
+  {
+    "alpha2": "SA",
+    "width": 750,
+    "height": 500,
+    "ratio": 1.5,
+    "ratioLabel": "3:2",
+    "shape": "rectangle",
+    "colors": [
+      "#006C35",
+      "#FFFFFF"
+    ]
+  },
+  {
+    "alpha2": "SN",
+    "width": 900,
+    "height": 600,
+    "ratio": 1.5,
+    "ratioLabel": "3:2",
+    "shape": "rectangle",
+    "colors": [
+      "#00853F",
+      "#FDEF42",
+      "#E31B23"
+    ]
+  },
+  {
+    "alpha2": "RS",
+    "width": 1350,
+    "height": 900,
+    "ratio": 1.5,
+    "ratioLabel": "3:2",
+    "shape": "rectangle",
+    "colors": [
+      "#FFFFFF",
+      "#0C4076",
+      "#C6363C",
+      "#21231E",
+      "#EDB92E"
+    ]
+  },
+  {
+    "alpha2": "SC",
+    "width": 900,
+    "height": 450,
+    "ratio": 2,
+    "ratioLabel": "2:1",
+    "shape": "rectangle",
+    "colors": [
+      "#D62828",
+      "#FCD856",
+      "#003F87",
+      "#FFFFFF",
+      "#007A3D"
+    ]
+  },
+  {
+    "alpha2": "SL",
+    "width": 450,
+    "height": 300,
+    "ratio": 1.5,
+    "ratioLabel": "3:2",
+    "shape": "rectangle",
+    "colors": [
+      "#0072C6",
+      "#FFFFFF",
+      "#1EB53A"
+    ]
+  },
+  {
+    "alpha2": "SG",
+    "width": 4320,
+    "height": 2880,
+    "ratio": 1.5,
+    "ratioLabel": "3:2",
+    "shape": "rectangle",
+    "colors": [
+      "#ED2939",
+      "#FFFFFF"
+    ]
+  },
+  {
+    "alpha2": "SK",
+    "width": 9,
+    "height": 6,
+    "ratio": 1.5,
+    "ratioLabel": "3:2",
+    "shape": "rectangle",
+    "colors": [
+      "#EE1C25",
+      "#0B4EA2",
+      "#FFFFFF"
+    ]
+  },
+  {
+    "alpha2": "SI",
+    "width": 12,
+    "height": 6,
+    "ratio": 2,
+    "ratioLabel": "2:1",
+    "shape": "rectangle",
+    "colors": [
+      "#ED1C24",
+      "#005DA4",
+      "#FFFFFF",
+      "#FFDD00"
+    ]
+  },
+  {
+    "alpha2": "SB",
+    "width": 800,
+    "height": 400,
+    "ratio": 2,
+    "ratioLabel": "2:1",
+    "shape": "rectangle",
+    "colors": [
+      "#0051BA",
+      "#215B33",
+      "#FCD116",
+      "#FFFFFF"
+    ]
+  },
+  {
+    "alpha2": "SO",
+    "width": 81,
+    "height": 54,
+    "ratio": 1.5,
+    "ratioLabel": "3:2",
+    "shape": "rectangle",
+    "colors": [
+      "#4189DD",
+      "#FFFFFF"
+    ]
+  },
+  {
+    "alpha2": "ZA",
+    "width": 9,
+    "height": 6,
+    "ratio": 1.5,
+    "ratioLabel": "3:2",
+    "shape": "rectangle",
+    "colors": [
+      "#001489",
+      "#E03C31",
+      "#FFFFFF",
+      "#FFB81C",
+      "#007749"
+    ]
+  },
+  {
+    "alpha2": "SS",
+    "width": 20,
+    "height": 10,
+    "ratio": 2,
+    "ratioLabel": "2:1",
+    "shape": "rectangle",
+    "colors": [
+      "#078930",
+      "#FFFFFF",
+      "#DA121A",
+      "#0F47AF",
+      "#FCDD09"
+    ]
+  },
+  {
+    "alpha2": "ES",
+    "width": 750,
+    "height": 500,
+    "ratio": 1.5,
+    "ratioLabel": "3:2",
+    "shape": "rectangle",
+    "colors": [
+      "#C60B1E",
+      "#FFC400",
+      "#000000",
+      "#AD1519",
+      "#C8B100",
+      "#058E6E",
+      "#FFFFFF",
+      "#005BBF",
+      "#CCCCCC",
+      "#FFD691",
+      "#0039F0",
+      "#DB4446",
+      "#ED72AA"
+    ]
+  },
+  {
+    "alpha2": "LK",
+    "width": 1200,
+    "height": 600,
+    "ratio": 2,
+    "ratioLabel": "2:1",
+    "shape": "rectangle",
+    "colors": [
+      "#FFB700",
+      "#FF5B00",
+      "#005641",
+      "#8D2029",
+      "#000000"
+    ]
+  },
+  {
+    "alpha2": "SD",
+    "width": 12,
+    "height": 6,
+    "ratio": 2,
+    "ratioLabel": "2:1",
+    "shape": "rectangle",
+    "colors": [
+      "#FFFFFF",
+      "#D21034",
+      "#007229"
+    ]
+  },
+  {
+    "alpha2": "SR",
+    "width": 900,
+    "height": 600,
+    "ratio": 1.5,
+    "ratioLabel": "3:2",
+    "shape": "rectangle",
+    "colors": [
+      "#377E3F",
+      "#FFFFFF",
+      "#B40A2D",
+      "#ECC81D"
+    ]
+  },
+  {
+    "alpha2": "SE",
+    "width": 16,
+    "height": 10,
+    "ratio": 1.6,
+    "ratioLabel": "8:5",
+    "shape": "rectangle",
+    "colors": [
+      "#006AA7",
+      "#FECC00"
+    ]
+  },
+  {
+    "alpha2": "CH",
+    "width": 320,
+    "height": 320,
+    "ratio": 1,
+    "ratioLabel": "1:1",
+    "shape": "rectangle",
+    "colors": [
+      "#D52B1E",
+      "#FFFFFF"
+    ]
+  },
+  {
+    "alpha2": "SY",
+    "width": 180,
+    "height": 120,
+    "ratio": 1.5,
+    "ratioLabel": "3:2",
+    "shape": "rectangle",
+    "colors": [
+      "#000000",
+      "#FFFFFF",
+      "#CE1126",
+      "#007A3D"
+    ]
+  },
+  {
+    "alpha2": "TJ",
+    "width": 1400,
+    "height": 700,
+    "ratio": 2,
+    "ratioLabel": "2:1",
+    "shape": "rectangle",
+    "colors": [
+      "#006600",
+      "#FFFFFF",
+      "#CC0000",
+      "#F8C300"
+    ]
+  },
+  {
+    "alpha2": "TH",
+    "width": 900,
+    "height": 600,
+    "ratio": 1.5,
+    "ratioLabel": "3:2",
+    "shape": "rectangle",
+    "colors": [
+      "#A51931",
+      "#F4F5F8",
+      "#2D2A4A"
+    ]
+  },
+  {
+    "alpha2": "TL",
+    "width": 1200,
+    "height": 600,
+    "ratio": 2,
+    "ratioLabel": "2:1",
+    "shape": "rectangle",
+    "colors": [
+      "#DC241F",
+      "#FFC726",
+      "#FFFFFF"
+    ]
+  },
+  {
+    "alpha2": "TG",
+    "width": 809,
+    "height": 500,
+    "ratio": 1.618,
+    "ratioLabel": "144:89",
+    "shape": "rectangle",
+    "colors": [
+      "#006A4E",
+      "#FFCE00",
+      "#D21034",
+      "#FFFFFF"
+    ]
+  },
+  {
+    "alpha2": "TO",
+    "width": 96,
+    "height": 48,
+    "ratio": 2,
+    "ratioLabel": "2:1",
+    "shape": "rectangle",
+    "colors": [
+      "#C10000",
+      "#FFFFFF"
+    ]
+  },
+  {
+    "alpha2": "TT",
+    "width": 30,
+    "height": 18,
+    "ratio": 1.6666666666666667,
+    "ratioLabel": "5:3",
+    "shape": "rectangle",
+    "colors": [
+      "#CE1126",
+      "#FFFFFF"
+    ]
+  },
+  {
+    "alpha2": "TN",
+    "width": 120,
+    "height": 80,
+    "ratio": 1.5,
+    "ratioLabel": "3:2",
+    "shape": "rectangle",
+    "colors": [
+      "#E70013",
+      "#FFFFFF"
+    ]
+  },
+  {
+    "alpha2": "TR",
+    "width": 1200,
+    "height": 800,
+    "ratio": 1.5,
+    "ratioLabel": "3:2",
+    "shape": "rectangle",
+    "colors": [
+      "#E30A17"
+    ]
+  },
+  {
+    "alpha2": "TM",
+    "width": 900,
+    "height": 600,
+    "ratio": 1.5,
+    "ratioLabel": "3:2",
+    "shape": "rectangle",
+    "colors": [
+      "#28AE66",
+      "#FFFFFF",
+      "#383739",
+      "#CA3745",
+      "#FAAE29"
+    ]
+  },
+  {
+    "alpha2": "TV",
+    "width": 1200,
+    "height": 600,
+    "ratio": 2,
+    "ratioLabel": "2:1",
+    "shape": "rectangle",
+    "colors": [
+      "#012169",
+      "#FFFFFF",
+      "#C8102E",
+      "#009CDE",
+      "#FEDD00"
+    ]
+  },
+  {
+    "alpha2": "UG",
+    "width": 900,
+    "height": 600,
+    "ratio": 1.5,
+    "ratioLabel": "3:2",
+    "shape": "rectangle",
+    "colors": [
+      "#FCDC04",
+      "#D90000",
+      "#FFFFFF",
+      "#000000",
+      "#9CA69C"
+    ]
+  },
+  {
+    "alpha2": "UA",
+    "width": 1200,
+    "height": 800,
+    "ratio": 1.5,
+    "ratioLabel": "3:2",
+    "shape": "rectangle",
+    "colors": [
+      "#005BBB",
+      "#FFD500"
+    ]
+  },
+  {
+    "alpha2": "AE",
+    "width": 12,
+    "height": 6,
+    "ratio": 2,
+    "ratioLabel": "2:1",
+    "shape": "rectangle",
+    "colors": [
+      "#00732F",
+      "#FFFFFF",
+      "#FF0000"
+    ]
+  },
+  {
+    "alpha2": "GB",
+    "width": 60,
+    "height": 30,
+    "ratio": 2,
+    "ratioLabel": "2:1",
+    "shape": "rectangle",
+    "colors": [
+      "#012169",
+      "#FFFFFF",
+      "#C8102E"
+    ]
+  },
+  {
+    "alpha2": "TZ",
+    "width": 72,
+    "height": 48,
+    "ratio": 1.5,
+    "ratioLabel": "3:2",
+    "shape": "rectangle",
+    "colors": [
+      "#1EB53A",
+      "#00A3DD",
+      "#FCD116",
+      "#000000"
+    ]
+  },
+  {
+    "alpha2": "US",
+    "width": 7410,
+    "height": 3900,
+    "ratio": 1.9,
+    "ratioLabel": "19:10",
+    "shape": "rectangle",
+    "colors": [
+      "#B22234",
+      "#FFFFFF",
+      "#3C3B6E"
+    ]
+  },
+  {
+    "alpha2": "UY",
+    "width": 27,
+    "height": 18,
+    "ratio": 1.5,
+    "ratioLabel": "3:2",
+    "shape": "rectangle",
+    "colors": [
+      "#FFFFFF",
+      "#0038A8",
+      "#FCD116",
+      "#000000"
+    ]
+  },
+  {
+    "alpha2": "UZ",
+    "width": 500,
+    "height": 250,
+    "ratio": 2,
+    "ratioLabel": "2:1",
+    "shape": "rectangle",
+    "colors": [
+      "#1EB53A",
+      "#0099B5",
+      "#CE1126",
+      "#FFFFFF"
+    ]
+  },
+  {
+    "alpha2": "VU",
+    "width": 950,
+    "height": 570,
+    "ratio": 1.6666666666666667,
+    "ratioLabel": "5:3",
+    "shape": "rectangle",
+    "colors": [
+      "#D21034",
+      "#009543",
+      "#000000",
+      "#FDCE12"
+    ]
+  },
+  {
+    "alpha2": "VE",
+    "width": 180,
+    "height": 120,
+    "ratio": 1.5,
+    "ratioLabel": "3:2",
+    "shape": "rectangle",
+    "colors": [
+      "#FFFFFF",
+      "#CF142B",
+      "#00247D",
+      "#FFCC00"
+    ]
+  },
+  {
+    "alpha2": "VN",
+    "width": 30,
+    "height": 20,
+    "ratio": 1.5,
+    "ratioLabel": "3:2",
+    "shape": "rectangle",
+    "colors": [
+      "#DA251D",
+      "#FFFF00"
+    ]
+  },
+  {
+    "alpha2": "YE",
+    "width": 450,
+    "height": 300,
+    "ratio": 1.5,
+    "ratioLabel": "3:2",
+    "shape": "rectangle",
+    "colors": [
+      "#FFFFFF",
+      "#CE1126"
+    ]
+  },
+  {
+    "alpha2": "ZM",
+    "width": 2100,
+    "height": 1400,
+    "ratio": 1.5,
+    "ratioLabel": "3:2",
+    "shape": "rectangle",
+    "colors": [
+      "#198A00",
+      "#EF7D00",
+      "#000000",
+      "#DE2010"
+    ]
+  },
+  {
+    "alpha2": "ZW",
+    "width": 252,
+    "height": 126,
+    "ratio": 2,
+    "ratioLabel": "2:1",
+    "shape": "rectangle",
+    "colors": [
+      "#319208",
+      "#FFD200",
+      "#DE2010",
+      "#FFFFFF",
+      "#FFC618",
+      "#000000"
+    ]
+  },
+  {
+    "alpha2": "VA",
+    "width": 2500,
+    "height": 2500,
+    "ratio": 1,
+    "ratioLabel": "1:1",
+    "shape": "rectangle",
+    "colors": [
+      "#FFFFFF",
+      "#FFE000",
+      "#000000",
+      "#CE9D09",
+      "#CCCCCC",
+      "#FA0204"
+    ]
+  },
+  {
+    "alpha2": "PS",
+    "width": 6,
+    "height": 3,
+    "ratio": 2,
+    "ratioLabel": "2:1",
+    "shape": "rectangle",
+    "colors": [
+      "#007A3D",
+      "#FFFFFF",
+      "#CE1126"
+    ]
+  }
+]

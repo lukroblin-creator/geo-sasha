@@ -1,17 +1,7 @@
-# Third-party licenses
+# Third-party assets
 
-## flag-icons
+## Country flag SVGs
 
-World Atlas bundles the flag SVG collection from [flag-icons](https://github.com/lipis/flag-icons), version 7.6.0.
+The flag illustrations are bundled from [`svg-country-flags`](https://www.npmjs.com/package/svg-country-flags), version 1.2.10. The package identifies its flag images as public domain and says they originate from Wikipedia/Wikimedia Commons. The application uses the locally bundled SVGs and does not fetch them at runtime.
 
-The collection is distributed under the MIT License:
-
-> The MIT License (MIT)
->
-> Copyright (c) 2013 Panayiotis Lipiridis
->
-> Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the “Software”), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
->
-> The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
->
-> THE SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+The original aspect ratios are retained in `src/renderer/src/data/quiz/flagMetadata.json`. Regenerate that metadata from the installed package with `npm run data:flag-metadata`.
