@@ -24,14 +24,6 @@ import {
   type QuizMode
 } from './data/quiz/progress'
 
-type Mode = {
-  id: QuizMode | 'countries' | 'physical'
-  name: string
-  description: string
-  icon: string
-  available: boolean
-}
-
 type MapLayerId = 'borders' | 'rivers' | 'mountains' | 'labels'
 type MapLayerVisibility = Record<MapLayerId, boolean>
 
@@ -44,44 +36,6 @@ const mapLayerOptions: {
   { id: 'rivers', label: 'Fleuves · bientôt', available: false },
   { id: 'mountains', label: 'Montagnes · bientôt', available: false },
   { id: 'labels', label: 'Noms des pays', available: true }
-]
-
-const modes: Mode[] = [
-  {
-    id: 'flags',
-    name: 'Drapeaux',
-    description: 'Reconnaître un pays à partir de son drapeau',
-    icon: '⚑',
-    available: true
-  },
-  {
-    id: 'capitals',
-    name: 'Capitales',
-    description: 'Retrouver la capitale d’un pays',
-    icon: '⌖',
-    available: true
-  },
-  {
-    id: 'custom',
-    name: 'Personnalisé',
-    description: 'Choisir les indices et les réponses',
-    icon: '⚙',
-    available: true
-  },
-  {
-    id: 'countries',
-    name: 'Territoires',
-    description: 'Identifier les pays sur la carte',
-    icon: '▧',
-    available: false
-  },
-  {
-    id: 'physical',
-    name: 'Géographie physique',
-    description: 'Explorer les éléments naturels',
-    icon: '⌁',
-    available: false
-  }
 ]
 
 const flagPresetClues: QuizClues = {
@@ -116,10 +70,29 @@ const quizContentOptions: { id: keyof QuizClues; label: string }[] = [
   { id: 'countryOnMap', label: 'Territoire sur la carte' }
 ]
 
+function matchesQuizConfiguration(
+  clues: QuizClues,
+  answers: QuizAnswers,
+  expectedClues: QuizClues,
+  expectedAnswers: QuizAnswers
+): boolean {
+  return quizContentOptions.every(
+    ({ id }) => clues[id] === expectedClues[id] && answers[id] === expectedAnswers[id]
+  )
+}
+
+function getQuizModeForContent(clues: QuizClues, answers: QuizAnswers): QuizMode {
+  if (matchesQuizConfiguration(clues, answers, flagPresetClues, flagPresetAnswers)) {
+    return 'flags'
+  }
+  if (matchesQuizConfiguration(clues, answers, capitalPresetClues, capitalPresetAnswers)) {
+    return 'capitals'
+  }
+  return 'custom'
+}
+
 function App(): React.JSX.Element {
-  const [activeMode, setActiveMode] = useState<Mode['id']>('flags')
   const [appView, setAppView] = useState<'home' | 'quiz' | 'exploration'>('home')
-  const [modeMenuOpen, setModeMenuOpen] = useState(false)
   const [contentSettingsOpen, setContentSettingsOpen] = useState(false)
   const [mapLayers, setMapLayers] = useState<MapLayerVisibility>({
     borders: true,
@@ -142,7 +115,6 @@ function App(): React.JSX.Element {
   } | null>(null)
   const [quizProgress, setQuizProgress] = useState(loadQuizProgress)
 
-  const selectedMode = modes.find((mode) => mode.id === activeMode)!
   const maxQuizQuestionCount = getAvailableQuizQuestionCount(quizRegion)
 
   const recordCompletedQuiz = (mode: QuizMode, score: number): void => {
@@ -173,8 +145,7 @@ function App(): React.JSX.Element {
     }
 
     setContentSettingsOpen(false)
-    const nextMode: QuizMode =
-      activeMode === 'flags' || activeMode === 'capitals' ? activeMode : 'custom'
+    const nextMode = getQuizModeForContent(quizClues, quizAnswers)
     setSessionMode(nextMode)
     setActiveQuizClues(quizClues)
     setActiveQuizAnswers(quizAnswers)
@@ -183,26 +154,11 @@ function App(): React.JSX.Element {
     quiz.restart()
   }
 
-  const selectMode = (mode: Mode): void => {
-    if (!mode.available) return
-
-    setActiveMode(mode.id)
-    if (mode.id === 'flags') {
-      setQuizClues(flagPresetClues)
-      setQuizAnswers(flagPresetAnswers)
-    } else if (mode.id === 'capitals') {
-      setQuizClues(capitalPresetClues)
-      setQuizAnswers(capitalPresetAnswers)
-    }
-    setModeMenuOpen(false)
-  }
-
   const selectQuizContent = (
     id: keyof QuizClues,
     side: 'clue' | 'answer',
     checked: boolean
   ): void => {
-    setActiveMode('custom')
     if (side === 'clue') {
       setQuizClues((current) => ({ ...current, [id]: checked }))
       if (checked) setQuizAnswers((current) => ({ ...current, [id]: false }))
@@ -388,7 +344,7 @@ return (
         <header className="topbar">
           <div>
             <div className="breadcrumb">APPRENTISSAGE / MONDE</div>
-            <h1>{selectedMode.name}</h1>
+            <h1>Quiz du monde</h1>
           </div>
 
           <div className="topbar-right">
@@ -398,7 +354,6 @@ return (
               onClick={() => {
                 quiz.restart()
                 setSelectedMapCountry(null)
-                setModeMenuOpen(false)
                 setAppView('home')
               }}
             >
@@ -411,48 +366,6 @@ return (
         </header>
 
         <section className="quiz-toolbar" aria-label="Réglages de la partie">
-          <div
-            className="mode-picker"
-            onKeyDown={(event) => {
-              if (event.key === 'Escape') setModeMenuOpen(false)
-            }}
-          >
-            <button
-              className="mode-picker-button"
-              type="button"
-              aria-haspopup="menu"
-              aria-expanded={modeMenuOpen}
-              onClick={() => setModeMenuOpen((open) => !open)}
-            >
-              <span className="mode-picker-caption">MODE DE JEU</span>
-              <span className="mode-picker-selected">
-                <span className="mode-picker-icon" aria-hidden="true">{selectedMode.icon}</span>
-                <span>{selectedMode.name}</span>
-                <span className="mode-picker-chevron" aria-hidden="true">⌄</span>
-              </span>
-            </button>
-            {modeMenuOpen && (
-              <div className="mode-picker-menu" role="menu" aria-label="Choisir un mode">
-                {modes.map((mode) => (
-                  <button
-                    key={mode.id}
-                    className={`mode-picker-option${activeMode === mode.id ? ' active' : ''}`}
-                    type="button"
-                    role="menuitem"
-                    disabled={!mode.available}
-                    onClick={() => selectMode(mode)}
-                  >
-                    <span className="mode-picker-icon" aria-hidden="true">{mode.icon}</span>
-                    <span className="mode-picker-option-copy">
-                      <span>{mode.name}</span>
-                      <small>{mode.available ? mode.description : 'Bientôt disponible'}</small>
-                    </span>
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
-
           <label className="quiz-region-field">
             <span>RÉGION</span>
             <select
@@ -469,9 +382,9 @@ return (
           </label>
 
           <div className="quiz-count-control">
-            <label className="quiz-count-value">
+            <div className="quiz-count-value">
               <span>À deviner</span>
-              <span className="quiz-count-number-row">
+              <div className="quiz-count-number-row">
                 <input
                   aria-label="Nombre exact de pays à deviner"
                   type="number"
@@ -489,8 +402,17 @@ return (
                   }}
                 />
                 <span>pays</span>
-              </span>
-            </label>
+                <button
+                  className="quiz-count-max-button"
+                  type="button"
+                  aria-label="Choisir le nombre maximum de pays"
+                  title={`Jouer avec les ${maxQuizQuestionCount} pays disponibles`}
+                  onClick={() => setQuizQuestionCount(maxQuizQuestionCount)}
+                >
+                  Max
+                </button>
+              </div>
+            </div>
             <div className="quiz-count-slider">
               <input
                 type="range"
@@ -533,18 +455,6 @@ return (
               </div>
             </div>
           </div>
-
-          <button
-            className="quiz-start-button"
-            type="button"
-            onClick={startNewQuiz}
-            disabled={
-              !Object.values(quizClues).some(Boolean) ||
-              !Object.values(quizAnswers).some(Boolean)
-            }
-          >
-            Nouvelle partie
-          </button>
 
           <div className="quiz-content-picker">
             <button
@@ -615,6 +525,18 @@ return (
               </div>
             )}
           </div>
+
+          <button
+            className="quiz-start-button"
+            type="button"
+            onClick={startNewQuiz}
+            disabled={
+              !Object.values(quizClues).some(Boolean) ||
+              !Object.values(quizAnswers).some(Boolean)
+            }
+          >
+            Nouvelle partie
+          </button>
         </section>
 
         <div className="workspace">
