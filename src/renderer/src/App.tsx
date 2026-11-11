@@ -1,13 +1,22 @@
 
 import { useState } from 'react'
 import WorldMap from './components/WorldMap'
-import { FlagsQuizPanel, CapitalsQuizPanel } from './components/QuizPanels'
-import { countryFlagQuestions } from './data/quiz/countryQuestions'
-import {
-  createCountryCapitalQuestions,
-  type CountryCapitalQuestion
-} from './data/quiz/countryCapitals'
+import { CountryQuizPanel } from './components/QuizPanels'
 import { useQuizSession } from './data/quiz/useQuizSession'
+import {
+  createCountryQuizQuestions,
+  normalizeQuizAnswer,
+  type QuizAnswers,
+  type QuizClues,
+  type CountryQuizQuestion
+} from './data/quiz/countryQuiz'
+import {
+  getAvailableQuizQuestionCount,
+  getQuizQuestionsForRegion,
+  quizRegions,
+  type QuizQuestionCount,
+  type QuizRegion
+} from './data/quiz/countryContinents'
 import {
   loadQuizProgress,
   saveCompletedQuiz,
@@ -19,87 +28,227 @@ type Mode = {
   name: string
   description: string
   icon: string
+  available: boolean
 }
+
+type MapLayerId = 'borders' | 'rivers' | 'mountains' | 'labels'
+type MapLayerVisibility = Record<MapLayerId, boolean>
+
+const mapLayerOptions: {
+  id: MapLayerId
+  label: string
+  available: boolean
+}[] = [
+  { id: 'borders', label: 'Frontières', available: true },
+  { id: 'rivers', label: 'Fleuves · bientôt', available: false },
+  { id: 'mountains', label: 'Montagnes · bientôt', available: false },
+  { id: 'labels', label: 'Noms des pays', available: true }
+]
 
 const modes: Mode[] = [
   {
     id: 'flags',
     name: 'Drapeaux',
     description: 'Reconnaître un pays à partir de son drapeau',
-    icon: '⚑'
+    icon: '⚑',
+    available: true
   },
   {
     id: 'capitals',
     name: 'Capitales',
     description: 'Retrouver la capitale d’un pays',
-    icon: '⌖'
+    icon: '⌖',
+    available: true
+  },
+  {
+    id: 'custom',
+    name: 'Personnalisé',
+    description: 'Choisir les indices et les réponses',
+    icon: '⚙',
+    available: true
   },
   {
     id: 'countries',
     name: 'Territoires',
     description: 'Identifier les pays sur la carte',
-    icon: '▧'
+    icon: '▧',
+    available: false
   },
   {
     id: 'physical',
     name: 'Géographie physique',
     description: 'Explorer les éléments naturels',
-    icon: '⌁'
+    icon: '⌁',
+    available: false
   }
+]
+
+const flagPresetClues: QuizClues = {
+  countryOnMap: false,
+  flag: true,
+  countryName: false,
+  capital: false
+}
+const flagPresetAnswers: QuizAnswers = {
+  countryOnMap: true,
+  countryName: false,
+  capital: false,
+  flag: false
+}
+const capitalPresetClues: QuizClues = {
+  countryOnMap: false,
+  flag: false,
+  countryName: true,
+  capital: false
+}
+const capitalPresetAnswers: QuizAnswers = {
+  countryOnMap: false,
+  countryName: false,
+  capital: true,
+  flag: false
+}
+
+const clueOptions: { id: keyof QuizClues; label: string }[] = [
+  { id: 'countryOnMap', label: 'Pays mis en évidence sur la carte' },
+  { id: 'flag', label: 'Drapeau' },
+  { id: 'countryName', label: 'Nom du pays' },
+  { id: 'capital', label: 'Capitale' }
+]
+const answerOptions: { id: keyof QuizAnswers; label: string }[] = [
+  { id: 'countryOnMap', label: 'Pays à sélectionner sur la carte' },
+  { id: 'countryName', label: 'Nom du pays à écrire' },
+  { id: 'capital', label: 'Capitale à écrire' },
+  { id: 'flag', label: 'Drapeau à choisir' }
 ]
 
 function App(): React.JSX.Element {
   const [activeMode, setActiveMode] = useState<Mode['id']>('flags')
-  const [showBorders, setShowBorders] = useState(true)
-  const [showRivers, setShowRivers] = useState(false)
-  const [showMountains, setShowMountains] = useState(false)
-  const [showLabels, setShowLabels] = useState(false)
+  const [modeMenuOpen, setModeMenuOpen] = useState(false)
+  const [mapLayers, setMapLayers] = useState<MapLayerVisibility>({
+    borders: true,
+    rivers: false,
+    mountains: false,
+    labels: false
+  })
+  const [quizRegion, setQuizRegion] = useState<QuizRegion>('world')
+  const [quizQuestionCount, setQuizQuestionCount] = useState<QuizQuestionCount>(10)
+  const [quizClues, setQuizClues] = useState<QuizClues>(flagPresetClues)
+  const [quizAnswers, setQuizAnswers] = useState<QuizAnswers>(flagPresetAnswers)
+  const [activeQuizClues, setActiveQuizClues] = useState<QuizClues>(flagPresetClues)
+  const [activeQuizAnswers, setActiveQuizAnswers] = useState<QuizAnswers>(flagPresetAnswers)
+  const [sessionMode, setSessionMode] = useState<QuizMode>('flags')
+  const [sessionGeneration, setSessionGeneration] = useState(0)
+  const [selectedMapCountry, setSelectedMapCountry] = useState<{
+    sourceFeatureId: string | number
+    name: string
+  } | null>(null)
   const [quizProgress, setQuizProgress] = useState(loadQuizProgress)
 
   const selectedMode = modes.find((mode) => mode.id === activeMode)!
+  const maxQuizQuestionCount = getAvailableQuizQuestionCount(quizRegion)
 
-  const recordCompletedQuiz = (
-    mode: QuizMode,
-    score: number
-  ): void => {
+  const recordCompletedQuiz = (mode: QuizMode, score: number): void => {
     setQuizProgress(saveCompletedQuiz(mode, score))
   }
 
-  const flagQuiz = useQuizSession({
-    mode: 'flags',
-    questionBank: () => countryFlagQuestions,
+  const quiz = useQuizSession<CountryQuizQuestion>({
+    mode: sessionMode,
+    questionBank: () =>
+      getQuizQuestionsForRegion(
+        createCountryQuizQuestions(),
+        quizRegion,
+        quizQuestionCount
+      ),
     onCompleted: recordCompletedQuiz
   })
-  const capitalQuiz = useQuizSession<CountryCapitalQuestion>({
-    mode: 'capitals',
-    questionBank: createCountryCapitalQuestions,
-    onCompleted: recordCompletedQuiz
-  })
+
+  const handleQuizRegionChange = (region: QuizRegion): void => {
+    setQuizRegion(region)
+    setQuizQuestionCount((current) =>
+      Math.min(current, getAvailableQuizQuestionCount(region))
+    )
+  }
+
+  const startNewQuiz = (): void => {
+    if (!Object.values(quizClues).some(Boolean) || !Object.values(quizAnswers).some(Boolean)) {
+      return
+    }
+
+    const nextMode: QuizMode =
+      activeMode === 'flags' || activeMode === 'capitals' ? activeMode : 'custom'
+    setSessionMode(nextMode)
+    setActiveQuizClues(quizClues)
+    setActiveQuizAnswers(quizAnswers)
+    setSessionGeneration((current) => current + 1)
+    setSelectedMapCountry(null)
+    quiz.restart()
+  }
+
+  const selectMode = (mode: Mode): void => {
+    if (!mode.available) return
+
+    setActiveMode(mode.id)
+    if (mode.id === 'flags') {
+      setQuizClues(flagPresetClues)
+      setQuizAnswers(flagPresetAnswers)
+    } else if (mode.id === 'capitals') {
+      setQuizClues(capitalPresetClues)
+      setQuizAnswers(capitalPresetAnswers)
+    }
+    setModeMenuOpen(false)
+  }
+
+  const snapQuestionCountToMark = (value: number): number => {
+    const marks = [10, 25, 50, maxQuizQuestionCount].filter(
+      (mark, index, allMarks) => mark <= maxQuizQuestionCount && allMarks.indexOf(mark) === index
+    )
+    return marks.find((mark) => Math.abs(value - mark) <= 1) ?? value
+  }
 
   const handleCountrySelected = (
     sourceFeatureId: string | number,
     name: string
   ): void => {
+    setSelectedMapCountry({ sourceFeatureId, name })
     if (
-      activeMode !== 'flags' ||
-      flagQuiz.session.answerCorrect === true ||
-      flagQuiz.session.answerRevealed ||
-      flagQuiz.session.completed
-    ) return
-    const question =
-      flagQuiz.session.questionOrder[flagQuiz.session.questionIndex]
-    const isCorrect =
-      Number(sourceFeatureId) === question.sourceFeatureId &&
-      name === question.countryName
-    flagQuiz.answer(isCorrect, name)
+      activeQuizAnswers.countryOnMap &&
+      !activeQuizAnswers.countryName &&
+      !activeQuizAnswers.capital &&
+      !activeQuizAnswers.flag
+    ) {
+      const question = quiz.session.questionOrder[quiz.session.questionIndex]
+      if (question) quiz.answer(Number(sourceFeatureId) === question.sourceFeatureId, name)
+    }
   }
 
-  const activeStats =
-    activeMode === 'capitals'
-      ? quizProgress.capitals
-      : quizProgress.flags
-  const activeQuizLength = countryFlagQuestions.length
+  const submitCountryQuizAnswers = (answers: {
+    countryName: string
+    capital: string
+    flagAlpha2: string | null
+  }): void => {
+    const question = quiz.session.questionOrder[quiz.session.questionIndex]
+    if (!question) return
 
+    const correct =
+      (!activeQuizAnswers.countryOnMap ||
+        Number(selectedMapCountry?.sourceFeatureId) === question.sourceFeatureId) &&
+      (!activeQuizAnswers.countryName ||
+        [question.countryName, question.frenchCountryName].some(
+          (name) => normalizeQuizAnswer(answers.countryName) === normalizeQuizAnswer(name)
+        )) &&
+      (!activeQuizAnswers.capital ||
+        normalizeQuizAnswer(answers.capital) === normalizeQuizAnswer(question.capitalName)) &&
+      (!activeQuizAnswers.flag || answers.flagAlpha2 === question.alpha2)
+
+    quiz.answer(correct, JSON.stringify(answers))
+  }
+
+  const nextQuizQuestion = (): void => {
+    setSelectedMapCountry(null)
+    quiz.next()
+  }
+
+  const activeStats = quizProgress[sessionMode]
   return (
     <div className="app-shell">
       <aside className="sidebar">
@@ -109,23 +258,6 @@ function App(): React.JSX.Element {
             <div className="brand-name">WORLD ATLAS</div>
             <div className="brand-subtitle">GEOGRAPHY TRAINER</div>
           </div>
-        </div>
-
-        <div className="sidebar-section">
-          <div className="section-label">APPRENTISSAGE</div>
-
-          <nav className="navigation">
-            {modes.map((mode) => (
-              <button
-                key={mode.id}
-                className={`nav-item ${activeMode === mode.id ? 'active' : ''}`}
-                onClick={() => setActiveMode(mode.id)}
-              >
-                <span className="nav-icon">{mode.icon}</span>
-                <span>{mode.name}</span>
-              </button>
-            ))}
-          </nav>
         </div>
 
         <div className="sidebar-section">
@@ -146,7 +278,7 @@ function App(): React.JSX.Element {
               Quiz terminés : {activeStats.completedSessions}
             </div>
             <div className="progress-caption">
-              Meilleur score : {activeStats.bestScore} / {activeQuizLength}
+              Meilleur score : {activeStats.bestScore}
             </div>
           </div>
         </div>
@@ -180,6 +312,190 @@ function App(): React.JSX.Element {
           </div>
         </header>
 
+        <section className="quiz-toolbar" aria-label="Réglages de la partie">
+          <div
+            className="mode-picker"
+            onKeyDown={(event) => {
+              if (event.key === 'Escape') setModeMenuOpen(false)
+            }}
+          >
+            <button
+              className="mode-picker-button"
+              type="button"
+              aria-haspopup="menu"
+              aria-expanded={modeMenuOpen}
+              onClick={() => setModeMenuOpen((open) => !open)}
+            >
+              <span className="mode-picker-caption">MODE DE JEU</span>
+              <span className="mode-picker-selected">
+                <span className="mode-picker-icon" aria-hidden="true">{selectedMode.icon}</span>
+                <span>{selectedMode.name}</span>
+                <span className="mode-picker-chevron" aria-hidden="true">⌄</span>
+              </span>
+            </button>
+            {modeMenuOpen && (
+              <div className="mode-picker-menu" role="menu" aria-label="Choisir un mode">
+                {modes.map((mode) => (
+                  <button
+                    key={mode.id}
+                    className={`mode-picker-option${activeMode === mode.id ? ' active' : ''}`}
+                    type="button"
+                    role="menuitem"
+                    disabled={!mode.available}
+                    onClick={() => selectMode(mode)}
+                  >
+                    <span className="mode-picker-icon" aria-hidden="true">{mode.icon}</span>
+                    <span className="mode-picker-option-copy">
+                      <span>{mode.name}</span>
+                      <small>{mode.available ? mode.description : 'Bientôt disponible'}</small>
+                    </span>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+
+          <label className="quiz-region-field">
+            <span>RÉGION</span>
+            <select
+              value={quizRegion}
+              onChange={(event) => {
+                const region = quizRegions.find((item) => item.id === event.target.value)
+                if (region) handleQuizRegionChange(region.id)
+              }}
+            >
+              {quizRegions.map((region) => (
+                <option key={region.id} value={region.id}>{region.label}</option>
+              ))}
+            </select>
+          </label>
+
+          <div className="quiz-count-control">
+            <label className="quiz-count-value">
+              <span>À deviner</span>
+              <span className="quiz-count-number-row">
+                <input
+                  aria-label="Nombre exact de pays à deviner"
+                  type="number"
+                  min={1}
+                  max={maxQuizQuestionCount}
+                  value={quizQuestionCount}
+                  onChange={(event) => {
+                    if (!event.target.value) return
+                    const nextCount = Number(event.target.value)
+                    if (Number.isFinite(nextCount)) {
+                      setQuizQuestionCount(
+                        Math.max(1, Math.min(maxQuizQuestionCount, Math.round(nextCount)))
+                      )
+                    }
+                  }}
+                />
+                <span>pays</span>
+              </span>
+            </label>
+            <div className="quiz-count-slider">
+              <input
+                type="range"
+                aria-label="Nombre de pays à deviner"
+                min={1}
+                max={maxQuizQuestionCount}
+                step={1}
+                value={Math.min(quizQuestionCount, maxQuizQuestionCount)}
+                onChange={(event) =>
+                  setQuizQuestionCount(
+                    snapQuestionCountToMark(Number(event.target.value))
+                  )
+                }
+                onPointerUp={(event) =>
+                  setQuizQuestionCount(
+                    snapQuestionCountToMark(Number(event.currentTarget.value))
+                  )
+                }
+                onKeyUp={(event) => {
+                  if (event.key.startsWith('Arrow')) {
+                    setQuizQuestionCount((current) => snapQuestionCountToMark(current))
+                  }
+                }}
+              />
+              <div className="quiz-count-marks" aria-hidden="true">
+                {[10, 25, 50, maxQuizQuestionCount]
+                  .filter((mark, index, allMarks) =>
+                    mark <= maxQuizQuestionCount && allMarks.indexOf(mark) === index
+                  )
+                  .map((mark) => (
+                    <span
+                      key={mark}
+                      className={`quiz-count-mark${Math.abs(quizQuestionCount - mark) <= 1 ? ' active' : ''}`}
+                      style={{ left: `${((mark - 1) / (maxQuizQuestionCount - 1)) * 100}%` }}
+                    >
+                      <i />
+                      <small>{mark === maxQuizQuestionCount ? 'Max' : mark}</small>
+                    </span>
+                  ))}
+              </div>
+            </div>
+          </div>
+
+          <button
+            className="quiz-start-button"
+            type="button"
+            onClick={startNewQuiz}
+            disabled={
+              !Object.values(quizClues).some(Boolean) ||
+              !Object.values(quizAnswers).some(Boolean)
+            }
+          >
+            Nouvelle partie
+          </button>
+
+          <details className="quiz-content-settings">
+            <summary>Choisir les indices et les réponses</summary>
+            <div className="quiz-content-settings-groups">
+              <fieldset>
+                <legend>Ce qui est affiché</legend>
+                {clueOptions.map((option) => (
+                  <label key={option.id} className="quiz-content-setting">
+                    <input
+                      type="checkbox"
+                      checked={quizClues[option.id]}
+                      onChange={(event) => {
+                        setActiveMode('custom')
+                        setQuizClues((current) => ({
+                          ...current,
+                          [option.id]: event.target.checked
+                        }))
+                      }}
+                    />
+                    <span>{option.label}</span>
+                  </label>
+                ))}
+              </fieldset>
+              <fieldset>
+                <legend>Ce que tu dois répondre</legend>
+                {answerOptions.map((option) => (
+                  <label key={option.id} className="quiz-content-setting">
+                    <input
+                      type="checkbox"
+                      checked={quizAnswers[option.id]}
+                      onChange={(event) => {
+                        setActiveMode('custom')
+                        setQuizAnswers((current) => ({
+                          ...current,
+                          [option.id]: event.target.checked
+                        }))
+                      }}
+                    />
+                    <span>{option.label}</span>
+                  </label>
+                ))}
+              </fieldset>
+            </div>
+            <p className="quiz-content-settings-help">
+              Choisis au moins un indice et une réponse. Les réglages s’appliquent à la prochaine partie.
+            </p>
+          </details>
+        </section>
+
         <div className="workspace">
           <section className="map-section">
             <div className="map-toolbar">
@@ -205,8 +521,12 @@ function App(): React.JSX.Element {
 
             <div className="map-canvas">
               <WorldMap
-                showBorders={showBorders}
-                showLabels={showLabels}
+                showBorders={mapLayers.borders}
+                showLabels={mapLayers.labels}
+                quizTargetFeatureId={activeQuizClues.countryOnMap
+                  ? quiz.session.questionOrder[quiz.session.questionIndex]?.sourceFeatureId ?? null
+                  : null}
+                interactionResetKey={`${sessionMode}:${sessionGeneration}:${quiz.session.questionIndex}:${quiz.session.questionOrder[quiz.session.questionIndex]?.sourceFeatureId ?? ''}`}
                 onCountrySelected={handleCountrySelected}
               />
 
@@ -219,72 +539,39 @@ function App(): React.JSX.Element {
             <div className="map-settings">
               <div className="settings-heading">AFFICHAGE CARTOGRAPHIQUE</div>
 
-              <label className="setting-item">
-                <input
-                  type="checkbox"
-                  checked={showBorders}
-                  onChange={(event) => setShowBorders(event.target.checked)}
-                />
-                <span>Frontières</span>
-              </label>
-
-              <label className="setting-item">
-                <input
-                  type="checkbox"
-                  checked={showRivers}
-                  onChange={(event) => setShowRivers(event.target.checked)}
-                />
-                <span>Fleuves</span>
-              </label>
-
-              <label className="setting-item">
-                <input
-                  type="checkbox"
-                  checked={showMountains}
-                  onChange={(event) => setShowMountains(event.target.checked)}
-                />
-                <span>Montagnes</span>
-              </label>
-
-              <label className="setting-item">
-                <input
-                  type="checkbox"
-                  checked={showLabels}
-                  onChange={(event) => setShowLabels(event.target.checked)}
-                />
-                <span>Noms des pays</span>
-              </label>
+              {mapLayerOptions.map((layer) => (
+                <label
+                  key={layer.id}
+                  className={`setting-item${layer.available ? '' : ' setting-item-disabled'}`}
+                  title={layer.available ? undefined : 'Cette couche sera ajoutée plus tard'}
+                >
+                  <input
+                    type="checkbox"
+                    checked={mapLayers[layer.id]}
+                    disabled={!layer.available}
+                    onChange={(event) =>
+                      setMapLayers((current) => ({
+                        ...current,
+                        [layer.id]: event.target.checked
+                      }))
+                    }
+                  />
+                  <span>{layer.label}</span>
+                </label>
+              ))}
             </div>
           </section>
 
-          {activeMode === 'flags' ? (
-            <FlagsQuizPanel
-              session={flagQuiz.session}
-              onRevealAnswer={flagQuiz.revealAnswer}
-              onNext={flagQuiz.next}
-              onRestart={flagQuiz.restart}
-            />
-          ) : activeMode === 'capitals' ? (
-            <CapitalsQuizPanel
-              session={capitalQuiz.session}
-              onAnswer={capitalQuiz.answer}
-              onRevealAnswer={capitalQuiz.revealAnswer}
-              onNext={capitalQuiz.next}
-              onRestart={capitalQuiz.restart}
-            />
-          ) : (
-            <aside className="quiz-panel">
-              <div className="quiz-header">
-                <div className="section-label">SESSION D’APPRENTISSAGE</div>
-              </div>
-              <div className="quiz-content">
-                <div className="quiz-mode-label">{selectedMode.description}</div>
-                <div className="answer-placeholder">
-                  Ce mode sera ajouté dans une prochaine étape.
-                </div>
-              </div>
-            </aside>
-          )}
+          <CountryQuizPanel
+            session={quiz.session}
+            clues={activeQuizClues}
+            answers={activeQuizAnswers}
+            selectedMapCountry={selectedMapCountry}
+            onAnswer={submitCountryQuizAnswers}
+            onRevealAnswer={quiz.revealAnswer}
+            onNext={nextQuizQuestion}
+            onRestart={startNewQuiz}
+          />
         </div>
       </main>
     </div>

@@ -19,6 +19,7 @@ type LabelProperties = {
   sourceName: string
   entityId: string | null
   resolution: string
+  priority: number
   sourcePolygonIndex?: number
 }
 
@@ -31,8 +32,79 @@ type CountryProperties = {
 }
 
 type LabelFeature = Feature<Point, LabelProperties>
+type Bounds = [number, number, number, number]
+type LabelAnchor = { coordinates: [number, number]; distance: number }
 
 const MAX_MERCATOR_LATITUDE = 85.05112878
+const polygonBoundsCache = new WeakMap<object, Bounds>()
+const stableLabelPointCache = new WeakMap<object, Map<string, LabelAnchor | null>>()
+
+function getPolygonBounds(coordinates: Polygon['coordinates']): Bounds | null {
+  const cachedBounds = polygonBoundsCache.get(coordinates)
+  if (cachedBounds) return cachedBounds
+
+  let west = Infinity
+  let south = Infinity
+  let east = -Infinity
+  let north = -Infinity
+
+  for (const ring of coordinates) {
+    for (const [longitude, latitude] of ring) {
+      west = Math.min(west, longitude)
+      south = Math.min(south, latitude)
+      east = Math.max(east, longitude)
+      north = Math.max(north, latitude)
+    }
+  }
+
+  if (!Number.isFinite(west + south + east + north)) return null
+  const bounds: Bounds = [west, south, east, north]
+  polygonBoundsCache.set(coordinates, bounds)
+  return bounds
+}
+
+function getGeometryBounds(geometry: Polygon | MultiPolygon): Bounds | null {
+  const polygons =
+    geometry.type === 'Polygon'
+      ? [geometry.coordinates]
+      : geometry.coordinates
+  let combinedBounds: Bounds | null = null
+
+  for (const polygon of polygons) {
+    const bounds = getPolygonBounds(polygon)
+    if (!bounds) continue
+
+    combinedBounds = combinedBounds
+      ? [
+          Math.min(combinedBounds[0], bounds[0]),
+          Math.min(combinedBounds[1], bounds[1]),
+          Math.max(combinedBounds[2], bounds[2]),
+          Math.max(combinedBounds[3], bounds[3])
+        ]
+      : bounds
+  }
+
+  return combinedBounds
+}
+
+function boundsIntersectViewport(bounds: Bounds, viewport: Bounds): boolean {
+  const longitudeIntersects =
+    viewport[0] <= viewport[2]
+      ? bounds[0] <= viewport[2] && bounds[2] >= viewport[0]
+      : bounds[2] >= viewport[0] || bounds[0] <= viewport[2]
+
+  return longitudeIntersects && bounds[1] <= viewport[3] && bounds[3] >= viewport[1]
+}
+
+function boundsFullyInsideViewport(bounds: Bounds, viewport: Bounds): boolean {
+  return (
+    viewport[0] <= viewport[2] &&
+    bounds[0] >= viewport[0] &&
+    bounds[1] >= viewport[1] &&
+    bounds[2] <= viewport[2] &&
+    bounds[3] <= viewport[3]
+  )
+}
 
 function toMercatorLatitude(latitude: number): number {
   const limitedLatitude = Math.max(
@@ -51,13 +123,13 @@ function fromMercatorLatitude(latitude: number): number {
 function findBestLabelPoint(
   geometry: Polygon | MultiPolygon,
   precision: number
-): [number, number] | null {
+): LabelAnchor | null {
   const polygons =
     geometry.type === 'Polygon'
       ? [geometry.coordinates]
       : geometry.coordinates
 
-  let bestPoint: [number, number] | null = null
+  let bestAnchor: LabelAnchor | null = null
   let bestDistance = -1
   for (const coordinates of polygons) {
     if (
@@ -90,14 +162,14 @@ function findBestLabelPoint(
         distance > bestDistance
       ) {
         bestDistance = distance
-        bestPoint = [longitude, latitude]
+        bestAnchor = { coordinates: [longitude, latitude], distance }
       }
     } catch {
       continue
     }
   }
 
-  return bestPoint
+  return bestAnchor
 }
 
 export function createVisibleCountryLabels(
@@ -120,29 +192,52 @@ export function createVisibleCountryLabels(
       name: string,
       sourcePolygonIndex?: number
     ): void => {
-      const clipped = bboxClip(
-        { ...country, geometry } as Feature<Polygon | MultiPolygon>,
-        bbox
-      )
-      if (
-        !clipped.geometry ||
-        (clipped.geometry.type !== 'Polygon' && clipped.geometry.type !== 'MultiPolygon')
-      ) {
-        return
+      const geometryBounds = getGeometryBounds(geometry)
+      if (!geometryBounds || !boundsIntersectViewport(geometryBounds, bbox)) return
+
+      let anchor: LabelAnchor | null
+      if (boundsFullyInsideViewport(geometryBounds, bbox)) {
+        let countryLabelCache = stableLabelPointCache.get(country)
+        if (!countryLabelCache) {
+          countryLabelCache = new Map()
+          stableLabelPointCache.set(country, countryLabelCache)
+        }
+
+        const cacheKey = `${entityId ?? name}:${precision}`
+        if (countryLabelCache.has(cacheKey)) {
+          anchor = countryLabelCache.get(cacheKey) ?? null
+        } else {
+          anchor = findBestLabelPoint(geometry, precision)
+          countryLabelCache.set(cacheKey, anchor)
+        }
+      } else {
+        const clipped = bboxClip(
+          { ...country, geometry } as Feature<Polygon | MultiPolygon>,
+          bbox
+        )
+        if (
+          !clipped.geometry ||
+          (clipped.geometry.type !== 'Polygon' && clipped.geometry.type !== 'MultiPolygon')
+        ) {
+          return
+        }
+        anchor = findBestLabelPoint(clipped.geometry, precision)
       }
-      const point = findBestLabelPoint(clipped.geometry, precision)
-      if (!point) return
+
+      if (!anchor) return
       labels.push({
         type: 'Feature',
         geometry: {
           type: 'Point',
-          coordinates: point
+          coordinates: anchor.coordinates
         },
         properties: {
           name,
           sourceName: String(properties?.sourceName ?? ''),
           entityId,
           resolution: String(properties?.resolution ?? ''),
+          // Les grandes zones gardent leurs noms lorsque l'espace manque.
+          priority: -Math.log10(anchor.distance + 0.001),
           ...(sourcePolygonIndex === undefined ? {} : { sourcePolygonIndex })
         }
       })
@@ -226,7 +321,8 @@ export function createVisibleCountryLabels(
         name: island.name,
         sourceName: 'GeoNames',
         entityId: island.territoryEntityId,
-        resolution: 'gazetteer'
+        resolution: 'gazetteer',
+        priority: 0.5
       }
     })
   }

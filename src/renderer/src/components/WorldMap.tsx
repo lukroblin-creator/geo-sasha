@@ -1,5 +1,5 @@
 
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef, useEffect, useMemo } from 'react'
 import type { JSX } from 'react'
 
 import Map, { Source, Layer } from 'react-map-gl/maplibre'
@@ -17,6 +17,7 @@ import type {
 
 import type {
   FeatureCollection,
+  Geometry,
   Point
 } from 'geojson'
 
@@ -25,14 +26,22 @@ import {
   world50m,
   world10m
 } from '../data/world'
+import countryCatalog from '../data/quiz/countryCatalog.json'
+import { additionalMapFlagRegions } from '../data/quiz/additionalMapFlagRegions'
+import { flagEmojiFromAlpha2 } from '../data/quiz/flagEmoji'
 
-import { getRelatedEntityIds } from '../data/geography/registry'
+import {
+  getEntityDisplayName,
+  getRelatedEntityIds
+} from '../data/geography/registry'
 
 import 'maplibre-gl/dist/maplibre-gl.css'
 
 type WorldMapProps = {
   showBorders: boolean
   showLabels: boolean
+  quizTargetFeatureId?: string | number | null
+  interactionResetKey?: string | number
   onCountrySelected?: (sourceFeatureId: string | number, name: string) => void
 }
 
@@ -41,6 +50,7 @@ type LabelProperties = {
   sourceName: string
   entityId: string | null
   resolution: string
+  priority: number
 }
 
 type WorkerResponse = {
@@ -48,6 +58,126 @@ type WorkerResponse = {
   requestId?: number
   labels?: FeatureCollection<Point, LabelProperties>
 }
+
+type LabelUpdateRequest = {
+  type: 'update'
+  bbox: [number, number, number, number]
+  zoom: number
+  requestId: number
+}
+
+type SearchableCountry = {
+  sourceFeatureId: string | number
+  sourceName: string
+  displayName: string
+  alpha2: string | null
+  entityId: string | null
+  geometry: Geometry
+}
+
+const frenchRegionNames = new Intl.DisplayNames(['fr'], { type: 'region' })
+function normalizeSourceFeatureId(sourceFeatureId: string | number): string {
+  const value = String(sourceFeatureId)
+  return /^\d+$/.test(value) ? String(Number(value)) : value
+}
+
+const frenchCountryNameBySourceId = new globalThis.Map<string, string | undefined>([
+  ...countryCatalog.map((country) => [
+    normalizeSourceFeatureId(country.sourceFeatureId),
+    frenchRegionNames.of(country.alpha2)
+  ] as const),
+  ...additionalMapFlagRegions.map((region) => [
+    normalizeSourceFeatureId(region.sourceFeatureId),
+    frenchRegionNames.of(region.alpha2)
+  ] as const)
+])
+const alpha2BySourceId = new globalThis.Map<string, string>([
+  ...countryCatalog.map((country) => [
+    normalizeSourceFeatureId(country.sourceFeatureId),
+    country.alpha2
+  ] as const),
+  ...additionalMapFlagRegions.map((region) => [
+    normalizeSourceFeatureId(region.sourceFeatureId),
+    region.alpha2
+  ] as const)
+])
+
+function normalizeSearchText(value: string): string {
+  return value
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLocaleLowerCase('fr')
+    .trim()
+}
+
+function getGeometryBounds(geometry: Geometry): [number, number, number, number] | null {
+  const polygons =
+    geometry.type === 'Polygon'
+      ? [geometry.coordinates]
+      : geometry.type === 'MultiPolygon'
+        ? geometry.coordinates
+        : []
+  const polygonBounds: [number, number, number, number][] = []
+
+  for (const polygon of polygons) {
+    let west = Infinity
+    let south = Infinity
+    let east = -Infinity
+    let north = -Infinity
+
+    for (const ring of polygon) {
+      for (const [longitude, latitude] of ring) {
+        west = Math.min(west, longitude)
+        south = Math.min(south, latitude)
+        east = Math.max(east, longitude)
+        north = Math.max(north, latitude)
+      }
+    }
+
+    if (Number.isFinite(west + south + east + north)) {
+      polygonBounds.push([west, south, east, north])
+    }
+  }
+
+  if (!polygonBounds.length) return null
+
+  return polygonBounds.reduce((largest, current) => {
+    const largestArea = (largest[2] - largest[0]) * (largest[3] - largest[1])
+    const currentArea = (current[2] - current[0]) * (current[3] - current[1])
+    return currentArea > largestArea ? current : largest
+  })
+}
+
+const searchableCountries: SearchableCountry[] = world10m.features.flatMap((feature) => {
+  const properties = feature.properties as Record<string, unknown> | null
+  const sourceName = typeof properties?.sourceName === 'string' ? properties.sourceName : ''
+  const sourceFeatureId = properties?.sourceId
+  const entityId = typeof properties?.entityId === 'string' ? properties.entityId : null
+  const geometry = feature.geometry
+
+  if (
+    !sourceName ||
+    (typeof sourceFeatureId !== 'string' && typeof sourceFeatureId !== 'number') ||
+    !geometry ||
+    (geometry.type !== 'Polygon' && geometry.type !== 'MultiPolygon')
+  ) {
+    return []
+  }
+
+  const sourceFeatureKey = normalizeSourceFeatureId(sourceFeatureId)
+  const frenchName = frenchCountryNameBySourceId.get(sourceFeatureKey)
+
+  return [{
+    sourceFeatureId,
+    sourceName,
+    displayName: entityId
+      ? getEntityDisplayName(entityId) ?? sourceName
+      : frenchName ?? sourceName,
+    alpha2: alpha2BySourceId.get(sourceFeatureKey) ?? null,
+    entityId,
+    geometry
+  }]
+})
 
 const mapStyle = {
   version: 8 as const,
@@ -63,16 +193,47 @@ const mapStyle = {
   ]
 }
 
-function WorldMap({ showBorders, showLabels, onCountrySelected }: WorldMapProps): JSX.Element {
+function haveSameLabels(
+  previous: FeatureCollection<Point, LabelProperties>,
+  next: FeatureCollection<Point, LabelProperties>
+): boolean {
+  if (previous.features.length !== next.features.length) return false
+
+  return previous.features.every((label, index) => {
+    const nextLabel = next.features[index]
+    const [longitude, latitude] = label.geometry.coordinates
+    const [nextLongitude, nextLatitude] = nextLabel.geometry.coordinates
+
+    return (
+      label.properties.name === nextLabel.properties.name &&
+      label.properties.entityId === nextLabel.properties.entityId &&
+      label.properties.priority === nextLabel.properties.priority &&
+      Math.abs(longitude - nextLongitude) < 0.000001 &&
+      Math.abs(latitude - nextLatitude) < 0.000001
+    )
+  })
+}
+
+function WorldMap({
+  showBorders,
+  showLabels,
+  quizTargetFeatureId = null,
+  interactionResetKey,
+  onCountrySelected
+}: WorldMapProps): JSX.Element {
   const [selectedEntityIds, setSelectedEntityIds] = useState<string[]>([])
   const [selectedSourceFeatureId, setSelectedSourceFeatureId] = useState<
     string | number | null
   >(null)
+  const [searchQuery, setSearchQuery] = useState('')
+  const [searchIsOpen, setSearchIsOpen] = useState(false)
 
   const mapRef = useRef<MapRef>(null)
 
   const workerRef = useRef<Worker | null>(null)
   const workerReadyRef = useRef(false)
+  const workerBusyRef = useRef(false)
+  const pendingLabelUpdateRef = useRef<LabelUpdateRequest | null>(null)
   const latestLabelRequestId = useRef(0)
 
   const [visibleLabels, setVisibleLabels] = useState<
@@ -81,6 +242,49 @@ function WorldMap({ showBorders, showLabels, onCountrySelected }: WorldMapProps)
     type: 'FeatureCollection',
     features: []
   })
+
+  const searchResults = useMemo(() => {
+    const query = normalizeSearchText(searchQuery)
+    if (!query) return []
+
+    return searchableCountries
+      .filter((country) =>
+        [country.displayName, country.sourceName].some((name) =>
+          normalizeSearchText(name).startsWith(query)
+        )
+      )
+      .sort((first, second) => first.displayName.localeCompare(second.displayName, 'fr'))
+  }, [searchQuery])
+
+  const selectedSearchCountry = searchIsOpen
+    ? null
+    : searchableCountries.find((country) => country.displayName === searchQuery)
+
+  const sendLabelUpdate = (request: LabelUpdateRequest): void => {
+    const worker = workerRef.current
+    if (!worker || !workerReadyRef.current) return
+
+    workerBusyRef.current = true
+    worker.postMessage(request)
+  }
+
+  const selectSearchResult = (country: SearchableCountry): void => {
+    setSearchQuery(country.displayName)
+    setSearchIsOpen(false)
+    setSelectedEntityIds(
+      country.entityId ? getRelatedEntityIds(country.entityId) : []
+    )
+    setSelectedSourceFeatureId(country.sourceFeatureId)
+
+    const bounds = getGeometryBounds(country.geometry)
+    const map = mapRef.current?.getMap()
+    if (bounds && map) {
+      map.fitBounds(
+        [[bounds[0], bounds[1]], [bounds[2], bounds[3]]],
+        { padding: 56, maxZoom: 7, duration: 700 }
+      )
+    }
+  }
 
   const updateVisibleLabels = (): void => {
     const map = mapRef.current
@@ -118,13 +322,53 @@ function WorldMap({ showBorders, showLabels, onCountrySelected }: WorldMapProps)
     const requestId = latestLabelRequestId.current + 1
     latestLabelRequestId.current = requestId
 
-    worker.postMessage({
+    const request: LabelUpdateRequest = {
       type: 'update',
       bbox,
       zoom: map.getZoom(),
       requestId
-    })
+    }
+
+    if (workerBusyRef.current) {
+      pendingLabelUpdateRef.current = request
+      return
+    }
+
+    sendLabelUpdate(request)
   }
+
+  const focusOnQuizTarget = (): void => {
+    if (quizTargetFeatureId === null) return
+
+    const target = world10m.features.find((feature) => {
+      const properties = feature.properties as Record<string, unknown> | null
+      const sourceFeatureId = properties?.sourceId
+      return (
+        (typeof sourceFeatureId === 'string' || typeof sourceFeatureId === 'number') &&
+        normalizeSourceFeatureId(sourceFeatureId) ===
+          normalizeSourceFeatureId(quizTargetFeatureId)
+      )
+    })
+    const bounds = target?.geometry ? getGeometryBounds(target.geometry) : null
+    const map = mapRef.current?.getMap()
+
+    if (bounds && map) {
+      map.fitBounds(
+        [[bounds[0], bounds[1]], [bounds[2], bounds[3]]],
+        { padding: 64, maxZoom: 4.5, duration: 650 }
+      )
+    }
+  }
+
+  useEffect(() => {
+    focusOnQuizTarget()
+  }, [quizTargetFeatureId])
+
+  useEffect(() => {
+    setSelectedEntityIds([])
+    setSelectedSourceFeatureId(null)
+    setSearchIsOpen(false)
+  }, [interactionResetKey])
 
   useEffect(() => {
     const worker = new Worker(
@@ -145,8 +389,18 @@ function WorldMap({ showBorders, showLabels, onCountrySelected }: WorldMapProps)
       }
 
       if (message.type === 'labels' && message.labels) {
-        if (message.requestId !== latestLabelRequestId.current) return
-        setVisibleLabels(message.labels)
+        workerBusyRef.current = false
+        if (message.requestId === latestLabelRequestId.current) {
+          setVisibleLabels((current) =>
+            haveSameLabels(current, message.labels!) ? current : message.labels!
+          )
+        }
+
+        const pendingUpdate = pendingLabelUpdateRef.current
+        if (pendingUpdate) {
+          pendingLabelUpdateRef.current = null
+          sendLabelUpdate(pendingUpdate)
+        }
       }
     }
 
@@ -161,26 +415,15 @@ function WorldMap({ showBorders, showLabels, onCountrySelected }: WorldMapProps)
 
     return () => {
       workerReadyRef.current = false
+      workerBusyRef.current = false
+      pendingLabelUpdateRef.current = null
       workerRef.current = null
       worker.terminate()
     }
   }, [])
 
-  const lastLabelUpdate = useRef(0)
-
-  const handleMapMove = (): void => {
-    const now = Date.now()
-
-    // Limite les demandes de recalcul à environ 8 par seconde.
-    if (now - lastLabelUpdate.current < 120) return
-
-
-    lastLabelUpdate.current = now
-
-    updateVisibleLabels()
-  }
-
   const handleCountryClick = (event: MapLayerMouseEvent): void => {
+    setSearchIsOpen(false)
     const feature = event.features?.[0]
     const name = feature?.properties?.name
     const entityId = feature?.properties?.entityId
@@ -199,13 +442,29 @@ function WorldMap({ showBorders, showLabels, onCountrySelected }: WorldMapProps)
     }
   }
 
+  const selectedFeatureExpressions: unknown[] = []
+  if (selectedEntityIds.length > 0) {
+    selectedFeatureExpressions.push([
+      'in',
+      ['get', 'entityId'],
+      ['literal', selectedEntityIds]
+    ])
+  }
+  if (selectedSourceFeatureId !== null) {
+    selectedFeatureExpressions.push(['==', ['get', 'sourceId'], selectedSourceFeatureId])
+  }
+  if (quizTargetFeatureId !== null) {
+    selectedFeatureExpressions.push([
+      '==',
+      ['to-number', ['get', 'sourceId']],
+      Number(quizTargetFeatureId)
+    ])
+  }
+  if (selectedFeatureExpressions.length === 0) selectedFeatureExpressions.push(false)
+
   const fillColor = [
     'case',
-    [
-      'any',
-      ['in', ['get', 'entityId'], ['literal', selectedEntityIds]],
-      ['==', ['get', 'sourceId'], selectedSourceFeatureId]
-    ],
+    ['any', ...selectedFeatureExpressions],
     '#e5a63b',
     '#263746'
   ] as unknown as NonNullable<FillLayerSpecification['paint']>['fill-color']
@@ -285,10 +544,12 @@ function WorldMap({ showBorders, showLabels, onCountrySelected }: WorldMapProps)
 
   const labelLayout: SymbolLayerSpecification['layout'] = {
     'text-field': ['get', 'name'],
-    'text-size': 10,
+    'text-size': ['interpolate', ['linear'], ['zoom'], 1, 8, 3, 9, 5, 10, 12, 11],
     'text-font': ['Open Sans Regular'],
-    'text-allow-overlap': true,
-    'text-ignore-placement': true
+    'symbol-sort-key': ['get', 'priority'],
+    'text-padding': 2,
+    'text-allow-overlap': false,
+    'text-ignore-placement': false
   }
 
   const labelPaint: SymbolLayerSpecification['paint'] = {
@@ -299,11 +560,13 @@ function WorldMap({ showBorders, showLabels, onCountrySelected }: WorldMapProps)
   }
 
   return (
-    <>
+    <div className="world-map-shell">
       <Map
         ref={mapRef}
-        onLoad={updateVisibleLabels}
-        onMove={handleMapMove}
+        onLoad={() => {
+          updateVisibleLabels()
+          focusOnQuizTarget()
+        }}
         onMoveEnd={updateVisibleLabels}
         initialViewState={{
           longitude: 0,
@@ -416,7 +679,98 @@ function WorldMap({ showBorders, showLabels, onCountrySelected }: WorldMapProps)
         )}
 
       </Map>
-    </>
+
+      <div className="map-search">
+        <label className="map-search-label" htmlFor="country-search">
+          Chercher un pays
+        </label>
+        <div className="map-search-input-row">
+          <span aria-hidden="true" className="map-search-icon">⌕</span>
+          <input
+            id="country-search"
+            className="map-search-input"
+            type="search"
+            placeholder="Ex. France, Japon, Canada…"
+            autoComplete="off"
+            role="combobox"
+            aria-autocomplete="list"
+            aria-expanded={searchIsOpen && searchQuery.trim().length > 0}
+            aria-controls="country-search-results"
+            value={searchQuery}
+            onChange={(event) => {
+              setSearchQuery(event.target.value)
+              setSearchIsOpen(true)
+              if (!event.target.value.trim()) {
+                setSelectedEntityIds([])
+                setSelectedSourceFeatureId(null)
+              }
+            }}
+            onFocus={() => setSearchIsOpen(true)}
+            onKeyDown={(event) => {
+              if (event.key === 'Escape') setSearchIsOpen(false)
+              if (event.key === 'Enter' && searchResults[0]) {
+                event.preventDefault()
+                selectSearchResult(searchResults[0])
+              }
+            }}
+          />
+          {searchQuery && (
+            <button
+              className="map-search-clear"
+              type="button"
+              aria-label="Effacer la recherche et la sélection"
+              onClick={() => {
+                setSearchQuery('')
+                setSearchIsOpen(false)
+                setSelectedEntityIds([])
+                setSelectedSourceFeatureId(null)
+              }}
+            >
+              ×
+            </button>
+          )}
+          {selectedSearchCountry?.alpha2 && (
+            <span
+              className="map-search-selected-flag"
+              role="img"
+              aria-label={`Drapeau : ${selectedSearchCountry.displayName}`}
+            >
+              {flagEmojiFromAlpha2(selectedSearchCountry.alpha2)}
+            </span>
+          )}
+        </div>
+        {searchIsOpen && searchQuery.trim() && (
+          <div
+            id="country-search-results"
+            className="map-search-results"
+            role="listbox"
+            aria-label="Résultats de recherche"
+          >
+            {searchResults.length ? (
+              searchResults.map((country) => (
+                <button
+                  key={`${country.sourceFeatureId}:${country.displayName}`}
+                  type="button"
+                  className="map-search-result"
+                  role="option"
+                  aria-selected={false}
+                  onClick={() => selectSearchResult(country)}
+                >
+                  {country.displayName}
+                  {country.alpha2 && (
+                    <span className="map-search-result-flag" aria-hidden="true">
+                      {flagEmojiFromAlpha2(country.alpha2)}
+                    </span>
+                  )}
+                </button>
+              ))
+            ) : (
+              <div className="map-search-empty">Aucun pays trouvé</div>
+            )}
+          </div>
+        )}
+      </div>
+    </div>
   )
 }
 

@@ -1,4 +1,4 @@
-export type QuizMode = 'flags' | 'capitals'
+export type QuizMode = 'flags' | 'capitals' | 'custom'
 
 export type QuizStats = {
   completedSessions: number
@@ -19,7 +19,7 @@ function emptyStats(): QuizStats {
 }
 
 function emptyProgress(): QuizProgress {
-  return { flags: emptyStats(), capitals: emptyStats() }
+  return { flags: emptyStats(), capitals: emptyStats(), custom: emptyStats() }
 }
 
 function toStats(value: unknown): QuizStats | null {
@@ -55,7 +55,9 @@ function migratePreviousProgress(value: unknown): QuizProgress | null {
     lastScore: previous.lastCountryFlagScore ?? previous.lastFlagScore
   })
 
-  return flags ? { flags, capitals: emptyStats() } : null
+  return flags
+    ? { flags, capitals: emptyStats(), custom: emptyStats() }
+    : null
 }
 
 export function loadQuizProgress(): QuizProgress {
@@ -67,7 +69,8 @@ export function loadQuizProgress(): QuizProgress {
         const progress = value as Record<string, unknown>
         const flags = toStats(progress.flags)
         const capitals = toStats(progress.capitals)
-        if (flags && capitals) return { flags, capitals }
+        const custom = toStats(progress.custom) ?? emptyStats()
+        if (flags && capitals) return { flags, capitals, custom }
       }
     }
 

@@ -12,6 +12,7 @@ type LabelProperties = {
   sourceName: string
   entityId: string | null
   resolution: string
+  priority: number
 }
 
 type WorkerMessage =
