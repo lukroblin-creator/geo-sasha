@@ -5,9 +5,17 @@ import { flagEmojiFromAlpha2 } from '../data/quiz/flagEmoji'
 import type { CountryCapitalQuestion } from '../data/quiz/countryCapitals'
 import type { QuizSession } from '../data/quiz/useQuizSession'
 import {
+  flagHasColorNear,
+  flagShapes,
+  getFlagImageSource,
+  getFlagShape,
+  type FlagShapeId
+} from '../data/quiz/flagAssets'
+import {
   type CountryQuizQuestion,
   type QuizAnswers,
-  type QuizClues
+  type QuizClues,
+  normalizeQuizAnswer
 } from '../data/quiz/countryQuiz'
 
 type QuizPanelFrameProps<Question> = {
@@ -255,17 +263,23 @@ function CountryQuizAnswerForm({
   session,
   answers,
   selectedMapCountry,
+  countryIsHighlighted,
   onAnswer
 }: {
   question: CountryQuizQuestion
   session: QuizSession<CountryQuizQuestion>
   answers: QuizAnswers
   selectedMapCountry: SelectedMapCountry
+  countryIsHighlighted: boolean
   onAnswer: CountryQuizPanelProps['onAnswer']
 }): React.JSX.Element {
   const [countryName, setCountryName] = useState('')
   const [capital, setCapital] = useState('')
   const [flagAlpha2, setFlagAlpha2] = useState<string | null>(null)
+  const [flagSearch, setFlagSearch] = useState('')
+  const [flagColorDraft, setFlagColorDraft] = useState('#e53935')
+  const [flagColorFilters, setFlagColorFilters] = useState<string[]>([])
+  const [flagShapeFilters, setFlagShapeFilters] = useState<FlagShapeId[]>([])
   const disabled = session.answerCorrect === true || session.answerRevealed
   const mapOnly =
     answers.countryOnMap &&
@@ -277,7 +291,23 @@ function CountryQuizAnswerForm({
     setCountryName('')
     setCapital('')
     setFlagAlpha2(null)
+    setFlagSearch('')
+    setFlagColorFilters([])
+    setFlagShapeFilters([])
   }, [question.sourceFeatureId, session.questionIndex])
+
+  const filteredFlagChoices = question.flagChoices
+    .filter((choice) => {
+      const query = normalizeQuizAnswer(flagSearch)
+      const matchesName = !query || normalizeQuizAnswer(choice.frenchCountryName).includes(query)
+      const matchesColors = flagColorFilters.every((color) => flagHasColorNear(choice.alpha2, color))
+      const matchesShape =
+        flagShapeFilters.length === 0 || flagShapeFilters.includes(getFlagShape(choice.alpha2))
+      return matchesName && matchesColors && matchesShape
+    })
+    .sort((first, second) =>
+      first.frenchCountryName.localeCompare(second.frenchCountryName, 'fr')
+    )
 
   const canSubmit =
     (!answers.countryOnMap || selectedMapCountry !== null) &&
@@ -305,14 +335,16 @@ function CountryQuizAnswerForm({
 
       {answers.countryName && (
         <label className="country-answer-field">
-          <span>Nom du pays</span>
+          <span>{countryIsHighlighted ? 'Nom du pays mis en évidence' : 'Nom du pays'}</span>
           <input
             type="text"
             autoComplete="off"
             value={countryName}
             onChange={(event) => setCountryName(event.target.value)}
             disabled={disabled}
-            placeholder="Écris le nom du pays"
+            placeholder={countryIsHighlighted
+              ? 'Écris le nom du pays sur la carte'
+              : 'Écris le nom du pays'}
           />
         </label>
       )}
@@ -333,21 +365,97 @@ function CountryQuizAnswerForm({
 
       {answers.flag && (
         <div className="country-answer-field">
-          <span>Choisis le drapeau</span>
+          <span>Choisis le drapeau correspondant</span>
+          <input
+            className="country-flag-search"
+            type="search"
+            value={flagSearch}
+            onChange={(event) => setFlagSearch(event.target.value)}
+            placeholder="Chercher un pays"
+            aria-label="Chercher un drapeau par pays"
+            disabled={disabled}
+          />
+          <div className="country-flag-filters">
+            <div className="country-flag-color-filter">
+              <label htmlFor="flag-color-picker">Couleur du drapeau</label>
+              <input
+                id="flag-color-picker"
+                type="color"
+                value={flagColorDraft}
+                onChange={(event) => setFlagColorDraft(event.target.value)}
+                aria-label="Choisir une couleur de drapeau"
+                disabled={disabled}
+              />
+              <button
+                type="button"
+                onClick={() => setFlagColorFilters((current) =>
+                  current.includes(flagColorDraft)
+                    ? current
+                    : [...current, flagColorDraft]
+                )}
+                disabled={disabled || flagColorFilters.includes(flagColorDraft)}
+              >
+                Ajouter
+              </button>
+              <div className="country-flag-color-chips">
+                {flagColorFilters.map((color) => (
+                  <button
+                    key={color}
+                    type="button"
+                    className="country-flag-color-chip"
+                    style={{ backgroundColor: color }}
+                    title={`Retirer le filtre ${color}`}
+                    aria-label={`Retirer le filtre de couleur ${color}`}
+                    onClick={() => setFlagColorFilters((current) => current.filter((item) => item !== color))}
+                    disabled={disabled}
+                  />
+                ))}
+              </div>
+            </div>
+            <div className="country-flag-shape-filters" aria-label="Filtrer par forme">
+              <span>Forme</span>
+              {flagShapes.map((shape) => (
+                <button
+                  key={shape.id}
+                  type="button"
+                  className={`country-flag-shape-filter${flagShapeFilters.includes(shape.id) ? ' selected' : ''}`}
+                  aria-pressed={flagShapeFilters.includes(shape.id)}
+                  onClick={() => setFlagShapeFilters((current) =>
+                    current.includes(shape.id)
+                      ? current.filter((item) => item !== shape.id)
+                      : [...current, shape.id]
+                  )}
+                  disabled={disabled}
+                >
+                  <img
+                    src={getFlagImageSource(shape.exampleAlpha2)}
+                    className={`country-flag-shape-preview ${shape.id}`}
+                    alt=""
+                  />
+                  {shape.label}
+                </button>
+              ))}
+            </div>
+          </div>
           <div className="country-flag-choices" role="group" aria-label="Choisir un drapeau">
-            {question.flagChoices.map((choice) => (
+            {filteredFlagChoices.map((choice) => (
               <button
                 key={choice.alpha2}
                 className={`country-flag-choice${flagAlpha2 === choice.alpha2 ? ' selected' : ''}`}
                 type="button"
                 onClick={() => setFlagAlpha2(choice.alpha2)}
                 disabled={disabled}
-                aria-label={`Drapeau ${choice.countryName}`}
+                aria-label={`Drapeau de ${choice.frenchCountryName}`}
+                title={choice.frenchCountryName}
                 aria-pressed={flagAlpha2 === choice.alpha2}
               >
-                {flagEmojiFromAlpha2(choice.alpha2)}
+                <img src={getFlagImageSource(choice.alpha2)} alt="" />
+                <span>{choice.frenchCountryName}</span>
               </button>
             ))}
+            {filteredFlagChoices.length === 0 && (
+              <p className="country-flag-no-results">Aucun drapeau ne correspond à ces filtres.</p>
+            )}
           </div>
         </div>
       )}
@@ -409,7 +517,11 @@ export function CountryQuizPanel({
       )}
       {clues.flag && (
         <div className="flag-container">
-          <div className="flag">{flagEmojiFromAlpha2(question.alpha2)}</div>
+          <img
+            className="flag flag-svg"
+            src={getFlagImageSource(question.alpha2)}
+            alt={`Drapeau de ${question.frenchCountryName}`}
+          />
         </div>
       )}
       {clues.countryName && (
@@ -431,6 +543,7 @@ export function CountryQuizPanel({
           session={session}
           answers={answers}
           selectedMapCountry={selectedMapCountry}
+          countryIsHighlighted={clues.countryOnMap}
           onAnswer={onAnswer}
         />
       )}

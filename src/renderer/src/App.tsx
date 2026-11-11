@@ -108,22 +108,17 @@ const capitalPresetAnswers: QuizAnswers = {
   flag: false
 }
 
-const clueOptions: { id: keyof QuizClues; label: string }[] = [
-  { id: 'countryOnMap', label: 'Pays mis en évidence sur la carte' },
+const quizContentOptions: { id: keyof QuizClues; label: string }[] = [
   { id: 'flag', label: 'Drapeau' },
   { id: 'countryName', label: 'Nom du pays' },
-  { id: 'capital', label: 'Capitale' }
-]
-const answerOptions: { id: keyof QuizAnswers; label: string }[] = [
-  { id: 'countryOnMap', label: 'Pays à sélectionner sur la carte' },
-  { id: 'countryName', label: 'Nom du pays à écrire' },
-  { id: 'capital', label: 'Capitale à écrire' },
-  { id: 'flag', label: 'Drapeau à choisir' }
+  { id: 'capital', label: 'Capitale' },
+  { id: 'countryOnMap', label: 'Territoire sur la carte' }
 ]
 
 function App(): React.JSX.Element {
   const [activeMode, setActiveMode] = useState<Mode['id']>('flags')
   const [modeMenuOpen, setModeMenuOpen] = useState(false)
+  const [contentSettingsOpen, setContentSettingsOpen] = useState(false)
   const [mapLayers, setMapLayers] = useState<MapLayerVisibility>({
     borders: true,
     rivers: false,
@@ -174,6 +169,7 @@ function App(): React.JSX.Element {
       return
     }
 
+    setContentSettingsOpen(false)
     const nextMode: QuizMode =
       activeMode === 'flags' || activeMode === 'capitals' ? activeMode : 'custom'
     setSessionMode(nextMode)
@@ -196,6 +192,22 @@ function App(): React.JSX.Element {
       setQuizAnswers(capitalPresetAnswers)
     }
     setModeMenuOpen(false)
+  }
+
+  const selectQuizContent = (
+    id: keyof QuizClues,
+    side: 'clue' | 'answer',
+    checked: boolean
+  ): void => {
+    setActiveMode('custom')
+    if (side === 'clue') {
+      setQuizClues((current) => ({ ...current, [id]: checked }))
+      if (checked) setQuizAnswers((current) => ({ ...current, [id]: false }))
+      return
+    }
+
+    setQuizAnswers((current) => ({ ...current, [id]: checked }))
+    if (checked) setQuizClues((current) => ({ ...current, [id]: false }))
   }
 
   const snapQuestionCountToMark = (value: number): number => {
@@ -448,52 +460,75 @@ function App(): React.JSX.Element {
             Nouvelle partie
           </button>
 
-          <details className="quiz-content-settings">
-            <summary>Choisir les indices et les réponses</summary>
-            <div className="quiz-content-settings-groups">
-              <fieldset>
-                <legend>Ce qui est affiché</legend>
-                {clueOptions.map((option) => (
-                  <label key={option.id} className="quiz-content-setting">
-                    <input
-                      type="checkbox"
-                      checked={quizClues[option.id]}
-                      onChange={(event) => {
-                        setActiveMode('custom')
-                        setQuizClues((current) => ({
-                          ...current,
-                          [option.id]: event.target.checked
-                        }))
-                      }}
-                    />
-                    <span>{option.label}</span>
-                  </label>
-                ))}
-              </fieldset>
-              <fieldset>
-                <legend>Ce que tu dois répondre</legend>
-                {answerOptions.map((option) => (
-                  <label key={option.id} className="quiz-content-setting">
-                    <input
-                      type="checkbox"
-                      checked={quizAnswers[option.id]}
-                      onChange={(event) => {
-                        setActiveMode('custom')
-                        setQuizAnswers((current) => ({
-                          ...current,
-                          [option.id]: event.target.checked
-                        }))
-                      }}
-                    />
-                    <span>{option.label}</span>
-                  </label>
-                ))}
-              </fieldset>
-            </div>
-            <p className="quiz-content-settings-help">
-              Choisis au moins un indice et une réponse. Les réglages s’appliquent à la prochaine partie.
-            </p>
-          </details>
+          <div className="quiz-content-picker">
+            <button
+              className="quiz-content-picker-button"
+              type="button"
+              aria-haspopup="dialog"
+              aria-expanded={contentSettingsOpen}
+              onClick={() => setContentSettingsOpen((open) => !open)}
+            >
+              <span className="quiz-content-picker-caption">CONTENU DU QUIZ</span>
+              <span className="quiz-content-picker-value">
+                Choisir indices et réponses <span aria-hidden="true">⌄</span>
+              </span>
+            </button>
+            {contentSettingsOpen && (
+              <div className="quiz-content-settings" role="dialog" aria-label="Choisir les indices et les réponses">
+                <div className="quiz-content-settings-columns">
+                  <fieldset>
+                    <legend>Indices donnés par le jeu</legend>
+                    {quizContentOptions.map((option) => {
+                      const blocked = quizAnswers[option.id]
+                      return (
+                        <label
+                          key={option.id}
+                          className={`quiz-content-setting${blocked ? ' quiz-content-setting-blocked' : ''}`}
+                          title={blocked ? 'Déjà utilisé comme réponse' : undefined}
+                        >
+                          <input
+                            type="checkbox"
+                            checked={quizClues[option.id]}
+                            disabled={blocked}
+                            onChange={(event) =>
+                              selectQuizContent(option.id, 'clue', event.target.checked)
+                            }
+                          />
+                          <span>{option.label}</span>
+                        </label>
+                      )
+                    })}
+                  </fieldset>
+                  <fieldset>
+                    <legend>Réponses à donner</legend>
+                    {quizContentOptions.map((option) => {
+                      const blocked = quizClues[option.id]
+                      return (
+                        <label
+                          key={option.id}
+                          className={`quiz-content-setting${blocked ? ' quiz-content-setting-blocked' : ''}`}
+                          title={blocked ? 'Déjà utilisé comme indice' : undefined}
+                        >
+                          <input
+                            type="checkbox"
+                            checked={quizAnswers[option.id]}
+                            disabled={blocked}
+                            onChange={(event) =>
+                              selectQuizContent(option.id, 'answer', event.target.checked)
+                            }
+                          />
+                          <span>{option.label}</span>
+                        </label>
+                      )
+                    })}
+                  </fieldset>
+                </div>
+                <p className="quiz-content-settings-help">
+                  Chaque élément peut être un indice ou une réponse. Coche au moins une ligne dans chaque colonne, puis démarre une nouvelle partie.
+                </p>
+              </div>
+            )}
+          </div>
         </section>
 
         <div className="workspace">

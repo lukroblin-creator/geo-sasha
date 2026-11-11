@@ -20,6 +20,7 @@ export type CountryFlagChoice = {
   sourceFeatureId: number
   alpha2: string
   countryName: string
+  frenchCountryName: string
 }
 
 export type CountryQuizQuestion = {
@@ -43,6 +44,13 @@ const capitalByCountryId = new Map<number, CapitalRecord>(
   (countryCapitals as CapitalRecord[]).map((record) => [record.sourceFeatureId, record])
 )
 const countryNamesInFrench = new Intl.DisplayNames(['fr'], { type: 'region' })
+const allFlagChoices: CountryFlagChoice[] = countryCatalog.map((candidate) => ({
+  sourceFeatureId: candidate.sourceFeatureId,
+  alpha2: candidate.alpha2,
+  countryName: candidate.countryName,
+  frenchCountryName:
+    countryNamesInFrench.of(candidate.alpha2) ?? candidate.countryName
+}))
 
 export function createCountryQuizQuestions(): CountryQuizQuestion[] {
   const capitalNames = [...new Set(
@@ -56,16 +64,6 @@ export function createCountryQuizQuestions(): CountryQuizQuestion[] {
     const capitalChoices = shuffleItems(
       capitalNames.filter((name) => name !== capital.capitalName)
     ).slice(0, 3)
-    const flagChoices = shuffleItems(
-      countryCatalog.filter((candidate) => candidate.sourceFeatureId !== country.sourceFeatureId)
-    )
-      .slice(0, 3)
-      .map((candidate) => ({
-        sourceFeatureId: candidate.sourceFeatureId,
-        alpha2: candidate.alpha2,
-        countryName: candidate.countryName
-      }))
-
     return [{
       sourceFeatureId: country.sourceFeatureId,
       alpha2: country.alpha2,
@@ -75,14 +73,7 @@ export function createCountryQuizQuestions(): CountryQuizQuestion[] {
       capitalName: capital.capitalName,
       ...(capital.note ? { capitalNote: capital.note } : {}),
       capitalChoices: shuffleItems([...capitalChoices, capital.capitalName]),
-      flagChoices: shuffleItems([
-        ...flagChoices,
-        {
-          sourceFeatureId: country.sourceFeatureId,
-          alpha2: country.alpha2,
-          countryName: country.countryName
-        }
-      ])
+      flagChoices: allFlagChoices
     }]
   })
 }

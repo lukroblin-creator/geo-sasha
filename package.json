@@ -29,6 +29,7 @@
     "@turf/bbox-clip": "^7.4.0",
     "@turf/point-on-feature": "^7.4.0",
     "electron-updater": "^6.8.9",
+    "flag-icons": "^7.6.0",
     "leaflet": "^1.9.4",
     "maplibre-gl": "^6.16.0",
     "polylabel": "^2.1.0",

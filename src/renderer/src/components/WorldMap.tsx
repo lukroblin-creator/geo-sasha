@@ -225,6 +225,10 @@ function WorldMap({
   const [selectedSourceFeatureId, setSelectedSourceFeatureId] = useState<
     string | number | null
   >(null)
+  const [hoveredCountry, setHoveredCountry] = useState<{
+    entityId: string | null
+    sourceFeatureId: string | number
+  } | null>(null)
   const [searchQuery, setSearchQuery] = useState('')
   const [searchIsOpen, setSearchIsOpen] = useState(false)
 
@@ -442,6 +446,28 @@ function WorldMap({
     }
   }
 
+  const handleCountryHover = (event: MapLayerMouseEvent): void => {
+    const feature = event.features?.[0]
+    const sourceFeatureId = feature?.properties?.sourceId
+    const entityId = feature?.properties?.entityId
+
+    if (typeof sourceFeatureId !== 'string' && typeof sourceFeatureId !== 'number') {
+      setHoveredCountry(null)
+      return
+    }
+
+    const nextHoveredCountry = {
+      entityId: typeof entityId === 'string' ? entityId : null,
+      sourceFeatureId
+    }
+    setHoveredCountry((current) =>
+      current?.entityId === nextHoveredCountry.entityId &&
+      current.sourceFeatureId === nextHoveredCountry.sourceFeatureId
+        ? current
+        : nextHoveredCountry
+    )
+  }
+
   const selectedFeatureExpressions: unknown[] = []
   if (selectedEntityIds.length > 0) {
     selectedFeatureExpressions.push([
@@ -462,10 +488,35 @@ function WorldMap({
   }
   if (selectedFeatureExpressions.length === 0) selectedFeatureExpressions.push(false)
 
+  const hoveredFeatureExpressions: unknown[] = []
+  if (hoveredCountry?.entityId) {
+    hoveredFeatureExpressions.push([
+      '==',
+      ['get', 'entityId'],
+      hoveredCountry.entityId
+    ])
+  } else if (hoveredCountry) {
+    hoveredFeatureExpressions.push([
+      '==',
+      ['get', 'sourceId'],
+      hoveredCountry.sourceFeatureId
+    ])
+  }
+  if (quizTargetFeatureId !== null) {
+    hoveredFeatureExpressions.push([
+      '==',
+      ['to-number', ['get', 'sourceId']],
+      Number(quizTargetFeatureId)
+    ])
+  }
+  if (hoveredFeatureExpressions.length === 0) hoveredFeatureExpressions.push(false)
+
   const fillColor = [
     'case',
     ['any', ...selectedFeatureExpressions],
     '#e5a63b',
+    ['any', ...hoveredFeatureExpressions],
+    '#34495b',
     '#263746'
   ] as unknown as NonNullable<FillLayerSpecification['paint']>['fill-color']
 
@@ -568,6 +619,8 @@ function WorldMap({
           focusOnQuizTarget()
         }}
         onMoveEnd={updateVisibleLabels}
+        onMouseMove={handleCountryHover}
+        onMouseLeave={() => setHoveredCountry(null)}
         initialViewState={{
           longitude: 0,
           latitude: 20,
