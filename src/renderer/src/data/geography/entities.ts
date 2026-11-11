@@ -5,7 +5,8 @@ export const geographicEntities: GeographicEntity[] = [
   {
     id: 'country:france',
     name: 'France',
-    kind: 'country'
+    kind: 'country',
+    alpha2: 'FR'
   },
   {
     id: 'territory:guyane',

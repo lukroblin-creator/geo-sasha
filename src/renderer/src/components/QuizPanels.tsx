@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import type { FormEvent, ReactNode } from 'react'
 import type { CountryFlagQuestion } from '../data/quiz/countryQuestions'
 import { flagEmojiFromAlpha2 } from '../data/quiz/flagEmoji'
@@ -286,15 +286,6 @@ function CountryQuizAnswerForm({
     !answers.countryName &&
     !answers.capital &&
     !answers.flag
-
-  useEffect(() => {
-    setCountryName('')
-    setCapital('')
-    setFlagAlpha2(null)
-    setFlagSearch('')
-    setFlagColorFilters([])
-    setFlagShapeFilters([])
-  }, [question.sourceFeatureId, session.questionIndex])
 
   const filteredFlagChoices = question.flagChoices
     .filter((choice) => {

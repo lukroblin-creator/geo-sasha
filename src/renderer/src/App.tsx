@@ -1,6 +1,7 @@
 
 import { useState } from 'react'
 import WorldMap from './components/WorldMap'
+import { ExplorationView } from './components/ExplorationView'
 import { CountryQuizPanel } from './components/QuizPanels'
 import { useQuizSession } from './data/quiz/useQuizSession'
 import {
@@ -117,6 +118,7 @@ const quizContentOptions: { id: keyof QuizClues; label: string }[] = [
 
 function App(): React.JSX.Element {
   const [activeMode, setActiveMode] = useState<Mode['id']>('flags')
+  const [appView, setAppView] = useState<'home' | 'quiz' | 'exploration'>('home')
   const [modeMenuOpen, setModeMenuOpen] = useState(false)
   const [contentSettingsOpen, setContentSettingsOpen] = useState(false)
   const [mapLayers, setMapLayers] = useState<MapLayerVisibility>({
@@ -136,6 +138,7 @@ function App(): React.JSX.Element {
   const [selectedMapCountry, setSelectedMapCountry] = useState<{
     sourceFeatureId: string | number
     name: string
+    entityId: string | null
   } | null>(null)
   const [quizProgress, setQuizProgress] = useState(loadQuizProgress)
 
@@ -219,9 +222,11 @@ function App(): React.JSX.Element {
 
   const handleCountrySelected = (
     sourceFeatureId: string | number,
-    name: string
+    name: string,
+    entityId: string | null
   ): void => {
-    setSelectedMapCountry({ sourceFeatureId, name })
+    setSelectedMapCountry({ sourceFeatureId, name, entityId })
+
     if (
       activeQuizAnswers.countryOnMap &&
       !activeQuizAnswers.countryName &&
@@ -229,7 +234,13 @@ function App(): React.JSX.Element {
       !activeQuizAnswers.flag
     ) {
       const question = quiz.session.questionOrder[quiz.session.questionIndex]
-      if (question) quiz.answer(Number(sourceFeatureId) === question.sourceFeatureId, name)
+
+      if (question) {
+        quiz.answer(
+          Number(sourceFeatureId) === question.sourceFeatureId,
+          name
+        )
+      }
     }
   }
 
@@ -261,7 +272,69 @@ function App(): React.JSX.Element {
   }
 
   const activeStats = quizProgress[sessionMode]
+
+if (appView === 'home') {
   return (
+    <div className="home-screen">
+      <div className="home-brand">
+        <div className="brand-icon">W</div>
+        <div>
+          <div className="brand-name">WORLD ATLAS</div>
+          <div className="brand-subtitle">GEOGRAPHY TRAINER</div>
+        </div>
+      </div>
+
+      <div className="home-content">
+        <div className="home-eyebrow">VOTRE ATLAS DU MONDE</div>
+        <h1>Explorez. Apprenez. Découvrez.</h1>
+        <p className="home-description">
+          Parcourez le monde à votre rythme ou mettez vos connaissances
+          géographiques à l&apos;épreuve.
+        </p>
+
+        <div className="home-mode-grid">
+          <button
+            className="home-mode-card"
+            type="button"
+            onClick={() => setAppView('quiz')}
+          >
+            <span className="home-mode-icon">⌖</span>
+            <span className="home-mode-title">Quiz</span>
+            <span className="home-mode-description">
+              Testez vos connaissances avec les drapeaux, les capitales
+              et des questionnaires personnalisés.
+            </span>
+            <span className="home-mode-action">Choisir un quiz →</span>
+          </button>
+
+          <button
+            className="home-mode-card"
+            type="button"
+            onClick={() => setAppView('exploration')}
+          >
+            <span className="home-mode-icon">◎</span>
+            <span className="home-mode-title">Exploration</span>
+            <span className="home-mode-description">
+              Parcourez librement la carte et découvrez les informations
+              détaillées de chaque pays.
+            </span>
+            <span className="home-mode-action">Explorer le monde →</span>
+          </button>
+        </div>
+      </div>
+
+      <div className="home-footer">
+        WORLD ATLAS · APPLICATION LOCALE · V0.1
+      </div>
+    </div>
+  )
+}
+
+if (appView === 'exploration') {
+  return <ExplorationView onBack={() => setAppView('home')} />
+}
+
+return (
     <div className="app-shell">
       <aside className="sidebar">
         <div className="brand">
@@ -319,6 +392,19 @@ function App(): React.JSX.Element {
           </div>
 
           <div className="topbar-right">
+            <button
+              className="home-back-button"
+              type="button"
+              onClick={() => {
+                quiz.restart()
+                setSelectedMapCountry(null)
+                setModeMenuOpen(false)
+                setAppView('home')
+              }}
+            >
+              ← Accueil
+            </button>
+
             <span className="status-dot" />
             <span className="status-text">Application locale</span>
           </div>
@@ -541,17 +627,6 @@ function App(): React.JSX.Element {
                 </div>
               </div>
 
-              <div className="map-controls">
-                <button className="map-control-button" title="Vue mondiale">
-                  ◎
-                </button>
-                <button className="map-control-button" title="Zoom avant">
-                  +
-                </button>
-                <button className="map-control-button" title="Zoom arrière">
-                  −
-                </button>
-              </div>
             </div>
 
             <div className="map-canvas">

@@ -1,17 +1,13 @@
-
 // Les grandes catégories d'entités géographiques.
 export type GeographicEntityKind =
-  | 'country'
-  | 'territory'
-  | 'administrative-region'
-  | 'disputed-area'
-  | 'other'
+  'country' | 'territory' | 'administrative-region' | 'disputed-area' | 'other'
 
 // Représente une entité géographique indépendante de sa représentation sur la carte.
 export type GeographicEntity = {
   id: string
   name: string
   kind: GeographicEntityKind
+  alpha2?: string
 
   // Permet de rattacher un territoire à un État souverain.
   sovereignEntityId?: string

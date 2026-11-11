@@ -1,7 +1,6 @@
 
 import { useState, useRef, useEffect, useMemo } from 'react'
 import type { JSX } from 'react'
-
 import Map, { Source, Layer } from 'react-map-gl/maplibre'
 
 import type {
@@ -22,16 +21,18 @@ import type {
 } from 'geojson'
 
 import {
-  world110m,
-  world50m,
+  world110mMap,
+  world50mMap,
+  world10mMap,
   world10m
 } from '../data/world'
 import countryCatalog from '../data/quiz/countryCatalog.json'
 import { additionalMapFlagRegions } from '../data/quiz/additionalMapFlagRegions'
-import { flagEmojiFromAlpha2 } from '../data/quiz/flagEmoji'
+import { getFlagImageSource } from '../data/quiz/flagAssets'
 
 import {
   getEntityDisplayName,
+  getEntityById,
   getRelatedEntityIds
 } from '../data/geography/registry'
 
@@ -42,7 +43,11 @@ type WorldMapProps = {
   showLabels: boolean
   quizTargetFeatureId?: string | number | null
   interactionResetKey?: string | number
-  onCountrySelected?: (sourceFeatureId: string | number, name: string) => void
+  onCountrySelected?: (
+  sourceFeatureId: string | number,
+  name: string,
+  entityId: string | null
+) => void
 }
 
 type LabelProperties = {
@@ -73,6 +78,13 @@ type SearchableCountry = {
   alpha2: string | null
   entityId: string | null
   geometry: Geometry
+}
+
+type MapInteractionState = {
+  resetKey: string | number | undefined
+  selectedEntityIds: string[]
+  selectedSourceFeatureId: string | number | null
+  searchIsOpen: boolean
 }
 
 const frenchRegionNames = new Intl.DisplayNames(['fr'], { type: 'region' })
@@ -148,7 +160,7 @@ function getGeometryBounds(geometry: Geometry): [number, number, number, number]
   })
 }
 
-const searchableCountries: SearchableCountry[] = world10m.features.flatMap((feature) => {
+const searchableCountries: SearchableCountry[] = world10mMap.features.flatMap((feature) => {
   const properties = feature.properties as Record<string, unknown> | null
   const sourceName = typeof properties?.sourceName === 'string' ? properties.sourceName : ''
   const sourceFeatureId = properties?.sourceId
@@ -221,16 +233,44 @@ function WorldMap({
   interactionResetKey,
   onCountrySelected
 }: WorldMapProps): JSX.Element {
-  const [selectedEntityIds, setSelectedEntityIds] = useState<string[]>([])
-  const [selectedSourceFeatureId, setSelectedSourceFeatureId] = useState<
-    string | number | null
-  >(null)
+  const [interactionState, setInteractionState] = useState<MapInteractionState>(() => ({
+    resetKey: interactionResetKey,
+    selectedEntityIds: [],
+    selectedSourceFeatureId: null,
+    searchIsOpen: false
+  }))
   const [hoveredCountry, setHoveredCountry] = useState<{
     entityId: string | null
     sourceFeatureId: string | number
   } | null>(null)
   const [searchQuery, setSearchQuery] = useState('')
-  const [searchIsOpen, setSearchIsOpen] = useState(false)
+
+  const activeInteractionState = interactionState.resetKey === interactionResetKey
+    ? interactionState
+    : {
+        resetKey: interactionResetKey,
+        selectedEntityIds: [],
+        selectedSourceFeatureId: null,
+        searchIsOpen: false
+      }
+  const selectedEntityIds = activeInteractionState.selectedEntityIds
+  const selectedSourceFeatureId = activeInteractionState.selectedSourceFeatureId
+  const searchIsOpen = activeInteractionState.searchIsOpen
+
+  const updateInteractionState = (updates: Partial<MapInteractionState>): void => {
+    setInteractionState((current) => ({
+      ...(current.resetKey === interactionResetKey
+        ? current
+        : {
+            resetKey: interactionResetKey,
+            selectedEntityIds: [],
+            selectedSourceFeatureId: null,
+            searchIsOpen: false
+          }),
+      ...updates,
+      resetKey: interactionResetKey
+    }))
+  }
 
   const mapRef = useRef<MapRef>(null)
 
@@ -274,12 +314,21 @@ function WorldMap({
 
   const selectSearchResult = (country: SearchableCountry): void => {
     setSearchQuery(country.displayName)
-    setSearchIsOpen(false)
-    setSelectedEntityIds(
-      country.entityId ? getRelatedEntityIds(country.entityId) : []
-    )
-    setSelectedSourceFeatureId(country.sourceFeatureId)
+    const entity = country.entityId ? getEntityById(country.entityId) : undefined
+    const nextSelectedEntityIds = country.entityId
+      ? entity?.kind === 'territory'
+        ? [country.entityId]
+        : getRelatedEntityIds(country.entityId)
+      : []
+    updateInteractionState({
+      selectedEntityIds: nextSelectedEntityIds,
+      selectedSourceFeatureId: nextSelectedEntityIds.length
+        ? null
+        : country.sourceFeatureId,
+      searchIsOpen: false
+    })
 
+    onCountrySelected?.(country.sourceFeatureId, country.displayName, country.entityId)
     const bounds = getGeometryBounds(country.geometry)
     const map = mapRef.current?.getMap()
     if (bounds && map) {
@@ -369,12 +418,6 @@ function WorldMap({
   }, [quizTargetFeatureId])
 
   useEffect(() => {
-    setSelectedEntityIds([])
-    setSelectedSourceFeatureId(null)
-    setSearchIsOpen(false)
-  }, [interactionResetKey])
-
-  useEffect(() => {
     const worker = new Worker(
       new URL('../workers/labelWorker.ts', import.meta.url),
       { type: 'module' }
@@ -427,23 +470,32 @@ function WorldMap({
   }, [])
 
   const handleCountryClick = (event: MapLayerMouseEvent): void => {
-    setSearchIsOpen(false)
     const feature = event.features?.[0]
-    const name = feature?.properties?.name
-    const entityId = feature?.properties?.entityId
-    const sourceFeatureId = feature?.properties?.sourceId
+    if (!feature) return
 
-    if (name) {
-      console.log(`Pays sélectionné : ${name}`)
+    const name = feature.properties?.name
+    const sourceFeatureId = feature.properties?.sourceId
+    const entityId = typeof feature.properties?.entityId === 'string'
+      ? feature.properties.entityId
+      : null
+
+    if (
+      (typeof sourceFeatureId !== 'string' && typeof sourceFeatureId !== 'number') ||
+      !name
+    ) {
+      return
     }
 
-    setSelectedEntityIds(
-      entityId ? getRelatedEntityIds(entityId) : []
-    )
-    setSelectedSourceFeatureId(sourceFeatureId ?? null)
-    if (sourceFeatureId !== undefined && name) {
-      onCountrySelected?.(sourceFeatureId, String(name))
-    }
+    const displayName = entityId
+      ? getEntityDisplayName(entityId) ?? String(name)
+      : frenchCountryNameBySourceId.get(normalizeSourceFeatureId(sourceFeatureId)) ?? String(name)
+
+    updateInteractionState({
+      selectedEntityIds: entityId ? [entityId] : [],
+      selectedSourceFeatureId: entityId ? null : sourceFeatureId,
+      searchIsOpen: false
+    })
+    onCountrySelected?.(sourceFeatureId, displayName, entityId)
   }
 
   const handleCountryHover = (event: MapLayerMouseEvent): void => {
@@ -475,8 +527,7 @@ function WorldMap({
       ['get', 'entityId'],
       ['literal', selectedEntityIds]
     ])
-  }
-  if (selectedSourceFeatureId !== null) {
+  } else if (selectedSourceFeatureId !== null) {
     selectedFeatureExpressions.push(['==', ['get', 'sourceId'], selectedSourceFeatureId])
   }
   if (quizTargetFeatureId !== null) {
@@ -646,7 +697,7 @@ function WorldMap({
         <Source
           id="countries-110m"
           type="geojson"
-          data={world110m}
+          data={world110mMap}
         >
           <Layer
             id="countries-fill-110m"
@@ -671,7 +722,7 @@ function WorldMap({
         <Source
           id="countries-50m"
           type="geojson"
-          data={world50m}
+          data={world50mMap}
         >
           <Layer
             id="countries-fill-50m"
@@ -696,7 +747,7 @@ function WorldMap({
         <Source
           id="countries-10m"
           type="geojson"
-          data={world10m}
+          data={world10mMap}
         >
           <Layer
             id="countries-fill-10m"
@@ -733,6 +784,40 @@ function WorldMap({
 
       </Map>
 
+      <div className="map-controls world-map-controls" aria-label="Contrôles de la carte">
+        <button
+          className="map-control-button"
+          type="button"
+          title="Vue mondiale"
+          aria-label="Revenir à la vue mondiale"
+          onClick={() => mapRef.current?.getMap().easeTo({
+            center: [0, 20],
+            zoom: 1.5,
+            duration: 450
+          })}
+        >
+          ◎
+        </button>
+        <button
+          className="map-control-button"
+          type="button"
+          title="Zoom avant"
+          aria-label="Zoom avant"
+          onClick={() => mapRef.current?.getMap().zoomIn({ duration: 250 })}
+        >
+          +
+        </button>
+        <button
+          className="map-control-button"
+          type="button"
+          title="Zoom arrière"
+          aria-label="Zoom arrière"
+          onClick={() => mapRef.current?.getMap().zoomOut({ duration: 250 })}
+        >
+          −
+        </button>
+      </div>
+
       <div className="map-search">
         <label className="map-search-label" htmlFor="country-search">
           Chercher un pays
@@ -752,15 +837,17 @@ function WorldMap({
             value={searchQuery}
             onChange={(event) => {
               setSearchQuery(event.target.value)
-              setSearchIsOpen(true)
+              updateInteractionState({ searchIsOpen: true })
               if (!event.target.value.trim()) {
-                setSelectedEntityIds([])
-                setSelectedSourceFeatureId(null)
+                updateInteractionState({
+                  selectedEntityIds: [],
+                  selectedSourceFeatureId: null
+                })
               }
             }}
-            onFocus={() => setSearchIsOpen(true)}
+            onFocus={() => updateInteractionState({ searchIsOpen: true })}
             onKeyDown={(event) => {
-              if (event.key === 'Escape') setSearchIsOpen(false)
+              if (event.key === 'Escape') updateInteractionState({ searchIsOpen: false })
               if (event.key === 'Enter' && searchResults[0]) {
                 event.preventDefault()
                 selectSearchResult(searchResults[0])
@@ -774,22 +861,22 @@ function WorldMap({
               aria-label="Effacer la recherche et la sélection"
               onClick={() => {
                 setSearchQuery('')
-                setSearchIsOpen(false)
-                setSelectedEntityIds([])
-                setSelectedSourceFeatureId(null)
+                updateInteractionState({
+                  searchIsOpen: false,
+                  selectedEntityIds: [],
+                  selectedSourceFeatureId: null
+                })
               }}
             >
               ×
             </button>
           )}
           {selectedSearchCountry?.alpha2 && (
-            <span
+            <img
               className="map-search-selected-flag"
-              role="img"
-              aria-label={`Drapeau : ${selectedSearchCountry.displayName}`}
-            >
-              {flagEmojiFromAlpha2(selectedSearchCountry.alpha2)}
-            </span>
+              src={getFlagImageSource(selectedSearchCountry.alpha2)}
+              alt={`Drapeau de ${selectedSearchCountry.displayName}`}
+            />
           )}
         </div>
         {searchIsOpen && searchQuery.trim() && (
@@ -811,9 +898,11 @@ function WorldMap({
                 >
                   {country.displayName}
                   {country.alpha2 && (
-                    <span className="map-search-result-flag" aria-hidden="true">
-                      {flagEmojiFromAlpha2(country.alpha2)}
-                    </span>
+                    <img
+                      className="map-search-result-flag"
+                      src={getFlagImageSource(country.alpha2)}
+                      alt=""
+                    />
                   )}
                 </button>
               ))

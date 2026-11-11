@@ -11,11 +11,9 @@ import {
   createQuizSession,
   submitQuizAnswer
 } from '../src/renderer/src/data/quiz/useQuizSession.ts'
-import {
-  loadQuizProgress,
-  saveCompletedQuiz
-} from '../src/renderer/src/data/quiz/progress.ts'
+import { loadQuizProgress, saveCompletedQuiz } from '../src/renderer/src/data/quiz/progress.ts'
 import { getLabelPrecision } from '../src/renderer/src/data/geography/labelPrecision.ts'
+import { geographicGeometryLinks } from '../src/renderer/src/data/geography/geometries.ts'
 
 const catalog = JSON.parse(
   await readFile(
@@ -80,10 +78,7 @@ test('chaque question de capitale propose quatre réponses uniques', (): void =>
 })
 
 test('la génération signale une capitale manquante', (): void => {
-  assert.throws(
-    () => buildCapitalQuestions(catalog.slice(0, 1), []),
-    /Missing capital for/
-  )
+  assert.throws(() => buildCapitalQuestions(catalog.slice(0, 1), []), /Missing capital for/)
 })
 
 test('une session mélange les questions et gère les réponses et la fin', (): void => {
@@ -149,7 +144,8 @@ test('la progression v2 des drapeaux est reprise sans inventer un score capitale
 
   assert.deepEqual(loadQuizProgress(), {
     flags: { completedSessions: 3, bestScore: 17, lastScore: 11 },
-    capitals: { completedSessions: 0, bestScore: 0, lastScore: 0 }
+    capitals: { completedSessions: 0, bestScore: 0, lastScore: 0 },
+    custom: { completedSessions: 0, bestScore: 0, lastScore: 0 }
   })
 })
 
@@ -164,7 +160,8 @@ test('la progression v1 des drapeaux reste lisible', (): void => {
 
   assert.deepEqual(loadQuizProgress(), {
     flags: { completedSessions: 2, bestScore: 15, lastScore: 9 },
-    capitals: { completedSessions: 0, bestScore: 0, lastScore: 0 }
+    capitals: { completedSessions: 0, bestScore: 0, lastScore: 0 },
+    custom: { completedSessions: 0, bestScore: 0, lastScore: 0 }
   })
 })
 
@@ -173,4 +170,22 @@ test('la précision des étiquettes augmente avec le zoom', (): void => {
   assert.ok(getLabelPrecision(8) < getLabelPrecision(5))
   assert.equal(getLabelPrecision(12), 0.00034332275390625)
   assert.equal(getLabelPrecision(Number.NaN), 0.05)
+})
+
+test('les polygones ultramarins de France gardent leur entité par résolution', (): void => {
+  const territoryAt = (resolution: string, index: number): string | undefined =>
+    geographicGeometryLinks.find(
+      (link) =>
+        link.sourceId === `natural-earth-${resolution}` &&
+        link.sourceFeatureId === 250 &&
+        link.sourcePolygonIndex === index
+    )?.entityId
+
+  assert.equal(territoryAt('110m', 0), 'territory:guyane')
+  assert.equal(territoryAt('50m', 0), undefined)
+  assert.equal(territoryAt('50m', 9), 'territory:guyane')
+  assert.equal(territoryAt('50m', 6), 'territory:guadeloupe')
+  assert.equal(territoryAt('10m', 0), 'territory:guyane')
+  assert.equal(territoryAt('10m', 6), 'territory:guadeloupe')
+  assert.equal(territoryAt('10m', 2), 'territory:martinique')
 })
