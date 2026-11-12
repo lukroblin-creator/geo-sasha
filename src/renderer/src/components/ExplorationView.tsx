@@ -1,13 +1,15 @@
 import { useState } from 'react'
 import WorldMap from './WorldMap'
 import { getExplorationDetails, type ExplorationDetails } from '../data/geography/exploration'
-import { getFlagImageSource } from '../data/quiz/flagAssets'
+import { ExplorationPlaceDetails } from './ExplorationPlaceDetails'
+import { useLanguage } from '../data/i18n'
 
 type ExplorationViewProps = {
   onBack: () => void
 }
 
 export function ExplorationView({ onBack }: ExplorationViewProps): React.JSX.Element {
+  const { t } = useLanguage()
   const [showBorders, setShowBorders] = useState(true)
   const [showLabels, setShowLabels] = useState(false)
   const [selectedPlace, setSelectedPlace] = useState<ExplorationDetails | null>(null)
@@ -27,31 +29,31 @@ export function ExplorationView({ onBack }: ExplorationViewProps): React.JSX.Ele
           <div className="brand-icon">W</div>
           <div>
             <div className="brand-name">WORLD ATLAS</div>
-            <div className="brand-subtitle">EXPLORATION</div>
+            <div className="brand-subtitle">{t('Exploration')}</div>
           </div>
         </div>
 
         <div className="exploration-heading">
-          <div className="breadcrumb">EXPLORATION / MONDE</div>
-          <h1>Explorer le monde</h1>
+          <div className="breadcrumb">{t('EXPLORATION / MONDE')}</div>
+          <h1>{t('Explorer le monde')}</h1>
         </div>
 
         <div className="exploration-header-actions">
           <span className="status-dot" />
-          <span className="status-text">Application locale</span>
+          <span className="status-text">{t('Application locale')}</span>
           <button className="home-back-button" type="button" onClick={onBack}>
-            ← Accueil
+            {t('← Accueil')}
           </button>
         </div>
       </header>
 
       <main className="exploration-workspace">
-        <section className="exploration-map-panel" aria-label="Carte interactive">
+        <section className="exploration-map-panel" aria-label={t('Carte interactive')}>
           <div className="exploration-map-toolbar">
             <div>
-              <div className="map-title">Carte mondiale</div>
+              <div className="map-title">{t('Carte mondiale')}</div>
               <div className="map-subtitle">
-                Clique sur un pays ou un territoire pour afficher sa fiche.
+                {t('Clique sur un pays ou un territoire pour afficher sa fiche.')}
               </div>
             </div>
           </div>
@@ -61,18 +63,19 @@ export function ExplorationView({ onBack }: ExplorationViewProps): React.JSX.Ele
               showBorders={showBorders}
               showLabels={showLabels}
               onCountrySelected={handlePlaceSelected}
+              onCountryDeselected={() => setSelectedPlace(null)}
             />
           </div>
 
-          <div className="exploration-layer-controls" aria-label="Affichage de la carte">
-            <span className="settings-heading">AFFICHAGE CARTOGRAPHIQUE</span>
+          <div className="exploration-layer-controls" aria-label={t('Affichage de la carte')}>
+            <span className="settings-heading">{t('AFFICHAGE CARTOGRAPHIQUE')}</span>
             <label className="setting-item">
               <input
                 type="checkbox"
                 checked={showBorders}
                 onChange={(event) => setShowBorders(event.target.checked)}
               />
-              <span>Frontières</span>
+              <span>{t('Frontières')}</span>
             </label>
             <label className="setting-item">
               <input
@@ -80,54 +83,13 @@ export function ExplorationView({ onBack }: ExplorationViewProps): React.JSX.Ele
                 checked={showLabels}
                 onChange={(event) => setShowLabels(event.target.checked)}
               />
-              <span>Noms des pays</span>
+              <span>{t('Noms des pays')}</span>
             </label>
           </div>
         </section>
 
         <aside className="exploration-details-panel" aria-live="polite">
-          <div className="exploration-details-eyebrow">FICHE GÉOGRAPHIQUE</div>
-          {selectedPlace ? (
-            <>
-              <h2>{selectedPlace.name}</h2>
-              {selectedPlace.isTerritory && selectedPlace.sovereignName && (
-                <p className="exploration-place-kind">
-                  Territoire de {selectedPlace.sovereignName}
-                </p>
-              )}
-
-              {selectedPlace.flagAlpha2 ? (
-                <div className="exploration-flag-card">
-                  <img
-                    src={getFlagImageSource(selectedPlace.flagAlpha2)}
-                    alt={`Drapeau de ${selectedPlace.flagName}`}
-                  />
-                  <span>Drapeau de {selectedPlace.flagName}</span>
-                </div>
-              ) : (
-                <div className="exploration-missing-flag">Drapeau non disponible</div>
-              )}
-
-              <dl className="exploration-facts">
-                <div>
-                  <dt>Capitale</dt>
-                  <dd>{selectedPlace.capital ?? 'Non renseignée'}</dd>
-                </div>
-                <div>
-                  <dt>Continent</dt>
-                  <dd>{selectedPlace.continent ?? 'Non renseigné'}</dd>
-                </div>
-              </dl>
-            </>
-          ) : (
-            <div className="exploration-empty-state">
-              <span aria-hidden="true">⌖</span>
-              <p>
-                Sélectionne un pays sur la carte pour découvrir son drapeau, sa capitale et son
-                continent.
-              </p>
-            </div>
-          )}
+          <ExplorationPlaceDetails place={selectedPlace} />
         </aside>
       </main>
     </div>

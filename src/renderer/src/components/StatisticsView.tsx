@@ -8,6 +8,7 @@ import {
 } from '../data/quiz/countryContinents'
 import type { QuizMode, QuizProgress } from '../data/quiz/progress'
 import type { CountryQuizStatsByAlpha2 } from '../data/quiz/countryQuizStats'
+import { useLanguage, type AppLanguage } from '../data/i18n'
 
 type StatisticsViewProps = {
   countryStats: CountryQuizStatsByAlpha2
@@ -27,7 +28,6 @@ type CountryRow = {
   rate: number | null
 }
 
-const countryNames = new Intl.DisplayNames(['fr'], { type: 'region' })
 const modeLabels: Record<QuizMode, string> = {
   flags: 'Drapeaux',
   capitals: 'Capitales',
@@ -40,7 +40,8 @@ function percent(rate: number | null): string {
   return rate === null ? '—' : `${Math.round(rate * 100)} %`
 }
 
-function getCountryRows(stats: CountryQuizStatsByAlpha2): CountryRow[] {
+function getCountryRows(stats: CountryQuizStatsByAlpha2, language: AppLanguage): CountryRow[] {
+  const countryNames = new Intl.DisplayNames([language], { type: 'region' })
   return countryCatalog.map((country) => {
     const countryStats = stats[country.alpha2]
     const answered = countryStats?.answered ?? 0
@@ -64,12 +65,13 @@ export function StatisticsView({
   onOpenQuiz,
   onOpenCountryQuiz
 }: StatisticsViewProps): React.JSX.Element {
+  const { language, t } = useLanguage()
   const [selectedAlpha2, setSelectedAlpha2] = useState<string | null>(null)
   const [selectedRegion, setSelectedRegion] = useState<QuizRegion | 'all'>('all')
   const [search, setSearch] = useState('')
   const [sort, setSort] = useState<'name' | 'lowest' | 'highest'>('lowest')
 
-  const rows = useMemo(() => getCountryRows(countryStats), [countryStats])
+  const rows = useMemo(() => getCountryRows(countryStats, language), [countryStats, language])
   const playedRows = rows.filter((country) => country.answered > 0)
   const totalAnswered = playedRows.reduce((sum, country) => sum + country.answered, 0)
   const totalCorrect = playedRows.reduce((sum, country) => sum + country.correct, 0)
@@ -89,15 +91,15 @@ export function StatisticsView({
   const filteredRows = rows
     .filter((country) => selectedRegion === 'all' || country.continent ===
       quizRegions.find((region) => region.id === selectedRegion)?.label)
-    .filter((country) => country.name.toLocaleLowerCase('fr').includes(search.toLocaleLowerCase('fr')))
+    .filter((country) => country.name.toLocaleLowerCase(language).includes(search.toLocaleLowerCase(language)))
     .sort((first, second) => {
       if (sort === 'lowest') {
-        return (first.rate ?? 2) - (second.rate ?? 2) || first.name.localeCompare(second.name, 'fr')
+        return (first.rate ?? 2) - (second.rate ?? 2) || first.name.localeCompare(second.name, language)
       }
       if (sort === 'highest') {
-        return (second.rate ?? -1) - (first.rate ?? -1) || first.name.localeCompare(second.name, 'fr')
+        return (second.rate ?? -1) - (first.rate ?? -1) || first.name.localeCompare(second.name, language)
       }
-      return first.name.localeCompare(second.name, 'fr')
+      return first.name.localeCompare(second.name, language)
     })
 
   const weakestCountries = [...playedRows]
@@ -113,41 +115,41 @@ export function StatisticsView({
     <main className="statistics-screen">
       <header className="statistics-header">
         <div>
-          <div className="breadcrumb">VOTRE PROGRESSION / MONDE</div>
-          <h1>Statistiques</h1>
-          <p>Retrouve tes résultats par quiz et par pays.</p>
+          <div className="breadcrumb">{t('VOTRE PROGRESSION / MONDE')}</div>
+          <h1>{t('Statistiques')}</h1>
+          <p>{t('Retrouve tes résultats par quiz et par pays.')}</p>
         </div>
         <div className="statistics-actions">
-          <button className="home-back-button" type="button" onClick={onBack}>← Accueil</button>
-          <button className="quiz-start-button" type="button" onClick={onOpenQuiz}>Retour au quiz</button>
+          <button className="home-back-button" type="button" onClick={onBack}>{t('← Accueil')}</button>
+          <button className="quiz-start-button" type="button" onClick={onOpenQuiz}>{t('Retour au quiz')}</button>
         </div>
       </header>
 
       <div className="statistics-content">
-        <section className="statistics-summary" aria-label="Résumé des résultats">
+        <section className="statistics-summary" aria-label={t('Résumé des résultats')}>
           <article className="statistics-card">
-            <span>Parties terminées</span>
+            <span>{t('Parties terminées')}</span>
             <strong>{totalCompletedSessions}</strong>
-            <small>Tous les types de quiz</small>
+            <small>{t('Tous les types de quiz')}</small>
           </article>
           <article className="statistics-card">
-            <span>Pays travaillés</span>
+            <span>{t('Pays travaillés')}</span>
             <strong>{playedRows.length} <small>/ {rows.length}</small></strong>
-            <small>Au moins une réponse enregistrée</small>
+            <small>{t('Au moins une réponse enregistrée')}</small>
           </article>
           <article className="statistics-card">
-            <span>Réponses évaluées</span>
+            <span>{t('Réponses évaluées')}</span>
             <strong>{totalAnswered}</strong>
-            <small>{totalCorrect} bonnes réponses</small>
+            <small>{totalCorrect} {t('bonnes réponses')}</small>
           </article>
           <article className="statistics-card statistics-card-highlight">
-            <span>Réussite globale</span>
+            <span>{t('Réussite globale')}</span>
             <strong>{percent(overallRate)}</strong>
-            <small>Sur les questions terminées</small>
+            <small>{t('Sur les questions terminées')}</small>
           </article>
         </section>
 
-        <section className="statistics-mode-grid" aria-label="Résultats par type de quiz">
+        <section className="statistics-mode-grid" aria-label={t('Résultats par type de quiz')}>
           {quizModes.map((mode) => {
             const modeStats = Object.values(countryStats).reduce(
               (sum, country) => ({
@@ -158,10 +160,10 @@ export function StatisticsView({
             )
             return (
               <article className="statistics-mode-card" key={mode}>
-                <span>{modeLabels[mode]}</span>
+                <span>{t(modeLabels[mode])}</span>
                 <strong>{percent(modeStats.answered ? modeStats.correct / modeStats.answered : null)}</strong>
                 <small>
-                  {modeStats.correct} bonnes réponses sur {modeStats.answered} · {quizProgress[mode].completedSessions} parties
+                  {modeStats.correct} {t('bonnes réponses sur')} {modeStats.answered} · {quizProgress[mode].completedSessions} {t('parties')}
                 </small>
               </article>
             )
@@ -172,8 +174,8 @@ export function StatisticsView({
           <div className="statistics-map-panel">
             <div className="statistics-section-heading">
               <div>
-                <h2>Réussite par pays</h2>
-                <p>La carte montre le taux de bonnes réponses des questions terminées.</p>
+                <h2>{t('Réussite par pays')}</h2>
+                <p>{t('La carte montre le taux de bonnes réponses des questions terminées.')}</p>
               </div>
             </div>
             <div className="statistics-map-canvas">
@@ -185,10 +187,11 @@ export function StatisticsView({
                   const alpha2 = countryBySourceId.get(Number(sourceFeatureId))
                   if (alpha2) selectCountry(alpha2)
                 }}
+                onCountryDeselected={() => setSelectedAlpha2(null)}
               />
             </div>
-            <div className="statistics-map-legend" aria-label="Légende du taux de réussite">
-              <span>Pas encore joué</span>
+            <div className="statistics-map-legend" aria-label={t('Légende du taux de réussite')}>
+              <span>{t('Pas encore joué')}</span>
               <i className="statistics-no-data-swatch" />
               <span>0 %</span>
               <i className="statistics-gradient-swatch" />
@@ -199,11 +202,11 @@ export function StatisticsView({
           <aside className="statistics-country-panel" aria-live="polite">
             {selectedCountry ? (
               <>
-                <div className="section-label">FICHE DE PROGRESSION</div>
+                <div className="section-label">{t('FICHE DE PROGRESSION')}</div>
                 <h2>{selectedCountry.name}</h2>
                 <div className="statistics-country-rate">
                   <strong>{percent(selectedCountry.rate)}</strong>
-                  <span>{selectedCountry.correct} bonnes réponses sur {selectedCountry.answered}</span>
+                  <span>{selectedCountry.correct} {t('bonnes réponses sur')} {selectedCountry.answered}</span>
                 </div>
                 <div className="statistics-country-modes">
                   {quizModes.map((mode) => {
@@ -213,7 +216,7 @@ export function StatisticsView({
                       : null
                     return (
                       <div key={mode}>
-                        <span>{modeLabels[mode]}</span>
+                        <span>{t(modeLabels[mode])}</span>
                         <strong>{percent(rate)}</strong>
                         <small>{modeStats?.correct ?? 0} / {modeStats?.answered ?? 0}</small>
                       </div>
@@ -225,14 +228,14 @@ export function StatisticsView({
                   type="button"
                   onClick={() => onOpenCountryQuiz(selectedCountry.alpha2)}
                 >
-                  Lancer un quiz pays
+                  {t('Lancer un quiz pays')}
                 </button>
               </>
             ) : (
               <div className="statistics-empty-selection">
-                <div className="section-label">FICHE DE PROGRESSION</div>
-                <h2>Choisis un pays</h2>
-                <p>Clique sur un pays de la carte ou de la liste pour voir le détail de tes réponses.</p>
+                <div className="section-label">{t('FICHE DE PROGRESSION')}</div>
+                <h2>{t('Choisis un pays')}</h2>
+                <p>{t('Clique sur un pays de la carte ou de la liste pour voir le détail de tes réponses.')}</p>
               </div>
             )}
           </aside>
@@ -246,42 +249,42 @@ export function StatisticsView({
         <section className="statistics-table-panel">
           <div className="statistics-section-heading">
             <div>
-              <h2>Tous les pays</h2>
-              <p>Filtre et trie l’historique de tes réponses.</p>
+              <h2>{t('Tous les pays')}</h2>
+              <p>{t('Filtre et trie l’historique de tes réponses.')}</p>
             </div>
             <div className="statistics-table-filters">
               <input
                 type="search"
-                aria-label="Chercher un pays dans les statistiques"
-                placeholder="Chercher un pays"
+                aria-label={t('Chercher un pays dans les statistiques')}
+                placeholder={t('Chercher un pays')}
                 value={search}
                 onChange={(event) => setSearch(event.target.value)}
               />
               <select
-                aria-label="Filtrer par continent"
+                aria-label={t('Filtrer par continent')}
                 value={selectedRegion}
                 onChange={(event) => setSelectedRegion(event.target.value as QuizRegion | 'all')}
               >
-                <option value="all">Tous les continents</option>
+                <option value="all">{t('Tous les continents')}</option>
                 {quizRegions.filter((region) => region.id !== 'world').map((region) => (
-                  <option key={region.id} value={region.id}>{region.label}</option>
+                  <option key={region.id} value={region.id}>{t(region.label)}</option>
                 ))}
               </select>
               <select
-                aria-label="Trier les pays"
+                aria-label={t('Trier les pays')}
                 value={sort}
                 onChange={(event) => setSort(event.target.value as typeof sort)}
               >
-                <option value="lowest">Réussite la plus basse</option>
-                <option value="highest">Réussite la plus haute</option>
-                <option value="name">Ordre alphabétique</option>
+                <option value="lowest">{t('Réussite la plus basse')}</option>
+                <option value="highest">{t('Réussite la plus haute')}</option>
+                <option value="name">{t('Ordre alphabétique')}</option>
               </select>
             </div>
           </div>
           <div className="statistics-table-scroll">
             <table className="statistics-table">
               <thead>
-                <tr><th>Pays</th><th>Continent</th><th>Bonnes réponses</th><th>Réussite</th></tr>
+                <tr><th>{t('Pays')}</th><th>{t('Continent')}</th><th>{t('Bonnes réponses')}</th><th>{t('Réussite')}</th></tr>
               </thead>
               <tbody>
                 {filteredRows.map((country) => (
@@ -289,13 +292,13 @@ export function StatisticsView({
                     <td>
                       <button type="button" onClick={() => selectCountry(country.alpha2)}>{country.name}</button>
                     </td>
-                    <td>{country.continent}</td>
+                    <td>{t(country.continent)}</td>
                     <td>{country.correct} / {country.answered}</td>
                     <td>{percent(country.rate)}</td>
                   </tr>
                 ))}
                 {filteredRows.length === 0 && (
-                  <tr><td colSpan={4}>Aucun pays ne correspond à cette recherche.</td></tr>
+                  <tr><td colSpan={4}>{t('Aucun pays ne correspond à cette recherche.')}</td></tr>
                 )}
               </tbody>
             </table>
@@ -315,15 +318,16 @@ function CountryRanking({
   rows: CountryRow[]
   onSelect: (alpha2: string) => void
 }): React.JSX.Element {
+  const { t } = useLanguage()
   return (
     <section className="statistics-ranking-panel">
-      <h2>{title}</h2>
+      <h2>{t(title)}</h2>
       {rows.length ? rows.map((country) => (
         <button type="button" key={country.alpha2} onClick={() => onSelect(country.alpha2)}>
           <span>{country.name}</span>
           <span>{percent(country.rate)} <small>({country.correct}/{country.answered})</small></span>
         </button>
-      )) : <p>Les résultats apparaîtront après quelques questions.</p>}
+      )) : <p>{t('Les résultats apparaîtront après quelques questions.')}</p>}
     </section>
   )
 }

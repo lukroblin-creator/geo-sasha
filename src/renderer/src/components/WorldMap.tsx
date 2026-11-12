@@ -1,7 +1,7 @@
 
-import { useState, useRef, useEffect, useMemo } from 'react'
-import type { JSX } from 'react'
-import Map, { Source, Layer } from 'react-map-gl/maplibre'
+import { useState, useRef, useEffect, useMemo, useCallback } from 'react'
+import type { CSSProperties, JSX, ReactNode } from 'react'
+import Map, { Source, Layer, Marker } from 'react-map-gl/maplibre'
 
 import type {
   MapLayerMouseEvent,
@@ -9,6 +9,7 @@ import type {
 } from 'react-map-gl/maplibre'
 
 import type {
+  Map as MapLibreMap,
   FillLayerSpecification,
   LineLayerSpecification,
   SymbolLayerSpecification
@@ -29,6 +30,11 @@ import {
 import countryCatalog from '../data/quiz/countryCatalog.json'
 import { additionalMapFlagRegions } from '../data/quiz/additionalMapFlagRegions'
 import { getFlagImageSource } from '../data/quiz/flagAssets'
+import {
+  addFlagTerritoryProperties
+} from '../data/quiz/mapFlagTerritories'
+import { MapFlagOverlay } from './MapFlagOverlay'
+import { useLanguage } from '../data/i18n'
 
 import {
   getEntityDisplayName,
@@ -42,15 +48,25 @@ import 'maplibre-gl/dist/maplibre-gl.css'
 type WorldMapProps = {
   showBorders: boolean
   showLabels: boolean
+  showFlagTerritories?: boolean
+  showSelectionFeedback?: boolean
   quizTargetFeatureId?: string | number | null
+  quizRevealCard?: ReactNode
+  showQuizRevealCard?: boolean
   interactionResetKey?: string | number
   countryAccuracyByAlpha2?: Record<string, { answered: number; correct: number }>
+  onCountryDeselected?: () => void
+  onMapClick?: (position: [number, number]) => number | null
   onCountrySelected?: (
   sourceFeatureId: string | number,
   name: string,
   entityId: string | null
-) => void
+) => void | boolean
 }
+
+const world110mFlagMap = addFlagTerritoryProperties(world110mMap)
+const world50mFlagMap = addFlagTerritoryProperties(world50mMap)
+const world10mFlagMap = addFlagTerritoryProperties(world10mMap)
 
 type LabelProperties = {
   name: string
@@ -87,6 +103,8 @@ type MapInteractionState = {
   selectedEntityIds: string[]
   selectedSourceFeatureId: string | number | null
   searchIsOpen: boolean
+  searchQuery: string
+  selectionSource: 'map' | 'search' | null
 }
 
 const frenchRegionNames = new Intl.DisplayNames(['fr'], { type: 'region' })
@@ -235,34 +253,68 @@ function haveSameLabels(
 function WorldMap({
   showBorders,
   showLabels,
+  showFlagTerritories = false,
+  showSelectionFeedback = false,
   quizTargetFeatureId = null,
+  quizRevealCard,
+  showQuizRevealCard = false,
   interactionResetKey,
   countryAccuracyByAlpha2,
+  onCountryDeselected,
+  onMapClick,
   onCountrySelected
 }: WorldMapProps): JSX.Element {
+  const { t } = useLanguage()
+  const [mapLoaded, setMapLoaded] = useState(false)
+  const [mapInstance, setMapInstance] = useState<MapLibreMap | null>(null)
+  const [mapZoom, setMapZoom] = useState(1.5)
+  const [mapViewRevision, setMapViewRevision] = useState(0)
+  const flagOverlayRafRef = useRef<number | null>(null)
+  const [clickMarker, setClickMarker] = useState<{
+    longitude: number
+    latitude: number
+    id: number
+    interactionResetKey: string | number | undefined
+  } | null>(null)
+  const [proximityMarker, setProximityMarker] = useState<{
+    longitude: number
+    latitude: number
+    score: number
+    id: number
+    interactionResetKey: string | number | undefined
+  } | null>(null)
+  const [selectionBoundaryResetKey, setSelectionBoundaryResetKey] = useState<
+    string | number | undefined | null
+  >(null)
+  const clickMarkerIdRef = useRef(0)
+  const proximityMarkerIdRef = useRef(0)
+  const proximityMarkerTimeoutRef = useRef<number | null>(null)
   const [interactionState, setInteractionState] = useState<MapInteractionState>(() => ({
     resetKey: interactionResetKey,
     selectedEntityIds: [],
     selectedSourceFeatureId: null,
-    searchIsOpen: false
+    searchIsOpen: false,
+    searchQuery: '',
+    selectionSource: null
   }))
   const [hoveredCountry, setHoveredCountry] = useState<{
     entityId: string | null
     sourceFeatureId: string | number
   } | null>(null)
-  const [searchQuery, setSearchQuery] = useState('')
-
   const activeInteractionState = interactionState.resetKey === interactionResetKey
     ? interactionState
     : {
         resetKey: interactionResetKey,
         selectedEntityIds: [],
         selectedSourceFeatureId: null,
-        searchIsOpen: false
+        searchIsOpen: false,
+        searchQuery: '',
+        selectionSource: null
       }
   const selectedEntityIds = activeInteractionState.selectedEntityIds
   const selectedSourceFeatureId = activeInteractionState.selectedSourceFeatureId
   const searchIsOpen = activeInteractionState.searchIsOpen
+  const searchQuery = activeInteractionState.searchQuery
 
   const updateInteractionState = (updates: Partial<MapInteractionState>): void => {
     setInteractionState((current) => ({
@@ -272,7 +324,9 @@ function WorldMap({
             resetKey: interactionResetKey,
             selectedEntityIds: [],
             selectedSourceFeatureId: null,
-            searchIsOpen: false
+            searchIsOpen: false,
+            searchQuery: '',
+            selectionSource: null
           }),
       ...updates,
       resetKey: interactionResetKey
@@ -294,6 +348,68 @@ function WorldMap({
     features: []
   })
 
+  const scheduleFlagOverlayUpdate = useCallback((): void => {
+    if (!showFlagTerritories || flagOverlayRafRef.current !== null) return
+    flagOverlayRafRef.current = window.requestAnimationFrame(() => {
+      flagOverlayRafRef.current = null
+      const map = mapRef.current?.getMap()
+      if (!map) return
+      setMapZoom(map.getZoom())
+      setMapViewRevision((current) => current + 1)
+    })
+  }, [showFlagTerritories])
+
+  useEffect(() => () => {
+    if (flagOverlayRafRef.current !== null) {
+      window.cancelAnimationFrame(flagOverlayRafRef.current)
+    }
+  }, [])
+
+  useEffect(() => () => {
+    if (proximityMarkerTimeoutRef.current !== null) {
+      window.clearTimeout(proximityMarkerTimeoutRef.current)
+    }
+  }, [])
+
+  useEffect(() => {
+    if (!showBorders) return
+    const timeoutId = window.setTimeout(() => {
+      setProximityMarker(null)
+      setClickMarker(null)
+      if (proximityMarkerTimeoutRef.current !== null) {
+        window.clearTimeout(proximityMarkerTimeoutRef.current)
+        proximityMarkerTimeoutRef.current = null
+      }
+    }, 0)
+    return () => window.clearTimeout(timeoutId)
+  }, [showBorders])
+
+  const activeClickMarker = clickMarker?.interactionResetKey === interactionResetKey
+    && showSelectionFeedback
+    && !showBorders
+    ? clickMarker
+    : null
+  const activeProximityMarker = !showBorders &&
+    proximityMarker?.interactionResetKey === interactionResetKey
+    ? proximityMarker
+    : null
+  const selectionBoundaryOpacity = selectionBoundaryResetKey === interactionResetKey ? 1 : 0
+
+  useEffect(() => {
+    scheduleFlagOverlayUpdate()
+  }, [
+    hoveredCountry,
+    mapLoaded,
+    scheduleFlagOverlayUpdate,
+    selectedEntityIds,
+    selectedSourceFeatureId,
+    showBorders,
+    showLabels,
+    visibleLabels,
+    quizTargetFeatureId,
+    selectionBoundaryOpacity
+  ])
+
   const searchResults = useMemo(() => {
     const query = normalizeSearchText(searchQuery)
     if (!query) return []
@@ -307,7 +423,8 @@ function WorldMap({
       .sort((first, second) => first.displayName.localeCompare(second.displayName, 'fr'))
   }, [searchQuery])
 
-  const selectedSearchCountry = searchIsOpen
+  const selectedSearchCountry = searchIsOpen ||
+    (showSelectionFeedback && activeInteractionState.selectionSource === 'map')
     ? null
     : searchableCountries.find((country) => country.displayName === searchQuery)
 
@@ -320,7 +437,13 @@ function WorldMap({
   }
 
   const selectSearchResult = (country: SearchableCountry): void => {
-    setSearchQuery(country.displayName)
+    const accepted = onCountrySelected?.(
+      country.sourceFeatureId,
+      country.displayName,
+      country.entityId
+    )
+    if (accepted === false) return
+
     const entity = country.entityId ? getEntityById(country.entityId) : undefined
     const nextSelectedEntityIds = country.entityId
       ? entity?.kind === 'territory'
@@ -332,10 +455,12 @@ function WorldMap({
       selectedSourceFeatureId: nextSelectedEntityIds.length
         ? null
         : country.sourceFeatureId,
-      searchIsOpen: false
+      searchIsOpen: false,
+      searchQuery: country.displayName,
+      selectionSource: 'search'
     })
 
-    onCountrySelected?.(country.sourceFeatureId, country.displayName, country.entityId)
+    if (showSelectionFeedback) setSelectionBoundaryResetKey(interactionResetKey)
     const bounds = getGeometryBounds(country.geometry)
     const map = mapRef.current?.getMap()
     if (bounds && map) {
@@ -397,7 +522,7 @@ function WorldMap({
     sendLabelUpdate(request)
   }
 
-  const focusOnQuizTarget = (): void => {
+  const focusOnQuizTarget = useCallback((): void => {
     if (quizTargetFeatureId === null) return
 
     const target = world10m.features.find((feature) => {
@@ -413,16 +538,39 @@ function WorldMap({
     const map = mapRef.current?.getMap()
 
     if (bounds && map) {
+      const padding = showQuizRevealCard
+        ? {
+            top: 56,
+            right: Math.min(350, map.getCanvas().clientWidth * 0.62),
+            bottom: 56,
+            left: 56
+          }
+        : 64
       map.fitBounds(
         [[bounds[0], bounds[1]], [bounds[2], bounds[3]]],
-        { padding: 64, maxZoom: 4.5, duration: 650 }
+        {
+          padding,
+          maxZoom: showQuizRevealCard ? 7 : 4.5,
+          duration: 650
+        }
       )
     }
-  }
+  }, [quizTargetFeatureId, showQuizRevealCard])
 
   useEffect(() => {
-    focusOnQuizTarget()
-  }, [quizTargetFeatureId])
+    if (interactionResetKey === undefined) return
+
+    if (quizTargetFeatureId !== null) {
+      focusOnQuizTarget()
+      return
+    }
+
+    mapRef.current?.getMap().easeTo({
+      center: [0, 0],
+      zoom: 1.5,
+      duration: 650
+    })
+  }, [focusOnQuizTarget, interactionResetKey, quizTargetFeatureId])
 
   useEffect(() => {
     const worker = new Worker(
@@ -476,9 +624,54 @@ function WorldMap({
     }
   }, [])
 
+  const showMapProximityFeedback = (longitude: number, latitude: number): void => {
+    const score = onMapClick?.([longitude, latitude])
+    if (score === null || score === undefined || showBorders) return
+
+    proximityMarkerIdRef.current += 1
+    const markerId = proximityMarkerIdRef.current
+    setProximityMarker({
+      longitude,
+      latitude,
+      score,
+      id: markerId,
+      interactionResetKey
+    })
+
+    if (proximityMarkerTimeoutRef.current !== null) {
+      window.clearTimeout(proximityMarkerTimeoutRef.current)
+    }
+    proximityMarkerTimeoutRef.current = window.setTimeout(() => {
+      setProximityMarker((current) => current?.id === markerId ? null : current)
+      proximityMarkerTimeoutRef.current = null
+    }, 1500)
+  }
+
+  const clearMapProximityFeedback = (): void => {
+    setProximityMarker(null)
+    if (proximityMarkerTimeoutRef.current !== null) {
+      window.clearTimeout(proximityMarkerTimeoutRef.current)
+      proximityMarkerTimeoutRef.current = null
+    }
+  }
+
   const handleCountryClick = (event: MapLayerMouseEvent): void => {
     const feature = event.features?.[0]
-    if (!feature) return
+    if (!feature) {
+      showMapProximityFeedback(event.lngLat.lng, event.lngLat.lat)
+      setHoveredCountry(null)
+      setClickMarker(null)
+      setSelectionBoundaryResetKey(null)
+      updateInteractionState({
+        selectedEntityIds: [],
+        selectedSourceFeatureId: null,
+        searchIsOpen: false,
+        searchQuery: '',
+        selectionSource: null
+      })
+      onCountryDeselected?.()
+      return
+    }
 
     const name = feature.properties?.name
     const sourceFeatureId = feature.properties?.sourceId
@@ -497,15 +690,38 @@ function WorldMap({
       ? getEntityDisplayName(entityId) ?? String(name)
       : frenchCountryNameBySourceId.get(normalizeSourceFeatureId(sourceFeatureId)) ?? String(name)
 
+    const accepted = onCountrySelected?.(sourceFeatureId, displayName, entityId)
+    if (accepted === false) {
+      showMapProximityFeedback(event.lngLat.lng, event.lngLat.lat)
+      return
+    }
+    if (accepted === true) clearMapProximityFeedback()
+
     updateInteractionState({
       selectedEntityIds: entityId ? [entityId] : [],
       selectedSourceFeatureId: entityId ? null : sourceFeatureId,
-      searchIsOpen: false
+      searchIsOpen: false,
+      searchQuery: displayName,
+      selectionSource: 'map'
     })
-    onCountrySelected?.(sourceFeatureId, displayName, entityId)
+    if (showSelectionFeedback && !showBorders) {
+      clickMarkerIdRef.current += 1
+      setClickMarker({
+        longitude: event.lngLat.lng,
+        latitude: event.lngLat.lat,
+        id: clickMarkerIdRef.current,
+        interactionResetKey
+      })
+      setSelectionBoundaryResetKey(interactionResetKey)
+    }
   }
 
   const handleCountryHover = (event: MapLayerMouseEvent): void => {
+    if (!showBorders) {
+      setHoveredCountry(null)
+      return
+    }
+
     const feature = event.features?.[0]
     const sourceFeatureId = feature?.properties?.sourceId
     const entityId = feature?.properties?.entityId
@@ -547,13 +763,13 @@ function WorldMap({
   if (selectedFeatureExpressions.length === 0) selectedFeatureExpressions.push(false)
 
   const hoveredFeatureExpressions: unknown[] = []
-  if (hoveredCountry?.entityId) {
+  if (showBorders && hoveredCountry?.entityId) {
     hoveredFeatureExpressions.push([
       '==',
       ['get', 'entityId'],
       hoveredCountry.entityId
     ])
-  } else if (hoveredCountry) {
+  } else if (showBorders && hoveredCountry) {
     hoveredFeatureExpressions.push([
       '==',
       ['get', 'sourceId'],
@@ -569,6 +785,11 @@ function WorldMap({
   }
   if (hoveredFeatureExpressions.length === 0) hoveredFeatureExpressions.push(false)
 
+  const selectedFeatureFilter = [
+    'any',
+    ...selectedFeatureExpressions
+  ] as unknown as NonNullable<FillLayerSpecification['filter']>
+
   const selectedFillColor = [
     'case',
     ['any', ...selectedFeatureExpressions],
@@ -577,7 +798,6 @@ function WorldMap({
     '#34495b',
     '#263746'
   ] as unknown as NonNullable<FillLayerSpecification['paint']>['fill-color']
-
   const accuracyBySourceId = countryCatalog.flatMap((country) => {
     const stats = countryAccuracyByAlpha2?.[country.alpha2]
     return stats?.answered
@@ -618,41 +838,46 @@ function WorldMap({
       ] as unknown as NonNullable<FillLayerSpecification['paint']>['fill-color']
     : selectedFillColor
 
+  const fillOpacity110m: NonNullable<FillLayerSpecification['paint']>['fill-opacity'] = [
+    'interpolate',
+    ['linear'],
+    ['zoom'],
+    2, 1,
+    3, 0
+  ]
+  const fillOpacity50m: NonNullable<FillLayerSpecification['paint']>['fill-opacity'] = [
+    'interpolate',
+    ['linear'],
+    ['zoom'],
+    2, 0,
+    3, 1,
+    4, 1,
+    5, 0
+  ]
+  const fillOpacity10m: NonNullable<FillLayerSpecification['paint']>['fill-opacity'] = [
+    'interpolate',
+    ['linear'],
+    ['zoom'],
+    4, 0,
+    5, 1
+  ]
+
   const fillPaint110m: FillLayerSpecification['paint'] = {
     'fill-color': fillColor,
-    'fill-opacity': [
-      'interpolate',
-      ['linear'],
-      ['zoom'],
-      2, 1,
-      3, 0
-    ]
+    // Crossfading resolutions can expose antialiased polygon edges as faint lines.
+    'fill-antialias': showBorders,
+    'fill-opacity': fillOpacity110m
   }
-
   const fillPaint50m: FillLayerSpecification['paint'] = {
     'fill-color': fillColor,
-    'fill-opacity': [
-      'interpolate',
-      ['linear'],
-      ['zoom'],
-      2, 0,
-      3, 1,
-      4, 1,
-      5, 0
-    ]
+    'fill-antialias': showBorders,
+    'fill-opacity': fillOpacity50m
   }
-
   const fillPaint10m: FillLayerSpecification['paint'] = {
     'fill-color': fillColor,
-    'fill-opacity': [
-      'interpolate',
-      ['linear'],
-      ['zoom'],
-      4, 0,
-      5, 1
-    ]
+    'fill-antialias': showBorders,
+    'fill-opacity': fillOpacity10m
   }
-
   const borderPaint110m: LineLayerSpecification['paint'] = {
     'line-color': '#64748b',
     'line-width': 0.7,
@@ -691,6 +916,13 @@ function WorldMap({
     ]
   }
 
+  const selectionBoundaryPaint = (minZoom: number, maxZoom: number): LineLayerSpecification['paint'] => ({
+    'line-color': '#f4c45e',
+    'line-width': ['interpolate', ['linear'], ['zoom'], minZoom, 1.2, maxZoom, 2.4],
+    'line-opacity': selectionBoundaryOpacity,
+    'line-opacity-transition': { duration: 320, delay: 0 }
+  })
+
   const labelLayout: SymbolLayerSpecification['layout'] = {
     'text-field': ['get', 'name'],
     'text-size': ['interpolate', ['linear'], ['zoom'], 1, 8, 3, 9, 5, 10, 12, 11],
@@ -712,11 +944,20 @@ function WorldMap({
     <div className="world-map-shell">
       <Map
         ref={mapRef}
-        onLoad={() => {
+        onLoad={(event) => {
+          setMapInstance(event.target)
+          setMapLoaded(true)
+          setMapZoom(event.target.getZoom())
           updateVisibleLabels()
           focusOnQuizTarget()
+          scheduleFlagOverlayUpdate()
         }}
-        onMoveEnd={updateVisibleLabels}
+        onMove={scheduleFlagOverlayUpdate}
+        onMoveEnd={() => {
+          updateVisibleLabels()
+          scheduleFlagOverlayUpdate()
+        }}
+        onResize={scheduleFlagOverlayUpdate}
         onMouseMove={handleCountryHover}
         onMouseLeave={() => setHoveredCountry(null)}
         initialViewState={{
@@ -744,7 +985,7 @@ function WorldMap({
         <Source
           id="countries-110m"
           type="geojson"
-          data={world110mMap}
+          data={world110mFlagMap}
         >
           <Layer
             id="countries-fill-110m"
@@ -763,13 +1004,24 @@ function WorldMap({
               paint={borderPaint110m}
             />
           )}
+
+          {showSelectionFeedback && (
+            <Layer
+              id="countries-selected-boundary-110m"
+              type="line"
+              minzoom={0}
+              maxzoom={3}
+              filter={selectedFeatureFilter}
+              paint={selectionBoundaryPaint(0, 3)}
+            />
+          )}
         </Source>
 
         {/* Résolution intermédiaire : 50m */}
         <Source
           id="countries-50m"
           type="geojson"
-          data={world50mMap}
+          data={world50mFlagMap}
         >
           <Layer
             id="countries-fill-50m"
@@ -788,13 +1040,24 @@ function WorldMap({
               paint={borderPaint50m}
             />
           )}
+
+          {showSelectionFeedback && (
+            <Layer
+              id="countries-selected-boundary-50m"
+              type="line"
+              minzoom={2}
+              maxzoom={5}
+              filter={selectedFeatureFilter}
+              paint={selectionBoundaryPaint(2, 5)}
+            />
+          )}
         </Source>
 
         {/* Résolution détaillée : 10m */}
         <Source
           id="countries-10m"
           type="geojson"
-          data={world10mMap}
+          data={world10mFlagMap}
         >
           <Layer
             id="countries-fill-10m"
@@ -811,10 +1074,20 @@ function WorldMap({
               paint={borderPaint10m}
             />
           )}
+
+          {showSelectionFeedback && (
+            <Layer
+              id="countries-selected-boundary-10m"
+              type="line"
+              minzoom={4}
+              filter={selectedFeatureFilter}
+              paint={selectionBoundaryPaint(4, 8)}
+            />
+          )}
         </Source>
 
         {/* Étiquettes indépendantes des résolutions */}
-        {showLabels && (
+        {showLabels && !showFlagTerritories && (
           <Source
             id="country-labels"
             type="geojson"
@@ -829,14 +1102,67 @@ function WorldMap({
           </Source>
         )}
 
+        {showSelectionFeedback && activeClickMarker && (
+          <Marker
+            key={activeClickMarker.id}
+            longitude={activeClickMarker.longitude}
+            latitude={activeClickMarker.latitude}
+            anchor="center"
+            style={{ pointerEvents: 'none' }}
+          >
+            <div className="map-selection-marker" aria-hidden="true">
+              <span className="map-selection-marker-ripple" />
+              <span className="map-selection-marker-dot" />
+            </div>
+          </Marker>
+        )}
+
+        {activeProximityMarker && (
+          <Marker
+            key={`proximity-${activeProximityMarker.id}`}
+            longitude={activeProximityMarker.longitude}
+            latitude={activeProximityMarker.latitude}
+            anchor="center"
+            style={{ pointerEvents: 'none' }}
+          >
+            <div className="map-proximity-marker-anchor" aria-hidden="true">
+              <span
+                className="map-proximity-score"
+                style={{ '--score-hue': `${activeProximityMarker.score * 1.2}deg` } as CSSProperties}
+              >
+                {activeProximityMarker.score}%
+              </span>
+            </div>
+          </Marker>
+        )}
+
       </Map>
 
-      <div className="map-controls world-map-controls" aria-label="Contrôles de la carte">
+      {showFlagTerritories && mapInstance && (
+        <MapFlagOverlay
+          map={mapInstance}
+          revision={mapViewRevision}
+          zoom={mapZoom}
+          world110m={world110mFlagMap}
+          world50m={world50mFlagMap}
+          world10m={world10mFlagMap}
+          labels={visibleLabels}
+          showBorders={showBorders}
+          showLabels={showLabels}
+          selectedEntityIds={selectedEntityIds}
+          selectedSourceFeatureId={selectedSourceFeatureId}
+          hoveredCountry={hoveredCountry}
+          quizTargetFeatureId={quizTargetFeatureId}
+          selectionBoundaryOpacity={selectionBoundaryOpacity}
+        />
+      )}
+
+      <div className="map-controls world-map-controls" aria-label={t('Contrôles de la carte')}>
         <button
           className="map-control-button"
           type="button"
-          title="Vue mondiale"
-          aria-label="Revenir à la vue mondiale"
+          title={t('Vue mondiale')}
+          aria-label={t('Revenir à la vue mondiale')}
           onClick={() => mapRef.current?.getMap().easeTo({
             center: [0, 0],
             zoom: 1.5,
@@ -848,8 +1174,8 @@ function WorldMap({
         <button
           className="map-control-button"
           type="button"
-          title="Zoom avant"
-          aria-label="Zoom avant"
+          title={t('Zoom avant')}
+          aria-label={t('Zoom avant')}
           onClick={() => mapRef.current?.getMap().zoomIn({ duration: 250 })}
         >
           +
@@ -857,8 +1183,8 @@ function WorldMap({
         <button
           className="map-control-button"
           type="button"
-          title="Zoom arrière"
-          aria-label="Zoom arrière"
+          title={t('Zoom arrière')}
+          aria-label={t('Zoom arrière')}
           onClick={() => mapRef.current?.getMap().zoomOut({ duration: 250 })}
         >
           −
@@ -867,7 +1193,7 @@ function WorldMap({
 
       <div className="map-search">
         <label className="map-search-label" htmlFor="country-search">
-          Chercher un pays
+          {t('Chercher un pays')}
         </label>
         <div className="map-search-input-row">
           <span aria-hidden="true" className="map-search-icon">⌕</span>
@@ -875,7 +1201,7 @@ function WorldMap({
             id="country-search"
             className="map-search-input"
             type="search"
-            placeholder="Ex. France, Japon, Canada…"
+            placeholder={t('Ex. France, Japon, Canada…')}
             autoComplete="off"
             role="combobox"
             aria-autocomplete="list"
@@ -883,14 +1209,14 @@ function WorldMap({
             aria-controls="country-search-results"
             value={searchQuery}
             onChange={(event) => {
-              setSearchQuery(event.target.value)
-              updateInteractionState({ searchIsOpen: true })
-              if (!event.target.value.trim()) {
-                updateInteractionState({
-                  selectedEntityIds: [],
-                  selectedSourceFeatureId: null
-                })
-              }
+              updateInteractionState({
+                searchQuery: event.target.value,
+                searchIsOpen: true,
+                selectedEntityIds: [],
+                selectedSourceFeatureId: null,
+                selectionSource: null
+              })
+              onCountryDeselected?.()
             }}
             onFocus={() => updateInteractionState({ searchIsOpen: true })}
             onKeyDown={(event) => {
@@ -905,14 +1231,16 @@ function WorldMap({
             <button
               className="map-search-clear"
               type="button"
-              aria-label="Effacer la recherche et la sélection"
+              aria-label={t('Effacer la recherche et la sélection')}
               onClick={() => {
-                setSearchQuery('')
                 updateInteractionState({
+                  searchQuery: '',
                   searchIsOpen: false,
                   selectedEntityIds: [],
-                  selectedSourceFeatureId: null
+                  selectedSourceFeatureId: null,
+                  selectionSource: null
                 })
+                onCountryDeselected?.()
               }}
             >
               ×
@@ -922,7 +1250,7 @@ function WorldMap({
             <img
               className="map-search-selected-flag"
               src={getFlagImageSource(selectedSearchCountry.alpha2)}
-              alt={`Drapeau de ${selectedSearchCountry.displayName}`}
+              alt={`${t('Drapeau de')} ${selectedSearchCountry.displayName}`}
             />
           )}
         </div>
@@ -931,7 +1259,7 @@ function WorldMap({
             id="country-search-results"
             className="map-search-results"
             role="listbox"
-            aria-label="Résultats de recherche"
+            aria-label={t('Résultats de recherche')}
           >
             {searchResults.length ? (
               searchResults.map((country) => (
@@ -954,11 +1282,16 @@ function WorldMap({
                 </button>
               ))
             ) : (
-              <div className="map-search-empty">Aucun pays trouvé</div>
+              <div className="map-search-empty">{t('Aucun pays trouvé')}</div>
             )}
           </div>
         )}
       </div>
+      {quizRevealCard && (
+        <div className="quiz-reveal-card-anchor">
+          {quizRevealCard}
+        </div>
+      )}
     </div>
   )
 }

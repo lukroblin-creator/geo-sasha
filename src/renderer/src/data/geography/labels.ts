@@ -172,6 +172,14 @@ function findBestLabelPoint(
   return bestAnchor
 }
 
+/** Returns a stable interior point for the main land mass of a polygon geometry. */
+export function getGeometryInteriorPoint(
+  geometry: Geometry
+): [number, number] | null {
+  if (geometry.type !== 'Polygon' && geometry.type !== 'MultiPolygon') return null
+  return findBestLabelPoint(geometry, getLabelPrecision(0))?.coordinates ?? null
+}
+
 export function createVisibleCountryLabels(
   countries: FeatureCollection<Geometry>,
   bbox: [number, number, number, number],

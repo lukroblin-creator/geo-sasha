@@ -25,6 +25,16 @@ for (const filename of await readdir(flagOverridesDirectory)) {
 
 const flagFiles = [...flagFilesByCode.entries()]
   .sort(([firstCode], [secondCode]) => firstCode.localeCompare(secondCode))
+const nonRectangularOutlines = {
+  NP: [
+    [0, 0],
+    [1, 0.46967],
+    [0, 0.46967],
+    [1, 1],
+    [0, 1]
+  ]
+}
+
 const namedColors = {
   black: '#000000',
   blue: '#0000FF',
@@ -94,14 +104,16 @@ for (const [alpha2, svgPath] of flagFiles) {
 
   const width = Number(viewBox[3])
   const height = Number(viewBox[4])
-  const isPennant = alpha2 === 'NP'
+  const outline = nonRectangularOutlines[alpha2]
+  const isPolygon = Boolean(outline)
   flags.push({
     alpha2,
     width,
     height,
     ratio: width / height,
-    ratioLabel: isPennant ? null : ratioLabel(width, height),
-    shape: isPennant ? 'pennant' : 'rectangle',
+    ratioLabel: isPolygon ? null : ratioLabel(width, height),
+    shape: isPolygon ? 'polygon' : 'rectangle',
+    ...(outline ? { outline } : {}),
     colors: parseColors(svg)
   })
 }

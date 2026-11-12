@@ -5,6 +5,7 @@ import {
   type CountryKnowledgeQuestion
 } from '../data/quiz/countryKnowledge'
 import type { QuizSession } from '../data/quiz/useQuizSession'
+import { useLanguage } from '../data/i18n'
 
 type CountryKnowledgeQuizViewProps = {
   alpha2: string
@@ -16,8 +17,6 @@ type CountryKnowledgeQuizViewProps = {
   onStop: () => void
 }
 
-const countryNames = new Intl.DisplayNames(['fr'], { type: 'region' })
-
 export function CountryKnowledgeQuizView({
   alpha2,
   session,
@@ -27,7 +26,9 @@ export function CountryKnowledgeQuizView({
   onRestart,
   onStop
 }: CountryKnowledgeQuizViewProps): React.JSX.Element {
+  const { language, t } = useLanguage()
   const country = getCountryKnowledgeCountry(alpha2)
+  const countryNames = new Intl.DisplayNames([language], { type: 'region' })
   const countryName = countryNames.of(alpha2) ?? country?.countryName ?? alpha2
   const question = session.questionOrder[session.questionIndex]
   const total = session.questionOrder.length
@@ -39,26 +40,26 @@ export function CountryKnowledgeQuizView({
     <main className="country-knowledge-screen">
       <header className="statistics-header">
         <div>
-          <div className="breadcrumb">APPRENTISSAGE / QUIZ PAYS</div>
-          <h1>À la découverte de {countryName}</h1>
-          <p>Réponds à des questions sur ses villes, ses reliefs, sa capitale et sa géographie.</p>
+          <div className="breadcrumb">{t('APPRENTISSAGE / QUIZ PAYS')}</div>
+          <h1>{t('À la découverte de')} {countryName}</h1>
+          <p>{t('Réponds à des questions sur ses villes, ses reliefs, sa capitale et sa géographie.')}</p>
         </div>
         <button className="home-back-button" type="button" onClick={onStop}>
-          Arrêter le quiz
+          {t('Arrêter le quiz')}
         </button>
       </header>
 
       <div className="country-knowledge-content">
-        <section className="country-knowledge-map" aria-label={`Carte de ${countryName}`}>
+        <section className="country-knowledge-map" aria-label={`${t('Carte')} ${countryName}`}>
           <WorldMap
             showBorders
             showLabels={false}
             quizTargetFeatureId={country?.sourceFeatureId ?? null}
           />
           <div className="country-knowledge-country-card">
-            <img src={getFlagImageSource(alpha2)} alt={`Drapeau de ${countryName}`} />
+            <img src={getFlagImageSource(alpha2)} alt={`${t('Drapeau de')} ${countryName}`} />
             <div>
-              <span>PAYS ÉTUDIÉ</span>
+                <span>{t('PAYS ÉTUDIÉ')}</span>
               <strong>{countryName}</strong>
             </div>
           </div>
@@ -67,22 +68,21 @@ export function CountryKnowledgeQuizView({
         <section className="country-knowledge-question-panel" aria-live="polite">
           {session.completed ? (
             <div className="country-knowledge-complete">
-              <div className="section-label">QUIZ TERMINÉ</div>
-              <h2>Bien joué !</h2>
+              <div className="section-label">{t('QUIZ TERMINÉ')}</div>
+              <h2>{t('Bien joué !')}</h2>
               <p>
-                Tu as obtenu{' '}
+                {t('Tu as obtenu')}{' '}
                 <strong>
-                  {session.score} bonne{session.score > 1 ? 's' : ''} réponse
-                  {session.score > 1 ? 's' : ''}
+                  {session.score} {t(session.score > 1 ? 'bonnes réponses' : 'bonne réponse')}
                 </strong>{' '}
-                sur {total}.
+                {t('sur')} {total}.
               </p>
               <div className="country-knowledge-complete-actions">
                 <button className="quiz-start-button" type="button" onClick={onRestart}>
-                  Rejouer ce pays
+                  {t('Rejouer ce pays')}
                 </button>
                 <button className="home-back-button" type="button" onClick={onStop}>
-                  Choisir un autre pays
+                  {t('Choisir un autre pays')}
                 </button>
               </div>
             </div>
@@ -91,14 +91,14 @@ export function CountryKnowledgeQuizView({
               <div className="country-knowledge-progress">
                 <div className="quiz-progress-row">
                   <span className="quiz-step">
-                    QUESTION {String(session.questionIndex + 1).padStart(2, '0')} / {total}
+                    {t('QUESTION')} {String(session.questionIndex + 1).padStart(2, '0')} / {total}
                   </span>
-                  <span className="country-knowledge-score">Score : {session.score}</span>
+                  <span className="country-knowledge-score">{t('Score :')} {session.score}</span>
                 </div>
                 <div
                   className="quiz-progress-track"
                   role="progressbar"
-                  aria-label="Progression du quiz pays"
+                  aria-label={t('Progression du quiz pays')}
                   aria-valuemin={0}
                   aria-valuemax={total}
                   aria-valuenow={completedCount}
@@ -113,7 +113,7 @@ export function CountryKnowledgeQuizView({
                 <div
                   className="country-knowledge-choices"
                   role="group"
-                  aria-label="Choisir une réponse"
+                  aria-label={t('Choisir une réponse')}
                 >
                   {question.choices.map((choice) => {
                     const selected = session.selectedAnswer === choice
@@ -140,16 +140,16 @@ export function CountryKnowledgeQuizView({
 
                 <div className="country-knowledge-feedback" aria-live="polite">
                   {!questionSettled ? (
-                    <span>Choisis une réponse parmi les propositions.</span>
+                    <span>{t('Choisis une réponse parmi les propositions.')}</span>
                   ) : session.answerCorrect ? (
-                    <span>Bonne réponse ! {question.explanation}</span>
+                    <span>{t('Bonne réponse !')} {question.explanation}</span>
                   ) : session.answerRevealed ? (
                     <span>
-                      Réponse : <strong>{question.answer}</strong>. {question.explanation}
+                      {t('Réponse')} : <strong>{question.answer}</strong>. {question.explanation}
                     </span>
                   ) : (
                     <span>
-                      Ce n’est pas la bonne réponse. Tu peux voir la solution ou passer à la suite.
+                      {t('Ce n’est pas la bonne réponse. Tu peux voir la solution ou passer à la suite.')}
                     </span>
                   )}
                 </div>
@@ -158,21 +158,21 @@ export function CountryKnowledgeQuizView({
               <div className="country-knowledge-actions">
                 {!session.answerCorrect && !session.answerRevealed && (
                   <button className="quiz-reveal-button" type="button" onClick={onRevealAnswer}>
-                    Voir la réponse
+                    {t('Voir la réponse')}
                   </button>
                 )}
                 {questionSettled && (
                   <button className="quiz-next-button" type="button" onClick={onNext}>
-                    {session.questionIndex === total - 1 ? 'Voir le résultat' : 'Question suivante'}
+                    {t(session.questionIndex === total - 1 ? 'Voir le résultat' : 'Question suivante')}
                   </button>
                 )}
               </div>
             </>
           ) : (
             <div className="country-knowledge-complete">
-              <h2>Aucune question disponible</h2>
+              <h2>{t('Aucune question disponible')}</h2>
               <button className="home-back-button" type="button" onClick={onStop}>
-                Retour aux pays
+                {t('Retour aux pays')}
               </button>
             </div>
           )}
