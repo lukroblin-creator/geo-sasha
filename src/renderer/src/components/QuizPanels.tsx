@@ -20,37 +20,61 @@ import {
 
 type QuizPanelFrameProps<Question> = {
   description: string
-  nextStepTitle: string
-  nextStepDescription: string
   session: QuizSession<Question>
   total: number
   onRevealAnswer: () => void
   onNext: () => void
   onRestart: () => void
+  onStop: () => void
   children: ReactNode
 }
 
 function QuizPanelFrame<Question>({
   description,
-  nextStepTitle,
-  nextStepDescription,
   session,
   total,
   onRevealAnswer,
   onNext,
   onRestart,
+  onStop,
   children
 }: QuizPanelFrameProps<Question>): React.JSX.Element {
   const questionSettled =
     session.answerCorrect !== null || session.answerRevealed
   const answeredCount = session.questionIndex + (questionSettled ? 1 : 0)
+  const progress = total > 0 ? (answeredCount / total) * 100 : 0
 
   return (
     <aside className="quiz-panel">
       <div className="quiz-header">
-        <div className="section-label">SESSION D’APPRENTISSAGE</div>
-        <div className="quiz-step">
-          QUESTION {String(session.questionIndex + 1).padStart(2, '0')} / {total}
+        <div className="quiz-header-topline">
+          <div className="section-label">QUIZ EN COURS</div>
+          {!session.completed && (
+            <button
+              className="quiz-stop-button"
+              type="button"
+              onClick={onStop}
+              aria-label="Arrêter la partie et revenir à l’accueil"
+            >
+              Arrêter
+            </button>
+          )}
+        </div>
+        <div className="quiz-progress-row">
+          <div className="quiz-step">
+            QUESTION {String(Math.min(session.questionIndex + 1, total)).padStart(2, '0')} / {total}
+          </div>
+          <div className="quiz-progress-count">{answeredCount} terminée{answeredCount > 1 ? 's' : ''}</div>
+        </div>
+        <div
+          className="quiz-progress-track"
+          role="progressbar"
+          aria-label="Progression du quiz"
+          aria-valuemin={0}
+          aria-valuemax={total}
+          aria-valuenow={answeredCount}
+        >
+          <span style={{ width: `${progress}%` }} />
         </div>
       </div>
 
@@ -70,44 +94,32 @@ function QuizPanelFrame<Question>({
         ) : (
           <>
             {children}
-            {session.answerCorrect !== true && !session.answerRevealed && (
-              <button
-                className="quiz-reveal-button"
-                onClick={onRevealAnswer}
-              >
-                Voir la réponse
-              </button>
-            )}
-            {questionSettled && (
-              <button className="quiz-next-button" onClick={onNext}>
-                {session.questionIndex === total - 1
-                  ? 'Voir le résultat'
-                  : 'Question suivante'}
-              </button>
-            )}
+            <div className="quiz-panel-actions">
+              {session.answerCorrect !== true && !session.answerRevealed && (
+                <button
+                  className="quiz-reveal-button"
+                  onClick={onRevealAnswer}
+                >
+                  Voir la réponse
+                </button>
+              )}
+              {questionSettled && (
+                <button className="quiz-next-button" onClick={onNext}>
+                  {session.questionIndex === total - 1
+                    ? 'Voir le résultat'
+                    : 'Question suivante'}
+                </button>
+              )}
+            </div>
           </>
         )}
 
-        <div className="quiz-divider" />
-
-        <div className="quiz-information">
-          <div className="info-label">ÉTAPE SUIVANTE</div>
-          <div className="next-step">
-            <span className="next-step-number">02</span>
-            <div>
-              <div className="next-step-title">{nextStepTitle}</div>
-              <div className="next-step-description">
-                {nextStepDescription}
-              </div>
-            </div>
-          </div>
-        </div>
       </div>
 
       <div className="quiz-footer">
         <div className="score-label">SCORE DE LA SESSION</div>
         <div className="score-value">
-          {session.score} <span>/ {answeredCount}</span>
+          {session.score} <span>/ {total}</span>
         </div>
       </div>
     </aside>
@@ -119,26 +131,27 @@ type FlagsQuizPanelProps = {
   onRevealAnswer: () => void
   onNext: () => void
   onRestart: () => void
+  onStop: () => void
 }
 
 export function FlagsQuizPanel({
   session,
   onRevealAnswer,
   onNext,
-  onRestart
+  onRestart,
+  onStop
 }: FlagsQuizPanelProps): React.JSX.Element {
   const question = session.questionOrder[session.questionIndex]
 
   return (
     <QuizPanelFrame
       description="Reconnaître un pays à partir de son drapeau"
-      nextStepTitle="Connaître les capitales"
-      nextStepDescription="Après avoir trouvé le pays"
       session={session}
       total={session.questionOrder.length}
       onRevealAnswer={onRevealAnswer}
       onNext={onNext}
       onRestart={onRestart}
+      onStop={onStop}
     >
       <h2>Quel pays possède ce drapeau ?</h2>
       <div className="flag-container">
@@ -173,6 +186,7 @@ type CapitalsQuizPanelProps = {
   onRevealAnswer: () => void
   onNext: () => void
   onRestart: () => void
+  onStop: () => void
 }
 
 export function CapitalsQuizPanel({
@@ -180,20 +194,20 @@ export function CapitalsQuizPanel({
   onAnswer,
   onRevealAnswer,
   onNext,
-  onRestart
+  onRestart,
+  onStop
 }: CapitalsQuizPanelProps): React.JSX.Element {
   const question = session.questionOrder[session.questionIndex]
 
   return (
     <QuizPanelFrame
       description="Retrouver la capitale d’un pays"
-      nextStepTitle="Explorer les territoires"
-      nextStepDescription="Après avoir appris les capitales"
       session={session}
       total={session.questionOrder.length}
       onRevealAnswer={onRevealAnswer}
       onNext={onNext}
       onRestart={onRestart}
+      onStop={onStop}
     >
       <h2>Quelle est la capitale de {question.countryName} ?</h2>
       <div className="capital-choices" role="group" aria-label="Choisir une capitale">
@@ -256,6 +270,7 @@ type CountryQuizPanelProps = {
   onRevealAnswer: () => void
   onNext: () => void
   onRestart: () => void
+  onStop: () => void
 }
 
 function CountryQuizAnswerForm({
@@ -290,14 +305,14 @@ function CountryQuizAnswerForm({
   const filteredFlagChoices = question.flagChoices
     .filter((choice) => {
       const query = normalizeQuizAnswer(flagSearch)
-      const matchesName = !query || normalizeQuizAnswer(choice.frenchCountryName).includes(query)
+      const matchesName = !query || normalizeQuizAnswer(choice.frenchName).includes(query)
       const matchesColors = flagColorFilters.every((color) => flagHasColorNear(choice.alpha2, color))
       const matchesShape =
         flagShapeFilters.length === 0 || flagShapeFilters.includes(getFlagShape(choice.alpha2))
       return matchesName && matchesColors && matchesShape
     })
     .sort((first, second) =>
-      first.frenchCountryName.localeCompare(second.frenchCountryName, 'fr')
+      first.frenchName.localeCompare(second.frenchName, 'fr')
     )
 
   const canSubmit =
@@ -437,12 +452,12 @@ function CountryQuizAnswerForm({
                 type="button"
                 onClick={() => setFlagAlpha2(choice.alpha2)}
                 disabled={disabled}
-                aria-label={`Drapeau de ${choice.frenchCountryName}`}
-                title={choice.frenchCountryName}
+                aria-label={`Drapeau de ${choice.frenchName}`}
+                title={choice.frenchName}
                 aria-pressed={flagAlpha2 === choice.alpha2}
               >
                 <img src={getFlagImageSource(choice.alpha2)} alt="" />
-                <span>{choice.frenchCountryName}</span>
+                <span>{choice.frenchName}</span>
               </button>
             ))}
             {filteredFlagChoices.length === 0 && (
@@ -459,12 +474,12 @@ function CountryQuizAnswerForm({
       )}
 
       {session.answerCorrect === true && (
-        <div className="answer-placeholder" aria-live="polite">
+        <div className="quiz-feedback quiz-feedback-correct" aria-live="polite">
           Bonne réponse !
         </div>
       )}
       {session.answerCorrect === false && !session.answerRevealed && (
-        <div className="answer-placeholder" aria-live="polite">
+        <div className="quiz-feedback quiz-feedback-incorrect" aria-live="polite">
           Il y a au moins une erreur. Corrige tes réponses ou regarde la solution.
         </div>
       )}
@@ -480,7 +495,8 @@ export function CountryQuizPanel({
   onAnswer,
   onRevealAnswer,
   onNext,
-  onRestart
+  onRestart,
+  onStop
 }: CountryQuizPanelProps): React.JSX.Element {
   const question = session.questionOrder[session.questionIndex]
   const hasClue = Object.values(clues).some(Boolean)
@@ -493,54 +509,86 @@ export function CountryQuizPanel({
   return (
     <QuizPanelFrame
       description="Retrouve les informations demandées à partir des indices."
-      nextStepTitle="Personnaliser le quiz"
-      nextStepDescription="Choisis les indices et les réponses"
       session={session}
       total={session.questionOrder.length}
       onRevealAnswer={onRevealAnswer}
       onNext={onNext}
       onRestart={onRestart}
+      onStop={onStop}
     >
-      <h2>{hasClue ? 'Observe les indices' : 'Choisis au moins un indice'}</h2>
-      {clues.countryOnMap && (
-        <div className="answer-placeholder">
-          Le pays à reconnaître est mis en évidence sur la carte.
+      <section className="quiz-panel-stage" aria-labelledby="quiz-clues-title">
+        <div className="quiz-panel-stage-heading">
+          <span className="quiz-panel-stage-number">1</span>
+          <div>
+            <h2 id="quiz-clues-title">Indices</h2>
+            <p>Observe les éléments fournis.</p>
+          </div>
         </div>
-      )}
-      {clues.flag && (
-        <div className="flag-container">
-          <img
-            className="flag flag-svg"
-            src={getFlagImageSource(question.alpha2)}
-            alt={`Drapeau de ${question.frenchCountryName}`}
-          />
-        </div>
-      )}
-      {clues.countryName && (
-        <div className="quiz-clue-card">
-          <span>Nom du pays</span>
-          <strong>{question.frenchCountryName}</strong>
-        </div>
-      )}
-      {clues.capital && (
-        <div className="quiz-clue-card">
-          <span>Capitale</span>
-          <strong>{question.capitalName}</strong>
-        </div>
-      )}
+        {hasClue ? (
+          <div className="quiz-clues-list">
+            {clues.countryOnMap && (
+              <div className="quiz-clue-card quiz-map-clue">
+                <span className="quiz-clue-icon" aria-hidden="true">⌖</span>
+                <div>
+                  <span>Sur la carte</span>
+                  <strong>Le pays à reconnaître est mis en évidence.</strong>
+                </div>
+              </div>
+            )}
+            {clues.flag && (
+              <div className="quiz-clue-card quiz-flag-clue">
+                <span className="quiz-clue-title">Drapeau</span>
+                <div className="flag-container">
+                  <img
+                    className="flag flag-svg"
+                    src={getFlagImageSource(question.alpha2)}
+                    alt={`Drapeau de ${question.frenchCountryName}`}
+                  />
+                </div>
+              </div>
+            )}
+            {clues.countryName && (
+              <div className="quiz-clue-card">
+                <span>Nom du pays</span>
+                <strong>{question.frenchCountryName}</strong>
+              </div>
+            )}
+            {clues.capital && (
+              <div className="quiz-clue-card">
+                <span>Capitale</span>
+                <strong>{question.capitalName}</strong>
+              </div>
+            )}
+          </div>
+        ) : (
+          <div className="quiz-empty-state">
+            Aucun indice n’est configuré. Reviens au contenu du quiz pour en choisir un.
+          </div>
+        )}
+      </section>
+
       {hasClue && (
-        <CountryQuizAnswerForm
-          key={`${question.sourceFeatureId}:${session.questionIndex}`}
-          question={question}
-          session={session}
-          answers={answers}
-          selectedMapCountry={selectedMapCountry}
-          countryIsHighlighted={clues.countryOnMap}
-          onAnswer={onAnswer}
-        />
+        <section className="quiz-panel-stage quiz-answer-stage" aria-labelledby="quiz-answer-title">
+          <div className="quiz-panel-stage-heading">
+            <span className="quiz-panel-stage-number">2</span>
+            <div>
+              <h2 id="quiz-answer-title">Ta réponse</h2>
+              <p>Complète les éléments demandés.</p>
+            </div>
+          </div>
+          <CountryQuizAnswerForm
+            key={`${question.sourceFeatureId}:${session.questionIndex}`}
+            question={question}
+            session={session}
+            answers={answers}
+            selectedMapCountry={selectedMapCountry}
+            countryIsHighlighted={clues.countryOnMap}
+            onAnswer={onAnswer}
+          />
+        </section>
       )}
       {session.answerRevealed && (
-        <div className="answer-placeholder" aria-live="polite">
+        <div className="quiz-feedback quiz-feedback-revealed" aria-live="polite">
           Réponse : {revealText}
         </div>
       )}

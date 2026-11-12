@@ -1,8 +1,10 @@
 
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import WorldMap from './components/WorldMap'
 import { ExplorationView } from './components/ExplorationView'
 import { CountryQuizPanel } from './components/QuizPanels'
+import { StatisticsView } from './components/StatisticsView'
+import { CountryQuizSelectionView } from './components/CountryQuizSelectionView'
 import { useQuizSession } from './data/quiz/useQuizSession'
 import {
   createCountryQuizQuestions,
@@ -23,6 +25,11 @@ import {
   saveCompletedQuiz,
   type QuizMode
 } from './data/quiz/progress'
+import {
+  loadCountryQuizStats,
+  saveCountryQuizStats,
+  updateCountryQuizStats
+} from './data/quiz/countryQuizStats'
 
 type MapLayerId = 'borders' | 'rivers' | 'mountains' | 'labels'
 type MapLayerVisibility = Record<MapLayerId, boolean>
@@ -92,7 +99,9 @@ function getQuizModeForContent(clues: QuizClues, answers: QuizAnswers): QuizMode
 }
 
 function App(): React.JSX.Element {
-  const [appView, setAppView] = useState<'home' | 'quiz' | 'exploration'>('home')
+  const [appView, setAppView] = useState<
+    'home' | 'quiz' | 'exploration' | 'statistics' | 'country-select'
+  >('home')
   const [contentSettingsOpen, setContentSettingsOpen] = useState(false)
   const [mapLayers, setMapLayers] = useState<MapLayerVisibility>({
     borders: true,
@@ -108,14 +117,27 @@ function App(): React.JSX.Element {
   const [activeQuizAnswers, setActiveQuizAnswers] = useState<QuizAnswers>(flagPresetAnswers)
   const [sessionMode, setSessionMode] = useState<QuizMode>('flags')
   const [sessionGeneration, setSessionGeneration] = useState(0)
+  const [selectedQuizCountry, setSelectedQuizCountry] = useState<string | null>(null)
   const [selectedMapCountry, setSelectedMapCountry] = useState<{
     sourceFeatureId: string | number
     name: string
     entityId: string | null
   } | null>(null)
   const [quizProgress, setQuizProgress] = useState(loadQuizProgress)
+  const [countryQuizStats, setCountryQuizStats] = useState(loadCountryQuizStats)
+  const lastRecordedQuestionRef = useRef<string | null>(null)
 
-  const maxQuizQuestionCount = getAvailableQuizQuestionCount(quizRegion)
+  const maxQuizQuestionCount = selectedQuizCountry
+    ? 1
+    : getAvailableQuizQuestionCount(quizRegion)
+
+  const getCurrentQuestionBank = (): CountryQuizQuestion[] => {
+    const allQuestions = createCountryQuizQuestions()
+    if (selectedQuizCountry) {
+      return allQuestions.filter((question) => question.alpha2 === selectedQuizCountry)
+    }
+    return getQuizQuestionsForRegion(allQuestions, quizRegion, quizQuestionCount)
+  }
 
   const recordCompletedQuiz = (mode: QuizMode, score: number): void => {
     setQuizProgress(saveCompletedQuiz(mode, score))
@@ -124,11 +146,7 @@ function App(): React.JSX.Element {
   const quiz = useQuizSession<CountryQuizQuestion>({
     mode: sessionMode,
     questionBank: () =>
-      getQuizQuestionsForRegion(
-        createCountryQuizQuestions(),
-        quizRegion,
-        quizQuestionCount
-      ),
+      getCurrentQuestionBank(),
     onCompleted: recordCompletedQuiz
   })
 
@@ -137,6 +155,28 @@ function App(): React.JSX.Element {
     setQuizQuestionCount((current) =>
       Math.min(current, getAvailableQuizQuestionCount(region))
     )
+  }
+
+  const startCountryQuiz = (alpha2: string): void => {
+    if (!Object.values(quizClues).some(Boolean) || !Object.values(quizAnswers).some(Boolean)) {
+      return
+    }
+
+    const question = createCountryQuizQuestions().find((item) => item.alpha2 === alpha2)
+    if (!question) return
+
+    const nextMode = getQuizModeForContent(quizClues, quizAnswers)
+    setContentSettingsOpen(false)
+    setSelectedQuizCountry(alpha2)
+    setQuizQuestionCount(1)
+    setSessionMode(nextMode)
+    setActiveQuizClues(quizClues)
+    setActiveQuizAnswers(quizAnswers)
+    setSessionGeneration((current) => current + 1)
+    lastRecordedQuestionRef.current = null
+    setSelectedMapCountry(null)
+    quiz.restart([question])
+    setAppView('quiz')
   }
 
   const startNewQuiz = (): void => {
@@ -150,8 +190,9 @@ function App(): React.JSX.Element {
     setActiveQuizClues(quizClues)
     setActiveQuizAnswers(quizAnswers)
     setSessionGeneration((current) => current + 1)
+    lastRecordedQuestionRef.current = null
     setSelectedMapCountry(null)
-    quiz.restart()
+    quiz.restart(getCurrentQuestionBank())
   }
 
   const selectQuizContent = (
@@ -223,8 +264,44 @@ function App(): React.JSX.Element {
   }
 
   const nextQuizQuestion = (): void => {
+    recordCurrentQuestionResult()
     setSelectedMapCountry(null)
     quiz.next()
+  }
+
+  const recordCurrentQuestionResult = (): void => {
+    const current = quiz.session
+    if (current.answerCorrect === null && !current.answerRevealed) return
+
+    const question = current.questionOrder[current.questionIndex]
+    if (!question) return
+
+    const questionKey = `${sessionGeneration}:${current.questionIndex}:${question.sourceFeatureId}`
+    if (lastRecordedQuestionRef.current === questionKey) return
+
+    lastRecordedQuestionRef.current = questionKey
+    const updatedStats = updateCountryQuizStats(
+      countryQuizStats,
+      question.alpha2,
+      sessionMode,
+      current.answerCorrect === true
+    )
+    setCountryQuizStats(updatedStats)
+    saveCountryQuizStats(updatedStats)
+  }
+
+  const stopQuiz = (): void => {
+    recordCurrentQuestionResult()
+    const nextQuestionBank = getQuizQuestionsForRegion(
+      createCountryQuizQuestions(),
+      quizRegion,
+      quizQuestionCount
+    )
+    quiz.restart(nextQuestionBank)
+    setSelectedQuizCountry(null)
+    lastRecordedQuestionRef.current = null
+    setSelectedMapCountry(null)
+    setAppView('home')
   }
 
   const activeStats = quizProgress[sessionMode]
@@ -276,6 +353,32 @@ if (appView === 'home') {
             </span>
             <span className="home-mode-action">Explorer le monde →</span>
           </button>
+
+          <button
+            className="home-mode-card"
+            type="button"
+            onClick={() => setAppView('country-select')}
+          >
+            <span className="home-mode-icon">◎</span>
+            <span className="home-mode-title">Quiz pays</span>
+            <span className="home-mode-description">
+              Choisissez un pays et révisez son drapeau, son nom, sa capitale ou son territoire.
+            </span>
+            <span className="home-mode-action">Choisir un pays →</span>
+          </button>
+
+          <button
+            className="home-mode-card"
+            type="button"
+            onClick={() => setAppView('statistics')}
+          >
+            <span className="home-mode-icon">▥</span>
+            <span className="home-mode-title">Statistiques</span>
+            <span className="home-mode-description">
+              Suivez votre progression pays par pays et repérez les sujets à réviser.
+            </span>
+            <span className="home-mode-action">Voir ma progression →</span>
+          </button>
         </div>
       </div>
 
@@ -288,6 +391,27 @@ if (appView === 'home') {
 
 if (appView === 'exploration') {
   return <ExplorationView onBack={() => setAppView('home')} />
+}
+
+if (appView === 'statistics') {
+  return (
+    <StatisticsView
+      countryStats={countryQuizStats}
+      quizProgress={quizProgress}
+      onBack={() => setAppView('home')}
+      onOpenQuiz={() => setAppView('quiz')}
+      onOpenCountryQuiz={startCountryQuiz}
+    />
+  )
+}
+
+if (appView === 'country-select') {
+  return (
+    <CountryQuizSelectionView
+      onBack={() => setAppView('home')}
+      onStart={startCountryQuiz}
+    />
+  )
 }
 
 return (
@@ -351,10 +475,15 @@ return (
             <button
               className="home-back-button"
               type="button"
+              onClick={() => setAppView('statistics')}
+            >
+              Statistiques
+            </button>
+            <button
+              className="home-back-button"
+              type="button"
               onClick={() => {
-                quiz.restart()
-                setSelectedMapCountry(null)
-                setAppView('home')
+                stopQuiz()
               }}
             >
               ← Accueil
@@ -603,6 +732,7 @@ return (
             onRevealAnswer={quiz.revealAnswer}
             onNext={nextQuizQuestion}
             onRestart={startNewQuiz}
+            onStop={stopQuiz}
           />
         </div>
       </main>

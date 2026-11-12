@@ -1,8 +1,13 @@
 import flagMetadata from './flagMetadata.json'
 import { flagEmojiFromAlpha2 } from './flagEmoji'
+import countryCatalog from './countryCatalog.json'
 
 const flagSvgUrls = import.meta.glob<string>(
   '../../../../../node_modules/svg-country-flags/svg/*.svg',
+  { eager: true, query: '?url', import: 'default' }
+)
+const flagOverrideSvgUrls = import.meta.glob<string>(
+  './flag-overrides/*.svg',
   { eager: true, query: '?url', import: 'default' }
 )
 
@@ -29,8 +34,14 @@ type FlagMetadata = {
 const metadataByCode = new Map<string, FlagMetadata>(
   (flagMetadata as FlagMetadata[]).map((metadata) => [metadata.alpha2, metadata])
 )
+const quizCountryCodes = new Set(
+  (countryCatalog as { alpha2: string }[]).map(({ alpha2 }) => alpha2)
+)
 const flagSvgUrlByCode = new Map<string, string>(
-  Object.entries(flagSvgUrls).flatMap(([path, url]) => {
+  [
+    ...Object.entries(flagSvgUrls),
+    ...Object.entries(flagOverrideSvgUrls)
+  ].flatMap(([path, url]) => {
     const alpha2 = path.match(/\/([a-z]{2})\.svg$/i)?.[1]?.toUpperCase()
     return alpha2 ? [[alpha2, url] as const] : []
   })
@@ -38,7 +49,11 @@ const flagSvgUrlByCode = new Map<string, string>(
 
 const rectangularRatios = [...new Map(
   (flagMetadata as FlagMetadata[])
-    .filter((metadata) => metadata.shape === 'rectangle' && metadata.ratioLabel)
+    .filter((metadata) =>
+      quizCountryCodes.has(metadata.alpha2) &&
+      metadata.shape === 'rectangle' &&
+      metadata.ratioLabel
+    )
     .map((metadata) => [metadata.ratioLabel!, metadata] as const)
 ).values()].sort((first, second) => first.ratio - second.ratio)
 

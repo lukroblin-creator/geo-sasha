@@ -1,5 +1,6 @@
 import countryCatalog from './countryCatalog.json'
 import countryCapitals from './countryCapitals.json'
+import flagMetadata from './flagMetadata.json'
 import { shuffleItems } from './useQuizSession'
 
 export type QuizClues = {
@@ -17,10 +18,8 @@ export type QuizAnswers = {
 }
 
 export type CountryFlagChoice = {
-  sourceFeatureId: number
   alpha2: string
-  countryName: string
-  frenchCountryName: string
+  frenchName: string
 }
 
 export type CountryQuizQuestion = {
@@ -44,13 +43,15 @@ const capitalByCountryId = new Map<number, CapitalRecord>(
   (countryCapitals as CapitalRecord[]).map((record) => [record.sourceFeatureId, record])
 )
 const countryNamesInFrench = new Intl.DisplayNames(['fr'], { type: 'region' })
-const allFlagChoices: CountryFlagChoice[] = countryCatalog.map((candidate) => ({
-  sourceFeatureId: candidate.sourceFeatureId,
-  alpha2: candidate.alpha2,
-  countryName: candidate.countryName,
-  frenchCountryName:
-    countryNamesInFrench.of(candidate.alpha2) ?? candidate.countryName
-}))
+const flagNameOverrides: Record<string, string> = {
+  AN: 'Antilles néerlandaises (ancien)'
+}
+const allFlagChoices: CountryFlagChoice[] = (flagMetadata as { alpha2: string }[]).map(
+  ({ alpha2 }) => ({
+    alpha2,
+    frenchName: flagNameOverrides[alpha2] ?? countryNamesInFrench.of(alpha2) ?? alpha2
+  })
+)
 
 export function createCountryQuizQuestions(): CountryQuizQuestion[] {
   const capitalNames = [...new Set(

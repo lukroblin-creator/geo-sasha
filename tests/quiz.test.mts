@@ -12,6 +12,11 @@ import {
   submitQuizAnswer
 } from '../src/renderer/src/data/quiz/useQuizSession.ts'
 import { loadQuizProgress, saveCompletedQuiz } from '../src/renderer/src/data/quiz/progress.ts'
+import {
+  loadCountryQuizStats,
+  saveCountryQuizStats,
+  updateCountryQuizStats
+} from '../src/renderer/src/data/quiz/countryQuizStats.ts'
 import { getLabelPrecision } from '../src/renderer/src/data/geography/labelPrecision.ts'
 import { geographicGeometryLinks } from '../src/renderer/src/data/geography/geometries.ts'
 
@@ -131,6 +136,25 @@ test('la progression sauvegarde les scores séparément par quiz', (): void => {
     lastScore: 8
   })
   assert.deepEqual(loadQuizProgress(), progress)
+})
+
+test('les statistiques par pays suivent les bonnes réponses et le mode de quiz', (): void => {
+  setLocalStorage()
+
+  const initial = loadCountryQuizStats()
+  const afterCorrect = updateCountryQuizStats(initial, 'fr', 'capitals', true)
+  const afterWrong = updateCountryQuizStats(afterCorrect, 'FR', 'flags', false)
+  saveCountryQuizStats(afterWrong)
+
+  assert.deepEqual(loadCountryQuizStats().FR, {
+    answered: 2,
+    correct: 1,
+    byMode: {
+      flags: { answered: 1, correct: 0 },
+      capitals: { answered: 1, correct: 1 },
+      custom: { answered: 0, correct: 0 }
+    }
+  })
 })
 
 test('la progression v2 des drapeaux est reprise sans inventer un score capitales', (): void => {

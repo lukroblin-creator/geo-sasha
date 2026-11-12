@@ -7,7 +7,11 @@ export type GeographicEntity = {
   id: string
   name: string
   kind: GeographicEntityKind
+  // ISO region code for the entity. A territory can have this without having a distinct flag.
   alpha2?: string
+
+  // ISO region code used for a distinct local flag, when one exists.
+  flagAlpha2?: string
 
   // Permet de rattacher un territoire à un État souverain.
   sovereignEntityId?: string

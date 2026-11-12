@@ -64,10 +64,13 @@ export function getExplorationDetails(
   const catalogEntry = catalogBySourceId.get(sourceId)
   const entity = entityId ? getEntityById(entityId) : undefined
   const sovereign = entity?.sovereignEntityId ? getEntityById(entity.sovereignEntityId) : undefined
+  const extraAlpha2 = alpha2ByExtraSourceId.get(sourceId)
   const alpha2 =
-    (entity?.kind === 'territory' ? sovereign?.alpha2 : entity?.alpha2) ??
+    (entity?.kind === 'territory'
+      ? entity.flagAlpha2 ?? sovereign?.alpha2
+      : entity?.alpha2) ??
+    (entity ? undefined : extraAlpha2) ??
     catalogEntry?.alpha2 ??
-    alpha2ByExtraSourceId.get(sourceId) ??
     null
   const territoryInfo =
     entity?.kind === 'territory' && entityId ? territoryDetails[entityId] : undefined
@@ -82,11 +85,14 @@ export function getExplorationDetails(
   const name = entityId
     ? (getEntityDisplayName(entityId) ?? fallbackName)
     : ((alpha2 ? frenchNames.of(alpha2) : undefined) ?? catalogEntry?.countryName ?? fallbackName)
+  const flagName = entity?.kind === 'territory'
+    ? (entity.flagAlpha2 ? entity.name : sovereign?.name ?? name)
+    : name
 
   return {
     name,
     flagAlpha2: alpha2,
-    flagName: sovereign?.name ?? name,
+    flagName,
     capital,
     continent,
     sovereignName: sovereign?.name ?? null,

@@ -100,7 +100,7 @@ type UseQuizSessionResult<Question> = {
   answer: (isCorrect: boolean, selectedAnswer?: string | null) => void
   revealAnswer: () => void
   next: () => void
-  restart: () => void
+  restart: (questions?: readonly Question[]) => void
 }
 
 export function useQuizSession<Question>({
@@ -136,8 +136,8 @@ export function useQuizSession<Question>({
     setSession((current) => revealQuizAnswer(current))
   }
 
-  const restart = (): void => {
-    setSession(createQuizSession(questionBank()))
+  const restart = (questions?: readonly Question[]): void => {
+    setSession(createQuizSession(questions ?? questionBank()))
   }
 
   return { session, answer, revealAnswer, next, restart }

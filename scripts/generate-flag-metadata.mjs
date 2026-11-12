@@ -1,14 +1,30 @@
-import { readFile, writeFile } from 'node:fs/promises'
+import { readFile, readdir, writeFile } from 'node:fs/promises'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
 const scriptDirectory = dirname(fileURLToPath(import.meta.url))
 const projectDirectory = dirname(scriptDirectory)
-const catalogPath = join(projectDirectory, 'src/renderer/src/data/quiz/countryCatalog.json')
 const flagsDirectory = join(projectDirectory, 'node_modules/svg-country-flags/svg')
+const flagOverridesDirectory = join(projectDirectory, 'src/renderer/src/data/quiz/flag-overrides')
 const outputPath = join(projectDirectory, 'src/renderer/src/data/quiz/flagMetadata.json')
 
-const countryCatalog = JSON.parse(await readFile(catalogPath, 'utf8'))
+const flagFilesByCode = new Map(
+  (await readdir(flagsDirectory))
+    .filter((filename) => /^[a-z]{2}\.svg$/i.test(filename))
+    .map((filename) => [filename.slice(0, 2).toUpperCase(), join(flagsDirectory, filename)])
+)
+
+for (const filename of await readdir(flagOverridesDirectory)) {
+  if (/^[a-z]{2}\.svg$/i.test(filename)) {
+    flagFilesByCode.set(
+      filename.slice(0, 2).toUpperCase(),
+      join(flagOverridesDirectory, filename)
+    )
+  }
+}
+
+const flagFiles = [...flagFilesByCode.entries()]
+  .sort(([firstCode], [secondCode]) => firstCode.localeCompare(secondCode))
 const namedColors = {
   black: '#000000',
   blue: '#0000FF',
@@ -51,7 +67,7 @@ function ratioLabel(width, height) {
 }
 
 function parseColors(svg) {
-  const colors = [...svg.matchAll(/(?:fill|stroke|stop-color)=["']([^"']+)["']/gi)]
+  const colors = [...svg.matchAll(/(?:fill|stroke|stop-color)\s*(?:=|:)\s*["']?([^;"'}\s]+)["']?/gi)]
     .map((match) => match[1].trim().toLowerCase())
     .filter((color) => color !== 'none' && color !== 'transparent' && !color.startsWith('url('))
     .map((color) => namedColors[color] ?? color)
@@ -68,20 +84,19 @@ function parseColors(svg) {
 }
 
 const flags = []
-for (const country of countryCatalog) {
-  const svgPath = join(flagsDirectory, `${country.alpha2.toLowerCase()}.svg`)
+for (const [alpha2, svgPath] of flagFiles) {
   const svg = await readFile(svgPath, 'utf8')
   const viewBox = svg.match(/\bviewBox=["']\s*([-+\d.e]+)[ ,]+([-+\d.e]+)[ ,]+([-+\d.e]+)[ ,]+([-+\d.e]+)\s*["']/i)
 
   if (!viewBox) {
-    throw new Error(`Impossible de lire les proportions du drapeau ${country.alpha2}`)
+    throw new Error(`Impossible de lire les proportions du drapeau ${alpha2}`)
   }
 
   const width = Number(viewBox[3])
   const height = Number(viewBox[4])
-  const isPennant = country.alpha2 === 'NP'
+  const isPennant = alpha2 === 'NP'
   flags.push({
-    alpha2: country.alpha2,
+    alpha2,
     width,
     height,
     ratio: width / height,

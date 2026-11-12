@@ -35,6 +35,7 @@ import {
   getEntityById,
   getRelatedEntityIds
 } from '../data/geography/registry'
+import { geographicEntities } from '../data/geography/entities'
 
 import 'maplibre-gl/dist/maplibre-gl.css'
 
@@ -43,6 +44,7 @@ type WorldMapProps = {
   showLabels: boolean
   quizTargetFeatureId?: string | number | null
   interactionResetKey?: string | number
+  countryAccuracyByAlpha2?: Record<string, { answered: number; correct: number }>
   onCountrySelected?: (
   sourceFeatureId: string | number,
   name: string,
@@ -178,6 +180,10 @@ const searchableCountries: SearchableCountry[] = world10mMap.features.flatMap((f
 
   const sourceFeatureKey = normalizeSourceFeatureId(sourceFeatureId)
   const frenchName = frenchCountryNameBySourceId.get(sourceFeatureKey)
+  const entity = entityId ? getEntityById(entityId) : undefined
+  const entityAlpha2 = entity?.kind === 'territory'
+    ? entity.flagAlpha2 ?? getEntityById(entity.sovereignEntityId ?? '')?.alpha2
+    : entity?.alpha2
 
   return [{
     sourceFeatureId,
@@ -185,7 +191,7 @@ const searchableCountries: SearchableCountry[] = world10mMap.features.flatMap((f
     displayName: entityId
       ? getEntityDisplayName(entityId) ?? sourceName
       : frenchName ?? sourceName,
-    alpha2: alpha2BySourceId.get(sourceFeatureKey) ?? null,
+    alpha2: entityAlpha2 ?? alpha2BySourceId.get(sourceFeatureKey) ?? null,
     entityId,
     geometry
   }]
@@ -231,6 +237,7 @@ function WorldMap({
   showLabels,
   quizTargetFeatureId = null,
   interactionResetKey,
+  countryAccuracyByAlpha2,
   onCountrySelected
 }: WorldMapProps): JSX.Element {
   const [interactionState, setInteractionState] = useState<MapInteractionState>(() => ({
@@ -562,7 +569,7 @@ function WorldMap({
   }
   if (hoveredFeatureExpressions.length === 0) hoveredFeatureExpressions.push(false)
 
-  const fillColor = [
+  const selectedFillColor = [
     'case',
     ['any', ...selectedFeatureExpressions],
     '#e5a63b',
@@ -570,6 +577,46 @@ function WorldMap({
     '#34495b',
     '#263746'
   ] as unknown as NonNullable<FillLayerSpecification['paint']>['fill-color']
+
+  const accuracyBySourceId = countryCatalog.flatMap((country) => {
+    const stats = countryAccuracyByAlpha2?.[country.alpha2]
+    return stats?.answered
+      ? [country.sourceFeatureId, stats.correct / stats.answered]
+      : []
+  })
+  const accuracyRateExpression = accuracyBySourceId.length
+    ? [
+        'match',
+        ['to-number', ['get', 'sourceId']],
+        ...accuracyBySourceId,
+        -1
+      ]
+    : -1
+  const territoryEntityIds = geographicEntities
+    .filter((entity) => entity.kind === 'territory')
+    .map((entity) => entity.id)
+  const isTerritoryFeature = [
+    'match',
+    ['get', 'entityId'],
+    ...territoryEntityIds.flatMap((entityId) => [entityId, true]),
+    false
+  ]
+  const fillColor = countryAccuracyByAlpha2
+    ? [
+        'case',
+        isTerritoryFeature,
+        '#344252',
+        ['<', accuracyRateExpression, 0],
+        '#344252',
+        [
+          'interpolate',
+          ['linear'],
+          accuracyRateExpression,
+          0, '#ffffff',
+          1, '#c62828'
+        ]
+      ] as unknown as NonNullable<FillLayerSpecification['paint']>['fill-color']
+    : selectedFillColor
 
   const fillPaint110m: FillLayerSpecification['paint'] = {
     'fill-color': fillColor,
@@ -674,10 +721,10 @@ function WorldMap({
         onMouseLeave={() => setHoveredCountry(null)}
         initialViewState={{
           longitude: 0,
-          latitude: 20,
+          latitude: 0,
           zoom: 1.5
         }}
-        minZoom={1}
+        minZoom={-1}
         maxZoom={12}
         mapStyle={mapStyle}
         scrollZoom={true}
@@ -791,7 +838,7 @@ function WorldMap({
           title="Vue mondiale"
           aria-label="Revenir à la vue mondiale"
           onClick={() => mapRef.current?.getMap().easeTo({
-            center: [0, 20],
+            center: [0, 0],
             zoom: 1.5,
             duration: 450
           })}
