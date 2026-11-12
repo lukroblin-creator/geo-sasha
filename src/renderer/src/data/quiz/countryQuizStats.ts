@@ -14,13 +14,14 @@ export type CountryQuizStats = {
 export type CountryQuizStatsByAlpha2 = Record<string, CountryQuizStats>
 
 const STORAGE_KEY = 'world-atlas:country-quiz-stats:v1'
-const quizModes: QuizMode[] = ['flags', 'capitals', 'custom']
+const quizModes: QuizMode[] = ['flags', 'capitals', 'custom', 'knowledge']
 
 function emptyModeStats(): Record<QuizMode, CountryModeStats> {
   return {
     flags: { answered: 0, correct: 0 },
     capitals: { answered: 0, correct: 0 },
-    custom: { answered: 0, correct: 0 }
+    custom: { answered: 0, correct: 0 },
+    knowledge: { answered: 0, correct: 0 }
   }
 }
 

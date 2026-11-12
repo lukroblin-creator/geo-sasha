@@ -152,7 +152,8 @@ test('les statistiques par pays suivent les bonnes réponses et le mode de quiz'
     byMode: {
       flags: { answered: 1, correct: 0 },
       capitals: { answered: 1, correct: 1 },
-      custom: { answered: 0, correct: 0 }
+      custom: { answered: 0, correct: 0 },
+      knowledge: { answered: 0, correct: 0 }
     }
   })
 })
@@ -169,7 +170,8 @@ test('la progression v2 des drapeaux est reprise sans inventer un score capitale
   assert.deepEqual(loadQuizProgress(), {
     flags: { completedSessions: 3, bestScore: 17, lastScore: 11 },
     capitals: { completedSessions: 0, bestScore: 0, lastScore: 0 },
-    custom: { completedSessions: 0, bestScore: 0, lastScore: 0 }
+    custom: { completedSessions: 0, bestScore: 0, lastScore: 0 },
+    knowledge: { completedSessions: 0, bestScore: 0, lastScore: 0 }
   })
 })
 
@@ -185,7 +187,8 @@ test('la progression v1 des drapeaux reste lisible', (): void => {
   assert.deepEqual(loadQuizProgress(), {
     flags: { completedSessions: 2, bestScore: 15, lastScore: 9 },
     capitals: { completedSessions: 0, bestScore: 0, lastScore: 0 },
-    custom: { completedSessions: 0, bestScore: 0, lastScore: 0 }
+    custom: { completedSessions: 0, bestScore: 0, lastScore: 0 },
+    knowledge: { completedSessions: 0, bestScore: 0, lastScore: 0 }
   })
 })
 

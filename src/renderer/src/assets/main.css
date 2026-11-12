@@ -1,8 +1,12 @@
-
 @import './base.css';
 
 :root {
-  font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-family:
+    Inter,
+    -apple-system,
+    BlinkMacSystemFont,
+    'Segoe UI',
+    sans-serif;
   color: #e7edf5;
   background: #101720;
   font-synthesis: none;
@@ -24,7 +28,8 @@ body {
   user-select: none;
 }
 
-button, input {
+button,
+input {
   font: inherit;
 }
 
@@ -397,7 +402,10 @@ button {
   width: 1px;
   height: 4px;
   background: #60768c;
-  transition: background-color 120ms ease, box-shadow 120ms ease, height 120ms ease;
+  transition:
+    background-color 120ms ease,
+    box-shadow 120ms ease,
+    height 120ms ease;
 }
 
 .quiz-count-mark small {
@@ -1576,7 +1584,6 @@ button {
   .map-section {
     padding: 20px;
   }
-
 }
 
 @container (max-width: 1600px) {
@@ -1651,9 +1658,7 @@ button {
   min-height: 100vh;
   padding: 45px 9%;
   overflow: auto;
-  background:
-    radial-gradient(ellipse at 50% 45%, #1d3043 0%, transparent 65%),
-    #101720;
+  background: radial-gradient(ellipse at 50% 45%, #1d3043 0%, transparent 65%), #101720;
 }
 
 .home-brand {
@@ -1717,6 +1722,228 @@ button {
 }
 
 /* STATISTICS */
+
+.country-knowledge-screen {
+  display: flex;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  flex-direction: column;
+  overflow: hidden;
+  background: #101820;
+  color: #e5edf5;
+}
+
+.country-knowledge-content {
+  display: grid;
+  flex: 1;
+  min-height: 0;
+  grid-template-columns: minmax(0, 1.35fr) minmax(340px, 0.8fr);
+  gap: 16px;
+  padding: 20px 26px;
+}
+
+.country-knowledge-map {
+  position: relative;
+  display: flex;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+  border: 1px solid #2d3c4c;
+  border-radius: 9px;
+  background: #101820;
+}
+
+.country-knowledge-country-card {
+  position: absolute;
+  z-index: 4;
+  bottom: 14px;
+  left: 14px;
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  padding: 9px 12px;
+  border: 1px solid #34485b;
+  border-radius: 8px;
+  background: rgba(20, 30, 42, 0.94);
+  box-shadow: 0 8px 22px rgba(0, 0, 0, 0.24);
+}
+
+.country-knowledge-country-card img {
+  width: 43px;
+  height: 29px;
+  object-fit: contain;
+  border: 1px solid #46596d;
+  border-radius: 3px;
+  background: #1b2a39;
+}
+
+.country-knowledge-country-card div {
+  display: grid;
+  gap: 3px;
+}
+
+.country-knowledge-country-card span {
+  color: #8ea2b7;
+  font-size: 8px;
+  letter-spacing: 0.8px;
+}
+
+.country-knowledge-country-card strong {
+  color: #e7eef5;
+  font-size: 12px;
+}
+
+.country-knowledge-question-panel {
+  display: flex;
+  min-width: 0;
+  min-height: 0;
+  flex-direction: column;
+  overflow-y: auto;
+  border: 1px solid #2d3c4c;
+  border-radius: 9px;
+  background: #141e2a;
+}
+
+.country-knowledge-progress {
+  padding: 18px 20px 14px;
+  border-bottom: 1px solid #293545;
+}
+
+.country-knowledge-score {
+  color: #a6bad0;
+  font-size: 10px;
+}
+
+.country-knowledge-question {
+  padding: 23px 20px 10px;
+}
+
+.country-knowledge-category {
+  display: inline-flex;
+  padding: 5px 8px;
+  border: 1px solid #3a536a;
+  border-radius: 999px;
+  background: #1c2d3e;
+  color: #a9c8e8;
+  font-size: 9px;
+  font-weight: 650;
+  letter-spacing: 0.4px;
+}
+
+.country-knowledge-question h2 {
+  margin: 14px 0 18px;
+  color: #e9eff6;
+  font-size: 20px;
+  line-height: 1.45;
+}
+
+.country-knowledge-choices {
+  display: grid;
+  gap: 9px;
+}
+
+.country-knowledge-choice {
+  width: 100%;
+  padding: 12px 13px;
+  border: 1px solid #364a5e;
+  border-radius: 7px;
+  background: #1b2a39;
+  color: #dce6ef;
+  font: inherit;
+  font-size: 12px;
+  line-height: 1.4;
+  text-align: left;
+  cursor: pointer;
+  transition:
+    border-color 140ms ease,
+    background 140ms ease,
+    transform 140ms ease;
+}
+
+.country-knowledge-choice:hover:not(:disabled) {
+  transform: translateY(-1px);
+  border-color: #7ba1c3;
+  background: #25394d;
+}
+
+.country-knowledge-choice:focus-visible {
+  outline: 2px solid #91b7da;
+  outline-offset: 2px;
+}
+
+.country-knowledge-choice:disabled {
+  cursor: default;
+  opacity: 0.78;
+}
+
+.country-knowledge-choice-correct {
+  border-color: #43836a;
+  background: #1c382f;
+  color: #d8f1e5;
+  opacity: 1 !important;
+}
+
+.country-knowledge-choice-incorrect {
+  border-color: #86534f;
+  background: #392927;
+  color: #f2d9d6;
+  opacity: 1 !important;
+}
+
+.country-knowledge-feedback {
+  min-height: 42px;
+  margin-top: 14px;
+  color: #99acbf;
+  font-size: 10px;
+  line-height: 1.6;
+}
+
+.country-knowledge-feedback strong {
+  color: #f0f4f8;
+}
+
+.country-knowledge-actions {
+  display: grid;
+  gap: 8px;
+  margin-top: auto;
+  padding: 12px 20px 20px;
+}
+
+.country-knowledge-actions .quiz-reveal-button,
+.country-knowledge-actions .quiz-next-button {
+  margin-top: 0;
+}
+
+.country-knowledge-complete {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  justify-content: center;
+  padding: 28px;
+}
+
+.country-knowledge-complete h2 {
+  margin: 12px 0 8px;
+  color: #e9eff6;
+  font-size: 23px;
+}
+
+.country-knowledge-complete p {
+  color: #a2b3c5;
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.country-knowledge-complete p strong {
+  color: #eef4fa;
+}
+
+.country-knowledge-complete-actions {
+  display: grid;
+  gap: 9px;
+  margin-top: 13px;
+}
 
 .statistics-screen {
   width: 100%;
@@ -1887,7 +2114,7 @@ button {
 
 .statistics-mode-grid {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 12px;
 }
 
@@ -2158,6 +2385,10 @@ button {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
+  .statistics-mode-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
   .statistics-map-layout {
     grid-template-columns: minmax(0, 1fr);
   }
@@ -2168,6 +2399,11 @@ button {
 
   .country-quiz-selection-content {
     grid-template-columns: minmax(0, 1fr) 250px;
+    padding: 14px;
+  }
+
+  .country-knowledge-content {
+    grid-template-columns: minmax(0, 1fr) minmax(300px, 0.9fr);
     padding: 14px;
   }
 }
@@ -2193,6 +2429,25 @@ button {
     grid-template-columns: minmax(0, 1fr);
     grid-template-rows: minmax(220px, 1fr) auto;
     overflow-y: auto;
+  }
+
+  .country-knowledge-screen {
+    overflow-y: auto;
+  }
+
+  .country-knowledge-content {
+    flex: none;
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: minmax(260px, 44vh) auto;
+    overflow: visible;
+  }
+
+  .country-knowledge-question-panel {
+    overflow: visible;
+  }
+
+  .country-knowledge-question h2 {
+    font-size: 17px;
   }
 
   .country-quiz-selection-card {

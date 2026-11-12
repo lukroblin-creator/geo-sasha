@@ -31,8 +31,10 @@ const countryNames = new Intl.DisplayNames(['fr'], { type: 'region' })
 const modeLabels: Record<QuizMode, string> = {
   flags: 'Drapeaux',
   capitals: 'Capitales',
-  custom: 'Quiz personnalisé'
+  custom: 'Quiz personnalisé',
+  knowledge: 'Quiz pays'
 }
+const quizModes: QuizMode[] = ['flags', 'capitals', 'custom', 'knowledge']
 
 function percent(rate: number | null): string {
   return rate === null ? '—' : `${Math.round(rate * 100)} %`
@@ -146,7 +148,7 @@ export function StatisticsView({
         </section>
 
         <section className="statistics-mode-grid" aria-label="Résultats par type de quiz">
-          {(['flags', 'capitals', 'custom'] as const).map((mode) => {
+          {quizModes.map((mode) => {
             const modeStats = Object.values(countryStats).reduce(
               (sum, country) => ({
                 answered: sum.answered + country.byMode[mode].answered,
@@ -204,7 +206,7 @@ export function StatisticsView({
                   <span>{selectedCountry.correct} bonnes réponses sur {selectedCountry.answered}</span>
                 </div>
                 <div className="statistics-country-modes">
-                  {(['flags', 'capitals', 'custom'] as const).map((mode) => {
+                  {quizModes.map((mode) => {
                     const modeStats = selectedStats?.byMode[mode]
                     const rate = modeStats?.answered
                       ? modeStats.correct / modeStats.answered

@@ -17,6 +17,7 @@
     "start": "electron-vite preview",
     "dev": "electron-vite dev",
     "update:capital-data": "node scripts/update-country-capitals.mjs",
+    "update:knowledge-data": "node scripts/generate-country-knowledge-data.mjs",
     "build": "npm run typecheck && electron-vite build",
     "postinstall": "install-electron && electron-builder install-app-deps",
     "build:unpack": "npm run build && electron-builder --dir",
@@ -40,6 +41,7 @@
     "world-atlas": "^2.0.2"
   },
   "devDependencies": {
+    "@turf/boolean-point-in-polygon": "^7.4.0",
     "@electron-toolkit/eslint-config-prettier": "^3.0.1",
     "@electron-toolkit/eslint-config-ts": "^4.0.0",
     "@electron-toolkit/tsconfig": "^2.0.0",

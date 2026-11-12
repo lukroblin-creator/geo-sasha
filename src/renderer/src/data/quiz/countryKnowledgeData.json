@@ -1,0 +1,9870 @@
+[
+  {
+    "alpha2": "AF",
+    "cities": [
+      {
+        "name": "Kaboul",
+        "population": 3277000
+      },
+      {
+        "name": "Kandahâr",
+        "population": 715542
+      },
+      {
+        "name": "Jalalabad",
+        "population": 597971
+      },
+      {
+        "name": "Hérat",
+        "population": 481009
+      },
+      {
+        "name": "Mazâr-e Charîf",
+        "population": 458151
+      },
+      {
+        "name": "Kondôz",
+        "population": 259809
+      },
+      {
+        "name": "Baghlân",
+        "population": 218748
+      },
+      {
+        "name": "Lashkar Gah",
+        "population": 201546
+      },
+      {
+        "name": "Maïmana",
+        "population": 199795
+      },
+      {
+        "name": "Balkh",
+        "population": 179969
+      },
+      {
+        "name": "Ghazni",
+        "population": 141000
+      },
+      {
+        "name": "Gardêz",
+        "population": 103601
+      }
+    ],
+    "mountains": [
+      {
+        "name": "Nowshak",
+        "elevationMeters": 7492
+      },
+      {
+        "name": "Shāh Fōlādī",
+        "elevationMeters": 5048
+      },
+      {
+        "name": "Sikaram",
+        "elevationMeters": 4755
+      },
+      {
+        "name": "Kuh-e Jang Qal'eh",
+        "elevationMeters": 4171
+      }
+    ]
+  },
+  {
+    "alpha2": "AL",
+    "cities": [
+      {
+        "name": "Tirana",
+        "population": 895350
+      },
+      {
+        "name": "Elbasan",
+        "population": 165010
+      },
+      {
+        "name": "Shkodër",
+        "population": 155767
+      },
+      {
+        "name": "Durrës",
+        "population": 142432
+      },
+      {
+        "name": "Vlora",
+        "population": 89546
+      },
+      {
+        "name": "Fier",
+        "population": 82297
+      },
+      {
+        "name": "Korçë",
+        "population": 58259
+      },
+      {
+        "name": "Berat",
+        "population": 46866
+      },
+      {
+        "name": "Lushnjë",
+        "population": 41469
+      },
+      {
+        "name": "Pogradec",
+        "population": 40000
+      },
+      {
+        "name": "Gjirokastër",
+        "population": 23437
+      },
+      {
+        "name": "Krujë",
+        "population": 21286
+      }
+    ],
+    "mountains": [
+      {
+        "name": "Korab",
+        "elevationMeters": 2764
+      },
+      {
+        "name": "Maja Jezercë",
+        "elevationMeters": 2694
+      }
+    ]
+  },
+  {
+    "alpha2": "DZ",
+    "cities": [
+      {
+        "name": "Alger",
+        "population": 3354000
+      },
+      {
+        "name": "Oran",
+        "population": 798000
+      },
+      {
+        "name": "Constantine",
+        "population": 605179
+      },
+      {
+        "name": "Blida",
+        "population": 511348
+      },
+      {
+        "name": "Annaba",
+        "population": 503524
+      },
+      {
+        "name": "Chlef",
+        "population": 449167
+      },
+      {
+        "name": "Arak",
+        "population": 423251
+      },
+      {
+        "name": "Béjaïa",
+        "population": 384937
+      },
+      {
+        "name": "Batna",
+        "population": 280798
+      },
+      {
+        "name": "Sétif",
+        "population": 274744
+      },
+      {
+        "name": "Tlemcen",
+        "population": 229777
+      },
+      {
+        "name": "Skikda",
+        "population": 225181
+      }
+    ],
+    "mountains": [
+      {
+        "name": "Tahat",
+        "elevationMeters": 2908
+      },
+      {
+        "name": "Garet el Djenoun",
+        "elevationMeters": 2327
+      },
+      {
+        "name": "Djebel Chélia",
+        "elevationMeters": 2326
+      },
+      {
+        "name": "Lalla-Khadîdja",
+        "elevationMeters": 2308
+      }
+    ]
+  },
+  {
+    "alpha2": "AD",
+    "cities": [
+      {
+        "name": "Andorre-la-Vieille",
+        "population": 53998
+      }
+    ],
+    "mountains": [
+      {
+        "name": "Pic de Coma Pedrosa",
+        "elevationMeters": 2943
+      }
+    ]
+  },
+  {
+    "alpha2": "AO",
+    "cities": [
+      {
+        "name": "Luanda",
+        "population": 5172900
+      },
+      {
+        "name": "Huambo",
+        "population": 1100000
+      },
+      {
+        "name": "Lobito",
+        "population": 207932
+      },
+      {
+        "name": "Benguela",
+        "population": 151226
+      },
+      {
+        "name": "Moçâmedes",
+        "population": 132900
+      },
+      {
+        "name": "Malanje",
+        "population": 125856
+      },
+      {
+        "name": "Lubango",
+        "population": 125632
+      },
+      {
+        "name": "Kuito",
+        "population": 114286
+      },
+      {
+        "name": "Cabinda",
+        "population": 91791
+      },
+      {
+        "name": "Capenda-Camulemba",
+        "population": 80000
+      },
+      {
+        "name": "Soyo",
+        "population": 67491
+      },
+      {
+        "name": "Mbanza-Kongo",
+        "population": 60182
+      }
+    ],
+    "mountains": [
+      {
+        "name": "Morro de Môco",
+        "elevationMeters": 2620
+      }
+    ]
+  },
+  {
+    "alpha2": "AG",
+    "cities": [
+      {
+        "name": "Saint John's",
+        "population": 35499
+      }
+    ],
+    "mountains": [
+      {
+        "name": "mont Obama",
+        "elevationMeters": 402
+      }
+    ]
+  },
+  {
+    "alpha2": "AR",
+    "cities": [
+      {
+        "name": "Buenos Aires",
+        "population": 12795000
+      },
+      {
+        "name": "Córdoba",
+        "population": 1452000
+      },
+      {
+        "name": "Rosario",
+        "population": 1203000
+      },
+      {
+        "name": "Mendoza",
+        "population": 893000
+      },
+      {
+        "name": "San Miguel de Tucumán",
+        "population": 830000
+      },
+      {
+        "name": "La Plata",
+        "population": 694253
+      },
+      {
+        "name": "Mar del Plata",
+        "population": 555897
+      },
+      {
+        "name": "Salta",
+        "population": 512686
+      },
+      {
+        "name": "Santa Fe",
+        "population": 489505
+      },
+      {
+        "name": "San Juan",
+        "population": 447048
+      },
+      {
+        "name": "San Luis",
+        "population": 432310
+      },
+      {
+        "name": "Resistencia",
+        "population": 387158
+      }
+    ],
+    "mountains": [
+      {
+        "name": "Aconcagua",
+        "elevationMeters": 6959
+      },
+      {
+        "name": "Nevado Ojos del Salado",
+        "elevationMeters": 6880
+      },
+      {
+        "name": "Llullaillaco",
+        "elevationMeters": 6739
+      },
+      {
+        "name": "Tupungato",
+        "elevationMeters": 6550
+      },
+      {
+        "name": "Volcan Domuyo",
+        "elevationMeters": 4709
+      },
+      {
+        "name": "Fitz Roy",
+        "elevationMeters": 3375
+      },
+      {
+        "name": "Champaquí",
+        "elevationMeters": 2770
+      },
+      {
+        "name": "Cerro Tres Picos",
+        "elevationMeters": 1243
+      }
+    ]
+  },
+  {
+    "alpha2": "AM",
+    "cities": [
+      {
+        "name": "Erevan",
+        "population": 1102000
+      },
+      {
+        "name": "Gyumri",
+        "population": 148381
+      },
+      {
+        "name": "Vanadzor",
+        "population": 101098
+      },
+      {
+        "name": "Gavar",
+        "population": 21680
+      },
+      {
+        "name": "Artachat",
+        "population": 20562
+      },
+      {
+        "name": "Achtarak",
+        "population": 18779
+      },
+      {
+        "name": "Idjevan",
+        "population": 14737
+      },
+      {
+        "name": "Eghegnazor",
+        "population": 8200
+      }
+    ],
+    "mountains": [
+      {
+        "name": "mont Aragats",
+        "elevationMeters": 4090
+      }
+    ]
+  },
+  {
+    "alpha2": "AU",
+    "cities": [
+      {
+        "name": "Sydney",
+        "population": 4630000
+      },
+      {
+        "name": "Melbourne",
+        "population": 4170000
+      },
+      {
+        "name": "Brisbane",
+        "population": 1860000
+      },
+      {
+        "name": "Perth",
+        "population": 1532000
+      },
+      {
+        "name": "Adélaïde",
+        "population": 1145000
+      },
+      {
+        "name": "Newcastle",
+        "population": 540796
+      },
+      {
+        "name": "Gold Coast",
+        "population": 527660
+      },
+      {
+        "name": "Cranbourne",
+        "population": 460491
+      },
+      {
+        "name": "Canberra",
+        "population": 327700
+      },
+      {
+        "name": "Wollongong",
+        "population": 260914
+      },
+      {
+        "name": "Geelong",
+        "population": 160991
+      },
+      {
+        "name": "Cairns",
+        "population": 154225
+      }
+    ],
+    "mountains": [
+      {
+        "name": "mont Kosciuszko",
+        "elevationMeters": 2228
+      },
+      {
+        "name": "mont Bogong",
+        "elevationMeters": 1986
+      },
+      {
+        "name": "mont Buller",
+        "elevationMeters": 1805
+      },
+      {
+        "name": "Mount Bartle Frere",
+        "elevationMeters": 1622
+      },
+      {
+        "name": "mont Ossa",
+        "elevationMeters": 1617
+      },
+      {
+        "name": "Round Mountain",
+        "elevationMeters": 1608
+      },
+      {
+        "name": "Mont Barrington",
+        "elevationMeters": 1555
+      },
+      {
+        "name": "Mount Zeil",
+        "elevationMeters": 1531
+      }
+    ]
+  },
+  {
+    "alpha2": "AT",
+    "cities": [
+      {
+        "name": "Vienne",
+        "population": 2400000
+      },
+      {
+        "name": "Linz",
+        "population": 349161
+      },
+      {
+        "name": "Graz",
+        "population": 263234
+      },
+      {
+        "name": "Salzbourg",
+        "population": 206279
+      },
+      {
+        "name": "Innsbruck",
+        "population": 155214
+      },
+      {
+        "name": "Klagenfurt",
+        "population": 90610
+      },
+      {
+        "name": "Wiener Neustadt",
+        "population": 82762
+      },
+      {
+        "name": "Brégence",
+        "population": 26928
+      },
+      {
+        "name": "Eisenstadt",
+        "population": 13165
+      }
+    ],
+    "mountains": [
+      {
+        "name": "Grossglockner",
+        "elevationMeters": 3798
+      }
+    ]
+  },
+  {
+    "alpha2": "AZ",
+    "cities": [
+      {
+        "name": "Bakou",
+        "population": 2122300
+      },
+      {
+        "name": "Gandja",
+        "population": 303268
+      },
+      {
+        "name": "Sumqayıt",
+        "population": 279159
+      },
+      {
+        "name": "Nakhitchevan",
+        "population": 94788
+      },
+      {
+        "name": "Şirvan",
+        "population": 70684
+      },
+      {
+        "name": "Sheki",
+        "population": 64968
+      },
+      {
+        "name": "Lankaran",
+        "population": 60180
+      },
+      {
+        "name": "Stepanakert",
+        "population": 57473
+      },
+      {
+        "name": "Ievlakh",
+        "population": 53716
+      },
+      {
+        "name": "Kapan",
+        "population": 42288
+      },
+      {
+        "name": "Goychay",
+        "population": 35348
+      },
+      {
+        "name": "Tovuz",
+        "population": 12626
+      }
+    ],
+    "mountains": [
+      {
+        "name": "Bazardüzü",
+        "elevationMeters": 4466
+      }
+    ]
+  },
+  {
+    "alpha2": "BS",
+    "cities": [
+      {
+        "name": "Nassau",
+        "population": 227940
+      },
+      {
+        "name": "Freeport",
+        "population": 25383
+      }
+    ],
+    "mountains": [
+      {
+        "name": "mont Alvernia",
+        "elevationMeters": 63
+      }
+    ]
+  },
+  {
+    "alpha2": "BH",
+    "cities": [
+      {
+        "name": "Manama",
+        "population": 563920
+      }
+    ],
+    "mountains": [
+      {
+        "name": "Djébel ad Dukhan",
+        "elevationMeters": 134
+      }
+    ]
+  },
+  {
+    "alpha2": "BD",
+    "cities": [
+      {
+        "name": "Dacca",
+        "population": 12797394
+      },
+      {
+        "name": "Chittagong",
+        "population": 4529000
+      },
+      {
+        "name": "Khulnâ",
+        "population": 1553000
+      },
+      {
+        "name": "Râjshâhî",
+        "population": 810000
+      },
+      {
+        "name": "Cumilla",
+        "population": 389411
+      },
+      {
+        "name": "Mymensingh",
+        "population": 330126
+      },
+      {
+        "name": "Rangpur",
+        "population": 285564
+      },
+      {
+        "name": "Jessore",
+        "population": 243987
+      },
+      {
+        "name": "Sylhet",
+        "population": 237000
+      },
+      {
+        "name": "Saiyadpur",
+        "population": 232209
+      },
+      {
+        "name": "Narayanganj",
+        "population": 223622
+      },
+      {
+        "name": "Barisal",
+        "population": 202242
+      }
+    ],
+    "mountains": [
+      {
+        "name": "Mowdok Mual",
+        "elevationMeters": 1052
+      }
+    ]
+  },
+  {
+    "alpha2": "BB",
+    "cities": [
+      {
+        "name": "Bridgetown",
+        "population": 191152
+      }
+    ],
+    "mountains": [
+      {
+        "name": "mont Hillaby",
+        "elevationMeters": 340
+      }
+    ]
+  },
+  {
+    "alpha2": "BY",
+    "cities": [
+      {
+        "name": "Minsk",
+        "population": 1805000
+      },
+      {
+        "name": "Homiel",
+        "population": 480951
+      },
+      {
+        "name": "Moguilev",
+        "population": 369200
+      },
+      {
+        "name": "Vitebsk",
+        "population": 342700
+      },
+      {
+        "name": "Hrodna",
+        "population": 317365
+      },
+      {
+        "name": "Brest",
+        "population": 300715
+      },
+      {
+        "name": "Babrouïsk",
+        "population": 220517
+      },
+      {
+        "name": "Baranavitchy",
+        "population": 168772
+      },
+      {
+        "name": "Borissov",
+        "population": 155389
+      },
+      {
+        "name": "Orcha",
+        "population": 135206
+      },
+      {
+        "name": "Pinsk",
+        "population": 130777
+      },
+      {
+        "name": "Mazyr",
+        "population": 112137
+      }
+    ],
+    "mountains": [
+      {
+        "name": "Mont Dzerjinski",
+        "elevationMeters": 346
+      }
+    ]
+  },
+  {
+    "alpha2": "BE",
+    "cities": [
+      {
+        "name": "Bruxelles",
+        "population": 1743000
+      },
+      {
+        "name": "Anvers",
+        "population": 920000
+      },
+      {
+        "name": "Liège",
+        "population": 749110
+      },
+      {
+        "name": "Gand",
+        "population": 444336
+      },
+      {
+        "name": "Charleroi",
+        "population": 345367
+      },
+      {
+        "name": "Bruges",
+        "population": 146469
+      },
+      {
+        "name": "Namur",
+        "population": 106284
+      },
+      {
+        "name": "Mons",
+        "population": 91277
+      },
+      {
+        "name": "Hasselt",
+        "population": 69222
+      },
+      {
+        "name": "Arlon",
+        "population": 26179
+      }
+    ],
+    "mountains": [
+      {
+        "name": "Signal de Botrange",
+        "elevationMeters": 694
+      }
+    ]
+  },
+  {
+    "alpha2": "BZ",
+    "cities": [
+      {
+        "name": "Belize City",
+        "population": 63028
+      },
+      {
+        "name": "Orange Walk Town",
+        "population": 20835
+      },
+      {
+        "name": "El Cayo",
+        "population": 16977
+      },
+      {
+        "name": "Belmopan",
+        "population": 15220
+      },
+      {
+        "name": "Dangriga",
+        "population": 10750
+      },
+      {
+        "name": "Corozal Town",
+        "population": 8724
+      },
+      {
+        "name": "Punta Gorda",
+        "population": 7748
+      }
+    ],
+    "mountains": [
+      {
+        "name": "Doyle's Delight",
+        "elevationMeters": 1174
+      }
+    ]
+  },
+  {
+    "alpha2": "BJ",
+    "cities": [
+      {
+        "name": "Cotonou",
+        "population": 762000
+      },
+      {
+        "name": "Porto-Novo",
+        "population": 300000
+      },
+      {
+        "name": "Djougou",
+        "population": 202810
+      },
+      {
+        "name": "Parakou",
+        "population": 188853
+      },
+      {
+        "name": "Kandi",
+        "population": 109701
+      },
+      {
+        "name": "Lokossa",
+        "population": 86971
+      },
+      {
+        "name": "Ouidah",
+        "population": 83503
+      },
+      {
+        "name": "Abomey",
+        "population": 82154
+      },
+      {
+        "name": "Natitingou",
+        "population": 80892
+      }
+    ],
+    "mountains": [
+      {
+        "name": "Tanéka",
+        "elevationMeters": 641
+      }
+    ]
+  },
+  {
+    "alpha2": "BT",
+    "cities": [
+      {
+        "name": "Thimphou",
+        "population": 98676
+      },
+      {
+        "name": "Paro",
+        "population": 15000
+      },
+      {
+        "name": "Punakha",
+        "population": 5000
+      },
+      {
+        "name": "Wangdue Phodrang",
+        "population": 5000
+      }
+    ],
+    "mountains": [
+      {
+        "name": "Gangkhar Puensum",
+        "elevationMeters": 7570
+      }
+    ]
+  },
+  {
+    "alpha2": "BO",
+    "cities": [
+      {
+        "name": "Santa Cruz de la Sierra",
+        "population": 2102998
+      },
+      {
+        "name": "La Paz",
+        "population": 1590000
+      },
+      {
+        "name": "Cochabamba",
+        "population": 1000000
+      },
+      {
+        "name": "Oruro",
+        "population": 246501
+      },
+      {
+        "name": "Santa Ana del Yacuma",
+        "population": 234478
+      },
+      {
+        "name": "Quillacollo",
+        "population": 227052
+      },
+      {
+        "name": "Sucre",
+        "population": 224838
+      },
+      {
+        "name": "Potosí",
+        "population": 179901
+      },
+      {
+        "name": "Tarija",
+        "population": 159269
+      },
+      {
+        "name": "Montero",
+        "population": 88616
+      },
+      {
+        "name": "Trinidad",
+        "population": 84259
+      },
+      {
+        "name": "Riberalta",
+        "population": 74014
+      }
+    ],
+    "mountains": [
+      {
+        "name": "Nevado Sajama",
+        "elevationMeters": 6542
+      },
+      {
+        "name": "Nevado Illimani",
+        "elevationMeters": 6402
+      },
+      {
+        "name": "Serrania de Santiago",
+        "elevationMeters": 1555
+      },
+      {
+        "name": "Cerro San Miguel",
+        "elevationMeters": 830
+      }
+    ]
+  },
+  {
+    "alpha2": "BA",
+    "cities": [
+      {
+        "name": "Sarajevo",
+        "population": 696731
+      },
+      {
+        "name": "Banja Luka",
+        "population": 221738
+      },
+      {
+        "name": "Zenica",
+        "population": 164423
+      },
+      {
+        "name": "Mostar",
+        "population": 163067
+      },
+      {
+        "name": "Tuzla",
+        "population": 144334
+      },
+      {
+        "name": "Prijedor",
+        "population": 104858
+      }
+    ],
+    "mountains": [
+      {
+        "name": "Maglić",
+        "elevationMeters": 2387
+      },
+      {
+        "name": "Troglav",
+        "elevationMeters": 1913
+      },
+      {
+        "name": "Dinara",
+        "elevationMeters": 1831
+      }
+    ]
+  },
+  {
+    "alpha2": "BW",
+    "cities": [
+      {
+        "name": "Gaborone",
+        "population": 208411
+      },
+      {
+        "name": "Francistown",
+        "population": 89979
+      },
+      {
+        "name": "Lobatse",
+        "population": 69804
+      },
+      {
+        "name": "Molepolole",
+        "population": 63248
+      },
+      {
+        "name": "Mahalapye",
+        "population": 50744
+      },
+      {
+        "name": "Maun",
+        "population": 49945
+      },
+      {
+        "name": "Serowe",
+        "population": 48573
+      },
+      {
+        "name": "Kanye",
+        "population": 46831
+      },
+      {
+        "name": "Mochudi",
+        "population": 39700
+      },
+      {
+        "name": "Palapye",
+        "population": 30650
+      },
+      {
+        "name": "Tsabong",
+        "population": 9679
+      },
+      {
+        "name": "Kasane",
+        "population": 9250
+      }
+    ],
+    "mountains": [
+      {
+        "name": "Colline de Monalanong",
+        "elevationMeters": 1494
+      }
+    ]
+  },
+  {
+    "alpha2": "BR",
+    "cities": [
+      {
+        "name": "São Paulo",
+        "population": 18845000
+      },
+      {
+        "name": "Rio de Janeiro",
+        "population": 11748000
+      },
+      {
+        "name": "Belo Horizonte",
+        "population": 5575000
+      },
+      {
+        "name": "Porto Alegre",
+        "population": 3917000
+      },
+      {
+        "name": "Brasilia",
+        "population": 3716996
+      },
+      {
+        "name": "Recife",
+        "population": 3651000
+      },
+      {
+        "name": "Fortaleza",
+        "population": 3602319
+      },
+      {
+        "name": "Salvador",
+        "population": 3484000
+      },
+      {
+        "name": "Curitiba",
+        "population": 3084000
+      },
+      {
+        "name": "Campinas",
+        "population": 2791000
+      },
+      {
+        "name": "Belém",
+        "population": 2167000
+      },
+      {
+        "name": "Goiânia",
+        "population": 2022000
+      }
+    ],
+    "mountains": [
+      {
+        "name": "Pic de la Bandeira",
+        "elevationMeters": 2890
+      },
+      {
+        "name": "Pedra da Mina",
+        "elevationMeters": 2798
+      },
+      {
+        "name": "Serra do Barbado",
+        "elevationMeters": 2033
+      },
+      {
+        "name": "Pico Paraná",
+        "elevationMeters": 1877
+      },
+      {
+        "name": "Morro da Boa Vista",
+        "elevationMeters": 1827
+      },
+      {
+        "name": "Chapada dos Veadeiros",
+        "elevationMeters": 1691
+      },
+      {
+        "name": "Pico do Jabre",
+        "elevationMeters": 1197
+      },
+      {
+        "name": "Pico Serra Branca",
+        "elevationMeters": 1154
+      }
+    ]
+  },
+  {
+    "alpha2": "BN",
+    "cities": [
+      {
+        "name": "Bandar Seri Begawan",
+        "population": 296500
+      }
+    ],
+    "mountains": [
+      {
+        "name": "Bukit Pagon",
+        "elevationMeters": 1850
+      }
+    ]
+  },
+  {
+    "alpha2": "BG",
+    "cities": [
+      {
+        "name": "Sofia",
+        "population": 1185000
+      },
+      {
+        "name": "Plovdiv",
+        "population": 340494
+      },
+      {
+        "name": "Varna",
+        "population": 312770
+      },
+      {
+        "name": "Bourgas",
+        "population": 195966
+      },
+      {
+        "name": "Roussé",
+        "population": 184270
+      },
+      {
+        "name": "Stara Zagora",
+        "population": 143431
+      },
+      {
+        "name": "Pleven",
+        "population": 118675
+      },
+      {
+        "name": "Sliven",
+        "population": 96368
+      },
+      {
+        "name": "Dobritch",
+        "population": 94831
+      },
+      {
+        "name": "Choumen",
+        "population": 87283
+      },
+      {
+        "name": "Pernik",
+        "population": 82467
+      },
+      {
+        "name": "Haskovo",
+        "population": 79699
+      }
+    ],
+    "mountains": [
+      {
+        "name": "Mousala",
+        "elevationMeters": 2925
+      },
+      {
+        "name": "Pic Botev",
+        "elevationMeters": 2376
+      },
+      {
+        "name": "Midžor",
+        "elevationMeters": 2168
+      }
+    ]
+  },
+  {
+    "alpha2": "BF",
+    "cities": [
+      {
+        "name": "Ouagadougou",
+        "population": 1149000
+      },
+      {
+        "name": "Bobo-Dioulasso",
+        "population": 360106
+      },
+      {
+        "name": "Koudougou",
+        "population": 87347
+      },
+      {
+        "name": "Ouahigouya",
+        "population": 79504
+      },
+      {
+        "name": "Banfora",
+        "population": 60288
+      },
+      {
+        "name": "Dédougou",
+        "population": 45341
+      },
+      {
+        "name": "Kaya",
+        "population": 40017
+      },
+      {
+        "name": "Tenkodogo",
+        "population": 38108
+      },
+      {
+        "name": "Dori",
+        "population": 37806
+      },
+      {
+        "name": "Réo",
+        "population": 37535
+      },
+      {
+        "name": "Fada N'Gourma",
+        "population": 33910
+      },
+      {
+        "name": "Koupéla",
+        "population": 32052
+      }
+    ],
+    "mountains": [
+      {
+        "name": "Tenakourou",
+        "elevationMeters": 747
+      }
+    ]
+  },
+  {
+    "alpha2": "BI",
+    "cities": [
+      {
+        "name": "Bujumbura",
+        "population": 331700
+      },
+      {
+        "name": "Muyinga",
+        "population": 71076
+      },
+      {
+        "name": "Ruyigi",
+        "population": 38458
+      },
+      {
+        "name": "Gitega",
+        "population": 23167
+      },
+      {
+        "name": "Ngozi",
+        "population": 21506
+      },
+      {
+        "name": "Rutana",
+        "population": 20893
+      },
+      {
+        "name": "Bururi",
+        "population": 20393
+      },
+      {
+        "name": "Makamba",
+        "population": 19642
+      },
+      {
+        "name": "Commune de Kayanza",
+        "population": 19443
+      },
+      {
+        "name": "Muramvya",
+        "population": 18041
+      },
+      {
+        "name": "Bubanza",
+        "population": 12728
+      },
+      {
+        "name": "Karuzi",
+        "population": 10705
+      }
+    ],
+    "mountains": [
+      {
+        "name": "mont Heha",
+        "elevationMeters": 2670
+      }
+    ]
+  },
+  {
+    "alpha2": "CV",
+    "cities": [
+      {
+        "name": "Praia",
+        "population": 113364
+      },
+      {
+        "name": "Mindelo",
+        "population": 70611
+      }
+    ],
+    "mountains": [
+      {
+        "name": "Pico de Cano",
+        "elevationMeters": 2829
+      }
+    ]
+  },
+  {
+    "alpha2": "KH",
+    "cities": [
+      {
+        "name": "Phnom Penh",
+        "population": 1466000
+      },
+      {
+        "name": "Battambang",
+        "population": 154773
+      },
+      {
+        "name": "Siem Reap",
+        "population": 109398
+      },
+      {
+        "name": "Kampong Cham",
+        "population": 83233
+      },
+      {
+        "name": "Kampong Chhnang",
+        "population": 75244
+      },
+      {
+        "name": "Prey Veng",
+        "population": 74000
+      },
+      {
+        "name": "Pouthisat",
+        "population": 52476
+      },
+      {
+        "name": "Sisophon",
+        "population": 50302
+      },
+      {
+        "name": "Kampot",
+        "population": 50105
+      },
+      {
+        "name": "Kampong Spoe",
+        "population": 33231
+      },
+      {
+        "name": "Koh Kong",
+        "population": 33134
+      },
+      {
+        "name": "Stung Treng",
+        "population": 29665
+      }
+    ],
+    "mountains": [
+      {
+        "name": "Phnum Aoral",
+        "elevationMeters": 1813
+      }
+    ]
+  },
+  {
+    "alpha2": "CM",
+    "cities": [
+      {
+        "name": "Douala",
+        "population": 1906000
+      },
+      {
+        "name": "Yaoundé",
+        "population": 1611000
+      },
+      {
+        "name": "Bamenda",
+        "population": 445299
+      },
+      {
+        "name": "Garoua",
+        "population": 436899
+      },
+      {
+        "name": "Maroua",
+        "population": 319941
+      },
+      {
+        "name": "Bafoussam",
+        "population": 290768
+      },
+      {
+        "name": "Ngaoundéré",
+        "population": 231357
+      },
+      {
+        "name": "Bertoua",
+        "population": 218111
+      },
+      {
+        "name": "Limbé",
+        "population": 212474
+      },
+      {
+        "name": "Édéa",
+        "population": 203149
+      },
+      {
+        "name": "Kumba",
+        "population": 144413
+      },
+      {
+        "name": "Kumbo",
+        "population": 125486
+      }
+    ],
+    "mountains": [
+      {
+        "name": "mont Cameroun",
+        "elevationMeters": 4040
+      },
+      {
+        "name": "mont Oku",
+        "elevationMeters": 3011
+      }
+    ]
+  },
+  {
+    "alpha2": "CA",
+    "cities": [
+      {
+        "name": "Toronto",
+        "population": 5213000
+      },
+      {
+        "name": "Montréal",
+        "population": 3678000
+      },
+      {
+        "name": "Vancouver",
+        "population": 2313328
+      },
+      {
+        "name": "Ottawa",
+        "population": 1145000
+      },
+      {
+        "name": "Calgary",
+        "population": 1110000
+      },
+      {
+        "name": "Edmonton",
+        "population": 1058000
+      },
+      {
+        "name": "Hamilton",
+        "population": 721053
+      },
+      {
+        "name": "Winnipeg",
+        "population": 632063
+      },
+      {
+        "name": "Québec",
+        "population": 624177
+      },
+      {
+        "name": "Oshawa",
+        "population": 450963
+      },
+      {
+        "name": "Kitchener",
+        "population": 417001
+      },
+      {
+        "name": "Halifax",
+        "population": 359111
+      }
+    ],
+    "mountains": [
+      {
+        "name": "mont Logan",
+        "elevationMeters": 5959
+      },
+      {
+        "name": "mont Waddington",
+        "elevationMeters": 4019
+      },
+      {
+        "name": "mont Robson",
+        "elevationMeters": 3954
+      },
+      {
+        "name": "mont Sir Sandford",
+        "elevationMeters": 3519
+      },
+      {
+        "name": "Ulysses Mountain",
+        "elevationMeters": 3024
+      },
+      {
+        "name": "Mont Roosevelt",
+        "elevationMeters": 2972
+      },
+      {
+        "name": "Keele Peak",
+        "elevationMeters": 2952
+      },
+      {
+        "name": "Mount Nirvana",
+        "elevationMeters": 2773
+      }
+    ]
+  },
+  {
+    "alpha2": "CF",
+    "cities": [
+      {
+        "name": "Bangui",
+        "population": 831925
+      },
+      {
+        "name": "Mbaïki",
+        "population": 67132
+      },
+      {
+        "name": "Bossangoa",
+        "population": 63064
+      },
+      {
+        "name": "Bambari",
+        "population": 62098
+      },
+      {
+        "name": "Berbérati",
+        "population": 61815
+      },
+      {
+        "name": "Kaga-Bandoro",
+        "population": 56520
+      },
+      {
+        "name": "Bozoum",
+        "population": 40201
+      },
+      {
+        "name": "Carnot",
+        "population": 38071
+      },
+      {
+        "name": "Bouar",
+        "population": 34372
+      },
+      {
+        "name": "Sibut",
+        "population": 34267
+      },
+      {
+        "name": "Bangassou",
+        "population": 32841
+      },
+      {
+        "name": "Bria",
+        "population": 29027
+      }
+    ],
+    "mountains": [
+      {
+        "name": "mont Ngaoui",
+        "elevationMeters": 1410
+      },
+      {
+        "name": "Massif des Bongos",
+        "elevationMeters": 1400
+      }
+    ]
+  },
+  {
+    "alpha2": "TD",
+    "cities": [
+      {
+        "name": "N'Djaména",
+        "population": 989000
+      },
+      {
+        "name": "Bongor",
+        "population": 193941
+      },
+      {
+        "name": "Sarh",
+        "population": 169196
+      },
+      {
+        "name": "Abéché",
+        "population": 158317
+      },
+      {
+        "name": "Moundou",
+        "population": 156705
+      },
+      {
+        "name": "Kélo",
+        "population": 96224
+      },
+      {
+        "name": "Pala",
+        "population": 35466
+      },
+      {
+        "name": "Am Timan",
+        "population": 30443
+      },
+      {
+        "name": "Doba",
+        "population": 29597
+      },
+      {
+        "name": "Mongo",
+        "population": 27763
+      },
+      {
+        "name": "Ati",
+        "population": 25373
+      },
+      {
+        "name": "Laï",
+        "population": 19382
+      }
+    ],
+    "mountains": [
+      {
+        "name": "Emi Koussi",
+        "elevationMeters": 3415
+      },
+      {
+        "name": "Kegueur Terbi",
+        "elevationMeters": 3376
+      }
+    ]
+  },
+  {
+    "alpha2": "CL",
+    "cities": [
+      {
+        "name": "Santiago",
+        "population": 5720000
+      },
+      {
+        "name": "Concepción",
+        "population": 889725
+      },
+      {
+        "name": "Valparaíso",
+        "population": 854000
+      },
+      {
+        "name": "Viña del Mar",
+        "population": 503534
+      },
+      {
+        "name": "Antofagasta",
+        "population": 309832
+      },
+      {
+        "name": "Talcahuano",
+        "population": 288074
+      },
+      {
+        "name": "Temuco",
+        "population": 265901
+      },
+      {
+        "name": "San Bernardo",
+        "population": 246762
+      },
+      {
+        "name": "Rancagua",
+        "population": 233268
+      },
+      {
+        "name": "Iquique",
+        "population": 227499
+      },
+      {
+        "name": "Talca",
+        "population": 197479
+      },
+      {
+        "name": "Arica",
+        "population": 185999
+      }
+    ],
+    "mountains": [
+      {
+        "name": "Aucanquilcha",
+        "elevationMeters": 6176
+      },
+      {
+        "name": "Monte San Valentin",
+        "elevationMeters": 4058
+      },
+      {
+        "name": "Tronador",
+        "elevationMeters": 3554
+      },
+      {
+        "name": "Villarrica",
+        "elevationMeters": 2847
+      },
+      {
+        "name": "mont Darwin",
+        "elevationMeters": 2580
+      },
+      {
+        "name": "Massif del Paine",
+        "elevationMeters": 2500
+      },
+      {
+        "name": "Cerro Cantillana",
+        "elevationMeters": 2281
+      },
+      {
+        "name": "Cerro de Los Inocentes",
+        "elevationMeters": 1650
+      }
+    ]
+  },
+  {
+    "alpha2": "CN",
+    "cities": [
+      {
+        "name": "Shanghai",
+        "population": 14987000
+      },
+      {
+        "name": "Pékin",
+        "population": 11106000
+      },
+      {
+        "name": "Canton",
+        "population": 8829000
+      },
+      {
+        "name": "Shenzhen",
+        "population": 7581000
+      },
+      {
+        "name": "Wuhan",
+        "population": 7243000
+      },
+      {
+        "name": "Tianjin",
+        "population": 7180000
+      },
+      {
+        "name": "Chongqing",
+        "population": 6461000
+      },
+      {
+        "name": "Shenyang",
+        "population": 4787000
+      },
+      {
+        "name": "Dongguan",
+        "population": 4528000
+      },
+      {
+        "name": "Chengdu",
+        "population": 4123000
+      },
+      {
+        "name": "Xi'an",
+        "population": 4009000
+      },
+      {
+        "name": "Hechi",
+        "population": 3830000
+      }
+    ],
+    "mountains": [
+      {
+        "name": "Everest",
+        "elevationMeters": 8848
+      },
+      {
+        "name": "Namcha Barwa",
+        "elevationMeters": 7782
+      },
+      {
+        "name": "Kongur Tagh",
+        "elevationMeters": 7649
+      },
+      {
+        "name": "Minya Konka",
+        "elevationMeters": 7556
+      },
+      {
+        "name": "Gyala Peri",
+        "elevationMeters": 7294
+      },
+      {
+        "name": "Liushi Shan",
+        "elevationMeters": 7167
+      },
+      {
+        "name": "mont Nyainqentanglha",
+        "elevationMeters": 7162
+      },
+      {
+        "name": "Loinbo Kangri",
+        "elevationMeters": 7095
+      }
+    ]
+  },
+  {
+    "alpha2": "CO",
+    "cities": [
+      {
+        "name": "Bogota",
+        "population": 7772000
+      },
+      {
+        "name": "Medellín",
+        "population": 3297000
+      },
+      {
+        "name": "Cali",
+        "population": 2254000
+      },
+      {
+        "name": "Barranquilla",
+        "population": 1798000
+      },
+      {
+        "name": "Bucaramanga",
+        "population": 1009000
+      },
+      {
+        "name": "Carthagène des Indes",
+        "population": 887000
+      },
+      {
+        "name": "Cúcuta",
+        "population": 722146
+      },
+      {
+        "name": "Soledad",
+        "population": 698852
+      },
+      {
+        "name": "Pereira",
+        "population": 568750
+      },
+      {
+        "name": "Bello",
+        "population": 519670
+      },
+      {
+        "name": "Santa Marta",
+        "population": 431781
+      },
+      {
+        "name": "Ibagué",
+        "population": 421685
+      }
+    ],
+    "mountains": [
+      {
+        "name": "Pic Cristóbal Colón",
+        "elevationMeters": 5775
+      },
+      {
+        "name": "Ritacuba Blanco",
+        "elevationMeters": 5410
+      },
+      {
+        "name": "Nevado del Ruiz",
+        "elevationMeters": 5311
+      },
+      {
+        "name": "Galeras",
+        "elevationMeters": 4276
+      },
+      {
+        "name": "Alto de Buey",
+        "elevationMeters": 1810
+      },
+      {
+        "name": "Cerro Maine Hanarí",
+        "elevationMeters": 860
+      }
+    ]
+  },
+  {
+    "alpha2": "KM",
+    "cities": [
+      {
+        "name": "Moroni",
+        "population": 128698
+      }
+    ],
+    "mountains": [
+      {
+        "name": "Kartala",
+        "elevationMeters": 2361
+      }
+    ]
+  },
+  {
+    "alpha2": "CG",
+    "cities": [
+      {
+        "name": "Brazzaville",
+        "population": 1355000
+      },
+      {
+        "name": "Pointe-Noire",
+        "population": 659084
+      },
+      {
+        "name": "Dolisie",
+        "population": 103894
+      },
+      {
+        "name": "Kayes",
+        "population": 62521
+      },
+      {
+        "name": "Owando",
+        "population": 34070
+      },
+      {
+        "name": "Mossendjo",
+        "population": 30936
+      },
+      {
+        "name": "Ouesso",
+        "population": 28320
+      },
+      {
+        "name": "Sibiti",
+        "population": 22811
+      },
+      {
+        "name": "Madingou",
+        "population": 22760
+      },
+      {
+        "name": "Gamboma",
+        "population": 20877
+      },
+      {
+        "name": "Impfondo",
+        "population": 20859
+      },
+      {
+        "name": "Kinkala",
+        "population": 13882
+      }
+    ],
+    "mountains": [
+      {
+        "name": "mont Nabemba",
+        "elevationMeters": 1020
+      },
+      {
+        "name": "Monts de la Lékéti",
+        "elevationMeters": 1000
+      }
+    ]
+  },
+  {
+    "alpha2": "CR",
+    "cities": [
+      {
+        "name": "San José",
+        "population": 1284000
+      },
+      {
+        "name": "Alajuela",
+        "population": 387743
+      },
+      {
+        "name": "Cartago",
+        "population": 196946
+      },
+      {
+        "name": "Puerto Limón",
+        "population": 85001
+      },
+      {
+        "name": "Puntarenas",
+        "population": 57102
+      },
+      {
+        "name": "Liberia",
+        "population": 45380
+      },
+      {
+        "name": "Ciudad Quesada",
+        "population": 31106
+      },
+      {
+        "name": "Heredia",
+        "population": 21947
+      },
+      {
+        "name": "Cañas",
+        "population": 20306
+      },
+      {
+        "name": "Golfito",
+        "population": 6777
+      },
+      {
+        "name": "La Cruz",
+        "population": 4319
+      },
+      {
+        "name": "Ciudad Cortés",
+        "population": 3850
+      }
+    ],
+    "mountains": [
+      {
+        "name": "Cerro Chirripó",
+        "elevationMeters": 3820
+      }
+    ]
+  },
+  {
+    "alpha2": "CI",
+    "cities": [
+      {
+        "name": "Abidjan",
+        "population": 3802000
+      },
+      {
+        "name": "Bouaké",
+        "population": 567481
+      },
+      {
+        "name": "Daloa",
+        "population": 255168
+      },
+      {
+        "name": "San-Pédro",
+        "population": 210273
+      },
+      {
+        "name": "Yamoussoukro",
+        "population": 206499
+      },
+      {
+        "name": "Korhogo",
+        "population": 177711
+      },
+      {
+        "name": "Man",
+        "population": 146974
+      },
+      {
+        "name": "Divo",
+        "population": 127867
+      },
+      {
+        "name": "Gagnoa",
+        "population": 123184
+      },
+      {
+        "name": "Soubré",
+        "population": 108933
+      },
+      {
+        "name": "Abengourou",
+        "population": 104020
+      },
+      {
+        "name": "Agboville",
+        "population": 81770
+      }
+    ],
+    "mountains": []
+  },
+  {
+    "alpha2": "HR",
+    "cities": [
+      {
+        "name": "Zagreb",
+        "population": 722526
+      },
+      {
+        "name": "Split",
+        "population": 214741
+      },
+      {
+        "name": "Rijeka",
+        "population": 170992
+      },
+      {
+        "name": "Slavonski Brod",
+        "population": 97718
+      },
+      {
+        "name": "Osijek",
+        "population": 95077
+      },
+      {
+        "name": "Zadar",
+        "population": 71258
+      },
+      {
+        "name": "Pula",
+        "population": 61599
+      },
+      {
+        "name": "Karlovac",
+        "population": 55063
+      },
+      {
+        "name": "Šibenik",
+        "population": 37112
+      },
+      {
+        "name": "Dubrovnik",
+        "population": 36994
+      }
+    ],
+    "mountains": []
+  },
+  {
+    "alpha2": "CU",
+    "cities": [
+      {
+        "name": "La Havane",
+        "population": 2174000
+      },
+      {
+        "name": "Santiago de Cuba",
+        "population": 555865
+      },
+      {
+        "name": "Camagüey",
+        "population": 347562
+      },
+      {
+        "name": "Holguín",
+        "population": 319102
+      },
+      {
+        "name": "Guantánamo",
+        "population": 272801
+      },
+      {
+        "name": "Santa Clara",
+        "population": 250512
+      },
+      {
+        "name": "Las Tunas",
+        "population": 203684
+      },
+      {
+        "name": "Bayamo",
+        "population": 192632
+      },
+      {
+        "name": "Pinar del Río",
+        "population": 186990
+      },
+      {
+        "name": "Cienfuegos",
+        "population": 186644
+      },
+      {
+        "name": "Matanzas",
+        "population": 146733
+      },
+      {
+        "name": "Ciego de Ávila",
+        "population": 142027
+      }
+    ],
+    "mountains": [
+      {
+        "name": "Pico Turquino",
+        "elevationMeters": 1974
+      }
+    ]
+  },
+  {
+    "alpha2": "CY",
+    "cities": [
+      {
+        "name": "Nicosie",
+        "population": 224300
+      },
+      {
+        "name": "Limassol",
+        "population": 154000
+      },
+      {
+        "name": "Larnaca",
+        "population": 48947
+      },
+      {
+        "name": "Paphos",
+        "population": 35961
+      }
+    ],
+    "mountains": [
+      {
+        "name": "mont Olympe",
+        "elevationMeters": 1951
+      }
+    ]
+  },
+  {
+    "alpha2": "CZ",
+    "cities": [
+      {
+        "name": "Prague",
+        "population": 1162000
+      },
+      {
+        "name": "Ostrava",
+        "population": 478963
+      },
+      {
+        "name": "Brno",
+        "population": 388277
+      },
+      {
+        "name": "Plzeň",
+        "population": 164180
+      },
+      {
+        "name": "Zlín",
+        "population": 124610
+      },
+      {
+        "name": "Pardubice",
+        "population": 107064
+      },
+      {
+        "name": "Liberec",
+        "population": 102175
+      },
+      {
+        "name": "Olomouc",
+        "population": 101268
+      },
+      {
+        "name": "České Budějovice",
+        "population": 98851
+      },
+      {
+        "name": "Hradec Králové",
+        "population": 95195
+      },
+      {
+        "name": "Ústí nad Labem",
+        "population": 94105
+      },
+      {
+        "name": "Jihlava",
+        "population": 53921
+      }
+    ],
+    "mountains": [
+      {
+        "name": "Sniejka",
+        "elevationMeters": 1603
+      }
+    ]
+  },
+  {
+    "alpha2": "KP",
+    "cities": [
+      {
+        "name": "Pyongyang",
+        "population": 3300000
+      },
+      {
+        "name": "Nampo",
+        "population": 1127000
+      },
+      {
+        "name": "Hamhŭng",
+        "population": 773000
+      },
+      {
+        "name": "Ch'ŏngjin",
+        "population": 672614
+      },
+      {
+        "name": "Sunchon",
+        "population": 400629
+      },
+      {
+        "name": "Kaesŏng",
+        "population": 338155
+      },
+      {
+        "name": "Wonsan",
+        "population": 329207
+      },
+      {
+        "name": "Kanggye",
+        "population": 299514
+      },
+      {
+        "name": "Sinuiju",
+        "population": 288112
+      },
+      {
+        "name": "Hyesan",
+        "population": 227461
+      },
+      {
+        "name": "Haeju",
+        "population": 224231
+      },
+      {
+        "name": "Kimch'aek",
+        "population": 187270
+      }
+    ],
+    "mountains": [
+      {
+        "name": "mont Paektu",
+        "elevationMeters": 2744
+      }
+    ]
+  },
+  {
+    "alpha2": "CD",
+    "cities": [
+      {
+        "name": "Kinshasa",
+        "population": 7843000
+      },
+      {
+        "name": "Lubumbashi",
+        "population": 1352000
+      },
+      {
+        "name": "Mbujimayi",
+        "population": 1295000
+      },
+      {
+        "name": "Kananga",
+        "population": 765000
+      },
+      {
+        "name": "Kikwit",
+        "population": 637736
+      },
+      {
+        "name": "Kisangani",
+        "population": 578470
+      },
+      {
+        "name": "Bukavu",
+        "population": 436779
+      },
+      {
+        "name": "Likasi",
+        "population": 434408
+      },
+      {
+        "name": "Kolwezi",
+        "population": 418000
+      },
+      {
+        "name": "Beni",
+        "population": 332903
+      },
+      {
+        "name": "Butembo",
+        "population": 286403
+      },
+      {
+        "name": "Mbandaka",
+        "population": 274996
+      }
+    ],
+    "mountains": [
+      {
+        "name": "mont Mohi",
+        "elevationMeters": 3480
+      },
+      {
+        "name": "Kabobo",
+        "elevationMeters": 2725
+      }
+    ]
+  },
+  {
+    "alpha2": "DK",
+    "cities": [
+      {
+        "name": "Copenhague",
+        "population": 1085000
+      },
+      {
+        "name": "Aarhus",
+        "population": 237551
+      },
+      {
+        "name": "Odense",
+        "population": 158222
+      },
+      {
+        "name": "Aalborg",
+        "population": 122219
+      },
+      {
+        "name": "Esbjerg",
+        "population": 72205
+      },
+      {
+        "name": "Vejle",
+        "population": 51177
+      },
+      {
+        "name": "Roskilde",
+        "population": 44285
+      },
+      {
+        "name": "Viborg",
+        "population": 34831
+      },
+      {
+        "name": "Svendborg",
+        "population": 29180
+      },
+      {
+        "name": "Hillerød",
+        "population": 28313
+      },
+      {
+        "name": "Frederikshavn",
+        "population": 24103
+      },
+      {
+        "name": "Sorø",
+        "population": 7167
+      }
+    ],
+    "mountains": [
+      {
+        "name": "Møllehøj",
+        "elevationMeters": 171
+      }
+    ]
+  },
+  {
+    "alpha2": "DJ",
+    "cities": [
+      {
+        "name": "Djibouti",
+        "population": 923000
+      },
+      {
+        "name": "Ali Sabieh",
+        "population": 40074
+      },
+      {
+        "name": "Tadjourah",
+        "population": 22193
+      },
+      {
+        "name": "Obock",
+        "population": 17776
+      },
+      {
+        "name": "Dikhil",
+        "population": 12043
+      }
+    ],
+    "mountains": [
+      {
+        "name": "Mousa Alli",
+        "elevationMeters": 2021
+      }
+    ]
+  },
+  {
+    "alpha2": "DM",
+    "cities": [
+      {
+        "name": "Roseau",
+        "population": 23336
+      }
+    ],
+    "mountains": [
+      {
+        "name": "Morne Diablotins",
+        "elevationMeters": 1447
+      }
+    ]
+  },
+  {
+    "alpha2": "DO",
+    "cities": [
+      {
+        "name": "Saint-Domingue",
+        "population": 2154000
+      },
+      {
+        "name": "Santiago de los Caballeros",
+        "population": 1550753
+      },
+      {
+        "name": "San Pedro de Macorís",
+        "population": 217899
+      },
+      {
+        "name": "La Romana",
+        "population": 208437
+      },
+      {
+        "name": "Concepción de La Vega",
+        "population": 163197
+      },
+      {
+        "name": "San Cristóbal",
+        "population": 154040
+      },
+      {
+        "name": "San Francisco de Macorís",
+        "population": 152538
+      },
+      {
+        "name": "Higüey",
+        "population": 123787
+      },
+      {
+        "name": "Puerto Plata",
+        "population": 119897
+      },
+      {
+        "name": "Santa Cruz de Barahona",
+        "population": 90128
+      },
+      {
+        "name": "Bonao",
+        "population": 73269
+      },
+      {
+        "name": "San Juan de la Maguana",
+        "population": 72950
+      }
+    ],
+    "mountains": [
+      {
+        "name": "Pico Duarte",
+        "elevationMeters": 3098
+      }
+    ]
+  },
+  {
+    "alpha2": "EC",
+    "cities": [
+      {
+        "name": "Guayaquil",
+        "population": 2514000
+      },
+      {
+        "name": "Quito",
+        "population": 1701000
+      },
+      {
+        "name": "Cuenca",
+        "population": 286878
+      },
+      {
+        "name": "Ambato",
+        "population": 281425
+      },
+      {
+        "name": "Portoviejo",
+        "population": 213601
+      },
+      {
+        "name": "Machala",
+        "population": 213034
+      },
+      {
+        "name": "Manta",
+        "population": 183166
+      },
+      {
+        "name": "Sangolquí",
+        "population": 178582
+      },
+      {
+        "name": "Esmeraldas",
+        "population": 173101
+      },
+      {
+        "name": "Riobamba",
+        "population": 172464
+      },
+      {
+        "name": "Ibarra",
+        "population": 146741
+      },
+      {
+        "name": "Loja",
+        "population": 126368
+      }
+    ],
+    "mountains": [
+      {
+        "name": "Volcan Chimborazo",
+        "elevationMeters": 6267
+      },
+      {
+        "name": "Wolf",
+        "elevationMeters": 1707
+      }
+    ]
+  },
+  {
+    "alpha2": "EG",
+    "cities": [
+      {
+        "name": "Le Caire",
+        "population": 11893000
+      },
+      {
+        "name": "Alexandrie",
+        "population": 4165000
+      },
+      {
+        "name": "Gizeh",
+        "population": 2681863
+      },
+      {
+        "name": "Ismaïlia",
+        "population": 656135
+      },
+      {
+        "name": "Port-Saïd",
+        "population": 623864
+      },
+      {
+        "name": "Louxor",
+        "population": 609248
+      },
+      {
+        "name": "Mansourah",
+        "population": 600000
+      },
+      {
+        "name": "Sohag",
+        "population": 600000
+      },
+      {
+        "name": "Suez",
+        "population": 508335
+      },
+      {
+        "name": "Al-Minya",
+        "population": 500000
+      },
+      {
+        "name": "Damanhur",
+        "population": 500000
+      },
+      {
+        "name": "Beni Suef",
+        "population": 489450
+      }
+    ],
+    "mountains": [
+      {
+        "name": "mont Sainte-Catherine",
+        "elevationMeters": 2629
+      },
+      {
+        "name": "Jabal Is",
+        "elevationMeters": 1851
+      }
+    ]
+  },
+  {
+    "alpha2": "SV",
+    "cities": [
+      {
+        "name": "San Salvador",
+        "population": 1433000
+      },
+      {
+        "name": "Santa Ana",
+        "population": 234478
+      },
+      {
+        "name": "San Miguel",
+        "population": 201563
+      },
+      {
+        "name": "Sonsonate",
+        "population": 168947
+      },
+      {
+        "name": "Santa Tecla",
+        "population": 124694
+      },
+      {
+        "name": "Usulután",
+        "population": 51910
+      },
+      {
+        "name": "Cojutepeque",
+        "population": 48411
+      },
+      {
+        "name": "Zacatecoluca",
+        "population": 39613
+      },
+      {
+        "name": "San Vicente",
+        "population": 37326
+      },
+      {
+        "name": "Ahuachapán",
+        "population": 34102
+      },
+      {
+        "name": "Chalatenango",
+        "population": 29271
+      },
+      {
+        "name": "Sensuntepeque",
+        "population": 26989
+      }
+    ],
+    "mountains": [
+      {
+        "name": "Cerro El Pital",
+        "elevationMeters": 2730
+      }
+    ]
+  },
+  {
+    "alpha2": "GQ",
+    "cities": [
+      {
+        "name": "Bata",
+        "population": 173046
+      },
+      {
+        "name": "Malabo",
+        "population": 155963
+      },
+      {
+        "name": "Luba",
+        "population": 8655
+      },
+      {
+        "name": "Evinayong",
+        "population": 8462
+      },
+      {
+        "name": "Mongomo",
+        "population": 6560
+      },
+      {
+        "name": "Calatrava",
+        "population": 628
+      }
+    ],
+    "mountains": [
+      {
+        "name": "Pico Basilé",
+        "elevationMeters": 3008
+      },
+      {
+        "name": "Mont Mitra",
+        "elevationMeters": 1200
+      }
+    ]
+  },
+  {
+    "alpha2": "ER",
+    "cities": [
+      {
+        "name": "Asmara",
+        "population": 620802
+      },
+      {
+        "name": "Mendefera",
+        "population": 257390
+      },
+      {
+        "name": "Keren",
+        "population": 150000
+      },
+      {
+        "name": "Massaoua",
+        "population": 142564
+      },
+      {
+        "name": "Assab",
+        "population": 105496
+      },
+      {
+        "name": "Agordat",
+        "population": 28600
+      },
+      {
+        "name": "Tesseney",
+        "population": 15255
+      }
+    ],
+    "mountains": [
+      {
+        "name": "mont Soira",
+        "elevationMeters": 3018
+      },
+      {
+        "name": "Mont Ramlo",
+        "elevationMeters": 2248
+      }
+    ]
+  },
+  {
+    "alpha2": "EE",
+    "cities": [
+      {
+        "name": "Tallinn",
+        "population": 394024
+      },
+      {
+        "name": "Tartu",
+        "population": 101092
+      },
+      {
+        "name": "Narva",
+        "population": 66980
+      },
+      {
+        "name": "Kohtla-Järve",
+        "population": 46060
+      },
+      {
+        "name": "Pärnu",
+        "population": 44192
+      },
+      {
+        "name": "Viljandi",
+        "population": 20309
+      },
+      {
+        "name": "Haapsalu",
+        "population": 11805
+      }
+    ],
+    "mountains": [
+      {
+        "name": "Suur Munamägi",
+        "elevationMeters": 318
+      }
+    ]
+  },
+  {
+    "alpha2": "SZ",
+    "cities": [
+      {
+        "name": "Manzini",
+        "population": 110537
+      },
+      {
+        "name": "Mbabane",
+        "population": 90138
+      },
+      {
+        "name": "Lobamba",
+        "population": 9782
+      },
+      {
+        "name": "Siteki",
+        "population": 6152
+      },
+      {
+        "name": "Piggs Peak",
+        "population": 5750
+      },
+      {
+        "name": "Golela",
+        "population": 3695
+      },
+      {
+        "name": "Hlatikulu",
+        "population": 2748
+      }
+    ],
+    "mountains": [
+      {
+        "name": "Emlembe",
+        "elevationMeters": 1862
+      }
+    ]
+  },
+  {
+    "alpha2": "ET",
+    "cities": [
+      {
+        "name": "Addis-Abeba",
+        "population": 3100000
+      },
+      {
+        "name": "Adama",
+        "population": 476892
+      },
+      {
+        "name": "Dire Dawa",
+        "population": 252279
+      },
+      {
+        "name": "Baher Dar",
+        "population": 206748
+      },
+      {
+        "name": "Dessie",
+        "population": 183802
+      },
+      {
+        "name": "Harar Jugol",
+        "population": 174994
+      },
+      {
+        "name": "Gondar",
+        "population": 156230
+      },
+      {
+        "name": "Hawassa",
+        "population": 133097
+      },
+      {
+        "name": "Jimma",
+        "population": 128306
+      },
+      {
+        "name": "Waliso",
+        "population": 114534
+      },
+      {
+        "name": "Shashamané",
+        "population": 114350
+      },
+      {
+        "name": "Adigrat",
+        "population": 104021
+      }
+    ],
+    "mountains": [
+      {
+        "name": "Ras Dashan",
+        "elevationMeters": 4533
+      },
+      {
+        "name": "Talo",
+        "elevationMeters": 4413
+      },
+      {
+        "name": "Mont Batu",
+        "elevationMeters": 4307
+      },
+      {
+        "name": "Amba Farit",
+        "elevationMeters": 4270
+      },
+      {
+        "name": "Gugu",
+        "elevationMeters": 3626
+      },
+      {
+        "name": "Argoun",
+        "elevationMeters": 3418
+      },
+      {
+        "name": "Muleta",
+        "elevationMeters": 3405
+      }
+    ]
+  },
+  {
+    "alpha2": "FJ",
+    "cities": [
+      {
+        "name": "Suva",
+        "population": 175399
+      },
+      {
+        "name": "Lautoka",
+        "population": 55894
+      },
+      {
+        "name": "Nadi",
+        "population": 42284
+      },
+      {
+        "name": "Labasa",
+        "population": 24187
+      }
+    ],
+    "mountains": [
+      {
+        "name": "mont Tomanivi",
+        "elevationMeters": 1323
+      }
+    ]
+  },
+  {
+    "alpha2": "FI",
+    "cities": [
+      {
+        "name": "Helsinki",
+        "population": 1115000
+      },
+      {
+        "name": "Tampere",
+        "population": 259279
+      },
+      {
+        "name": "Turku",
+        "population": 175945
+      },
+      {
+        "name": "Oulu",
+        "population": 136752
+      },
+      {
+        "name": "Lahti",
+        "population": 98826
+      },
+      {
+        "name": "Jyväskylä",
+        "population": 98136
+      },
+      {
+        "name": "Kuopio",
+        "population": 91900
+      },
+      {
+        "name": "Pori",
+        "population": 76772
+      },
+      {
+        "name": "Lappeenranta",
+        "population": 59276
+      },
+      {
+        "name": "Vaasa",
+        "population": 57014
+      },
+      {
+        "name": "Joensuu",
+        "population": 53388
+      },
+      {
+        "name": "Hämeenlinna",
+        "population": 47261
+      }
+    ],
+    "mountains": [
+      {
+        "name": "Halti",
+        "elevationMeters": 1328
+      },
+      {
+        "name": "Koli",
+        "elevationMeters": 347
+      }
+    ]
+  },
+  {
+    "alpha2": "FR",
+    "cities": [
+      {
+        "name": "Paris",
+        "population": 9904000
+      },
+      {
+        "name": "Lyon",
+        "population": 1423000
+      },
+      {
+        "name": "Marseille",
+        "population": 1400000
+      },
+      {
+        "name": "Lille",
+        "population": 1044000
+      },
+      {
+        "name": "Nice",
+        "population": 927000
+      },
+      {
+        "name": "Toulouse",
+        "population": 847000
+      },
+      {
+        "name": "Bordeaux",
+        "population": 803000
+      },
+      {
+        "name": "Rouen",
+        "population": 532559
+      },
+      {
+        "name": "Strasbourg",
+        "population": 439972
+      },
+      {
+        "name": "Nantes",
+        "population": 438537
+      },
+      {
+        "name": "Metz",
+        "population": 409186
+      },
+      {
+        "name": "Grenoble",
+        "population": 388574
+      }
+    ],
+    "mountains": [
+      {
+        "name": "mont Blanc",
+        "elevationMeters": 4807
+      },
+      {
+        "name": "Piton des Neiges",
+        "elevationMeters": 3069
+      },
+      {
+        "name": "Monte Cinto",
+        "elevationMeters": 2706
+      },
+      {
+        "name": "Puy de Sancy",
+        "elevationMeters": 1885
+      },
+      {
+        "name": "crêt de la Neige",
+        "elevationMeters": 1718
+      },
+      {
+        "name": "Soufrière",
+        "elevationMeters": 1467
+      },
+      {
+        "name": "montagne Pelée",
+        "elevationMeters": 1397
+      },
+      {
+        "name": "montagne Bellevue",
+        "elevationMeters": 851
+      }
+    ]
+  },
+  {
+    "alpha2": "GA",
+    "cities": [
+      {
+        "name": "Libreville",
+        "population": 578156
+      },
+      {
+        "name": "Port-Gentil",
+        "population": 116836
+      },
+      {
+        "name": "Oyem",
+        "population": 43423
+      },
+      {
+        "name": "Franceville",
+        "population": 42967
+      },
+      {
+        "name": "Moanda",
+        "population": 30151
+      },
+      {
+        "name": "Mouila",
+        "population": 28000
+      },
+      {
+        "name": "Lambaréné",
+        "population": 25310
+      },
+      {
+        "name": "Ebebiyín",
+        "population": 24831
+      },
+      {
+        "name": "Tchibanga",
+        "population": 19365
+      },
+      {
+        "name": "Bitam",
+        "population": 17637
+      },
+      {
+        "name": "Makokou",
+        "population": 17070
+      },
+      {
+        "name": "Koulamoutou",
+        "population": 16222
+      }
+    ],
+    "mountains": [
+      {
+        "name": "mont Bengoué",
+        "elevationMeters": 1070
+      }
+    ]
+  },
+  {
+    "alpha2": "GM",
+    "cities": [
+      {
+        "name": "Brikama",
+        "population": 195136
+      },
+      {
+        "name": "Banjul",
+        "population": 43094
+      },
+      {
+        "name": "Mansa Konko",
+        "population": 18672
+      },
+      {
+        "name": "Basse Santa Su",
+        "population": 14380
+      },
+      {
+        "name": "Bansang",
+        "population": 7615
+      },
+      {
+        "name": "Janjanbureh",
+        "population": 3584
+      },
+      {
+        "name": "Kerewan",
+        "population": 2751
+      }
+    ],
+    "mountains": []
+  },
+  {
+    "alpha2": "GE",
+    "cities": [
+      {
+        "name": "Tbilissi",
+        "population": 1100000
+      },
+      {
+        "name": "Koutaïssi",
+        "population": 183945
+      },
+      {
+        "name": "Roustavi",
+        "population": 157063
+      },
+      {
+        "name": "Batoumi",
+        "population": 155542
+      },
+      {
+        "name": "Soukhoumi",
+        "population": 81546
+      },
+      {
+        "name": "Poti",
+        "population": 47149
+      },
+      {
+        "name": "Tskhinvali",
+        "population": 38502
+      }
+    ],
+    "mountains": [
+      {
+        "name": "Chkhara",
+        "elevationMeters": 5200
+      },
+      {
+        "name": "mont Teboulo",
+        "elevationMeters": 4494
+      },
+      {
+        "name": "Dombaï",
+        "elevationMeters": 4038
+      }
+    ]
+  },
+  {
+    "alpha2": "DE",
+    "cities": [
+      {
+        "name": "Berlin",
+        "population": 3406000
+      },
+      {
+        "name": "Stuttgart",
+        "population": 2944700
+      },
+      {
+        "name": "Francfort",
+        "population": 2895000
+      },
+      {
+        "name": "Mannheim",
+        "population": 2362000
+      },
+      {
+        "name": "Hambourg",
+        "population": 1757000
+      },
+      {
+        "name": "Essen",
+        "population": 1742135
+      },
+      {
+        "name": "Duisbourg",
+        "population": 1276757
+      },
+      {
+        "name": "Munich",
+        "population": 1275000
+      },
+      {
+        "name": "Düsseldorf",
+        "population": 1220000
+      },
+      {
+        "name": "Cologne",
+        "population": 1004000
+      },
+      {
+        "name": "Wuppertal",
+        "population": 776525
+      },
+      {
+        "name": "Sarrebruck",
+        "population": 770001
+      }
+    ],
+    "mountains": [
+      {
+        "name": "Zugspitze",
+        "elevationMeters": 2963
+      },
+      {
+        "name": "Feldberg",
+        "elevationMeters": 1493
+      },
+      {
+        "name": "Brocken",
+        "elevationMeters": 1141
+      },
+      {
+        "name": "Hohe Acht",
+        "elevationMeters": 747
+      }
+    ]
+  },
+  {
+    "alpha2": "GH",
+    "cities": [
+      {
+        "name": "Accra",
+        "population": 2121000
+      },
+      {
+        "name": "Kumasi",
+        "population": 1646000
+      },
+      {
+        "name": "Tamale",
+        "population": 360579
+      },
+      {
+        "name": "Sékondi",
+        "population": 286248
+      },
+      {
+        "name": "Tema",
+        "population": 209000
+      },
+      {
+        "name": "Obuasi",
+        "population": 180117
+      },
+      {
+        "name": "Koforidua",
+        "population": 156653
+      },
+      {
+        "name": "Cape Coast",
+        "population": 143015
+      },
+      {
+        "name": "Ho",
+        "population": 93044
+      },
+      {
+        "name": "Bolgatanga",
+        "population": 82177
+      },
+      {
+        "name": "Wa",
+        "population": 78107
+      },
+      {
+        "name": "Bawku",
+        "population": 73594
+      }
+    ],
+    "mountains": [
+      {
+        "name": "mont Afadjato",
+        "elevationMeters": 885
+      }
+    ]
+  },
+  {
+    "alpha2": "GR",
+    "cities": [
+      {
+        "name": "Athènes",
+        "population": 3242000
+      },
+      {
+        "name": "Thessalonique",
+        "population": 828000
+      },
+      {
+        "name": "Le Pirée",
+        "population": 466065
+      },
+      {
+        "name": "Patras",
+        "population": 163360
+      },
+      {
+        "name": "Héraklion",
+        "population": 137154
+      },
+      {
+        "name": "Larissa",
+        "population": 128758
+      },
+      {
+        "name": "Vólos",
+        "population": 110632
+      },
+      {
+        "name": "Ioannina",
+        "population": 86304
+      },
+      {
+        "name": "La Canée",
+        "population": 78728
+      },
+      {
+        "name": "Agrínio",
+        "population": 75233
+      },
+      {
+        "name": "Chalcis",
+        "population": 71842
+      },
+      {
+        "name": "Kalamata",
+        "population": 71823
+      }
+    ],
+    "mountains": [
+      {
+        "name": "mont Olympe",
+        "elevationMeters": 2917
+      },
+      {
+        "name": "mont Ida",
+        "elevationMeters": 2456
+      }
+    ]
+  },
+  {
+    "alpha2": "GD",
+    "cities": [
+      {
+        "name": "Saint-Georges",
+        "population": 33734
+      }
+    ],
+    "mountains": [
+      {
+        "name": "mont Sainte-Catherine",
+        "elevationMeters": 840
+      }
+    ]
+  },
+  {
+    "alpha2": "GT",
+    "cities": [
+      {
+        "name": "Guatemala-Ville",
+        "population": 1024000
+      },
+      {
+        "name": "Quetzaltenango",
+        "population": 575263
+      },
+      {
+        "name": "El Progreso",
+        "population": 147197
+      },
+      {
+        "name": "San Luis",
+        "population": 132470
+      },
+      {
+        "name": "Escuintla",
+        "population": 107638
+      },
+      {
+        "name": "Huehuetenango",
+        "population": 85992
+      },
+      {
+        "name": "Chimaltenango",
+        "population": 82370
+      },
+      {
+        "name": "Totonicapán",
+        "population": 69734
+      },
+      {
+        "name": "Cobán",
+        "population": 65194
+      },
+      {
+        "name": "Mazatenango",
+        "population": 64652
+      },
+      {
+        "name": "Puerto Barrios",
+        "population": 56605
+      },
+      {
+        "name": "Jutiapa",
+        "population": 50681
+      }
+    ],
+    "mountains": [
+      {
+        "name": "Tajumulco",
+        "elevationMeters": 4220
+      },
+      {
+        "name": "Tacaná",
+        "elevationMeters": 4067
+      }
+    ]
+  },
+  {
+    "alpha2": "GN",
+    "cities": [
+      {
+        "name": "Conakry",
+        "population": 1494000
+      },
+      {
+        "name": "Gueckedou",
+        "population": 221715
+      },
+      {
+        "name": "Nzérékoré",
+        "population": 168121
+      },
+      {
+        "name": "Labé",
+        "population": 140575
+      },
+      {
+        "name": "Kindia",
+        "population": 117062
+      },
+      {
+        "name": "Boké",
+        "population": 116270
+      },
+      {
+        "name": "Kankan",
+        "population": 114009
+      },
+      {
+        "name": "Mamou",
+        "population": 71153
+      },
+      {
+        "name": "Kissidougou",
+        "population": 66815
+      },
+      {
+        "name": "Siguiri",
+        "population": 50159
+      },
+      {
+        "name": "Macenta",
+        "population": 43102
+      },
+      {
+        "name": "Kamsar",
+        "population": 34973
+      }
+    ],
+    "mountains": [
+      {
+        "name": "mont Nimba",
+        "elevationMeters": 1752
+      }
+    ]
+  },
+  {
+    "alpha2": "GW",
+    "cities": [
+      {
+        "name": "Bissau",
+        "population": 403339
+      },
+      {
+        "name": "Bafatá",
+        "population": 29704
+      },
+      {
+        "name": "Gabu",
+        "population": 14430
+      },
+      {
+        "name": "Bolama",
+        "population": 10769
+      },
+      {
+        "name": "Cacheu",
+        "population": 10490
+      },
+      {
+        "name": "Catió",
+        "population": 9898
+      },
+      {
+        "name": "Farim",
+        "population": 6792
+      },
+      {
+        "name": "Fulacunda",
+        "population": 1311
+      }
+    ],
+    "mountains": []
+  },
+  {
+    "alpha2": "GY",
+    "cities": [
+      {
+        "name": "Georgetown",
+        "population": 264350
+      },
+      {
+        "name": "New Amsterdam",
+        "population": 46874
+      },
+      {
+        "name": "Linden",
+        "population": 44690
+      },
+      {
+        "name": "Corriverton",
+        "population": 12000
+      },
+      {
+        "name": "Bartica",
+        "population": 11524
+      },
+      {
+        "name": "Anna Regina",
+        "population": 3113
+      },
+      {
+        "name": "Mabaruma",
+        "population": 2972
+      },
+      {
+        "name": "Kumaka",
+        "population": 2190
+      },
+      {
+        "name": "Lethem",
+        "population": 352
+      },
+      {
+        "name": "Ituni",
+        "population": 100
+      }
+    ],
+    "mountains": []
+  },
+  {
+    "alpha2": "HT",
+    "cities": [
+      {
+        "name": "Port-au-Prince",
+        "population": 1998000
+      },
+      {
+        "name": "Cap-Haïtien",
+        "population": 281487
+      },
+      {
+        "name": "Les Cayes",
+        "population": 175457
+      },
+      {
+        "name": "Les Gonaïves",
+        "population": 166678
+      },
+      {
+        "name": "chansolme",
+        "population": 34657
+      },
+      {
+        "name": "Jacmel",
+        "population": 33563
+      },
+      {
+        "name": "Jérémie",
+        "population": 30917
+      },
+      {
+        "name": "Hinche",
+        "population": 18590
+      },
+      {
+        "name": "Fort-Liberté",
+        "population": 11465
+      }
+    ],
+    "mountains": [
+      {
+        "name": "Pic la Selle",
+        "elevationMeters": 2680
+      }
+    ]
+  },
+  {
+    "alpha2": "HN",
+    "cities": [
+      {
+        "name": "Tegucigalpa",
+        "population": 946000
+      },
+      {
+        "name": "San Pedro Sula",
+        "population": 680091
+      },
+      {
+        "name": "La Ceiba",
+        "population": 145926
+      },
+      {
+        "name": "Choluteca",
+        "population": 99429
+      },
+      {
+        "name": "Comayagua",
+        "population": 71142
+      },
+      {
+        "name": "Nacaome",
+        "population": 47000
+      },
+      {
+        "name": "Juticalpa",
+        "population": 37442
+      },
+      {
+        "name": "Santa Rosa de Copán",
+        "population": 35529
+      },
+      {
+        "name": "La Paz",
+        "population": 17555
+      },
+      {
+        "name": "Yoro",
+        "population": 15774
+      },
+      {
+        "name": "Santa Bárbara",
+        "population": 15119
+      },
+      {
+        "name": "Trujillo",
+        "population": 9646
+      }
+    ],
+    "mountains": [
+      {
+        "name": "Cerro Las Minas",
+        "elevationMeters": 2849
+      },
+      {
+        "name": "Mogoton",
+        "elevationMeters": 2106
+      }
+    ]
+  },
+  {
+    "alpha2": "HU",
+    "cities": [
+      {
+        "name": "Budapest",
+        "population": 1679000
+      },
+      {
+        "name": "Miskolc",
+        "population": 247757
+      },
+      {
+        "name": "Debrecen",
+        "population": 231286
+      },
+      {
+        "name": "Szeged",
+        "population": 187765
+      },
+      {
+        "name": "Pécs",
+        "population": 186262
+      },
+      {
+        "name": "Nyíregyháza",
+        "population": 176880
+      },
+      {
+        "name": "Székesfehérvár",
+        "population": 144319
+      },
+      {
+        "name": "Győr",
+        "population": 136081
+      },
+      {
+        "name": "Kecskemét",
+        "population": 113895
+      },
+      {
+        "name": "Szombathely",
+        "population": 109518
+      },
+      {
+        "name": "Szolnok",
+        "population": 109261
+      },
+      {
+        "name": "Kaposvár",
+        "population": 108528
+      }
+    ],
+    "mountains": [
+      {
+        "name": "Kékes",
+        "elevationMeters": 1015
+      }
+    ]
+  },
+  {
+    "alpha2": "IS",
+    "cities": [
+      {
+        "name": "Reykjavik",
+        "population": 166212
+      },
+      {
+        "name": "Akureyri",
+        "population": 16563
+      },
+      {
+        "name": "Keflavík",
+        "population": 7930
+      },
+      {
+        "name": "Selfoss",
+        "population": 6275
+      },
+      {
+        "name": "Sauðárkrókur",
+        "population": 2682
+      },
+      {
+        "name": "Ísafjörður",
+        "population": 2534
+      },
+      {
+        "name": "Egilsstaðir",
+        "population": 2265
+      },
+      {
+        "name": "Borgarnes",
+        "population": 1783
+      },
+      {
+        "name": "Höfn",
+        "population": 1695
+      }
+    ],
+    "mountains": [
+      {
+        "name": "Hvannadalshnjúkur",
+        "elevationMeters": 2110
+      }
+    ]
+  },
+  {
+    "alpha2": "IN",
+    "cities": [
+      {
+        "name": "Bombay",
+        "population": 18978000
+      },
+      {
+        "name": "Delhi",
+        "population": 15926000
+      },
+      {
+        "name": "Calcutta",
+        "population": 14787000
+      },
+      {
+        "name": "Chennai",
+        "population": 7163000
+      },
+      {
+        "name": "Bangalore",
+        "population": 6787000
+      },
+      {
+        "name": "Hyderabad",
+        "population": 6376000
+      },
+      {
+        "name": "Amaravati",
+        "population": 5800000
+      },
+      {
+        "name": "Ahmedabad",
+        "population": 5375000
+      },
+      {
+        "name": "Howrah",
+        "population": 4841638
+      },
+      {
+        "name": "Pune",
+        "population": 4672000
+      },
+      {
+        "name": "Surate",
+        "population": 3842000
+      },
+      {
+        "name": "Kanpur",
+        "population": 3162000
+      }
+    ],
+    "mountains": [
+      {
+        "name": "Kangchenjunga",
+        "elevationMeters": 8586
+      },
+      {
+        "name": "Nanda Devi",
+        "elevationMeters": 7817
+      },
+      {
+        "name": "Nun-Kun",
+        "elevationMeters": 7135
+      },
+      {
+        "name": "Saser Kangri",
+        "elevationMeters": 6934
+      },
+      {
+        "name": "Kangju Kangri",
+        "elevationMeters": 6725
+      },
+      {
+        "name": "Anamudi",
+        "elevationMeters": 2695
+      },
+      {
+        "name": "Doddabetta Peak",
+        "elevationMeters": 2636
+      },
+      {
+        "name": "Gurû Sikhara",
+        "elevationMeters": 1722
+      }
+    ]
+  },
+  {
+    "alpha2": "ID",
+    "cities": [
+      {
+        "name": "Jakarta",
+        "population": 9125000
+      },
+      {
+        "name": "Surabaya",
+        "population": 2845000
+      },
+      {
+        "name": "Bandung",
+        "population": 2394000
+      },
+      {
+        "name": "Bekasi",
+        "population": 2378211
+      },
+      {
+        "name": "Medan",
+        "population": 2115000
+      },
+      {
+        "name": "Palembang",
+        "population": 1749000
+      },
+      {
+        "name": "Semarang",
+        "population": 1396000
+      },
+      {
+        "name": "Makassar",
+        "population": 1262000
+      },
+      {
+        "name": "Cilacap",
+        "population": 1174964
+      },
+      {
+        "name": "Bogor",
+        "population": 918000
+      },
+      {
+        "name": "Bandar Lampung",
+        "population": 881801
+      },
+      {
+        "name": "Padang",
+        "population": 855000
+      }
+    ],
+    "mountains": [
+      {
+        "name": "Puncak Jaya",
+        "elevationMeters": 4884
+      },
+      {
+        "name": "Kerinci",
+        "elevationMeters": 3805
+      },
+      {
+        "name": "Rinjani",
+        "elevationMeters": 3726
+      },
+      {
+        "name": "Semeru",
+        "elevationMeters": 3676
+      },
+      {
+        "name": "Bulu Rantekombola",
+        "elevationMeters": 3455
+      },
+      {
+        "name": "Ciremai",
+        "elevationMeters": 3077
+      },
+      {
+        "name": "Fuyul Sojol",
+        "elevationMeters": 3030
+      },
+      {
+        "name": "Binaya",
+        "elevationMeters": 3027
+      }
+    ]
+  },
+  {
+    "alpha2": "IR",
+    "cities": [
+      {
+        "name": "Téhéran",
+        "population": 7873000
+      },
+      {
+        "name": "Mechhed",
+        "population": 2469000
+      },
+      {
+        "name": "Ispahan",
+        "population": 1628000
+      },
+      {
+        "name": "Karadj",
+        "population": 1423000
+      },
+      {
+        "name": "Tabriz",
+        "population": 1413000
+      },
+      {
+        "name": "Chiraz",
+        "population": 1240000
+      },
+      {
+        "name": "Ahvaz",
+        "population": 996000
+      },
+      {
+        "name": "Qom",
+        "population": 973000
+      },
+      {
+        "name": "Kermanshah",
+        "population": 828313
+      },
+      {
+        "name": "Zahedan",
+        "population": 598887
+      },
+      {
+        "name": "Racht",
+        "population": 594590
+      },
+      {
+        "name": "Kerman",
+        "population": 577514
+      }
+    ],
+    "mountains": [
+      {
+        "name": "mont Damavand",
+        "elevationMeters": 5610
+      },
+      {
+        "name": "Volcan Savalan",
+        "elevationMeters": 4814
+      },
+      {
+        "name": "Zard Kuh",
+        "elevationMeters": 4548
+      },
+      {
+        "name": "Kōh-e Hazār",
+        "elevationMeters": 4465
+      },
+      {
+        "name": "mont Dena",
+        "elevationMeters": 4409
+      },
+      {
+        "name": "Taftan",
+        "elevationMeters": 3941
+      },
+      {
+        "name": "Monts Garrin",
+        "elevationMeters": 3630
+      },
+      {
+        "name": "Kūh-e Ḩājjī Ebrāhīm",
+        "elevationMeters": 3587
+      }
+    ]
+  },
+  {
+    "alpha2": "IQ",
+    "cities": [
+      {
+        "name": "Bagdad",
+        "population": 5054000
+      },
+      {
+        "name": "Mossoul",
+        "population": 1316000
+      },
+      {
+        "name": "Dahuk",
+        "population": 986000
+      },
+      {
+        "name": "Erbil",
+        "population": 926000
+      },
+      {
+        "name": "Bassorah",
+        "population": 870000
+      },
+      {
+        "name": "Souleimaniye",
+        "population": 723170
+      },
+      {
+        "name": "Nadjaf",
+        "population": 665552
+      },
+      {
+        "name": "Kirkouk",
+        "population": 601433
+      },
+      {
+        "name": "Hilla",
+        "population": 594605
+      },
+      {
+        "name": "Kerbala",
+        "population": 510692
+      },
+      {
+        "name": "Nassiriya",
+        "population": 451547
+      },
+      {
+        "name": "Diwaniya",
+        "population": 358408
+      }
+    ],
+    "mountains": [
+      {
+        "name": "Cheekha Dar",
+        "elevationMeters": 3611
+      }
+    ]
+  },
+  {
+    "alpha2": "IE",
+    "cities": [
+      {
+        "name": "Dublin",
+        "population": 1059000
+      },
+      {
+        "name": "Cork",
+        "population": 188907
+      },
+      {
+        "name": "Limerick",
+        "population": 90054
+      },
+      {
+        "name": "Galway",
+        "population": 75594
+      },
+      {
+        "name": "Waterford",
+        "population": 49275
+      },
+      {
+        "name": "Dundalk",
+        "population": 38884
+      },
+      {
+        "name": "Drogheda",
+        "population": 36533
+      },
+      {
+        "name": "Tralee",
+        "population": 26384
+      },
+      {
+        "name": "Kilkenny",
+        "population": 21589
+      },
+      {
+        "name": "Sligo",
+        "population": 20228
+      },
+      {
+        "name": "Killarney",
+        "population": 11902
+      },
+      {
+        "name": "Shannon",
+        "population": 8781
+      }
+    ],
+    "mountains": [
+      {
+        "name": "Carrauntuohill",
+        "elevationMeters": 1038
+      }
+    ]
+  },
+  {
+    "alpha2": "IL",
+    "cities": [
+      {
+        "name": "Tel Aviv",
+        "population": 3112000
+      },
+      {
+        "name": "Jérusalem",
+        "population": 1029300
+      },
+      {
+        "name": "Haïfa",
+        "population": 1011000
+      },
+      {
+        "name": "Beer-Sheva",
+        "population": 206408
+      },
+      {
+        "name": "Nazareth",
+        "population": 151459
+      },
+      {
+        "name": "Ramla",
+        "population": 63860
+      }
+    ],
+    "mountains": [
+      {
+        "name": "mont Méron",
+        "elevationMeters": 1208
+      }
+    ]
+  },
+  {
+    "alpha2": "IT",
+    "cities": [
+      {
+        "name": "Rome",
+        "population": 3339000
+      },
+      {
+        "name": "Milan",
+        "population": 2945000
+      },
+      {
+        "name": "Naples",
+        "population": 2250000
+      },
+      {
+        "name": "Turin",
+        "population": 1652000
+      },
+      {
+        "name": "Florence",
+        "population": 1500000
+      },
+      {
+        "name": "Salerne",
+        "population": 954265
+      },
+      {
+        "name": "Palerme",
+        "population": 863000
+      },
+      {
+        "name": "Catane",
+        "population": 674542
+      },
+      {
+        "name": "Gênes",
+        "population": 647497
+      },
+      {
+        "name": "Bari",
+        "population": 500577
+      },
+      {
+        "name": "Bologne",
+        "population": 488172
+      },
+      {
+        "name": "Vérone",
+        "population": 347459
+      }
+    ],
+    "mountains": [
+      {
+        "name": "Mont Etna",
+        "elevationMeters": 3322
+      },
+      {
+        "name": "Corno Grande",
+        "elevationMeters": 2912
+      },
+      {
+        "name": "Mont Viglio",
+        "elevationMeters": 2156
+      },
+      {
+        "name": "Punta La Marmora",
+        "elevationMeters": 1834
+      },
+      {
+        "name": "Vésuve",
+        "elevationMeters": 1281
+      }
+    ]
+  },
+  {
+    "alpha2": "JM",
+    "cities": [
+      {
+        "name": "Kingston",
+        "population": 937700
+      },
+      {
+        "name": "Spanish Town",
+        "population": 432704
+      },
+      {
+        "name": "May Pen",
+        "population": 135142
+      },
+      {
+        "name": "Montego Bay",
+        "population": 126008
+      },
+      {
+        "name": "Half Way Tree",
+        "population": 96494
+      },
+      {
+        "name": "Mandeville",
+        "population": 47115
+      },
+      {
+        "name": "Savanna-la-Mar",
+        "population": 30000
+      },
+      {
+        "name": "Port Antonio",
+        "population": 14400
+      },
+      {
+        "name": "Saint Ann's Bay",
+        "population": 13671
+      },
+      {
+        "name": "Port Morant",
+        "population": 11536
+      },
+      {
+        "name": "Port Maria",
+        "population": 7906
+      },
+      {
+        "name": "Falmouth",
+        "population": 7779
+      }
+    ],
+    "mountains": [
+      {
+        "name": "Blue Mountain Peak",
+        "elevationMeters": 2256
+      }
+    ]
+  },
+  {
+    "alpha2": "JP",
+    "cities": [
+      {
+        "name": "Tokyo",
+        "population": 35676000
+      },
+      {
+        "name": "Osaka",
+        "population": 11294000
+      },
+      {
+        "name": "Yokohama",
+        "population": 3697894
+      },
+      {
+        "name": "Nagoya",
+        "population": 3230000
+      },
+      {
+        "name": "Fukuoka",
+        "population": 2792000
+      },
+      {
+        "name": "Sapporo",
+        "population": 2544000
+      },
+      {
+        "name": "Sendai",
+        "population": 2250000
+      },
+      {
+        "name": "Hiroshima",
+        "population": 2045000
+      },
+      {
+        "name": "Kyoto",
+        "population": 1805000
+      },
+      {
+        "name": "Kōbe",
+        "population": 1528478
+      },
+      {
+        "name": "Kawasaki",
+        "population": 1437266
+      },
+      {
+        "name": "Kitakyūshū",
+        "population": 997536
+      }
+    ],
+    "mountains": [
+      {
+        "name": "mont Fuji",
+        "elevationMeters": 3776
+      },
+      {
+        "name": "mont Tate",
+        "elevationMeters": 3015
+      },
+      {
+        "name": "Asahidake",
+        "elevationMeters": 2290
+      },
+      {
+        "name": "mont Iwate",
+        "elevationMeters": 2038
+      },
+      {
+        "name": "mont Ishizuchi",
+        "elevationMeters": 1982
+      },
+      {
+        "name": "Monts Kujū",
+        "elevationMeters": 1788
+      },
+      {
+        "name": "mont Unzen",
+        "elevationMeters": 1500
+      },
+      {
+        "name": "Sakurajima",
+        "elevationMeters": 1117
+      }
+    ]
+  },
+  {
+    "alpha2": "JO",
+    "cities": [
+      {
+        "name": "Amman",
+        "population": 1060000
+      },
+      {
+        "name": "Zarka",
+        "population": 894691
+      },
+      {
+        "name": "Irbid",
+        "population": 650000
+      },
+      {
+        "name": "Salt",
+        "population": 140689
+      },
+      {
+        "name": "Aqaba",
+        "population": 95048
+      },
+      {
+        "name": "Al-Karak",
+        "population": 80062
+      },
+      {
+        "name": "Mafraq",
+        "population": 57118
+      },
+      {
+        "name": "Ma'an",
+        "population": 50350
+      },
+      {
+        "name": "Tafilah",
+        "population": 25429
+      }
+    ],
+    "mountains": [
+      {
+        "name": "Mount Rum",
+        "elevationMeters": 1754
+      }
+    ]
+  },
+  {
+    "alpha2": "KZ",
+    "cities": [
+      {
+        "name": "Almaty",
+        "population": 1209000
+      },
+      {
+        "name": "Chimkent",
+        "population": 465392
+      },
+      {
+        "name": "Karaganda",
+        "population": 451800
+      },
+      {
+        "name": "Taraz",
+        "population": 358153
+      },
+      {
+        "name": "Noursoultan",
+        "population": 345604
+      },
+      {
+        "name": "Pavlodar",
+        "population": 329002
+      },
+      {
+        "name": "Öskemen",
+        "population": 319067
+      },
+      {
+        "name": "Semeï",
+        "population": 311353
+      },
+      {
+        "name": "Kyzylorda",
+        "population": 300000
+      },
+      {
+        "name": "Aktioubé",
+        "population": 262457
+      },
+      {
+        "name": "Kostanaï",
+        "population": 236901
+      },
+      {
+        "name": "Petropavl",
+        "population": 228238
+      }
+    ],
+    "mountains": [
+      {
+        "name": "Pik Talgar",
+        "elevationMeters": 4979
+      },
+      {
+        "name": "El Toro",
+        "elevationMeters": 2992
+      }
+    ]
+  },
+  {
+    "alpha2": "KE",
+    "cities": [
+      {
+        "name": "Nairobi",
+        "population": 3010000
+      },
+      {
+        "name": "Mombasa",
+        "population": 882000
+      },
+      {
+        "name": "Kisumu",
+        "population": 395615
+      },
+      {
+        "name": "Nakuru",
+        "population": 364727
+      },
+      {
+        "name": "Eldoret",
+        "population": 353381
+      },
+      {
+        "name": "Kitale",
+        "population": 150495
+      },
+      {
+        "name": "Machakos",
+        "population": 144925
+      },
+      {
+        "name": "Thika",
+        "population": 99322
+      },
+      {
+        "name": "Kericho",
+        "population": 98852
+      },
+      {
+        "name": "Malindi",
+        "population": 94016
+      },
+      {
+        "name": "Kendu Bay",
+        "population": 91248
+      },
+      {
+        "name": "Kilifi",
+        "population": 80339
+      }
+    ],
+    "mountains": [
+      {
+        "name": "mont Kenya",
+        "elevationMeters": 5199
+      },
+      {
+        "name": "Mount Satima",
+        "elevationMeters": 4001
+      }
+    ]
+  },
+  {
+    "alpha2": "KI",
+    "cities": [
+      {
+        "name": "Tarawa-Sud",
+        "population": 28802
+      }
+    ],
+    "mountains": []
+  },
+  {
+    "alpha2": "KW",
+    "cities": [
+      {
+        "name": "Koweït",
+        "population": 2063000
+      },
+      {
+        "name": "Al Jahra",
+        "population": 194193
+      },
+      {
+        "name": "Hawally",
+        "population": 164212
+      },
+      {
+        "name": "Al Ahmadi",
+        "population": 68763
+      }
+    ],
+    "mountains": []
+  },
+  {
+    "alpha2": "KG",
+    "cities": [
+      {
+        "name": "Bichkek",
+        "population": 837000
+      },
+      {
+        "name": "Och",
+        "population": 391277
+      },
+      {
+        "name": "Djalalabad",
+        "population": 248899
+      },
+      {
+        "name": "Tokmok",
+        "population": 112860
+      },
+      {
+        "name": "Karabalta",
+        "population": 74133
+      },
+      {
+        "name": "Karakol",
+        "population": 70171
+      },
+      {
+        "name": "Naryn",
+        "population": 52300
+      },
+      {
+        "name": "Balyktchy",
+        "population": 40527
+      },
+      {
+        "name": "Talas",
+        "population": 35172
+      },
+      {
+        "name": "Toktogul",
+        "population": 26115
+      },
+      {
+        "name": "Tachkoumyr",
+        "population": 23594
+      },
+      {
+        "name": "Tcholponata",
+        "population": 18595
+      }
+    ],
+    "mountains": [
+      {
+        "name": "Jengish Chokusu",
+        "elevationMeters": 7439
+      },
+      {
+        "name": "Pic Karakol",
+        "elevationMeters": 5216
+      },
+      {
+        "name": "Gora Manas",
+        "elevationMeters": 4482
+      }
+    ]
+  },
+  {
+    "alpha2": "LA",
+    "cities": [
+      {
+        "name": "Vientiane",
+        "population": 754000
+      },
+      {
+        "name": "Luang Prabang",
+        "population": 107142
+      },
+      {
+        "name": "Paksé",
+        "population": 102775
+      },
+      {
+        "name": "Savannakhet",
+        "population": 84898
+      },
+      {
+        "name": "Thakhek",
+        "population": 76928
+      },
+      {
+        "name": "Sam Neua",
+        "population": 38992
+      },
+      {
+        "name": "Phonsavan",
+        "population": 37507
+      },
+      {
+        "name": "Sainyabuli",
+        "population": 16200
+      },
+      {
+        "name": "Champassak",
+        "population": 12994
+      },
+      {
+        "name": "Houei Sai",
+        "population": 6347
+      },
+      {
+        "name": "Phongsali",
+        "population": 6000
+      },
+      {
+        "name": "Salavan",
+        "population": 5521
+      }
+    ],
+    "mountains": [
+      {
+        "name": "Phou Bia",
+        "elevationMeters": 2830
+      },
+      {
+        "name": "Phu Soai Dao",
+        "elevationMeters": 2120
+      }
+    ]
+  },
+  {
+    "alpha2": "LV",
+    "cities": [
+      {
+        "name": "Riga",
+        "population": 742572
+      },
+      {
+        "name": "Daugavpils",
+        "population": 111564
+      },
+      {
+        "name": "Liepāja",
+        "population": 85132
+      },
+      {
+        "name": "Jelgava",
+        "population": 67207
+      },
+      {
+        "name": "Ventspils",
+        "population": 42884
+      },
+      {
+        "name": "Rēzekne",
+        "population": 38340
+      }
+    ],
+    "mountains": []
+  },
+  {
+    "alpha2": "LB",
+    "cities": [
+      {
+        "name": "Beyrouth",
+        "population": 1846000
+      },
+      {
+        "name": "Tripoli",
+        "population": 530000
+      },
+      {
+        "name": "Sidon",
+        "population": 173894
+      },
+      {
+        "name": "Nabatieh",
+        "population": 80000
+      },
+      {
+        "name": "Zahlé",
+        "population": 78145
+      },
+      {
+        "name": "Baabda",
+        "population": 9000
+      }
+    ],
+    "mountains": [
+      {
+        "name": "Qurnat as Sawda'",
+        "elevationMeters": 3088
+      }
+    ]
+  },
+  {
+    "alpha2": "LS",
+    "cities": [
+      {
+        "name": "Maseru",
+        "population": 361324
+      },
+      {
+        "name": "Mafeteng",
+        "population": 57059
+      },
+      {
+        "name": "Leribe",
+        "population": 47675
+      },
+      {
+        "name": "Mohale's Hoek",
+        "population": 24992
+      },
+      {
+        "name": "Quthing",
+        "population": 24130
+      },
+      {
+        "name": "Butha-Buthe",
+        "population": 16330
+      },
+      {
+        "name": "Mokhotlong",
+        "population": 8809
+      },
+      {
+        "name": "Teyateyaneng",
+        "population": 5115
+      }
+    ],
+    "mountains": [
+      {
+        "name": "Thabana Ntlenyana",
+        "elevationMeters": 3482
+      }
+    ]
+  },
+  {
+    "alpha2": "LR",
+    "cities": [
+      {
+        "name": "Monrovia",
+        "population": 1041000
+      },
+      {
+        "name": "Buchanan",
+        "population": 48315
+      },
+      {
+        "name": "Gbarnga",
+        "population": 45835
+      },
+      {
+        "name": "Kakata",
+        "population": 33945
+      },
+      {
+        "name": "Harper",
+        "population": 32661
+      },
+      {
+        "name": "Voinjama",
+        "population": 26594
+      },
+      {
+        "name": "Zwedru",
+        "population": 25678
+      },
+      {
+        "name": "Robertsport",
+        "population": 11969
+      },
+      {
+        "name": "Sanniquellie",
+        "population": 11415
+      },
+      {
+        "name": "Greenville",
+        "population": 10374
+      },
+      {
+        "name": "Bensonville",
+        "population": 4089
+      },
+      {
+        "name": "Barclayville",
+        "population": 2733
+      }
+    ],
+    "mountains": [
+      {
+        "name": "mont Wuteve",
+        "elevationMeters": 1380
+      }
+    ]
+  },
+  {
+    "alpha2": "LY",
+    "cities": [
+      {
+        "name": "Tripoli",
+        "population": 2189000
+      },
+      {
+        "name": "Benghazi",
+        "population": 1180000
+      },
+      {
+        "name": "Misrata",
+        "population": 386120
+      },
+      {
+        "name": "Tobrouk",
+        "population": 263527
+      },
+      {
+        "name": "Khoms",
+        "population": 201943
+      },
+      {
+        "name": "Zaouïa",
+        "population": 200000
+      },
+      {
+        "name": "Zouara",
+        "population": 180310
+      },
+      {
+        "name": "Al Marj",
+        "population": 169540
+      },
+      {
+        "name": "Gharyan",
+        "population": 146810
+      },
+      {
+        "name": "Ajdabiya",
+        "population": 143833
+      },
+      {
+        "name": "Syrte",
+        "population": 128123
+      },
+      {
+        "name": "Derna",
+        "population": 127974
+      }
+    ],
+    "mountains": [
+      {
+        "name": "Bikku Bitti",
+        "elevationMeters": 2266
+      }
+    ]
+  },
+  {
+    "alpha2": "LI",
+    "cities": [
+      {
+        "name": "Vaduz",
+        "population": 36281
+      }
+    ],
+    "mountains": [
+      {
+        "name": "Grauspitz",
+        "elevationMeters": 2599
+      }
+    ]
+  },
+  {
+    "alpha2": "LT",
+    "cities": [
+      {
+        "name": "Vilnius",
+        "population": 542366
+      },
+      {
+        "name": "Kaunas",
+        "population": 374643
+      },
+      {
+        "name": "Klaipėda",
+        "population": 192307
+      },
+      {
+        "name": "Šiauliai",
+        "population": 133528
+      },
+      {
+        "name": "Panevėžys",
+        "population": 127405
+      }
+    ],
+    "mountains": []
+  },
+  {
+    "alpha2": "LU",
+    "cities": [
+      {
+        "name": "Luxembourg",
+        "population": 107260
+      },
+      {
+        "name": "Diekirch",
+        "population": 6242
+      },
+      {
+        "name": "Grevenmacher",
+        "population": 3958
+      }
+    ],
+    "mountains": [
+      {
+        "name": "Burrigplatz",
+        "elevationMeters": 559
+      }
+    ]
+  },
+  {
+    "alpha2": "MG",
+    "cities": [
+      {
+        "name": "Antananarivo",
+        "population": 1697000
+      },
+      {
+        "name": "Antsirabe",
+        "population": 307921
+      },
+      {
+        "name": "Tamatave",
+        "population": 210226
+      },
+      {
+        "name": "Fianarantsoa",
+        "population": 184184
+      },
+      {
+        "name": "Mahajanga",
+        "population": 154657
+      },
+      {
+        "name": "Toliara",
+        "population": 115319
+      },
+      {
+        "name": "Antsiranana",
+        "population": 82937
+      },
+      {
+        "name": "Antalaha",
+        "population": 47224
+      },
+      {
+        "name": "Sambava",
+        "population": 43465
+      },
+      {
+        "name": "Ambatondrazaka",
+        "population": 43134
+      },
+      {
+        "name": "Maroantsetra",
+        "population": 38046
+      },
+      {
+        "name": "Morondava",
+        "population": 36803
+      }
+    ],
+    "mountains": [
+      {
+        "name": "Maromokotro",
+        "elevationMeters": 2876
+      },
+      {
+        "name": "Pic Boby",
+        "elevationMeters": 2658
+      }
+    ]
+  },
+  {
+    "alpha2": "MW",
+    "cities": [
+      {
+        "name": "Lilongwe",
+        "population": 646750
+      },
+      {
+        "name": "Blantyre",
+        "population": 584877
+      },
+      {
+        "name": "Mzuzu",
+        "population": 110201
+      },
+      {
+        "name": "Mangochi",
+        "population": 97711
+      },
+      {
+        "name": "Zomba",
+        "population": 80932
+      },
+      {
+        "name": "Salima",
+        "population": 71181
+      },
+      {
+        "name": "Nkhotakota",
+        "population": 59854
+      },
+      {
+        "name": "Karonga",
+        "population": 34207
+      },
+      {
+        "name": "Chiromo",
+        "population": 25235
+      },
+      {
+        "name": "Nkhata Bay",
+        "population": 22108
+      },
+      {
+        "name": "Nsanje",
+        "population": 21774
+      },
+      {
+        "name": "Mzimba",
+        "population": 19308
+      }
+    ],
+    "mountains": [
+      {
+        "name": "Sapitwa",
+        "elevationMeters": 3003
+      }
+    ]
+  },
+  {
+    "alpha2": "MY",
+    "cities": [
+      {
+        "name": "George Town",
+        "population": 2500000
+      },
+      {
+        "name": "Kuala Lumpur",
+        "population": 1448000
+      },
+      {
+        "name": "Kelang",
+        "population": 956000
+      },
+      {
+        "name": "Johor Bahru",
+        "population": 875000
+      },
+      {
+        "name": "Butterworth",
+        "population": 821652
+      },
+      {
+        "name": "Malacca",
+        "population": 788706
+      },
+      {
+        "name": "Ipoh",
+        "population": 673318
+      },
+      {
+        "name": "Kuching",
+        "population": 570407
+      },
+      {
+        "name": "Kota Kinabalu",
+        "population": 527671
+      },
+      {
+        "name": "Kota Bharu",
+        "population": 505583
+      },
+      {
+        "name": "Shah Alam",
+        "population": 481654
+      },
+      {
+        "name": "Sandakan",
+        "population": 392288
+      }
+    ],
+    "mountains": [
+      {
+        "name": "mont Kinabalu",
+        "elevationMeters": 4101
+      },
+      {
+        "name": "Gunung Tahan",
+        "elevationMeters": 2190
+      }
+    ]
+  },
+  {
+    "alpha2": "MV",
+    "cities": [
+      {
+        "name": "Malé",
+        "population": 112927
+      }
+    ],
+    "mountains": []
+  },
+  {
+    "alpha2": "ML",
+    "cities": [
+      {
+        "name": "Bamako",
+        "population": 1494000
+      },
+      {
+        "name": "Sikasso",
+        "population": 225753
+      },
+      {
+        "name": "Ségou",
+        "population": 122952
+      },
+      {
+        "name": "Gao",
+        "population": 116967
+      },
+      {
+        "name": "Mopti",
+        "population": 108456
+      },
+      {
+        "name": "Koutiala",
+        "population": 104927
+      },
+      {
+        "name": "Kayes",
+        "population": 77207
+      },
+      {
+        "name": "Tombouctou",
+        "population": 68872
+      },
+      {
+        "name": "Kati",
+        "population": 66895
+      },
+      {
+        "name": "Markala",
+        "population": 53738
+      },
+      {
+        "name": "Kita",
+        "population": 46435
+      },
+      {
+        "name": "San",
+        "population": 41386
+      }
+    ],
+    "mountains": [
+      {
+        "name": "monts Hombori",
+        "elevationMeters": 1155
+      }
+    ]
+  },
+  {
+    "alpha2": "MT",
+    "cities": [
+      {
+        "name": "La Valette",
+        "population": 368250
+      }
+    ],
+    "mountains": [
+      {
+        "name": "Dingli Cliffs",
+        "elevationMeters": 253
+      }
+    ]
+  },
+  {
+    "alpha2": "MH",
+    "cities": [
+      {
+        "name": "Majuro",
+        "population": 25400
+      }
+    ],
+    "mountains": []
+  },
+  {
+    "alpha2": "MR",
+    "cities": [
+      {
+        "name": "Nouakchott",
+        "population": 742144
+      },
+      {
+        "name": "Saint-Louis",
+        "population": 220792
+      },
+      {
+        "name": "Néma",
+        "population": 200000
+      },
+      {
+        "name": "Nouadhibou",
+        "population": 86738
+      },
+      {
+        "name": "Kiffa",
+        "population": 73930
+      },
+      {
+        "name": "Zouerate",
+        "population": 56345
+      },
+      {
+        "name": "Rosso",
+        "population": 47203
+      },
+      {
+        "name": "Atar",
+        "population": 44265
+      },
+      {
+        "name": "Tidjikdja",
+        "population": 19981
+      },
+      {
+        "name": "Boutilimit",
+        "population": 14142
+      },
+      {
+        "name": "Boghé",
+        "population": 10415
+      },
+      {
+        "name": "Aleg",
+        "population": 8388
+      }
+    ],
+    "mountains": [
+      {
+        "name": "Kdeyyat ej Joul",
+        "elevationMeters": 915
+      }
+    ]
+  },
+  {
+    "alpha2": "MU",
+    "cities": [
+      {
+        "name": "Port-Louis",
+        "population": 595491
+      },
+      {
+        "name": "Curepipe",
+        "population": 299975
+      }
+    ],
+    "mountains": [
+      {
+        "name": "Piton de la Petite Rivière Noire",
+        "elevationMeters": 828
+      }
+    ]
+  },
+  {
+    "alpha2": "MX",
+    "cities": [
+      {
+        "name": "Mexico",
+        "population": 19028000
+      },
+      {
+        "name": "Guadalajara",
+        "population": 4198000
+      },
+      {
+        "name": "Monterrey",
+        "population": 3712000
+      },
+      {
+        "name": "Puebla",
+        "population": 2195000
+      },
+      {
+        "name": "Tijuana",
+        "population": 1553000
+      },
+      {
+        "name": "Toluca",
+        "population": 1531000
+      },
+      {
+        "name": "León",
+        "population": 1488000
+      },
+      {
+        "name": "Ciudad Juárez",
+        "population": 1343000
+      },
+      {
+        "name": "Torreón",
+        "population": 1144000
+      },
+      {
+        "name": "Nezahualcóyotl",
+        "population": 1109363
+      },
+      {
+        "name": "San Luis Potosí",
+        "population": 992000
+      },
+      {
+        "name": "Mérida",
+        "population": 965000
+      }
+    ],
+    "mountains": [
+      {
+        "name": "pic d'Orizaba",
+        "elevationMeters": 5636
+      },
+      {
+        "name": "Volcan Popocatepetl",
+        "elevationMeters": 5420
+      },
+      {
+        "name": "Volcán de Colima",
+        "elevationMeters": 4330
+      },
+      {
+        "name": "Cerro Nube",
+        "elevationMeters": 3750
+      },
+      {
+        "name": "Cerro San Rafael",
+        "elevationMeters": 3710
+      },
+      {
+        "name": "Sierra El Viejo",
+        "elevationMeters": 3500
+      },
+      {
+        "name": "Chichimeco",
+        "elevationMeters": 3440
+      },
+      {
+        "name": "Cerro Mohinora",
+        "elevationMeters": 3348
+      }
+    ]
+  },
+  {
+    "alpha2": "FM",
+    "cities": [
+      {
+        "name": "Palikir",
+        "population": 4645
+      }
+    ],
+    "mountains": [
+      {
+        "name": "Ngihneni",
+        "elevationMeters": 791
+      }
+    ]
+  },
+  {
+    "alpha2": "MC",
+    "cities": [
+      {
+        "name": "Monaco",
+        "population": 36371
+      }
+    ],
+    "mountains": [
+      {
+        "name": "mont Agel",
+        "elevationMeters": 140
+      }
+    ]
+  },
+  {
+    "alpha2": "MN",
+    "cities": [
+      {
+        "name": "Oulan-Bator",
+        "population": 885000
+      },
+      {
+        "name": "Erdenet",
+        "population": 79647
+      },
+      {
+        "name": "Darkhan",
+        "population": 74738
+      },
+      {
+        "name": "Ulaangom",
+        "population": 35796
+      },
+      {
+        "name": "Ölgiy",
+        "population": 34934
+      },
+      {
+        "name": "Choybalsan",
+        "population": 33376
+      },
+      {
+        "name": "Altay",
+        "population": 32488
+      },
+      {
+        "name": "Khovd",
+        "population": 30500
+      },
+      {
+        "name": "Arvayheer",
+        "population": 28053
+      },
+      {
+        "name": "Mörön",
+        "population": 27690
+      },
+      {
+        "name": "Bayankhongor khot",
+        "population": 26252
+      },
+      {
+        "name": "Sükhbaatar",
+        "population": 24235
+      }
+    ],
+    "mountains": [
+      {
+        "name": "Tavan Bogd",
+        "elevationMeters": 4374
+      },
+      {
+        "name": "Mönkh Khairkhan Uul",
+        "elevationMeters": 4231
+      },
+      {
+        "name": "Otgontenger",
+        "elevationMeters": 4000
+      },
+      {
+        "name": "Tergun Bogd",
+        "elevationMeters": 3957
+      },
+      {
+        "name": "Dund Sayhni Nuru",
+        "elevationMeters": 2825
+      }
+    ]
+  },
+  {
+    "alpha2": "ME",
+    "cities": [
+      {
+        "name": "Podgorica",
+        "population": 145850
+      }
+    ],
+    "mountains": [
+      {
+        "name": "Durmitor",
+        "elevationMeters": 2522
+      }
+    ]
+  },
+  {
+    "alpha2": "MA",
+    "cities": [
+      {
+        "name": "Casablanca",
+        "population": 3181000
+      },
+      {
+        "name": "Rabat",
+        "population": 1705000
+      },
+      {
+        "name": "Fès",
+        "population": 1002000
+      },
+      {
+        "name": "Marrakech",
+        "population": 872000
+      },
+      {
+        "name": "Agadir",
+        "population": 825467
+      },
+      {
+        "name": "Tanger",
+        "population": 750060
+      },
+      {
+        "name": "Meknès",
+        "population": 697628
+      },
+      {
+        "name": "Kénitra",
+        "population": 551786
+      },
+      {
+        "name": "Oujda",
+        "population": 409391
+      },
+      {
+        "name": "Safi",
+        "population": 353476
+      },
+      {
+        "name": "Ksar El Kébir",
+        "population": 306600
+      },
+      {
+        "name": "Errachidia",
+        "population": 228489
+      }
+    ],
+    "mountains": [
+      {
+        "name": "Jbel Toubkal",
+        "elevationMeters": 4165
+      },
+      {
+        "name": "Adrar Bou Nasser",
+        "elevationMeters": 3340
+      },
+      {
+        "name": "Jbel Tidirhine",
+        "elevationMeters": 2456
+      },
+      {
+        "name": "Jebel Lekst",
+        "elevationMeters": 2359
+      }
+    ]
+  },
+  {
+    "alpha2": "MZ",
+    "cities": [
+      {
+        "name": "Maputo",
+        "population": 1446000
+      },
+      {
+        "name": "Matola",
+        "population": 543907
+      },
+      {
+        "name": "Beira",
+        "population": 530604
+      },
+      {
+        "name": "Nampula",
+        "population": 388526
+      },
+      {
+        "name": "Chimoio",
+        "population": 256936
+      },
+      {
+        "name": "Nacala",
+        "population": 224795
+      },
+      {
+        "name": "Quelimane",
+        "population": 188964
+      },
+      {
+        "name": "Tete",
+        "population": 129316
+      },
+      {
+        "name": "Xai-Xai",
+        "population": 128805
+      },
+      {
+        "name": "Maxixe",
+        "population": 119868
+      },
+      {
+        "name": "Inhambane",
+        "population": 115776
+      },
+      {
+        "name": "Pemba",
+        "population": 110643
+      }
+    ],
+    "mountains": [
+      {
+        "name": "mont Binga",
+        "elevationMeters": 2436
+      },
+      {
+        "name": "mont Namuli",
+        "elevationMeters": 2419
+      }
+    ]
+  },
+  {
+    "alpha2": "MM",
+    "cities": [
+      {
+        "name": "Rangoun",
+        "population": 4088000
+      },
+      {
+        "name": "Mandalay",
+        "population": 1300000
+      },
+      {
+        "name": "Naypyidaw",
+        "population": 930000
+      },
+      {
+        "name": "Moulmein",
+        "population": 438861
+      },
+      {
+        "name": "Pégou",
+        "population": 284318
+      },
+      {
+        "name": "Mergui",
+        "population": 266720
+      },
+      {
+        "name": "Pathein",
+        "population": 237089
+      },
+      {
+        "name": "Monywa",
+        "population": 226222
+      },
+      {
+        "name": "Henzada",
+        "population": 180728
+      },
+      {
+        "name": "Sittwe",
+        "population": 179032
+      },
+      {
+        "name": "Letpadan",
+        "population": 176571
+      },
+      {
+        "name": "Myingyan",
+        "population": 163812
+      }
+    ],
+    "mountains": [
+      {
+        "name": "Hkakabo Razi",
+        "elevationMeters": 5881
+      },
+      {
+        "name": "Saramati",
+        "elevationMeters": 3826
+      },
+      {
+        "name": "mont Victoria",
+        "elevationMeters": 3053
+      },
+      {
+        "name": "Le Mont Kennedy",
+        "elevationMeters": 2703
+      },
+      {
+        "name": "Loi Leng",
+        "elevationMeters": 2673
+      },
+      {
+        "name": "Myinmoletkat Taung",
+        "elevationMeters": 2072
+      }
+    ]
+  },
+  {
+    "alpha2": "NA",
+    "cities": [
+      {
+        "name": "Windhoek",
+        "population": 268132
+      },
+      {
+        "name": "Rundu",
+        "population": 58172
+      },
+      {
+        "name": "Walvis Bay",
+        "population": 52058
+      },
+      {
+        "name": "Swakopmund",
+        "population": 29491
+      },
+      {
+        "name": "Rehoboth",
+        "population": 25219
+      },
+      {
+        "name": "Ongwediva",
+        "population": 25032
+      },
+      {
+        "name": "Katima Mulilo",
+        "population": 25027
+      },
+      {
+        "name": "Otjiwarongo",
+        "population": 24815
+      },
+      {
+        "name": "Grootfontein",
+        "population": 24099
+      },
+      {
+        "name": "Okahandja",
+        "population": 20879
+      },
+      {
+        "name": "Keetmanshoop",
+        "population": 18039
+      },
+      {
+        "name": "Gobabis",
+        "population": 16321
+      }
+    ],
+    "mountains": [
+      {
+        "name": "Massif du Brandberg",
+        "elevationMeters": 2579
+      },
+      {
+        "name": "Hunsberge",
+        "elevationMeters": 1655
+      }
+    ]
+  },
+  {
+    "alpha2": "NR",
+    "cities": [],
+    "mountains": []
+  },
+  {
+    "alpha2": "NP",
+    "cities": [
+      {
+        "name": "Katmandou",
+        "population": 895000
+      },
+      {
+        "name": "Patan",
+        "population": 337785
+      },
+      {
+        "name": "Hetauda",
+        "population": 232334
+      },
+      {
+        "name": "Pokhara",
+        "population": 200000
+      },
+      {
+        "name": "Biratnagar",
+        "population": 182324
+      },
+      {
+        "name": "Birganj",
+        "population": 133238
+      },
+      {
+        "name": "Dhangadhi",
+        "population": 92294
+      },
+      {
+        "name": "Nepalganj",
+        "population": 64400
+      },
+      {
+        "name": "Siddharthanagar",
+        "population": 63367
+      },
+      {
+        "name": "Rajbiraj",
+        "population": 33061
+      },
+      {
+        "name": "Baglung",
+        "population": 23296
+      },
+      {
+        "name": "Dadeldhura",
+        "population": 19014
+      }
+    ],
+    "mountains": [
+      {
+        "name": "Dhaulagiri",
+        "elevationMeters": 8172
+      }
+    ]
+  },
+  {
+    "alpha2": "NL",
+    "cities": [
+      {
+        "name": "La Haye",
+        "population": 1406000
+      },
+      {
+        "name": "Amsterdam",
+        "population": 1031000
+      },
+      {
+        "name": "Rotterdam",
+        "population": 1005000
+      },
+      {
+        "name": "Utrecht",
+        "population": 640000
+      },
+      {
+        "name": "Eindhoven",
+        "population": 398053
+      },
+      {
+        "name": "Haarlem",
+        "population": 349957
+      },
+      {
+        "name": "Groningue",
+        "population": 216688
+      },
+      {
+        "name": "Arnhem",
+        "population": 141674
+      },
+      {
+        "name": "Bois-le-Duc",
+        "population": 134520
+      },
+      {
+        "name": "Leeuwarden",
+        "population": 125778
+      },
+      {
+        "name": "Maastricht",
+        "population": 122378
+      },
+      {
+        "name": "Zwolle",
+        "population": 111805
+      }
+    ],
+    "mountains": [
+      {
+        "name": "mont Scenery",
+        "elevationMeters": 870
+      },
+      {
+        "name": "Vaalserberg",
+        "elevationMeters": 321
+      }
+    ]
+  },
+  {
+    "alpha2": "NZ",
+    "cities": [
+      {
+        "name": "Auckland",
+        "population": 1377200
+      },
+      {
+        "name": "Wellington",
+        "population": 393400
+      },
+      {
+        "name": "Manukau City",
+        "population": 375600
+      },
+      {
+        "name": "Christchurch",
+        "population": 363200
+      },
+      {
+        "name": "Waitakere",
+        "population": 208100
+      },
+      {
+        "name": "North Shore City",
+        "population": 205605
+      },
+      {
+        "name": "Hamilton",
+        "population": 148200
+      },
+      {
+        "name": "Tauranga",
+        "population": 121500
+      },
+      {
+        "name": "Dunedin",
+        "population": 117700
+      },
+      {
+        "name": "Lower Hutt",
+        "population": 102400
+      },
+      {
+        "name": "Palmerston North",
+        "population": 82400
+      },
+      {
+        "name": "Hastings",
+        "population": 66100
+      }
+    ],
+    "mountains": [
+      {
+        "name": "Aoraki/Mont Cook",
+        "elevationMeters": 3754
+      },
+      {
+        "name": "Mont Tapuaenuku",
+        "elevationMeters": 2885
+      },
+      {
+        "name": "mont Ruapehu",
+        "elevationMeters": 2797
+      },
+      {
+        "name": "mont Taranaki",
+        "elevationMeters": 2518
+      },
+      {
+        "name": "Mont Anglem",
+        "elevationMeters": 980
+      }
+    ]
+  },
+  {
+    "alpha2": "NI",
+    "cities": [
+      {
+        "name": "Managua",
+        "population": 920000
+      },
+      {
+        "name": "León",
+        "population": 164441
+      },
+      {
+        "name": "Chinandega",
+        "population": 139023
+      },
+      {
+        "name": "Masaya",
+        "population": 130113
+      },
+      {
+        "name": "Matagalpa",
+        "population": 109089
+      },
+      {
+        "name": "Estelí",
+        "population": 107839
+      },
+      {
+        "name": "Granada",
+        "population": 105219
+      },
+      {
+        "name": "Juigalpa",
+        "population": 54731
+      },
+      {
+        "name": "Jinotega",
+        "population": 51073
+      },
+      {
+        "name": "Bluefields",
+        "population": 44373
+      },
+      {
+        "name": "Bilwi",
+        "population": 43001
+      },
+      {
+        "name": "Ocotal",
+        "population": 33928
+      }
+    ],
+    "mountains": []
+  },
+  {
+    "alpha2": "NE",
+    "cities": [
+      {
+        "name": "Niamey",
+        "population": 915000
+      },
+      {
+        "name": "Maradi",
+        "population": 232555
+      },
+      {
+        "name": "Zinder",
+        "population": 230358
+      },
+      {
+        "name": "Agadez",
+        "population": 117770
+      },
+      {
+        "name": "Tahoua",
+        "population": 115956
+      },
+      {
+        "name": "Arlit",
+        "population": 100000
+      },
+      {
+        "name": "Birni N'Konni",
+        "population": 65252
+      },
+      {
+        "name": "Dosso",
+        "population": 49750
+      },
+      {
+        "name": "Gaya",
+        "population": 33051
+      },
+      {
+        "name": "Diffa",
+        "population": 30988
+      },
+      {
+        "name": "Ayérou",
+        "population": 26290
+      },
+      {
+        "name": "Madaoua",
+        "population": 24804
+      }
+    ],
+    "mountains": [
+      {
+        "name": "Monts Bagzane",
+        "elevationMeters": 2022
+      }
+    ]
+  },
+  {
+    "alpha2": "NG",
+    "cities": [
+      {
+        "name": "Lagos",
+        "population": 9466000
+      },
+      {
+        "name": "Kano",
+        "population": 3140000
+      },
+      {
+        "name": "Ibadan",
+        "population": 2628000
+      },
+      {
+        "name": "Abuja",
+        "population": 1576000
+      },
+      {
+        "name": "Kaduna",
+        "population": 1442000
+      },
+      {
+        "name": "Benin City",
+        "population": 1190000
+      },
+      {
+        "name": "Ikare-Akoko",
+        "population": 1099931
+      },
+      {
+        "name": "Port Harcourt",
+        "population": 1020000
+      },
+      {
+        "name": "Ogbomoso",
+        "population": 951000
+      },
+      {
+        "name": "Aba",
+        "population": 897560
+      },
+      {
+        "name": "Maiduguri",
+        "population": 896000
+      },
+      {
+        "name": "Zaria",
+        "population": 889000
+      }
+    ],
+    "mountains": [
+      {
+        "name": "Chappal Waddi",
+        "elevationMeters": 2419
+      },
+      {
+        "name": "Mont Dimlang",
+        "elevationMeters": 2042
+      }
+    ]
+  },
+  {
+    "alpha2": "MK",
+    "cities": [
+      {
+        "name": "Skopje",
+        "population": 494087
+      },
+      {
+        "name": "Tetovo",
+        "population": 119132
+      },
+      {
+        "name": "Bitola",
+        "population": 86528
+      }
+    ],
+    "mountains": []
+  },
+  {
+    "alpha2": "NO",
+    "cities": [
+      {
+        "name": "Oslo",
+        "population": 835000
+      },
+      {
+        "name": "Bergen",
+        "population": 213585
+      },
+      {
+        "name": "Stavanger",
+        "population": 173132
+      },
+      {
+        "name": "Trondheim",
+        "population": 147139
+      },
+      {
+        "name": "Bærum",
+        "population": 113659
+      },
+      {
+        "name": "Drammen",
+        "population": 90722
+      },
+      {
+        "name": "Skien",
+        "population": 73330
+      },
+      {
+        "name": "Kristiansand",
+        "population": 63814
+      },
+      {
+        "name": "Tromsø",
+        "population": 52436
+      },
+      {
+        "name": "Ålesund",
+        "population": 47772
+      },
+      {
+        "name": "Sandnes",
+        "population": 46911
+      },
+      {
+        "name": "Haugesund",
+        "population": 40321
+      }
+    ],
+    "mountains": [
+      {
+        "name": "Galdhøpiggen",
+        "elevationMeters": 2469
+      },
+      {
+        "name": "Beerenberg",
+        "elevationMeters": 2277
+      },
+      {
+        "name": "Oksskolten",
+        "elevationMeters": 1916
+      },
+      {
+        "name": "Newtontoppen",
+        "elevationMeters": 1713
+      },
+      {
+        "name": "Olavtoppen",
+        "elevationMeters": 780
+      }
+    ]
+  },
+  {
+    "alpha2": "OM",
+    "cities": [
+      {
+        "name": "Mascate",
+        "population": 734697
+      },
+      {
+        "name": "Sib",
+        "population": 237816
+      },
+      {
+        "name": "Salalah",
+        "population": 203877
+      },
+      {
+        "name": "Sohar",
+        "population": 151349
+      },
+      {
+        "name": "Ibri",
+        "population": 101640
+      },
+      {
+        "name": "Nizwa",
+        "population": 72076
+      },
+      {
+        "name": "Sour",
+        "population": 71152
+      },
+      {
+        "name": "Al Qabil",
+        "population": 47718
+      },
+      {
+        "name": "Hilf",
+        "population": 8500
+      },
+      {
+        "name": "Mirbat",
+        "population": 1120
+      }
+    ],
+    "mountains": [
+      {
+        "name": "Djebel Shams",
+        "elevationMeters": 3035
+      }
+    ]
+  },
+  {
+    "alpha2": "PK",
+    "cities": [
+      {
+        "name": "Karachi",
+        "population": 12130000
+      },
+      {
+        "name": "Lahore",
+        "population": 6577000
+      },
+      {
+        "name": "Faisalabad",
+        "population": 2617000
+      },
+      {
+        "name": "Saidu Sharif",
+        "population": 1860310
+      },
+      {
+        "name": "Rawalpindi",
+        "population": 1858000
+      },
+      {
+        "name": "Multan",
+        "population": 1522000
+      },
+      {
+        "name": "Gujranwala",
+        "population": 1513000
+      },
+      {
+        "name": "Hyderâbâd",
+        "population": 1459000
+      },
+      {
+        "name": "Peshawar",
+        "population": 1303000
+      },
+      {
+        "name": "Abbottabad",
+        "population": 1183647
+      },
+      {
+        "name": "Islamabad",
+        "population": 780000
+      },
+      {
+        "name": "Quetta",
+        "population": 768000
+      }
+    ],
+    "mountains": [
+      {
+        "name": "K2",
+        "elevationMeters": 8611
+      },
+      {
+        "name": "Nanga Parbat",
+        "elevationMeters": 8125
+      },
+      {
+        "name": "Batura Sar",
+        "elevationMeters": 7795
+      },
+      {
+        "name": "Tirich Mir",
+        "elevationMeters": 7708
+      },
+      {
+        "name": "Obasta Tsukai",
+        "elevationMeters": 3452
+      },
+      {
+        "name": "Ras Koh",
+        "elevationMeters": 3003
+      }
+    ]
+  },
+  {
+    "alpha2": "PW",
+    "cities": [
+      {
+        "name": "Koror",
+        "population": 11200
+      },
+      {
+        "name": "Melekeok",
+        "population": 7026
+      }
+    ],
+    "mountains": [
+      {
+        "name": "mont Ngerchelchuus",
+        "elevationMeters": 242
+      }
+    ]
+  },
+  {
+    "alpha2": "PA",
+    "cities": [
+      {
+        "name": "Panama",
+        "population": 1281000
+      },
+      {
+        "name": "Colón",
+        "population": 204000
+      },
+      {
+        "name": "David",
+        "population": 110037
+      },
+      {
+        "name": "Balboa",
+        "population": 62882
+      },
+      {
+        "name": "Santiago de Veraguas",
+        "population": 45955
+      },
+      {
+        "name": "Chitré",
+        "population": 44082
+      },
+      {
+        "name": "Penonomé",
+        "population": 28766
+      },
+      {
+        "name": "Puerto Armuelles",
+        "population": 27147
+      },
+      {
+        "name": "Las Tablas",
+        "population": 11358
+      },
+      {
+        "name": "Bocas del Toro",
+        "population": 9883
+      },
+      {
+        "name": "Almirante",
+        "population": 8114
+      },
+      {
+        "name": "La Palma",
+        "population": 1845
+      }
+    ],
+    "mountains": [
+      {
+        "name": "Volcan Barú",
+        "elevationMeters": 3475
+      }
+    ]
+  },
+  {
+    "alpha2": "PG",
+    "cities": [
+      {
+        "name": "Port Moresby",
+        "population": 283733
+      },
+      {
+        "name": "Lae",
+        "population": 131052
+      },
+      {
+        "name": "Madang",
+        "population": 62023
+      },
+      {
+        "name": "Mount Hagen",
+        "population": 59064
+      },
+      {
+        "name": "Arawa",
+        "population": 40266
+      },
+      {
+        "name": "Goroka",
+        "population": 39699
+      },
+      {
+        "name": "Popondetta",
+        "population": 28198
+      },
+      {
+        "name": "Mendi",
+        "population": 26252
+      },
+      {
+        "name": "Wewak",
+        "population": 25143
+      },
+      {
+        "name": "Kavieng",
+        "population": 19728
+      },
+      {
+        "name": "Kimbe",
+        "population": 18847
+      },
+      {
+        "name": "Daru",
+        "population": 15214
+      }
+    ],
+    "mountains": [
+      {
+        "name": "mont Wilhelm",
+        "elevationMeters": 4509
+      },
+      {
+        "name": "mont Victoria",
+        "elevationMeters": 4038
+      },
+      {
+        "name": "mont Balbi",
+        "elevationMeters": 2715
+      },
+      {
+        "name": "Ulawun",
+        "elevationMeters": 2334
+      },
+      {
+        "name": "Groupe de Takuan",
+        "elevationMeters": 2243
+      }
+    ]
+  },
+  {
+    "alpha2": "PY",
+    "cities": [
+      {
+        "name": "Asuncion",
+        "population": 1870000
+      },
+      {
+        "name": "San Lorenzo",
+        "population": 500000
+      },
+      {
+        "name": "Encarnación",
+        "population": 357119
+      },
+      {
+        "name": "Ciudad del Este",
+        "population": 320872
+      },
+      {
+        "name": "Pedro Juan Caballero",
+        "population": 102787
+      },
+      {
+        "name": "Coronel Oviedo",
+        "population": 88101
+      },
+      {
+        "name": "Concepción",
+        "population": 59118
+      },
+      {
+        "name": "Villarrica",
+        "population": 41157
+      },
+      {
+        "name": "Itá",
+        "population": 41090
+      },
+      {
+        "name": "Ypacaraí",
+        "population": 30150
+      },
+      {
+        "name": "Pilar",
+        "population": 28435
+      },
+      {
+        "name": "Caacupé",
+        "population": 21696
+      }
+    ],
+    "mountains": [
+      {
+        "name": "Cerro Peró",
+        "elevationMeters": 842
+      }
+    ]
+  },
+  {
+    "alpha2": "PE",
+    "cities": [
+      {
+        "name": "Lima",
+        "population": 8012000
+      },
+      {
+        "name": "Callao",
+        "population": 876877
+      },
+      {
+        "name": "Arequipa",
+        "population": 815000
+      },
+      {
+        "name": "Trujillo",
+        "population": 765171
+      },
+      {
+        "name": "Chiclayo",
+        "population": 596792
+      },
+      {
+        "name": "Iquitos",
+        "population": 458729
+      },
+      {
+        "name": "Huancayo",
+        "population": 412733
+      },
+      {
+        "name": "Piura",
+        "population": 396932
+      },
+      {
+        "name": "Cuzco",
+        "population": 361182
+      },
+      {
+        "name": "Chimbote",
+        "population": 349846
+      },
+      {
+        "name": "Pucallpa",
+        "population": 310750
+      },
+      {
+        "name": "Tacna",
+        "population": 280098
+      }
+    ],
+    "mountains": [
+      {
+        "name": "Huascarán",
+        "elevationMeters": 6768
+      },
+      {
+        "name": "Nevado Coropuna",
+        "elevationMeters": 6425
+      },
+      {
+        "name": "Ausangate",
+        "elevationMeters": 6372
+      }
+    ]
+  },
+  {
+    "alpha2": "PH",
+    "cities": [
+      {
+        "name": "Manille",
+        "population": 11100000
+      },
+      {
+        "name": "Quezon City",
+        "population": 2761720
+      },
+      {
+        "name": "Davao",
+        "population": 1402000
+      },
+      {
+        "name": "Cagayán de Oro",
+        "population": 1121561
+      },
+      {
+        "name": "General Santos",
+        "population": 950530
+      },
+      {
+        "name": "Bacolod",
+        "population": 949354
+      },
+      {
+        "name": "Cebu",
+        "population": 815000
+      },
+      {
+        "name": "Zamboanga",
+        "population": 773000
+      },
+      {
+        "name": "Naga",
+        "population": 741635
+      },
+      {
+        "name": "Iligan",
+        "population": 464599
+      },
+      {
+        "name": "Baguio",
+        "population": 447824
+      },
+      {
+        "name": "Batangas",
+        "population": 424508
+      }
+    ],
+    "mountains": [
+      {
+        "name": "Mont Apo",
+        "elevationMeters": 2954
+      },
+      {
+        "name": "Pulag",
+        "elevationMeters": 2934
+      },
+      {
+        "name": "Mont Halcon",
+        "elevationMeters": 2585
+      },
+      {
+        "name": "Kanlaon",
+        "elevationMeters": 2430
+      },
+      {
+        "name": "Mont Mantalingajan",
+        "elevationMeters": 2085
+      },
+      {
+        "name": "Pinatubo",
+        "elevationMeters": 1486
+      },
+      {
+        "name": "Volcan Taal",
+        "elevationMeters": 400
+      }
+    ]
+  },
+  {
+    "alpha2": "PL",
+    "cities": [
+      {
+        "name": "Katowice",
+        "population": 2746000
+      },
+      {
+        "name": "Varsovie",
+        "population": 1707000
+      },
+      {
+        "name": "Łódź",
+        "population": 758000
+      },
+      {
+        "name": "Cracovie",
+        "population": 756000
+      },
+      {
+        "name": "Gdańsk",
+        "population": 740000
+      },
+      {
+        "name": "Bytom",
+        "population": 662247
+      },
+      {
+        "name": "Wrocław",
+        "population": 634893
+      },
+      {
+        "name": "Poznań",
+        "population": 623997
+      },
+      {
+        "name": "Gliwice",
+        "population": 507670
+      },
+      {
+        "name": "Szczecin",
+        "population": 407811
+      },
+      {
+        "name": "Bydgoszcz",
+        "population": 366452
+      },
+      {
+        "name": "Lublin",
+        "population": 360044
+      }
+    ],
+    "mountains": []
+  },
+  {
+    "alpha2": "PT",
+    "cities": [
+      {
+        "name": "Lisbonne",
+        "population": 2812000
+      },
+      {
+        "name": "Porto",
+        "population": 1337000
+      },
+      {
+        "name": "Braga",
+        "population": 826833
+      },
+      {
+        "name": "Funchal",
+        "population": 204767
+      },
+      {
+        "name": "Setúbal",
+        "population": 117974
+      },
+      {
+        "name": "Coimbra",
+        "population": 106582
+      },
+      {
+        "name": "Ponta Delgada",
+        "population": 61526
+      },
+      {
+        "name": "Portimão",
+        "population": 61226
+      },
+      {
+        "name": "Évora",
+        "population": 55620
+      },
+      {
+        "name": "Aveiro",
+        "population": 54162
+      },
+      {
+        "name": "Leiria",
+        "population": 45112
+      },
+      {
+        "name": "Faro",
+        "population": 41355
+      }
+    ],
+    "mountains": [
+      {
+        "name": "Ponta do Pico",
+        "elevationMeters": 2351
+      }
+    ]
+  },
+  {
+    "alpha2": "QA",
+    "cities": [
+      {
+        "name": "Doha",
+        "population": 1450000
+      }
+    ],
+    "mountains": []
+  },
+  {
+    "alpha2": "KR",
+    "cities": [
+      {
+        "name": "Séoul",
+        "population": 9796000
+      },
+      {
+        "name": "Pusan",
+        "population": 3480000
+      },
+      {
+        "name": "Incheon",
+        "population": 2550000
+      },
+      {
+        "name": "Daegu",
+        "population": 2460000
+      },
+      {
+        "name": "Daejeon",
+        "population": 1468000
+      },
+      {
+        "name": "Gwangju",
+        "population": 1440000
+      },
+      {
+        "name": "Changwon",
+        "population": 1081499
+      },
+      {
+        "name": "Suwon",
+        "population": 1078000
+      },
+      {
+        "name": "Ulsan",
+        "population": 1061000
+      },
+      {
+        "name": "Seongnam",
+        "population": 942000
+      },
+      {
+        "name": "Goyang",
+        "population": 903000
+      },
+      {
+        "name": "Bucheon",
+        "population": 866000
+      }
+    ],
+    "mountains": [
+      {
+        "name": "Hallasan",
+        "elevationMeters": 1950
+      },
+      {
+        "name": "Jirisan",
+        "elevationMeters": 1915
+      },
+      {
+        "name": "Seoraksan",
+        "elevationMeters": 1708
+      }
+    ]
+  },
+  {
+    "alpha2": "MD",
+    "cities": [
+      {
+        "name": "Chișinău",
+        "population": 688134
+      },
+      {
+        "name": "Tiraspol",
+        "population": 157000
+      },
+      {
+        "name": "Bălți",
+        "population": 151355
+      },
+      {
+        "name": "Cahul",
+        "population": 63407
+      },
+      {
+        "name": "Dubăsari",
+        "population": 23254
+      }
+    ],
+    "mountains": [
+      {
+        "name": "Dealul Bălănești",
+        "elevationMeters": 429
+      }
+    ]
+  },
+  {
+    "alpha2": "RO",
+    "cities": [
+      {
+        "name": "Bucarest",
+        "population": 1942000
+      },
+      {
+        "name": "Iași",
+        "population": 325914
+      },
+      {
+        "name": "Cluj-Napoca",
+        "population": 316748
+      },
+      {
+        "name": "Timișoara",
+        "population": 315053
+      },
+      {
+        "name": "Galați",
+        "population": 311156
+      },
+      {
+        "name": "Brașov",
+        "population": 311044
+      },
+      {
+        "name": "Craiova",
+        "population": 304142
+      },
+      {
+        "name": "Constanța",
+        "population": 303399
+      },
+      {
+        "name": "Ploiești",
+        "population": 232542
+      },
+      {
+        "name": "Oradea",
+        "population": 213830
+      },
+      {
+        "name": "Brăila",
+        "population": 213569
+      },
+      {
+        "name": "Bacău",
+        "population": 199668
+      }
+    ],
+    "mountains": [
+      {
+        "name": "Moldoveanu",
+        "elevationMeters": 2543
+      }
+    ]
+  },
+  {
+    "alpha2": "RU",
+    "cities": [
+      {
+        "name": "Moscou",
+        "population": 10452000
+      },
+      {
+        "name": "Saint-Pétersbourg",
+        "population": 4553000
+      },
+      {
+        "name": "Novossibirsk",
+        "population": 1389000
+      },
+      {
+        "name": "Iekaterinbourg",
+        "population": 1313000
+      },
+      {
+        "name": "Nijni Novgorod",
+        "population": 1278000
+      },
+      {
+        "name": "Samara",
+        "population": 1137000
+      },
+      {
+        "name": "Omsk",
+        "population": 1135000
+      },
+      {
+        "name": "Kazan",
+        "population": 1115000
+      },
+      {
+        "name": "Tcheliabinsk",
+        "population": 1091000
+      },
+      {
+        "name": "Rostov-sur-le-Don",
+        "population": 1052000
+      },
+      {
+        "name": "Oufa",
+        "population": 1018000
+      },
+      {
+        "name": "Perm",
+        "population": 997000
+      }
+    ],
+    "mountains": [
+      {
+        "name": "Elbrouz",
+        "elevationMeters": 5642
+      },
+      {
+        "name": "Klioutchevskoï",
+        "elevationMeters": 4750
+      },
+      {
+        "name": "mont Béloukha",
+        "elevationMeters": 4506
+      },
+      {
+        "name": "Gunnbjørn",
+        "elevationMeters": 3694
+      },
+      {
+        "name": "Gora Munku-Sardyk",
+        "elevationMeters": 3491
+      },
+      {
+        "name": "Koriakski",
+        "elevationMeters": 3456
+      },
+      {
+        "name": "mont Forel",
+        "elevationMeters": 3360
+      },
+      {
+        "name": "Pic BAM",
+        "elevationMeters": 3072
+      }
+    ]
+  },
+  {
+    "alpha2": "RW",
+    "cities": [
+      {
+        "name": "Kigali",
+        "population": 860000
+      },
+      {
+        "name": "Nyanza",
+        "population": 225209
+      },
+      {
+        "name": "Muhanga",
+        "population": 87613
+      },
+      {
+        "name": "Ruhengeri",
+        "population": 86685
+      },
+      {
+        "name": "Gisenyi",
+        "population": 83623
+      },
+      {
+        "name": "Butare",
+        "population": 77000
+      },
+      {
+        "name": "Byumba",
+        "population": 70593
+      },
+      {
+        "name": "Kibuye",
+        "population": 48024
+      },
+      {
+        "name": "Kibungo",
+        "population": 46240
+      },
+      {
+        "name": "Cyangugu",
+        "population": 19900
+      },
+      {
+        "name": "Gikongoro",
+        "population": 15000
+      }
+    ],
+    "mountains": [
+      {
+        "name": "mont Karisimbi",
+        "elevationMeters": 4519
+      }
+    ]
+  },
+  {
+    "alpha2": "KN",
+    "cities": [
+      {
+        "name": "Basseterre",
+        "population": 21887
+      }
+    ],
+    "mountains": [
+      {
+        "name": "Mont Misery",
+        "elevationMeters": 1156
+      }
+    ]
+  },
+  {
+    "alpha2": "LC",
+    "cities": [
+      {
+        "name": "Castries",
+        "population": 37963
+      }
+    ],
+    "mountains": [
+      {
+        "name": "mont Gimie",
+        "elevationMeters": 950
+      }
+    ]
+  },
+  {
+    "alpha2": "VC",
+    "cities": [
+      {
+        "name": "Kingstown",
+        "population": 49485
+      }
+    ],
+    "mountains": [
+      {
+        "name": "Soufrière",
+        "elevationMeters": 1234
+      }
+    ]
+  },
+  {
+    "alpha2": "WS",
+    "cities": [
+      {
+        "name": "Apia",
+        "population": 61916
+      }
+    ],
+    "mountains": [
+      {
+        "name": "Mauga Silisili",
+        "elevationMeters": 1858
+      }
+    ]
+  },
+  {
+    "alpha2": "SM",
+    "cities": [
+      {
+        "name": "Saint-Marin",
+        "population": 29579
+      }
+    ],
+    "mountains": [
+      {
+        "name": "mont Titano",
+        "elevationMeters": 739
+      }
+    ]
+  },
+  {
+    "alpha2": "ST",
+    "cities": [
+      {
+        "name": "São Tomé",
+        "population": 88219
+      },
+      {
+        "name": "Santo António",
+        "population": 1156
+      }
+    ],
+    "mountains": [
+      {
+        "name": "Pico de São Tomé",
+        "elevationMeters": 2024
+      }
+    ]
+  },
+  {
+    "alpha2": "SA",
+    "cities": [
+      {
+        "name": "Riyad",
+        "population": 4465000
+      },
+      {
+        "name": "Djeddah",
+        "population": 3012000
+      },
+      {
+        "name": "Dammam",
+        "population": 2054710
+      },
+      {
+        "name": "La Mecque",
+        "population": 1385000
+      },
+      {
+        "name": "Médine",
+        "population": 1010000
+      },
+      {
+        "name": "Taëf",
+        "population": 657282
+      },
+      {
+        "name": "Al-Hufuf",
+        "population": 637389
+      },
+      {
+        "name": "Al Hilla",
+        "population": 594605
+      },
+      {
+        "name": "Tabuk",
+        "population": 547957
+      },
+      {
+        "name": "Buraydah",
+        "population": 398581
+      },
+      {
+        "name": "Haïl",
+        "population": 385257
+      },
+      {
+        "name": "Najran",
+        "population": 369609
+      }
+    ],
+    "mountains": [
+      {
+        "name": "Jabal Sawda",
+        "elevationMeters": 3000
+      },
+      {
+        "name": "Jabal Al-Lawz",
+        "elevationMeters": 2580
+      },
+      {
+        "name": "Jebel Jar",
+        "elevationMeters": 2300
+      }
+    ]
+  },
+  {
+    "alpha2": "SN",
+    "cities": [
+      {
+        "name": "Dakar",
+        "population": 2604000
+      },
+      {
+        "name": "Thiès",
+        "population": 293001
+      },
+      {
+        "name": "Kaolack",
+        "population": 277812
+      },
+      {
+        "name": "Ziguinchor",
+        "population": 191716
+      },
+      {
+        "name": "Diourbel",
+        "population": 148024
+      },
+      {
+        "name": "Tambacounda",
+        "population": 89212
+      },
+      {
+        "name": "Louga",
+        "population": 85075
+      },
+      {
+        "name": "Kolda",
+        "population": 69267
+      },
+      {
+        "name": "Fatick",
+        "population": 24243
+      },
+      {
+        "name": "Kaédi",
+        "population": 21656
+      },
+      {
+        "name": "Kédougou",
+        "population": 18226
+      }
+    ],
+    "mountains": []
+  },
+  {
+    "alpha2": "RS",
+    "cities": [
+      {
+        "name": "Belgrade",
+        "population": 1099000
+      },
+      {
+        "name": "Niš",
+        "population": 250000
+      },
+      {
+        "name": "Novi Sad",
+        "population": 225457
+      },
+      {
+        "name": "Kragujevac",
+        "population": 171197
+      },
+      {
+        "name": "Čačak",
+        "population": 170000
+      },
+      {
+        "name": "Subotica",
+        "population": 100000
+      },
+      {
+        "name": "Zrenjanin",
+        "population": 64053
+      }
+    ],
+    "mountains": []
+  },
+  {
+    "alpha2": "SC",
+    "cities": [
+      {
+        "name": "Victoria",
+        "population": 33576
+      }
+    ],
+    "mountains": [
+      {
+        "name": "Morne Seychellois",
+        "elevationMeters": 905
+      }
+    ]
+  },
+  {
+    "alpha2": "SL",
+    "cities": [
+      {
+        "name": "Freetown",
+        "population": 827000
+      },
+      {
+        "name": "Bo",
+        "population": 174354
+      },
+      {
+        "name": "Kenema",
+        "population": 143137
+      },
+      {
+        "name": "Makeni",
+        "population": 87679
+      },
+      {
+        "name": "Koidu",
+        "population": 87539
+      }
+    ],
+    "mountains": [
+      {
+        "name": "Loma Mansa",
+        "elevationMeters": 1945
+      }
+    ]
+  },
+  {
+    "alpha2": "SG",
+    "cities": [
+      {
+        "name": "Singapour",
+        "population": 5183700
+      }
+    ],
+    "mountains": [
+      {
+        "name": "Bukit Timah",
+        "elevationMeters": 176
+      }
+    ]
+  },
+  {
+    "alpha2": "SK",
+    "cities": [
+      {
+        "name": "Bratislava",
+        "population": 423737
+      },
+      {
+        "name": "Košice",
+        "population": 236563
+      },
+      {
+        "name": "Prešov",
+        "population": 94718
+      },
+      {
+        "name": "Žilina",
+        "population": 87625
+      },
+      {
+        "name": "Banská Bystrica",
+        "population": 82336
+      },
+      {
+        "name": "Trnava",
+        "population": 69785
+      },
+      {
+        "name": "Zvolen",
+        "population": 44502
+      }
+    ],
+    "mountains": [
+      {
+        "name": "Gerlachovský štít",
+        "elevationMeters": 2655
+      }
+    ]
+  },
+  {
+    "alpha2": "SI",
+    "cities": [
+      {
+        "name": "Ljubljana",
+        "population": 314807
+      },
+      {
+        "name": "Maribor",
+        "population": 114228
+      }
+    ],
+    "mountains": [
+      {
+        "name": "Triglav",
+        "elevationMeters": 2864
+      }
+    ]
+  },
+  {
+    "alpha2": "SB",
+    "cities": [
+      {
+        "name": "Honiara",
+        "population": 76328
+      },
+      {
+        "name": "Gizo",
+        "population": 6154
+      },
+      {
+        "name": "Lata",
+        "population": 553
+      }
+    ],
+    "mountains": [
+      {
+        "name": "mont Popomanaseu",
+        "elevationMeters": 2335
+      }
+    ]
+  },
+  {
+    "alpha2": "SO",
+    "cities": [
+      {
+        "name": "Mogadiscio",
+        "population": 1100000
+      },
+      {
+        "name": "Kismaayo",
+        "population": 234852
+      },
+      {
+        "name": "Jamaame",
+        "population": 185270
+      },
+      {
+        "name": "Baidoa",
+        "population": 129839
+      },
+      {
+        "name": "Jowhar",
+        "population": 111308
+      },
+      {
+        "name": "Beledweyne",
+        "population": 62945
+      },
+      {
+        "name": "Gaal Kacyo",
+        "population": 61200
+      },
+      {
+        "name": "Mandera",
+        "population": 52885
+      },
+      {
+        "name": "Bosasso",
+        "population": 46969
+      },
+      {
+        "name": "Luuq",
+        "population": 33820
+      },
+      {
+        "name": "Buur Hakaba",
+        "population": 31267
+      },
+      {
+        "name": "Eyl",
+        "population": 18904
+      }
+    ],
+    "mountains": []
+  },
+  {
+    "alpha2": "ZA",
+    "cities": [
+      {
+        "name": "Johannesbourg",
+        "population": 3435000
+      },
+      {
+        "name": "Le Cap",
+        "population": 3215000
+      },
+      {
+        "name": "Benoni",
+        "population": 2986000
+      },
+      {
+        "name": "Durban",
+        "population": 2729000
+      },
+      {
+        "name": "Pretoria",
+        "population": 1338000
+      },
+      {
+        "name": "Vereeniging",
+        "population": 1074000
+      },
+      {
+        "name": "Port Elizabeth",
+        "population": 1021000
+      },
+      {
+        "name": "Pietermaritzburg",
+        "population": 750845
+      },
+      {
+        "name": "Bloemfontein",
+        "population": 463064
+      },
+      {
+        "name": "Welkom",
+        "population": 431944
+      },
+      {
+        "name": "Nelspruit",
+        "population": 348138
+      },
+      {
+        "name": "East London",
+        "population": 338627
+      }
+    ],
+    "mountains": [
+      {
+        "name": "Mafadi",
+        "elevationMeters": 3451
+      },
+      {
+        "name": "Compassberg",
+        "elevationMeters": 2504
+      },
+      {
+        "name": "Die Berg",
+        "elevationMeters": 2331
+      },
+      {
+        "name": "Pic Seweweekspoort",
+        "elevationMeters": 2325
+      },
+      {
+        "name": "Bokkeveldberg",
+        "elevationMeters": 843
+      }
+    ]
+  },
+  {
+    "alpha2": "SS",
+    "cities": [
+      {
+        "name": "Yei",
+        "population": 185000
+      },
+      {
+        "name": "Malakal",
+        "population": 160765
+      },
+      {
+        "name": "Wau",
+        "population": 127384
+      },
+      {
+        "name": "Djouba",
+        "population": 111975
+      },
+      {
+        "name": "Gogrial",
+        "population": 50065
+      },
+      {
+        "name": "Aweil",
+        "population": 46705
+      },
+      {
+        "name": "Yambio",
+        "population": 40382
+      },
+      {
+        "name": "Rumbek",
+        "population": 32083
+      },
+      {
+        "name": "Bor",
+        "population": 26782
+      },
+      {
+        "name": "Maridi",
+        "population": 14224
+      },
+      {
+        "name": "Bentiu",
+        "population": 7653
+      },
+      {
+        "name": "Kapoeta",
+        "population": 7042
+      }
+    ],
+    "mountains": [
+      {
+        "name": "Kinyeti",
+        "elevationMeters": 3187
+      }
+    ]
+  },
+  {
+    "alpha2": "ES",
+    "cities": [
+      {
+        "name": "Madrid",
+        "population": 5567000
+      },
+      {
+        "name": "Barcelone",
+        "population": 4920000
+      },
+      {
+        "name": "Séville",
+        "population": 1212045
+      },
+      {
+        "name": "Bilbao",
+        "population": 875552
+      },
+      {
+        "name": "Valence",
+        "population": 808000
+      },
+      {
+        "name": "Saragosse",
+        "population": 649404
+      },
+      {
+        "name": "Malaga",
+        "population": 550058
+      },
+      {
+        "name": "Murcie",
+        "population": 406807
+      },
+      {
+        "name": "Grenade",
+        "population": 388290
+      },
+      {
+        "name": "Vigo",
+        "population": 378952
+      },
+      {
+        "name": "Las Palmas de Gran Canaria",
+        "population": 378495
+      },
+      {
+        "name": "Palma de Majorque",
+        "population": 375773
+      }
+    ],
+    "mountains": [
+      {
+        "name": "Teide",
+        "elevationMeters": 3718
+      },
+      {
+        "name": "Mulhacén",
+        "elevationMeters": 3479
+      },
+      {
+        "name": "Aneto",
+        "elevationMeters": 3404
+      },
+      {
+        "name": "Torre de Cerredo",
+        "elevationMeters": 2648
+      },
+      {
+        "name": "pic Almanzor",
+        "elevationMeters": 2592
+      },
+      {
+        "name": "Moncayo",
+        "elevationMeters": 2313
+      },
+      {
+        "name": "mont San Lorenzo",
+        "elevationMeters": 2271
+      },
+      {
+        "name": "El Teleno",
+        "elevationMeters": 2183
+      }
+    ]
+  },
+  {
+    "alpha2": "LK",
+    "cities": [
+      {
+        "name": "Jaffna",
+        "population": 250000
+      },
+      {
+        "name": "Colombo",
+        "population": 217000
+      },
+      {
+        "name": "Moratuwa",
+        "population": 200000
+      },
+      {
+        "name": "Batticaloa",
+        "population": 129222
+      },
+      {
+        "name": "Anurâdhapura",
+        "population": 118302
+      },
+      {
+        "name": "Sri Jayawardenapura",
+        "population": 115826
+      },
+      {
+        "name": "Kandy",
+        "population": 111701
+      },
+      {
+        "name": "Trinquemalay",
+        "population": 108420
+      },
+      {
+        "name": "Kilinochchi",
+        "population": 103717
+      },
+      {
+        "name": "Galle",
+        "population": 99478
+      },
+      {
+        "name": "Matara",
+        "population": 68244
+      },
+      {
+        "name": "Ratnapura",
+        "population": 47832
+      }
+    ],
+    "mountains": [
+      {
+        "name": "Pidurutalagala",
+        "elevationMeters": 2524
+      }
+    ]
+  },
+  {
+    "alpha2": "SD",
+    "cities": [
+      {
+        "name": "Khartoum",
+        "population": 4754000
+      },
+      {
+        "name": "Omdourman",
+        "population": 2395159
+      },
+      {
+        "name": "Port-Soudan",
+        "population": 489725
+      },
+      {
+        "name": "Kassala",
+        "population": 401477
+      },
+      {
+        "name": "El Obeid",
+        "population": 393311
+      },
+      {
+        "name": "Nyala",
+        "population": 392373
+      },
+      {
+        "name": "Kosti",
+        "population": 345068
+      },
+      {
+        "name": "Wad Madani",
+        "population": 332714
+      },
+      {
+        "name": "El Fasher",
+        "population": 252609
+      },
+      {
+        "name": "Al-Qadarif",
+        "population": 201282
+      },
+      {
+        "name": "Chendi",
+        "population": 186611
+      },
+      {
+        "name": "Ad-Damazin",
+        "population": 186051
+      }
+    ],
+    "mountains": [
+      {
+        "name": "Djebel Marra",
+        "elevationMeters": 3042
+      },
+      {
+        "name": "Hamoyet",
+        "elevationMeters": 2726
+      },
+      {
+        "name": "Jebel Oda",
+        "elevationMeters": 2260
+      },
+      {
+        "name": "Jabal Teljo",
+        "elevationMeters": 1954
+      },
+      {
+        "name": "Jebel Arkanu",
+        "elevationMeters": 1934
+      }
+    ]
+  },
+  {
+    "alpha2": "SR",
+    "cities": [
+      {
+        "name": "Paramaribo",
+        "population": 254169
+      },
+      {
+        "name": "Cottica",
+        "population": 29210
+      },
+      {
+        "name": "Nieuw Nickerie",
+        "population": 15992
+      },
+      {
+        "name": "Brokopondo",
+        "population": 8340
+      },
+      {
+        "name": "Moengo",
+        "population": 7766
+      },
+      {
+        "name": "Nieuw-Amsterdam",
+        "population": 4935
+      },
+      {
+        "name": "Brownsweg",
+        "population": 4582
+      },
+      {
+        "name": "Groningen",
+        "population": 3216
+      },
+      {
+        "name": "Onverwacht",
+        "population": 2105
+      },
+      {
+        "name": "Totness",
+        "population": 1685
+      }
+    ],
+    "mountains": [
+      {
+        "name": "Juliana Top",
+        "elevationMeters": 1230
+      }
+    ]
+  },
+  {
+    "alpha2": "SE",
+    "cities": [
+      {
+        "name": "Stockholm",
+        "population": 1264000
+      },
+      {
+        "name": "Göteborg",
+        "population": 537797
+      },
+      {
+        "name": "Malmö",
+        "population": 269349
+      },
+      {
+        "name": "Uppsala",
+        "population": 133117
+      },
+      {
+        "name": "Västerås",
+        "population": 107194
+      },
+      {
+        "name": "Örebro",
+        "population": 98573
+      },
+      {
+        "name": "Linköping",
+        "population": 96732
+      },
+      {
+        "name": "Helsingborg",
+        "population": 91304
+      },
+      {
+        "name": "Jönköping",
+        "population": 89780
+      },
+      {
+        "name": "Norrköping",
+        "population": 88639
+      },
+      {
+        "name": "Umeå",
+        "population": 78197
+      },
+      {
+        "name": "Karlstad",
+        "population": 74141
+      }
+    ],
+    "mountains": []
+  },
+  {
+    "alpha2": "CH",
+    "cities": [
+      {
+        "name": "Genève",
+        "population": 1240000
+      },
+      {
+        "name": "Zurich",
+        "population": 1108000
+      },
+      {
+        "name": "Bâle",
+        "population": 830000
+      },
+      {
+        "name": "Berne",
+        "population": 275329
+      },
+      {
+        "name": "Lausanne",
+        "population": 265702
+      },
+      {
+        "name": "Lucerne",
+        "population": 250000
+      },
+      {
+        "name": "Lugano",
+        "population": 105388
+      },
+      {
+        "name": "Bienne",
+        "population": 78708
+      },
+      {
+        "name": "Saint-Gall",
+        "population": 70572
+      },
+      {
+        "name": "Coire",
+        "population": 38293
+      },
+      {
+        "name": "Schaffhouse",
+        "population": 33863
+      },
+      {
+        "name": "Fribourg",
+        "population": 32827
+      }
+    ],
+    "mountains": [
+      {
+        "name": "mont Rose",
+        "elevationMeters": 4634
+      },
+      {
+        "name": "Cervin",
+        "elevationMeters": 4478
+      },
+      {
+        "name": "Finsteraarhorn",
+        "elevationMeters": 4274
+      }
+    ]
+  },
+  {
+    "alpha2": "SY",
+    "cities": [
+      {
+        "name": "Alep",
+        "population": 2738000
+      },
+      {
+        "name": "Damas",
+        "population": 2466000
+      },
+      {
+        "name": "Homs",
+        "population": 1005000
+      },
+      {
+        "name": "Lattaquié",
+        "population": 539147
+      },
+      {
+        "name": "Douma",
+        "population": 496145
+      },
+      {
+        "name": "Hama",
+        "population": 460602
+      },
+      {
+        "name": "Deir ez-Zor",
+        "population": 309141
+      },
+      {
+        "name": "Raqqa",
+        "population": 177636
+      },
+      {
+        "name": "Tartous",
+        "population": 162980
+      },
+      {
+        "name": "Deraa",
+        "population": 146481
+      },
+      {
+        "name": "Idleb",
+        "population": 128840
+      },
+      {
+        "name": "Hassaké",
+        "population": 128100
+      }
+    ],
+    "mountains": [
+      {
+        "name": "Jabal ash Shaykh",
+        "elevationMeters": 2814
+      }
+    ]
+  },
+  {
+    "alpha2": "TJ",
+    "cities": [
+      {
+        "name": "Douchanbé",
+        "population": 1086244
+      },
+      {
+        "name": "Khodjent",
+        "population": 437684
+      },
+      {
+        "name": "Qurghonteppa",
+        "population": 311574
+      },
+      {
+        "name": "Konibodom",
+        "population": 259876
+      },
+      {
+        "name": "Istaravchan",
+        "population": 156621
+      },
+      {
+        "name": "Kulob",
+        "population": 115164
+      },
+      {
+        "name": "Khorog",
+        "population": 30000
+      },
+      {
+        "name": "Kuybyshev",
+        "population": 8925
+      }
+    ],
+    "mountains": [
+      {
+        "name": "Pic Ismail Samani",
+        "elevationMeters": 7495
+      }
+    ]
+  },
+  {
+    "alpha2": "TH",
+    "cities": [
+      {
+        "name": "Bangkok",
+        "population": 6704000
+      },
+      {
+        "name": "Chiang Mai",
+        "population": 397211
+      },
+      {
+        "name": "Samut Prakan",
+        "population": 388920
+      },
+      {
+        "name": "Nakhon Ratchasima",
+        "population": 334984
+      },
+      {
+        "name": "Hat Yai",
+        "population": 317954
+      },
+      {
+        "name": "Ubon Ratchathani",
+        "population": 273893
+      },
+      {
+        "name": "Nonthaburi",
+        "population": 258550
+      },
+      {
+        "name": "Khon Kaen",
+        "population": 251056
+      },
+      {
+        "name": "Udon Thani",
+        "population": 247231
+      },
+      {
+        "name": "Nakhon Si Thammarat",
+        "population": 232335
+      },
+      {
+        "name": "Chonburi",
+        "population": 226618
+      },
+      {
+        "name": "Lampang",
+        "population": 204081
+      }
+    ],
+    "mountains": [
+      {
+        "name": "Doi Inthanon",
+        "elevationMeters": 2580
+      },
+      {
+        "name": "Khao Luang",
+        "elevationMeters": 1780
+      }
+    ]
+  },
+  {
+    "alpha2": "TL",
+    "cities": [
+      {
+        "name": "Dili",
+        "population": 234331
+      }
+    ],
+    "mountains": [
+      {
+        "name": "mont Ramelau",
+        "elevationMeters": 2986
+      }
+    ]
+  },
+  {
+    "alpha2": "TG",
+    "cities": [
+      {
+        "name": "Lomé",
+        "population": 1452000
+      },
+      {
+        "name": "Sokodé",
+        "population": 117811
+      },
+      {
+        "name": "Kpalimé",
+        "population": 100479
+      },
+      {
+        "name": "Atakpamé",
+        "population": 80683
+      },
+      {
+        "name": "Bassar",
+        "population": 61845
+      },
+      {
+        "name": "Mango",
+        "population": 42626
+      },
+      {
+        "name": "Sotouboua",
+        "population": 21054
+      }
+    ],
+    "mountains": [
+      {
+        "name": "mont Agou",
+        "elevationMeters": 968
+      }
+    ]
+  },
+  {
+    "alpha2": "TO",
+    "cities": [
+      {
+        "name": "Nukuʻalofa",
+        "population": 42620
+      },
+      {
+        "name": "Neiafu",
+        "population": 7391
+      }
+    ],
+    "mountains": [
+      {
+        "name": "Kao",
+        "elevationMeters": 1109
+      }
+    ]
+  },
+  {
+    "alpha2": "TT",
+    "cities": [
+      {
+        "name": "Port-d'Espagne",
+        "population": 294934
+      },
+      {
+        "name": "San Fernando",
+        "population": 166039
+      }
+    ],
+    "mountains": [
+      {
+        "name": "El Cerro del Aripo",
+        "elevationMeters": 940
+      }
+    ]
+  },
+  {
+    "alpha2": "TN",
+    "cities": [
+      {
+        "name": "Tunis",
+        "population": 2412500
+      },
+      {
+        "name": "Sfax",
+        "population": 453050
+      },
+      {
+        "name": "Sousse",
+        "population": 327004
+      },
+      {
+        "name": "Gabès",
+        "population": 219517
+      },
+      {
+        "name": "Zarzis",
+        "population": 159161
+      },
+      {
+        "name": "Kairouan",
+        "population": 144522
+      },
+      {
+        "name": "Bizerte",
+        "population": 139843
+      },
+      {
+        "name": "Gafsa",
+        "population": 126803
+      },
+      {
+        "name": "Nabeul",
+        "population": 115149
+      },
+      {
+        "name": "Ariana",
+        "population": 97687
+      },
+      {
+        "name": "Kasserine",
+        "population": 81987
+      },
+      {
+        "name": "Monastir",
+        "population": 71546
+      }
+    ],
+    "mountains": [
+      {
+        "name": "djebel Chambi",
+        "elevationMeters": 1544
+      }
+    ]
+  },
+  {
+    "alpha2": "TR",
+    "cities": [
+      {
+        "name": "Istanbul",
+        "population": 10061000
+      },
+      {
+        "name": "Ankara",
+        "population": 3716000
+      },
+      {
+        "name": "Izmir",
+        "population": 2587000
+      },
+      {
+        "name": "Bursa",
+        "population": 1492000
+      },
+      {
+        "name": "Adana",
+        "population": 1293000
+      },
+      {
+        "name": "Gaziantep",
+        "population": 1044000
+      },
+      {
+        "name": "Konya",
+        "population": 919000
+      },
+      {
+        "name": "Tarse",
+        "population": 894318
+      },
+      {
+        "name": "Antalya",
+        "population": 783000
+      },
+      {
+        "name": "Trébizonde",
+        "population": 764714
+      },
+      {
+        "name": "Diyarbakır",
+        "population": 644763
+      },
+      {
+        "name": "Mersin",
+        "population": 616990
+      }
+    ],
+    "mountains": [
+      {
+        "name": "mont Ararat",
+        "elevationMeters": 5137
+      },
+      {
+        "name": "Mont Kaçkar",
+        "elevationMeters": 3931
+      },
+      {
+        "name": "Mont Erciyes",
+        "elevationMeters": 3917
+      },
+      {
+        "name": "Kizilkaya",
+        "elevationMeters": 3767
+      },
+      {
+        "name": "Demirkazık",
+        "elevationMeters": 3756
+      },
+      {
+        "name": "Kizlar Sivrisi",
+        "elevationMeters": 3070
+      },
+      {
+        "name": "Uludağ",
+        "elevationMeters": 2543
+      }
+    ]
+  },
+  {
+    "alpha2": "TM",
+    "cities": [
+      {
+        "name": "Achgabat",
+        "population": 727700
+      },
+      {
+        "name": "Türkmenabat",
+        "population": 234817
+      },
+      {
+        "name": "Daşoguz",
+        "population": 201424
+      },
+      {
+        "name": "Mary",
+        "population": 178708
+      },
+      {
+        "name": "Balkanabat",
+        "population": 110827
+      },
+      {
+        "name": "Türkmenbaşy",
+        "population": 68292
+      },
+      {
+        "name": "Tejen",
+        "population": 67294
+      },
+      {
+        "name": "Serdar",
+        "population": 48458
+      },
+      {
+        "name": "Abadan",
+        "population": 40813
+      },
+      {
+        "name": "Kaka",
+        "population": 38381
+      },
+      {
+        "name": "Atamyrat",
+        "population": 33242
+      },
+      {
+        "name": "Kounia-Ourguentch",
+        "population": 31400
+      }
+    ],
+    "mountains": [
+      {
+        "name": "Aýrybaba",
+        "elevationMeters": 3137
+      },
+      {
+        "name": "Kūh-e Rūzeh",
+        "elevationMeters": 2941
+      },
+      {
+        "name": "Gora Arlan",
+        "elevationMeters": 1880
+      }
+    ]
+  },
+  {
+    "alpha2": "TV",
+    "cities": [
+      {
+        "name": "Funafuti",
+        "population": 4749
+      }
+    ],
+    "mountains": []
+  },
+  {
+    "alpha2": "UG",
+    "cities": [
+      {
+        "name": "Kampala",
+        "population": 1420000
+      },
+      {
+        "name": "Mbale",
+        "population": 402368
+      },
+      {
+        "name": "Jinja",
+        "population": 301619
+      },
+      {
+        "name": "Arua",
+        "population": 250000
+      },
+      {
+        "name": "Entebbe",
+        "population": 175128
+      },
+      {
+        "name": "Tororo",
+        "population": 150000
+      },
+      {
+        "name": "Gulu",
+        "population": 146858
+      },
+      {
+        "name": "Lira",
+        "population": 135445
+      },
+      {
+        "name": "Mbarara",
+        "population": 83700
+      },
+      {
+        "name": "Bombo",
+        "population": 75000
+      },
+      {
+        "name": "Kasese",
+        "population": 67269
+      },
+      {
+        "name": "Masaka",
+        "population": 65373
+      }
+    ],
+    "mountains": [
+      {
+        "name": "mont Stanley",
+        "elevationMeters": 4979
+      },
+      {
+        "name": "mont Elgon",
+        "elevationMeters": 4321
+      }
+    ]
+  },
+  {
+    "alpha2": "UA",
+    "cities": [
+      {
+        "name": "Kiev",
+        "population": 2709000
+      },
+      {
+        "name": "Kharkiv",
+        "population": 1461000
+      },
+      {
+        "name": "Dnipro",
+        "population": 1050000
+      },
+      {
+        "name": "Odessa",
+        "population": 991000
+      },
+      {
+        "name": "Donetsk",
+        "population": 988000
+      },
+      {
+        "name": "Lviv",
+        "population": 803880
+      },
+      {
+        "name": "Zaporijjia",
+        "population": 788000
+      },
+      {
+        "name": "Kryvyï Rih",
+        "population": 652380
+      },
+      {
+        "name": "Mykolaïv",
+        "population": 510840
+      },
+      {
+        "name": "Marioupol",
+        "population": 481626
+      },
+      {
+        "name": "Louhansk",
+        "population": 452000
+      },
+      {
+        "name": "Khmelnytskyï",
+        "population": 398346
+      }
+    ],
+    "mountains": [
+      {
+        "name": "Hoverla",
+        "elevationMeters": 2058
+      }
+    ]
+  },
+  {
+    "alpha2": "AE",
+    "cities": [
+      {
+        "name": "Dubaï",
+        "population": 1379000
+      },
+      {
+        "name": "Charjah",
+        "population": 1103027
+      },
+      {
+        "name": "Abou Dabi",
+        "population": 603492
+      },
+      {
+        "name": "Al-Aïn",
+        "population": 408733
+      },
+      {
+        "name": "Ras el Khaïmah",
+        "population": 160849
+      },
+      {
+        "name": "Fujaïrah",
+        "population": 94163
+      },
+      {
+        "name": "Jebel Ali",
+        "population": 80000
+      },
+      {
+        "name": "Oumm al Qaïwaïn",
+        "population": 44411
+      }
+    ],
+    "mountains": [
+      {
+        "name": "Jabal Yibir",
+        "elevationMeters": 1527
+      }
+    ]
+  },
+  {
+    "alpha2": "GB",
+    "cities": [
+      {
+        "name": "Londres",
+        "population": 8567000
+      },
+      {
+        "name": "Birmingham",
+        "population": 2285000
+      },
+      {
+        "name": "Manchester",
+        "population": 2230000
+      },
+      {
+        "name": "Leeds",
+        "population": 1529000
+      },
+      {
+        "name": "Sheffield",
+        "population": 1292900
+      },
+      {
+        "name": "Glasgow",
+        "population": 1160000
+      },
+      {
+        "name": "Newcastle upon Tyne",
+        "population": 882000
+      },
+      {
+        "name": "Cardiff",
+        "population": 861400
+      },
+      {
+        "name": "Nottingham",
+        "population": 825600
+      },
+      {
+        "name": "Liverpool",
+        "population": 811000
+      },
+      {
+        "name": "Southend-on-Sea",
+        "population": 618386
+      },
+      {
+        "name": "Bristol",
+        "population": 553528
+      }
+    ],
+    "mountains": [
+      {
+        "name": "Ben Nevis",
+        "elevationMeters": 1343
+      },
+      {
+        "name": "Yr Wyddfa",
+        "elevationMeters": 1085
+      }
+    ]
+  },
+  {
+    "alpha2": "TZ",
+    "cities": [
+      {
+        "name": "Dar es Salam",
+        "population": 2930000
+      },
+      {
+        "name": "Moshi",
+        "population": 721018
+      },
+      {
+        "name": "Mwanza",
+        "population": 493944
+      },
+      {
+        "name": "Zanzibar",
+        "population": 403658
+      },
+      {
+        "name": "Arusha",
+        "population": 341136
+      },
+      {
+        "name": "Mbeya",
+        "population": 291649
+      },
+      {
+        "name": "Morogoro",
+        "population": 250902
+      },
+      {
+        "name": "Tanga",
+        "population": 224876
+      },
+      {
+        "name": "Dodoma",
+        "population": 218269
+      },
+      {
+        "name": "Kigoma",
+        "population": 164268
+      },
+      {
+        "name": "Tabora",
+        "population": 146495
+      },
+      {
+        "name": "Musoma",
+        "population": 133156
+      }
+    ],
+    "mountains": [
+      {
+        "name": "Kilimanjaro",
+        "elevationMeters": 5895
+      },
+      {
+        "name": "Loolmalassin",
+        "elevationMeters": 3682
+      },
+      {
+        "name": "Mtorwi",
+        "elevationMeters": 2980
+      },
+      {
+        "name": "Kimhondu",
+        "elevationMeters": 2653
+      }
+    ]
+  },
+  {
+    "alpha2": "US",
+    "cities": [
+      {
+        "name": "New York",
+        "population": 19040000
+      },
+      {
+        "name": "Los Angeles",
+        "population": 12500000
+      },
+      {
+        "name": "Chicago",
+        "population": 8990000
+      },
+      {
+        "name": "Miami",
+        "population": 5585000
+      },
+      {
+        "name": "Philadelphie",
+        "population": 5492000
+      },
+      {
+        "name": "Dallas",
+        "population": 4798000
+      },
+      {
+        "name": "Atlanta",
+        "population": 4506000
+      },
+      {
+        "name": "Boston",
+        "population": 4467000
+      },
+      {
+        "name": "Houston",
+        "population": 4459000
+      },
+      {
+        "name": "Washington",
+        "population": 4338000
+      },
+      {
+        "name": "Détroit",
+        "population": 4101000
+      },
+      {
+        "name": "Phoenix",
+        "population": 3551000
+      }
+    ],
+    "mountains": [
+      {
+        "name": "Denali",
+        "elevationMeters": 6194
+      },
+      {
+        "name": "mont Blackburn",
+        "elevationMeters": 4996
+      },
+      {
+        "name": "mont Fairweather",
+        "elevationMeters": 4671
+      },
+      {
+        "name": "mont Whitney",
+        "elevationMeters": 4421
+      },
+      {
+        "name": "mont Elbert",
+        "elevationMeters": 4402
+      },
+      {
+        "name": "mont Rainier",
+        "elevationMeters": 4392
+      },
+      {
+        "name": "pic Uncompahgre",
+        "elevationMeters": 4361
+      },
+      {
+        "name": "pic Longs",
+        "elevationMeters": 4346
+      }
+    ]
+  },
+  {
+    "alpha2": "UY",
+    "cities": [
+      {
+        "name": "Montevideo",
+        "population": 1513000
+      },
+      {
+        "name": "Rivera",
+        "population": 200000
+      },
+      {
+        "name": "Punta del Este",
+        "population": 159000
+      },
+      {
+        "name": "Salto",
+        "population": 105690
+      },
+      {
+        "name": "Paysandú",
+        "population": 79016
+      },
+      {
+        "name": "Melo",
+        "population": 55494
+      },
+      {
+        "name": "Maldonado",
+        "population": 55478
+      },
+      {
+        "name": "Tacuarembó",
+        "population": 54277
+      },
+      {
+        "name": "Mercedes",
+        "population": 42359
+      },
+      {
+        "name": "Artigas",
+        "population": 41909
+      },
+      {
+        "name": "Minas",
+        "population": 41180
+      },
+      {
+        "name": "San José de Mayo",
+        "population": 36529
+      }
+    ],
+    "mountains": [
+      {
+        "name": "Cerro Catedral",
+        "elevationMeters": 514
+      }
+    ]
+  },
+  {
+    "alpha2": "UZ",
+    "cities": [
+      {
+        "name": "Tachkent",
+        "population": 2184000
+      },
+      {
+        "name": "Ferghana",
+        "population": 750000
+      },
+      {
+        "name": "Namangan",
+        "population": 750000
+      },
+      {
+        "name": "Samarcande",
+        "population": 708000
+      },
+      {
+        "name": "Andijan",
+        "population": 650000
+      },
+      {
+        "name": "Chakhrisabz",
+        "population": 498545
+      },
+      {
+        "name": "Karchi",
+        "population": 386361
+      },
+      {
+        "name": "Kokand",
+        "population": 350000
+      },
+      {
+        "name": "Boukhara",
+        "population": 319476
+      },
+      {
+        "name": "Kattakourgan",
+        "population": 247113
+      },
+      {
+        "name": "Djizak",
+        "population": 235352
+      },
+      {
+        "name": "Noukous",
+        "population": 230006
+      }
+    ],
+    "mountains": []
+  },
+  {
+    "alpha2": "VU",
+    "cities": [
+      {
+        "name": "Port-Vila",
+        "population": 44040
+      },
+      {
+        "name": "Luganville",
+        "population": 13397
+      }
+    ],
+    "mountains": [
+      {
+        "name": "mont Tabwemasana",
+        "elevationMeters": 1877
+      }
+    ]
+  },
+  {
+    "alpha2": "VE",
+    "cities": [
+      {
+        "name": "Caracas",
+        "population": 2985000
+      },
+      {
+        "name": "Maracaibo",
+        "population": 2072000
+      },
+      {
+        "name": "Valencia",
+        "population": 1770000
+      },
+      {
+        "name": "Barquisimeto",
+        "population": 1116000
+      },
+      {
+        "name": "Maracay",
+        "population": 1007000
+      },
+      {
+        "name": "Ciudad Guayana",
+        "population": 746535
+      },
+      {
+        "name": "Barcelona",
+        "population": 600954
+      },
+      {
+        "name": "Puerto la Cruz",
+        "population": 546616
+      },
+      {
+        "name": "Cabimas",
+        "population": 441094
+      },
+      {
+        "name": "San Cristóbal",
+        "population": 438798
+      },
+      {
+        "name": "Maturín",
+        "population": 410972
+      },
+      {
+        "name": "Mérida",
+        "population": 345489
+      }
+    ],
+    "mountains": [
+      {
+        "name": "Pico Bolívar",
+        "elevationMeters": 4980
+      },
+      {
+        "name": "Pico da Neblina",
+        "elevationMeters": 3014
+      },
+      {
+        "name": "Cerro Marahuaca",
+        "elevationMeters": 2832
+      },
+      {
+        "name": "mont Roraima",
+        "elevationMeters": 2772
+      },
+      {
+        "name": "Pico Naiguatá",
+        "elevationMeters": 2765
+      },
+      {
+        "name": "Cero Raya",
+        "elevationMeters": 2070
+      },
+      {
+        "name": "Parque Nacional Cerro El Copey",
+        "elevationMeters": 957
+      }
+    ]
+  },
+  {
+    "alpha2": "VN",
+    "cities": [
+      {
+        "name": "Hô Chi Minh-Ville",
+        "population": 5314000
+      },
+      {
+        "name": "Hanoï",
+        "population": 4378000
+      },
+      {
+        "name": "Haïphong",
+        "population": 1969000
+      },
+      {
+        "name": "Cần Thơ",
+        "population": 1121000
+      },
+      {
+        "name": "Đà Nẵng",
+        "population": 1000000
+      },
+      {
+        "name": "Hué",
+        "population": 950000
+      },
+      {
+        "name": "Quy Nhơn",
+        "population": 805290
+      },
+      {
+        "name": "Biên Hòa",
+        "population": 652646
+      },
+      {
+        "name": "Vinh",
+        "population": 593645
+      },
+      {
+        "name": "Thái Nguyên",
+        "population": 500000
+      },
+      {
+        "name": "Nha Trang",
+        "population": 411556
+      },
+      {
+        "name": "Cà Mau",
+        "population": 356636
+      }
+    ],
+    "mountains": [
+      {
+        "name": "Phan Xi Păng",
+        "elevationMeters": 3142
+      },
+      {
+        "name": "Ngoc Linh",
+        "elevationMeters": 2598
+      },
+      {
+        "name": "Chu Yang Sin",
+        "elevationMeters": 2420
+      }
+    ]
+  },
+  {
+    "alpha2": "YE",
+    "cities": [
+      {
+        "name": "Sanaa",
+        "population": 2008000
+      },
+      {
+        "name": "Aden",
+        "population": 1000000
+      },
+      {
+        "name": "Al Hudaydah",
+        "population": 780000
+      },
+      {
+        "name": "Ta'izz",
+        "population": 751000
+      },
+      {
+        "name": "Al Mukalla",
+        "population": 258132
+      },
+      {
+        "name": "Ibb",
+        "population": 234837
+      },
+      {
+        "name": "Hajjah",
+        "population": 208287
+      },
+      {
+        "name": "Dhamar",
+        "population": 191259
+      },
+      {
+        "name": "Zabid",
+        "population": 152504
+      },
+      {
+        "name": "Sa'dah",
+        "population": 105542
+      },
+      {
+        "name": "Say'un",
+        "population": 68747
+      },
+      {
+        "name": "Lahij",
+        "population": 66288
+      }
+    ],
+    "mountains": [
+      {
+        "name": "Jabal an Nabi Shu'ayb",
+        "elevationMeters": 3666
+      },
+      {
+        "name": "Jebel El Jihaf",
+        "elevationMeters": 3277
+      }
+    ]
+  },
+  {
+    "alpha2": "ZM",
+    "cities": [
+      {
+        "name": "Lusaka",
+        "population": 1328000
+      },
+      {
+        "name": "Kitwe",
+        "population": 404901
+      },
+      {
+        "name": "Ndola",
+        "population": 396339
+      },
+      {
+        "name": "Kasama",
+        "population": 200000
+      },
+      {
+        "name": "Kabwe",
+        "population": 188979
+      },
+      {
+        "name": "Chingola",
+        "population": 182015
+      },
+      {
+        "name": "Livingstone",
+        "population": 165480
+      },
+      {
+        "name": "Mufulira",
+        "population": 153624
+      },
+      {
+        "name": "Luanshya",
+        "population": 151993
+      },
+      {
+        "name": "Chipata",
+        "population": 85963
+      },
+      {
+        "name": "Chililabombwe",
+        "population": 82068
+      },
+      {
+        "name": "Solwezi",
+        "population": 65000
+      }
+    ],
+    "mountains": [
+      {
+        "name": "Sunzu",
+        "elevationMeters": 2067
+      }
+    ]
+  },
+  {
+    "alpha2": "ZW",
+    "cities": [
+      {
+        "name": "Harare",
+        "population": 1572000
+      },
+      {
+        "name": "Bulawayo",
+        "population": 699385
+      },
+      {
+        "name": "Chitungwiza",
+        "population": 340360
+      },
+      {
+        "name": "Mutare",
+        "population": 249365
+      },
+      {
+        "name": "Gweru",
+        "population": 183358
+      },
+      {
+        "name": "Kwekwe",
+        "population": 99149
+      },
+      {
+        "name": "Kadoma",
+        "population": 79174
+      },
+      {
+        "name": "Masvingo",
+        "population": 76311
+      },
+      {
+        "name": "Chinhoyi",
+        "population": 61739
+      },
+      {
+        "name": "Zvishavane",
+        "population": 35896
+      },
+      {
+        "name": "Victoria Falls",
+        "population": 35761
+      },
+      {
+        "name": "Hwange",
+        "population": 33989
+      }
+    ],
+    "mountains": [
+      {
+        "name": "Nyangani",
+        "elevationMeters": 2592
+      }
+    ]
+  },
+  {
+    "alpha2": "VA",
+    "cities": [
+      {
+        "name": "Cité du Vatican",
+        "population": 832
+      }
+    ],
+    "mountains": []
+  },
+  {
+    "alpha2": "PS",
+    "cities": [
+      {
+        "name": "Gaza",
+        "population": 505700
+      },
+      {
+        "name": "Hébron",
+        "population": 280321
+      },
+      {
+        "name": "Naplouse",
+        "population": 215981
+      },
+      {
+        "name": "Ramallah",
+        "population": 24599
+      }
+    ],
+    "mountains": []
+  }
+]

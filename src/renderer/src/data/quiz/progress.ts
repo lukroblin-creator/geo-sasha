@@ -1,4 +1,4 @@
-export type QuizMode = 'flags' | 'capitals' | 'custom'
+export type QuizMode = 'flags' | 'capitals' | 'custom' | 'knowledge'
 
 export type QuizStats = {
   completedSessions: number
@@ -19,7 +19,7 @@ function emptyStats(): QuizStats {
 }
 
 function emptyProgress(): QuizProgress {
-  return { flags: emptyStats(), capitals: emptyStats(), custom: emptyStats() }
+  return { flags: emptyStats(), capitals: emptyStats(), custom: emptyStats(), knowledge: emptyStats() }
 }
 
 function toStats(value: unknown): QuizStats | null {
@@ -56,7 +56,7 @@ function migratePreviousProgress(value: unknown): QuizProgress | null {
   })
 
   return flags
-    ? { flags, capitals: emptyStats(), custom: emptyStats() }
+    ? { flags, capitals: emptyStats(), custom: emptyStats(), knowledge: emptyStats() }
     : null
 }
 
@@ -70,7 +70,8 @@ export function loadQuizProgress(): QuizProgress {
         const flags = toStats(progress.flags)
         const capitals = toStats(progress.capitals)
         const custom = toStats(progress.custom) ?? emptyStats()
-        if (flags && capitals) return { flags, capitals, custom }
+        const knowledge = toStats(progress.knowledge) ?? emptyStats()
+        if (flags && capitals) return { flags, capitals, custom, knowledge }
       }
     }
 

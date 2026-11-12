@@ -66,8 +66,9 @@ export function CountryQuizSelectionView({
               />
               <h2>{selectedCountry.name}</h2>
               <p>
-                Une partie dédiée à ce pays utilise les indices et les réponses
-                choisis dans le contenu du quiz.
+                Réponds à des questions mélangées sur sa capitale, ses grandes villes,
+                ses montagnes et son continent. Les questions de relief apparaissent
+                lorsque les données locales en proposent.
               </p>
               <button
                 className="quiz-start-button"

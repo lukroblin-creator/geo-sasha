@@ -5,6 +5,7 @@ import { ExplorationView } from './components/ExplorationView'
 import { CountryQuizPanel } from './components/QuizPanels'
 import { StatisticsView } from './components/StatisticsView'
 import { CountryQuizSelectionView } from './components/CountryQuizSelectionView'
+import { CountryKnowledgeQuizView } from './components/CountryKnowledgeQuizView'
 import { useQuizSession } from './data/quiz/useQuizSession'
 import {
   createCountryQuizQuestions,
@@ -13,6 +14,10 @@ import {
   type QuizClues,
   type CountryQuizQuestion
 } from './data/quiz/countryQuiz'
+import {
+  createCountryKnowledgeQuestions,
+  type CountryKnowledgeQuestion
+} from './data/quiz/countryKnowledge'
 import {
   getAvailableQuizQuestionCount,
   getQuizQuestionsForRegion,
@@ -100,7 +105,7 @@ function getQuizModeForContent(clues: QuizClues, answers: QuizAnswers): QuizMode
 
 function App(): React.JSX.Element {
   const [appView, setAppView] = useState<
-    'home' | 'quiz' | 'exploration' | 'statistics' | 'country-select'
+    'home' | 'quiz' | 'exploration' | 'statistics' | 'country-select' | 'country-quiz'
   >('home')
   const [contentSettingsOpen, setContentSettingsOpen] = useState(false)
   const [mapLayers, setMapLayers] = useState<MapLayerVisibility>({
@@ -118,6 +123,10 @@ function App(): React.JSX.Element {
   const [sessionMode, setSessionMode] = useState<QuizMode>('flags')
   const [sessionGeneration, setSessionGeneration] = useState(0)
   const [selectedQuizCountry, setSelectedQuizCountry] = useState<string | null>(null)
+  const [countryKnowledgeAlpha2, setCountryKnowledgeAlpha2] = useState<string | null>(null)
+  const [countryQuizReturnView, setCountryQuizReturnView] = useState<
+    'country-select' | 'statistics'
+  >('country-select')
   const [selectedMapCountry, setSelectedMapCountry] = useState<{
     sourceFeatureId: string | number
     name: string
@@ -126,6 +135,7 @@ function App(): React.JSX.Element {
   const [quizProgress, setQuizProgress] = useState(loadQuizProgress)
   const [countryQuizStats, setCountryQuizStats] = useState(loadCountryQuizStats)
   const lastRecordedQuestionRef = useRef<string | null>(null)
+  const countryKnowledgeRecordedQuestionRef = useRef<string | null>(null)
 
   const maxQuizQuestionCount = selectedQuizCountry
     ? 1
@@ -149,6 +159,11 @@ function App(): React.JSX.Element {
       getCurrentQuestionBank(),
     onCompleted: recordCompletedQuiz
   })
+  const countryKnowledgeQuiz = useQuizSession<CountryKnowledgeQuestion>({
+    mode: 'knowledge',
+    questionBank: () => [],
+    onCompleted: recordCompletedQuiz
+  })
 
   const handleQuizRegionChange = (region: QuizRegion): void => {
     setQuizRegion(region)
@@ -158,25 +173,68 @@ function App(): React.JSX.Element {
   }
 
   const startCountryQuiz = (alpha2: string): void => {
-    if (!Object.values(quizClues).some(Boolean) || !Object.values(quizAnswers).some(Boolean)) {
-      return
-    }
+    const countryQuestions = createCountryKnowledgeQuestions(alpha2)
+    if (!countryQuestions.length) return
 
-    const question = createCountryQuizQuestions().find((item) => item.alpha2 === alpha2)
-    if (!question) return
+    setCountryQuizReturnView(appView === 'statistics' ? 'statistics' : 'country-select')
+    setCountryKnowledgeAlpha2(alpha2.toUpperCase())
+    countryKnowledgeRecordedQuestionRef.current = null
+    countryKnowledgeQuiz.restart(countryQuestions)
+    setAppView('country-quiz')
+  }
 
-    const nextMode = getQuizModeForContent(quizClues, quizAnswers)
-    setContentSettingsOpen(false)
-    setSelectedQuizCountry(alpha2)
-    setQuizQuestionCount(1)
-    setSessionMode(nextMode)
-    setActiveQuizClues(quizClues)
-    setActiveQuizAnswers(quizAnswers)
-    setSessionGeneration((current) => current + 1)
-    lastRecordedQuestionRef.current = null
-    setSelectedMapCountry(null)
-    quiz.restart([question])
-    setAppView('quiz')
+  const answerCountryKnowledgeQuestion = (answer: string): void => {
+    const current = countryKnowledgeQuiz.session
+    const question = current.questionOrder[current.questionIndex]
+    if (!question || current.answerCorrect !== null || current.answerRevealed) return
+    const questionKey = `${question.alpha2}:${current.questionIndex}:${question.id}`
+    if (countryKnowledgeRecordedQuestionRef.current === questionKey) return
+    countryKnowledgeRecordedQuestionRef.current = questionKey
+
+    const isCorrect = answer === question.answer
+    countryKnowledgeQuiz.answer(isCorrect, answer)
+    const updatedStats = updateCountryQuizStats(
+      countryQuizStats,
+      question.alpha2,
+      'knowledge',
+      isCorrect
+    )
+    setCountryQuizStats(updatedStats)
+    saveCountryQuizStats(updatedStats)
+  }
+
+  const revealCountryKnowledgeAnswer = (): void => {
+    const current = countryKnowledgeQuiz.session
+    const question = current.questionOrder[current.questionIndex]
+    if (!question || current.answerCorrect === true || current.answerRevealed) return
+
+    countryKnowledgeQuiz.revealAnswer()
+    if (current.answerCorrect !== null) return
+    const questionKey = `${question.alpha2}:${current.questionIndex}:${question.id}`
+    if (countryKnowledgeRecordedQuestionRef.current === questionKey) return
+    countryKnowledgeRecordedQuestionRef.current = questionKey
+
+    const updatedStats = updateCountryQuizStats(
+      countryQuizStats,
+      question.alpha2,
+      'knowledge',
+      false
+    )
+    setCountryQuizStats(updatedStats)
+    saveCountryQuizStats(updatedStats)
+  }
+
+  const replayCountryQuiz = (): void => {
+    if (!countryKnowledgeAlpha2) return
+    countryKnowledgeRecordedQuestionRef.current = null
+    countryKnowledgeQuiz.restart(createCountryKnowledgeQuestions(countryKnowledgeAlpha2))
+  }
+
+  const stopCountryQuiz = (): void => {
+    countryKnowledgeQuiz.restart([])
+    setCountryKnowledgeAlpha2(null)
+    countryKnowledgeRecordedQuestionRef.current = null
+    setAppView(countryQuizReturnView)
   }
 
   const startNewQuiz = (): void => {
@@ -362,7 +420,8 @@ if (appView === 'home') {
             <span className="home-mode-icon">◎</span>
             <span className="home-mode-title">Quiz pays</span>
             <span className="home-mode-description">
-              Choisissez un pays et révisez son drapeau, son nom, sa capitale ou son territoire.
+              Choisissez un pays et répondez à des questions sur ses villes, ses montagnes, sa
+              capitale et sa géographie.
             </span>
             <span className="home-mode-action">Choisir un pays →</span>
           </button>
@@ -401,6 +460,20 @@ if (appView === 'statistics') {
       onBack={() => setAppView('home')}
       onOpenQuiz={() => setAppView('quiz')}
       onOpenCountryQuiz={startCountryQuiz}
+    />
+  )
+}
+
+if (appView === 'country-quiz' && countryKnowledgeAlpha2) {
+  return (
+    <CountryKnowledgeQuizView
+      alpha2={countryKnowledgeAlpha2}
+      session={countryKnowledgeQuiz.session}
+      onAnswer={answerCountryKnowledgeQuestion}
+      onRevealAnswer={revealCountryKnowledgeAnswer}
+      onNext={countryKnowledgeQuiz.next}
+      onRestart={replayCountryQuiz}
+      onStop={stopCountryQuiz}
     />
   )
 }
@@ -455,9 +528,9 @@ return (
             <div className="footer-subtitle">Progression locale</div>
             <div
               className="footer-subtitle"
-              title="GeoNames sous licence CC BY 4.0 ; Natural Earth dans le domaine public"
+              title="Capitales : UNGEGN ; villes et reliefs : Natural Earth, données intégrées hors ligne"
             >
-              Sources cartographiques : GeoNames et Natural Earth
+              Données de quiz : UNGEGN et Natural Earth
             </div>
           </div>
           <span className="footer-version">v0.1</span>
