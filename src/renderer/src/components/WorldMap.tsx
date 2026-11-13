@@ -33,6 +33,7 @@ import { getFlagImageSource } from '../data/quiz/flagAssets'
 import {
   addFlagTerritoryProperties
 } from '../data/quiz/mapFlagTerritories'
+import type { MapProximityResult } from '../data/quiz/mapProximity'
 import { MapFlagOverlay } from './MapFlagOverlay'
 import { useLanguage } from '../data/i18n'
 
@@ -48,6 +49,7 @@ import 'maplibre-gl/dist/maplibre-gl.css'
 type WorldMapProps = {
   showBorders: boolean
   showLabels: boolean
+  globeMode?: boolean
   showFlagTerritories?: boolean
   showSelectionFeedback?: boolean
   quizTargetFeatureId?: string | number | null
@@ -56,7 +58,7 @@ type WorldMapProps = {
   interactionResetKey?: string | number
   countryAccuracyByAlpha2?: Record<string, { answered: number; correct: number }>
   onCountryDeselected?: () => void
-  onMapClick?: (position: [number, number]) => number | null
+  onMapClick?: (position: [number, number]) => MapProximityResult | null
   onCountrySelected?: (
   sourceFeatureId: string | number,
   name: string,
@@ -253,6 +255,7 @@ function haveSameLabels(
 function WorldMap({
   showBorders,
   showLabels,
+  globeMode = false,
   showFlagTerritories = false,
   showSelectionFeedback = false,
   quizTargetFeatureId = null,
@@ -264,12 +267,13 @@ function WorldMap({
   onMapClick,
   onCountrySelected
 }: WorldMapProps): JSX.Element {
-  const { t } = useLanguage()
+  const { language, t } = useLanguage()
   const [mapLoaded, setMapLoaded] = useState(false)
   const [mapInstance, setMapInstance] = useState<MapLibreMap | null>(null)
   const [mapZoom, setMapZoom] = useState(1.5)
   const [mapViewRevision, setMapViewRevision] = useState(0)
   const flagOverlayRafRef = useRef<number | null>(null)
+  const lastGlobeOverlayUpdateRef = useRef(0)
   const [clickMarker, setClickMarker] = useState<{
     longitude: number
     latitude: number
@@ -279,7 +283,7 @@ function WorldMap({
   const [proximityMarker, setProximityMarker] = useState<{
     longitude: number
     latitude: number
-    score: number
+    proximity: MapProximityResult
     id: number
     interactionResetKey: string | number | undefined
   } | null>(null)
@@ -358,6 +362,21 @@ function WorldMap({
       setMapViewRevision((current) => current + 1)
     })
   }, [showFlagTerritories])
+
+  useEffect(() => {
+    if (!mapLoaded) return
+    const map = mapRef.current?.getMap()
+    if (!map) return
+
+    const projection = globeMode
+      ? {
+          type: ['interpolate', ['linear'], ['zoom'], 1.5, 'globe', 3.5, 'mercator']
+        }
+      : { type: 'mercator' }
+
+    map.setProjection(projection as Parameters<MapLibreMap['setProjection']>[0])
+    scheduleFlagOverlayUpdate()
+  }, [globeMode, mapLoaded, scheduleFlagOverlayUpdate])
 
   useEffect(() => () => {
     if (flagOverlayRafRef.current !== null) {
@@ -625,15 +644,15 @@ function WorldMap({
   }, [])
 
   const showMapProximityFeedback = (longitude: number, latitude: number): void => {
-    const score = onMapClick?.([longitude, latitude])
-    if (score === null || score === undefined || showBorders) return
+    const proximity = onMapClick?.([longitude, latitude])
+    if (proximity === null || proximity === undefined || showBorders) return
 
     proximityMarkerIdRef.current += 1
     const markerId = proximityMarkerIdRef.current
     setProximityMarker({
       longitude,
       latitude,
-      score,
+      proximity,
       id: markerId,
       interactionResetKey
     })
@@ -952,7 +971,16 @@ function WorldMap({
           focusOnQuizTarget()
           scheduleFlagOverlayUpdate()
         }}
-        onMove={scheduleFlagOverlayUpdate}
+        onMove={(event) => {
+          if (!globeMode || !showFlagTerritories || event.viewState.zoom >= 3.5) {
+            scheduleFlagOverlayUpdate()
+            return
+          }
+          const now = performance.now()
+          if (now - lastGlobeOverlayUpdateRef.current < 100) return
+          lastGlobeOverlayUpdateRef.current = now
+          scheduleFlagOverlayUpdate()
+        }}
         onMoveEnd={() => {
           updateVisibleLabels()
           scheduleFlagOverlayUpdate()
@@ -1128,9 +1156,12 @@ function WorldMap({
             <div className="map-proximity-marker-anchor" aria-hidden="true">
               <span
                 className="map-proximity-score"
-                style={{ '--score-hue': `${activeProximityMarker.score * 1.2}deg` } as CSSProperties}
+                style={{ '--score-hue': `${activeProximityMarker.proximity.score * 1.2}deg` } as CSSProperties}
               >
-                {activeProximityMarker.score}%
+                {activeProximityMarker.proximity.score}%
+                {activeProximityMarker.proximity.distanceKm !== null && (
+                  <> · {activeProximityMarker.proximity.distanceKm.toLocaleString(language)} km</>
+                )}
               </span>
             </div>
           </Marker>
@@ -1141,6 +1172,7 @@ function WorldMap({
       {showFlagTerritories && mapInstance && (
         <MapFlagOverlay
           map={mapInstance}
+          globeMode={globeMode && mapZoom < 3.5}
           revision={mapViewRevision}
           zoom={mapZoom}
           world110m={world110mFlagMap}

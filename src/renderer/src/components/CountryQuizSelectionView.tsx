@@ -3,15 +3,18 @@ import WorldMap from './WorldMap'
 import countryCatalog from '../data/quiz/countryCatalog.json'
 import { getFlagImageSource } from '../data/quiz/flagAssets'
 import { useLanguage } from '../data/i18n'
+import { AppModeSwitcher, type AppPrimaryMode } from './AppModeSwitcher'
 
 type CountryQuizSelectionViewProps = {
   onBack: () => void
   onStart: (alpha2: string) => void
+  onModeChange: (mode: AppPrimaryMode) => void
 }
 
 export function CountryQuizSelectionView({
   onBack,
-  onStart
+  onStart,
+  onModeChange
 }: CountryQuizSelectionViewProps): React.JSX.Element {
   const { language, t } = useLanguage()
   const [selectedAlpha2, setSelectedAlpha2] = useState<string | null>(null)
@@ -37,6 +40,8 @@ export function CountryQuizSelectionView({
         </div>
         <button className="home-back-button" type="button" onClick={onBack}>{t('← Accueil')}</button>
       </header>
+
+      <AppModeSwitcher active="country-select" onChange={onModeChange} />
 
       <div className="country-quiz-selection-content">
         <section className="country-quiz-selection-map">

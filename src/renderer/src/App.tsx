@@ -11,6 +11,7 @@ import { ExplorationPlaceDetails } from './components/ExplorationPlaceDetails'
 import { QuizCountryStudyView } from './components/QuizCountryStudyView'
 import { StatisticsView } from './components/StatisticsView'
 import { CountryQuizSelectionView } from './components/CountryQuizSelectionView'
+import { AppModeSwitcher } from './components/AppModeSwitcher'
 import { CountryKnowledgeQuizView } from './components/CountryKnowledgeQuizView'
 import { useQuizSession } from './data/quiz/useQuizSession'
 import {
@@ -41,7 +42,7 @@ import {
   saveCountryQuizStats,
   updateCountryQuizStats
 } from './data/quiz/countryQuizStats'
-import { getMapProximityScore } from './data/quiz/mapProximity'
+import { getMapProximityResult, type MapProximityResult } from './data/quiz/mapProximity'
 import { getExplorationDetails } from './data/geography/exploration'
 import { activateUndoScope, undoActiveScope } from './data/undo'
 import { loadQuizPresets, saveQuizPresets, type QuizPreset } from './data/quiz/presets'
@@ -148,10 +149,10 @@ function getContentLabels(
 }
 
 function App(): React.JSX.Element {
-  const { language, setLanguage, t } = useLanguage()
+  const { language, t } = useLanguage()
   const [appView, setAppView] = useState<
-    'home' | 'quiz' | 'exploration' | 'statistics' | 'country-select' | 'country-quiz'
-  >('home')
+    'quiz' | 'exploration' | 'statistics' | 'country-select' | 'country-quiz'
+  >('quiz')
   const [contentSettingsOpen, setContentSettingsOpen] = useState(false)
   const [isQuizFullscreen, setIsQuizFullscreen] = useState(false)
   const [fullscreenAnswersOpen, setFullscreenAnswersOpen] = useState(false)
@@ -162,6 +163,7 @@ function App(): React.JSX.Element {
     labels: false,
     flags: false
   })
+  const [globeMode, setGlobeMode] = useState(false)
   const [quizRegion, setQuizRegion] = useState<QuizRegion>('world')
   const [quizQuestionCount, setQuizQuestionCount] = useState<QuizQuestionCount>(10)
   const [activeQuizRegion, setActiveQuizRegion] = useState<QuizRegion>('world')
@@ -186,7 +188,7 @@ function App(): React.JSX.Element {
     name: string
     entityId: string | null
   } | null>(null)
-  const [mapProximityScore, setMapProximityScore] = useState<number | null>(null)
+  const [mapProximity, setMapProximity] = useState<MapProximityResult | null>(null)
   const [quizProgress, setQuizProgress] = useState(loadQuizProgress)
   const [countryQuizStats, setCountryQuizStats] = useState(loadCountryQuizStats)
   const [savedQuizPresets, setSavedQuizPresets] = useState<QuizPreset[]>(loadQuizPresets)
@@ -196,6 +198,34 @@ function App(): React.JSX.Element {
   const [presetFeedback, setPresetFeedback] = useState('')
   const lastRecordedQuestionRef = useRef<string | null>(null)
   const countryKnowledgeRecordedQuestionRef = useRef<string | null>(null)
+
+  useEffect(() => {
+    if (!selectedQuizPresetId) return
+
+    const selectedPreset = savedQuizPresets.find((preset) => preset.id === selectedQuizPresetId)
+    if (!selectedPreset) {
+      setSelectedQuizPresetId('')
+      return
+    }
+
+    const expectedQuestionCount = Math.min(
+      selectedPreset.questionCount,
+      getAvailableQuizQuestionCount(selectedPreset.region)
+    )
+    const stillMatchesPreset =
+      quizRegion === selectedPreset.region &&
+      quizQuestionCount === expectedQuestionCount &&
+      matchesQuizConfiguration(quizClues, quizAnswers, selectedPreset.clues, selectedPreset.answers)
+
+    if (!stillMatchesPreset) setSelectedQuizPresetId('')
+  }, [
+    quizAnswers,
+    quizClues,
+    quizQuestionCount,
+    quizRegion,
+    savedQuizPresets,
+    selectedQuizPresetId
+  ])
 
   useEffect(() => {
     const handlePointerDown = (event: PointerEvent): void => {
@@ -381,7 +411,7 @@ function App(): React.JSX.Element {
     setSessionGeneration((current) => current + 1)
     lastRecordedQuestionRef.current = null
     setSelectedMapCountry(null)
-    setMapProximityScore(null)
+    setMapProximity(null)
     setShowQuizRevealCard(false)
     setShowExpandedQuizCountry(false)
     setFullscreenAnswersOpen(false)
@@ -489,7 +519,7 @@ function App(): React.JSX.Element {
     const isCorrect = Number(sourceFeatureId) === question.sourceFeatureId
     if (!isCorrect) return false
 
-    setMapProximityScore(null)
+    setMapProximity(null)
     setSelectedMapCountry({ sourceFeatureId, name, entityId })
 
     if (
@@ -503,7 +533,7 @@ function App(): React.JSX.Element {
     return true
   }
 
-  const handleQuizMapClick = ([longitude, latitude]: [number, number]): number | null => {
+  const handleQuizMapClick = ([longitude, latitude]: [number, number]): MapProximityResult | null => {
     const question = quiz.session.questionOrder[quiz.session.questionIndex]
     if (
       !activeQuizAnswers.countryOnMap ||
@@ -514,9 +544,9 @@ function App(): React.JSX.Element {
       return null
     }
 
-    const score = getMapProximityScore(question.sourceFeatureId, longitude, latitude)
-    setMapProximityScore(score)
-    return score
+    const proximity = getMapProximityResult(question.sourceFeatureId, longitude, latitude)
+    setMapProximity(proximity)
+    return proximity
   }
 
   const revealQuizAnswer = (): void => {
@@ -524,7 +554,7 @@ function App(): React.JSX.Element {
     if (!question) return
 
     quiz.revealAnswer()
-    setMapProximityScore(null)
+    setMapProximity(null)
     setFullscreenAnswersOpen(false)
     setSelectedMapCountry({
       sourceFeatureId: question.sourceFeatureId,
@@ -561,7 +591,7 @@ function App(): React.JSX.Element {
   const nextQuizQuestion = (): void => {
     recordCurrentQuestionResult()
     setSelectedMapCountry(null)
-    setMapProximityScore(null)
+    setMapProximity(null)
     setShowQuizRevealCard(false)
     setShowExpandedQuizCountry(false)
     setFullscreenAnswersOpen(false)
@@ -600,108 +630,18 @@ function App(): React.JSX.Element {
     setSelectedQuizCountry(null)
     lastRecordedQuestionRef.current = null
     setSelectedMapCountry(null)
-    setMapProximityScore(null)
+    setMapProximity(null)
     setShowQuizRevealCard(false)
     setShowExpandedQuizCountry(false)
     setFullscreenAnswersOpen(false)
     setIsQuizRunning(false)
     setIsQuizSetupOpen(false)
     exitQuizFullscreen()
-    setAppView('home')
+    setAppView('quiz')
   }
 
-if (appView === 'home') {
-  return (
-    <div className="home-screen">
-      <label className="home-language-selector">
-        <span>{t('Langue')}</span>
-        <select
-          value={language}
-          onChange={(event) => setLanguage(event.target.value as typeof language)}
-          aria-label={t('Modifier la langue du logiciel')}
-        >
-          <option value="fr">Français</option>
-          <option value="en">English</option>
-          <option value="es">Español</option>
-        </select>
-      </label>
-      <div className="home-brand">
-        <div className="brand-icon">W</div>
-        <div>
-          <div className="brand-name">WORLD ATLAS</div>
-          <div className="brand-subtitle">{t('GEOGRAPHY TRAINER')}</div>
-        </div>
-      </div>
-
-      <div className="home-content">
-        <div className="home-eyebrow">{t('VOTRE ATLAS DU MONDE')}</div>
-        <h1>{t('Explorez. Apprenez. Découvrez.')}</h1>
-        <p className="home-description">
-          {t('Parcourez le monde à votre rythme ou mettez vos connaissances géographiques à l’épreuve.')}
-        </p>
-
-        <div className="home-mode-grid">
-          <button
-            className="home-mode-card"
-            type="button"
-            onClick={() => setAppView('quiz')}
-          >
-            <span className="home-mode-icon">⌖</span>
-            <span className="home-mode-title">{t('Quiz')}</span>
-            <span className="home-mode-description">
-              {t('Testez vos connaissances avec les drapeaux, les capitales et des questionnaires personnalisés.')}
-            </span>
-            <span className="home-mode-action">{t('Choisir un quiz →')}</span>
-          </button>
-
-          <button
-            className="home-mode-card"
-            type="button"
-            onClick={() => setAppView('exploration')}
-          >
-            <span className="home-mode-icon">◎</span>
-            <span className="home-mode-title">{t('Exploration')}</span>
-            <span className="home-mode-description">
-              {t('Parcourez librement la carte et découvrez les informations détaillées de chaque pays.')}
-            </span>
-            <span className="home-mode-action">{t('Explorer le monde →')}</span>
-          </button>
-
-          <button
-            className="home-mode-card"
-            type="button"
-            onClick={() => setAppView('country-select')}
-          >
-            <span className="home-mode-icon">◎</span>
-            <span className="home-mode-title">{t('Quiz pays')}</span>
-            <span className="home-mode-description">
-              {t('Choisissez un pays et répondez à des questions sur ses villes, ses montagnes, sa capitale et sa géographie.')}
-            </span>
-            <span className="home-mode-action">{t('Choisir un pays →')}</span>
-          </button>
-
-          <button
-            className="home-mode-card"
-            type="button"
-            onClick={() => setAppView('statistics')}
-          >
-            <span className="home-mode-icon">▥</span>
-            <span className="home-mode-title">{t('Statistiques')}</span>
-            <span className="home-mode-description">
-              {t('Suivez votre progression pays par pays et repérez les sujets à réviser.')}
-            </span>
-            <span className="home-mode-action">{t('Voir ma progression →')}</span>
-          </button>
-        </div>
-      </div>
-
-      <div className="home-footer">{t('WORLD ATLAS · APPLICATION LOCALE · V0.1')}</div>
-    </div>
-  )
-}
-
 if (appView === 'exploration') {
-  return <ExplorationView onBack={() => setAppView('home')} />
+  return <ExplorationView onBack={() => setAppView('quiz')} onModeChange={setAppView} />
 }
 
 if (appView === 'statistics') {
@@ -709,9 +649,10 @@ if (appView === 'statistics') {
     <StatisticsView
       countryStats={countryQuizStats}
       quizProgress={quizProgress}
-      onBack={() => setAppView('home')}
+      onBack={() => setAppView('quiz')}
       onOpenQuiz={() => setAppView('quiz')}
       onOpenCountryQuiz={startCountryQuiz}
+      onModeChange={setAppView}
     />
   )
 }
@@ -733,8 +674,9 @@ if (appView === 'country-quiz' && countryKnowledgeAlpha2) {
 if (appView === 'country-select') {
   return (
     <CountryQuizSelectionView
-      onBack={() => setAppView('home')}
+      onBack={() => setAppView('quiz')}
       onStart={startCountryQuiz}
+      onModeChange={setAppView}
     />
   )
 }
@@ -814,6 +756,8 @@ return (
             </div>
           </header>
         )}
+
+        {!isQuizRunning && <AppModeSwitcher active="quiz" onChange={setAppView} />}
 
         {(!isQuizRunning || isQuizSetupOpen) && (
           <>
@@ -1087,13 +1031,33 @@ return (
                   {t('Explorez le monde et apprenez à le reconnaître')}
                 </div>
               </div>
-
+              <button
+                className="map-projection-toggle"
+                type="button"
+                title={t(globeMode ? 'Passer au plan' : 'Passer au globe')}
+                aria-label={t(globeMode ? 'Passer au plan' : 'Passer au globe')}
+                aria-pressed={globeMode}
+                onClick={() => setGlobeMode((current) => !current)}
+              >
+                {globeMode ? (
+                  <svg viewBox="0 0 24 24" aria-hidden="true">
+                    <rect x="3" y="4" width="18" height="16" rx="1.5" />
+                    <path d="M3 9h18M3 15h18M9 4v16M15 4v16" />
+                  </svg>
+                ) : (
+                  <svg viewBox="0 0 24 24" aria-hidden="true">
+                    <circle cx="12" cy="12" r="9" />
+                    <path d="M3.5 12h17M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18M5.5 6.5a14 14 0 0 0 13 11M18.5 6.5a14 14 0 0 1-13 11" />
+                  </svg>
+                )}
+              </button>
             </div>
 
             <div className="map-canvas">
               <WorldMap
                 showBorders={mapLayers.borders}
                 showLabels={mapLayers.labels}
+                globeMode={globeMode}
                 showFlagTerritories={mapLayers.flags}
                 showSelectionFeedback={activeQuizAnswers.countryOnMap}
                 quizTargetFeatureId={activeQuizClues.countryOnMap || quiz.session.answerRevealed
@@ -1168,7 +1132,7 @@ return (
               clues={activeQuizClues}
               answers={activeQuizAnswers}
               selectedMapCountry={selectedMapCountry}
-              mapProximityScore={mapProximityScore}
+              mapProximity={mapProximity}
               onAnswer={submitCountryQuizAnswers}
               onRevealAnswer={revealQuizAnswer}
               onNext={nextQuizQuestion}
@@ -1194,7 +1158,7 @@ return (
               clues={activeQuizClues}
               answers={activeQuizAnswers}
               selectedMapCountry={selectedMapCountry}
-              mapProximityScore={mapProximityScore}
+              mapProximity={mapProximity}
               showPanelActions={false}
               onAnswer={submitCountryQuizAnswers}
               onRevealAnswer={revealQuizAnswer}

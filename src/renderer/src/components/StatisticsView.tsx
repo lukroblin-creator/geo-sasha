@@ -9,6 +9,7 @@ import {
 import type { QuizMode, QuizProgress } from '../data/quiz/progress'
 import type { CountryQuizStatsByAlpha2 } from '../data/quiz/countryQuizStats'
 import { useLanguage, type AppLanguage } from '../data/i18n'
+import { AppModeSwitcher, type AppPrimaryMode } from './AppModeSwitcher'
 
 type StatisticsViewProps = {
   countryStats: CountryQuizStatsByAlpha2
@@ -16,6 +17,7 @@ type StatisticsViewProps = {
   onBack: () => void
   onOpenQuiz: () => void
   onOpenCountryQuiz: (alpha2: string) => void
+  onModeChange: (mode: AppPrimaryMode) => void
 }
 
 type CountryRow = {
@@ -63,7 +65,8 @@ export function StatisticsView({
   quizProgress,
   onBack,
   onOpenQuiz,
-  onOpenCountryQuiz
+  onOpenCountryQuiz,
+  onModeChange
 }: StatisticsViewProps): React.JSX.Element {
   const { language, t } = useLanguage()
   const [selectedAlpha2, setSelectedAlpha2] = useState<string | null>(null)
@@ -124,6 +127,8 @@ export function StatisticsView({
           <button className="quiz-start-button" type="button" onClick={onOpenQuiz}>{t('Retour au quiz')}</button>
         </div>
       </header>
+
+      <AppModeSwitcher active={null} onChange={onModeChange} />
 
       <div className="statistics-content">
         <section className="statistics-summary" aria-label={t('Résumé des résultats')}>

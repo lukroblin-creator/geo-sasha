@@ -21,9 +21,11 @@
 
 body {
   margin: 0;
-  min-width: 900px;
-  min-height: 600px;
-  overflow: hidden;
+  min-width: 0;
+  min-height: 100vh;
+  min-height: 100dvh;
+  overflow-x: hidden;
+  overflow-y: auto;
   background: #101720;
   user-select: none;
 }
@@ -39,13 +41,16 @@ button {
 
 #root {
   width: 100%;
-  height: 100vh;
+  min-height: 100vh;
+  min-height: 100dvh;
 }
 
 .app-shell {
   display: flex;
   width: 100%;
   height: 100vh;
+  height: 100dvh;
+  min-height: 0;
   background: #101720;
 }
 
@@ -969,6 +974,42 @@ button {
   margin-bottom: 20px;
 }
 
+.map-projection-toggle {
+  display: grid;
+  width: 36px;
+  height: 36px;
+  flex: 0 0 auto;
+  place-items: center;
+  border: 1px solid #354456;
+  border-radius: 7px;
+  background: #1b2937;
+  color: #c2cfdb;
+  cursor: pointer;
+  transition: background-color 140ms ease, border-color 140ms ease, color 140ms ease;
+}
+
+.map-projection-toggle:hover,
+.map-projection-toggle[aria-pressed='true'] {
+  border-color: #6689a8;
+  background: #263b50;
+  color: #eaf4fc;
+}
+
+.map-projection-toggle:focus-visible {
+  outline: 2px solid #8db7d9;
+  outline-offset: 2px;
+}
+
+.map-projection-toggle svg {
+  width: 20px;
+  height: 20px;
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 1.5;
+}
+
 .map-title {
   font-size: 14px;
   font-weight: 650;
@@ -1026,13 +1067,23 @@ button {
   min-height: 0;
 }
 
-.map-flag-overlay {
+.map-flag-overlay-viewport {
   position: absolute;
   inset: 0;
   z-index: 1;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.map-flag-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
   display: block;
   pointer-events: none;
-  overflow: hidden;
+  overflow: visible;
+  transform-origin: center;
+  will-change: transform;
 }
 
 .world-map-shell .maplibregl-marker {
@@ -3003,7 +3054,8 @@ button {
   display: flex;
   width: 100%;
   height: 100%;
-  min-height: 0;
+  min-height: 100vh;
+  min-height: 100dvh;
   flex-direction: column;
   overflow: hidden;
   background: #101820;
@@ -3454,6 +3506,29 @@ button {
 }
 
 @media (max-width: 620px) {
+  .app-mode-switcher {
+    align-items: stretch;
+    flex-wrap: wrap;
+    gap: 5px;
+    padding: 7px 12px;
+  }
+
+  .app-mode-buttons {
+    display: grid;
+    flex: 1 1 100%;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 4px;
+  }
+
+  .app-mode-buttons button {
+    padding: 7px 4px;
+    font-size: 10px;
+  }
+
+  .app-mode-language {
+    margin-left: auto;
+  }
+
   .statistics-header {
     align-items: flex-start;
     flex-direction: column;
@@ -3565,6 +3640,66 @@ button {
   background: #355974;
 }
 
+.app-mode-switcher {
+  z-index: 4;
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 7px 24px;
+  border-bottom: 1px solid #293545;
+  background: #111a24;
+}
+
+.app-mode-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+
+.app-mode-buttons button {
+  min-height: 34px;
+  padding: 7px 14px;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  background: transparent;
+  color: #9aabbd;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.app-mode-buttons button:hover {
+  border-color: #35495d;
+  background: #1b2937;
+  color: #e7edf5;
+}
+
+.app-mode-buttons button.active {
+  border-color: #456b8a;
+  background: #29445b;
+  color: #f1f5f9;
+}
+
+.app-mode-language {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #9aabbd;
+  font-size: 10px;
+}
+
+.app-mode-language select {
+  min-height: 32px;
+  padding: 0 26px 0 9px;
+  border: 1px solid #35495d;
+  border-radius: 6px;
+  background: #1b2937;
+  color: #e1eaf2;
+  font-size: 10px;
+}
+
 /* EXPLORATION */
 
 .exploration-screen {
@@ -3572,8 +3707,9 @@ button {
   flex-direction: column;
   width: 100%;
   height: 100vh;
-  min-width: 900px;
-  min-height: 600px;
+  height: 100dvh;
+  min-width: 0;
+  min-height: 0;
   background: #101720;
   color: #e7edf5;
 }
@@ -3861,5 +3997,734 @@ button {
     width: 290px;
     min-width: 270px;
     padding: 21px 18px;
+  }
+}
+
+/* WINDOW-SIZE ADAPTATION */
+
+@media (max-width: 900px) {
+  body {
+    overflow-x: hidden;
+    overflow-y: auto;
+  }
+
+  .app-shell:not(.quiz-fullscreen) {
+    height: auto;
+    min-height: 100vh;
+    min-height: 100dvh;
+    flex-direction: column;
+    overflow: visible;
+  }
+
+  .quiz-clue-sidebar {
+    width: 100%;
+    min-width: 0;
+    max-height: 205px;
+    flex: 0 0 auto;
+    padding: 10px 16px;
+    border-right: 0;
+    border-bottom: 1px solid #293545;
+  }
+
+  .quiz-clue-sidebar-header {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    grid-template-rows: auto auto;
+    align-items: baseline;
+    column-gap: 10px;
+    padding-bottom: 8px;
+    border: 0;
+  }
+
+  .quiz-clue-sidebar-header .section-label {
+    grid-column: 1;
+    margin: 0;
+    font-size: 8px;
+  }
+
+  .quiz-clue-sidebar-header h2 {
+    grid-column: 2;
+    font-size: 12px;
+  }
+
+  .quiz-clue-sidebar-count {
+    grid-column: 3;
+    margin: 0;
+    font-size: 9px;
+    white-space: nowrap;
+  }
+
+  .quiz-clue-sidebar-header > .quiz-progress-track {
+    grid-column: 1 / -1;
+    margin-top: 6px;
+  }
+
+  .quiz-clue-sidebar-content {
+    min-height: 0;
+    overflow-x: auto;
+    overflow-y: hidden;
+    padding: 5px 0 0;
+  }
+
+  .quiz-clue-sidebar .quiz-clues-list {
+    display: flex;
+    width: max-content;
+    gap: 8px;
+    padding-bottom: 3px;
+  }
+
+  .quiz-clue-sidebar .quiz-clue-card {
+    width: 180px;
+    min-height: 54px;
+    flex: 0 0 auto;
+  }
+
+  .quiz-clue-sidebar .quiz-flag-clue {
+    width: 150px;
+  }
+
+  .quiz-clue-sidebar .quiz-flag-clue .flag-container {
+    height: 54px;
+  }
+
+  .quiz-clue-sidebar-footer {
+    display: none;
+  }
+
+  .main-content {
+    width: 100%;
+    min-height: calc(100vh - 130px);
+    min-height: calc(100dvh - 130px);
+    overflow: visible;
+  }
+
+  .topbar {
+    min-height: 76px;
+    height: auto;
+    gap: 12px;
+    padding: 12px 18px;
+  }
+
+  .topbar-right {
+    flex-wrap: wrap;
+    justify-content: flex-end;
+  }
+
+  .app-mode-switcher {
+    padding-right: 16px;
+    padding-left: 16px;
+  }
+
+  .quiz-live-topbar {
+    flex-wrap: wrap;
+    gap: 8px 12px;
+    padding: 9px 14px;
+  }
+
+  .quiz-live-settings {
+    flex: 1 1 250px;
+  }
+
+  .quiz-live-settings > small {
+    overflow-wrap: anywhere;
+  }
+
+  .quiz-live-actions {
+    flex-wrap: wrap;
+  }
+
+  .quiz-toolbar,
+  .quiz-preset-toolbar {
+    padding-right: 16px;
+    padding-left: 16px;
+  }
+
+  .workspace {
+    display: grid;
+    flex: 1 0 auto;
+    min-height: 500px;
+    grid-template-columns: minmax(0, 1fr) minmax(280px, 34%);
+  }
+
+  .quiz-fullscreen .workspace {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .map-section {
+    min-height: 0;
+    padding: 16px;
+  }
+
+  .map-canvas {
+    min-height: 310px;
+  }
+
+  .quiz-panel {
+    width: auto;
+    min-width: 0;
+  }
+
+  .map-settings {
+    gap: 10px 14px;
+  }
+
+  .exploration-screen {
+    height: auto;
+    min-height: 100vh;
+    min-height: 100dvh;
+    overflow: visible;
+  }
+
+  .exploration-header {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 12px;
+    padding: 14px 18px;
+  }
+
+  .exploration-header-actions {
+    grid-column: 1 / -1;
+  }
+
+  .exploration-workspace {
+    min-height: 0;
+  }
+
+  .exploration-map-panel {
+    min-height: 65vh;
+  }
+
+  .country-quiz-selection-screen,
+  .country-knowledge-screen {
+    height: auto;
+    min-height: 100vh;
+    min-height: 100dvh;
+    overflow: visible;
+  }
+
+  .country-quiz-selection-content,
+  .country-knowledge-content {
+    min-height: 0;
+  }
+}
+
+@media (max-width: 760px) {
+  .home-screen {
+    justify-content: flex-start;
+    min-height: 100vh;
+    min-height: 100dvh;
+    padding: 120px 24px 60px;
+  }
+
+  .home-mode-grid {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 12px;
+  }
+
+  .home-mode-card {
+    min-height: 0;
+    padding: 20px;
+  }
+
+  .home-mode-icon {
+    margin-bottom: 10px;
+  }
+
+  .workspace {
+    display: flex;
+    min-height: 0;
+    flex-direction: column;
+  }
+
+  .map-section {
+    flex: 0 0 auto;
+    padding: 12px;
+  }
+
+  .map-toolbar {
+    gap: 10px;
+    margin-bottom: 10px;
+  }
+
+  .map-canvas {
+    height: clamp(250px, 52vh, 500px);
+    min-height: 250px;
+    flex: 0 0 auto;
+  }
+
+  .quiz-panel {
+    min-height: 420px;
+    overflow: visible;
+    border-top: 1px solid #293545;
+    border-left: 0;
+  }
+
+  .quiz-fullscreen .workspace {
+    flex: 1 1 auto;
+    min-height: 0;
+  }
+
+  .quiz-fullscreen .map-section {
+    min-height: 0;
+    flex: 1 1 0;
+    padding: 0;
+  }
+
+  .quiz-fullscreen .map-canvas {
+    height: auto;
+    min-height: 0;
+    flex: 1 1 auto;
+  }
+
+  .quiz-content {
+    overflow: visible;
+    padding: 16px 18px 8px;
+  }
+
+  .quiz-header {
+    padding: 14px 18px 12px;
+  }
+
+  .quiz-footer {
+    padding: 12px 18px;
+  }
+
+  .exploration-header {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+
+  .exploration-brand .brand-icon {
+    width: 32px;
+    height: 32px;
+  }
+
+  .exploration-heading {
+    grid-column: 1 / -1;
+    grid-row: 2;
+  }
+
+  .exploration-header-actions {
+    grid-column: 2;
+    grid-row: 1;
+    gap: 7px;
+  }
+
+  .exploration-header-actions .status-dot,
+  .exploration-header-actions .status-text {
+    display: none;
+  }
+
+  .exploration-workspace {
+    flex-direction: column;
+    padding: 12px;
+  }
+
+  .exploration-map-panel {
+    min-height: 0;
+    flex: 0 0 auto;
+    padding: 12px;
+  }
+
+  .exploration-map-toolbar {
+    align-items: flex-start;
+  }
+
+  .exploration-map-frame {
+    height: clamp(260px, 58vh, 560px);
+    min-height: 260px;
+    flex: 0 0 auto;
+  }
+
+  .exploration-layer-controls {
+    gap: 10px 14px;
+    padding-top: 12px;
+  }
+
+  .exploration-details-panel {
+    width: 100%;
+    min-width: 0;
+    padding: 18px;
+  }
+
+  .country-quiz-selection-content,
+  .country-knowledge-content {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: minmax(250px, 48vh) auto;
+    padding: 12px;
+  }
+
+  .country-knowledge-content {
+    grid-template-rows: minmax(250px, 48vh) auto;
+  }
+
+  .country-quiz-selection-map,
+  .country-knowledge-map {
+    min-height: 250px;
+  }
+
+  .country-knowledge-question-panel {
+    min-height: 360px;
+    overflow: visible;
+  }
+}
+
+@media (max-width: 560px) {
+  .quiz-clue-sidebar {
+    max-height: 185px;
+    padding: 9px 11px;
+  }
+
+  .quiz-clue-sidebar-header {
+    grid-template-columns: auto minmax(0, 1fr);
+    column-gap: 8px;
+  }
+
+  .quiz-clue-sidebar-header h2 {
+    grid-column: 2;
+    grid-row: 1;
+  }
+
+  .quiz-clue-sidebar-header .section-label {
+    display: none;
+  }
+
+  .quiz-clue-sidebar-count {
+    grid-column: 1 / -1;
+    grid-row: 2;
+  }
+
+  .quiz-clue-sidebar-header > .quiz-progress-track {
+    grid-row: 3;
+    margin-top: 3px;
+  }
+
+  .topbar {
+    align-items: flex-start;
+    padding: 10px 12px;
+  }
+
+  .topbar h1 {
+    font-size: 17px;
+  }
+
+  .topbar .breadcrumb,
+  .topbar-right .status-dot,
+  .topbar-right .status-text {
+    display: none;
+  }
+
+  .topbar-right {
+    gap: 6px;
+  }
+
+  .topbar-right .home-back-button {
+    padding: 8px 10px;
+    font-size: 10px;
+  }
+
+  .quiz-live-topbar {
+    align-items: flex-start;
+    padding: 9px 11px;
+  }
+
+  .quiz-live-settings > span {
+    font-size: 8px;
+  }
+
+  .quiz-live-settings > strong {
+    font-size: 11px;
+  }
+
+  .quiz-live-actions {
+    width: 100%;
+    justify-content: flex-start;
+    gap: 6px;
+  }
+
+  .quiz-live-actions button {
+    min-height: 32px;
+    font-size: 9px;
+  }
+
+  .quiz-toolbar,
+  .quiz-preset-toolbar {
+    padding-right: 11px;
+    padding-left: 11px;
+  }
+
+  .map-subtitle {
+    font-size: 10px;
+  }
+
+  .map-settings {
+    gap: 9px 12px;
+    padding-top: 12px;
+  }
+
+  .setting-item {
+    font-size: 9px;
+  }
+
+  .exploration-header {
+    padding: 11px 12px;
+  }
+
+  .exploration-heading h1 {
+    font-size: 18px;
+  }
+
+  .exploration-header-actions .home-back-button {
+    margin: 0;
+    padding: 8px 10px;
+    font-size: 10px;
+  }
+
+  .home-screen {
+    justify-content: flex-start;
+    min-height: 100vh;
+    min-height: 100dvh;
+    padding: 112px 16px 58px;
+  }
+
+  .home-brand {
+    top: 16px;
+    left: 16px;
+  }
+
+  .home-brand .brand-icon {
+    width: 32px;
+    height: 32px;
+  }
+
+  .brand-name {
+    font-size: 12px;
+  }
+
+  .brand-subtitle {
+    font-size: 8px;
+  }
+
+  .home-language-selector {
+    top: 16px;
+    right: 12px;
+    gap: 5px;
+    padding: 5px;
+    font-size: 9px;
+  }
+
+  .home-language-selector select {
+    min-height: 29px;
+    max-width: 105px;
+    font-size: 10px;
+  }
+
+  .home-content h1 {
+    font-size: clamp(24px, 8vw, 32px);
+    line-height: 1.2;
+  }
+
+  .home-description {
+    margin: 13px auto 22px;
+    font-size: 12px;
+  }
+
+  .home-mode-grid {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 10px;
+  }
+
+  .home-mode-card {
+    min-height: 0;
+    padding: 16px;
+  }
+
+  .home-mode-icon {
+    margin-bottom: 8px;
+    font-size: 22px;
+  }
+
+  .home-mode-title {
+    margin-bottom: 5px;
+    font-size: 16px;
+  }
+
+  .home-mode-action {
+    padding-top: 10px;
+  }
+
+  .home-footer {
+    bottom: 10px;
+    font-size: 7px;
+  }
+
+  .statistics-header {
+    gap: 10px;
+    padding: 14px;
+  }
+
+  .statistics-header h1 {
+    font-size: 20px;
+  }
+
+  .statistics-actions {
+    width: 100%;
+    flex-wrap: wrap;
+  }
+
+  .statistics-map-layout {
+    min-height: 0;
+  }
+
+  .statistics-map-canvas {
+    min-height: 260px;
+  }
+
+  .statistics-ranking-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .statistics-table-panel {
+    padding: 11px;
+  }
+
+  .statistics-table-scroll {
+    overflow-x: auto;
+  }
+
+  .statistics-table {
+    min-width: 560px;
+  }
+}
+
+@media (max-width: 1000px) and (min-width: 761px),
+  (max-height: 760px) and (min-width: 761px) {
+  .home-screen {
+    padding: 68px 4% 30px;
+  }
+
+  .home-brand {
+    top: 13px;
+    left: 18px;
+    gap: 8px;
+  }
+
+  .home-brand .brand-icon {
+    width: 34px;
+    height: 34px;
+    font-size: 20px;
+  }
+
+  .home-brand .brand-name {
+    font-size: 12px;
+  }
+
+  .home-brand .brand-subtitle {
+    margin-top: 1px;
+    font-size: 8px;
+  }
+
+  .home-language-selector {
+    top: 12px;
+    right: 14px;
+    gap: 6px;
+    padding: 4px 7px;
+    font-size: 9px;
+  }
+
+  .home-language-selector select {
+    min-height: 27px;
+    font-size: 10px;
+  }
+
+  .home-eyebrow {
+    margin-bottom: 5px;
+    font-size: 8px;
+    letter-spacing: 2px;
+  }
+
+  .home-content h1 {
+    font-size: clamp(25px, 3.6vw, 32px);
+    line-height: 1.2;
+  }
+
+  .home-description {
+    margin: 8px auto 15px;
+    font-size: 11px;
+    line-height: 1.45;
+  }
+
+  .home-mode-grid {
+    gap: 12px;
+  }
+
+  .home-mode-card {
+    min-height: clamp(126px, 19vh, 154px);
+    padding: 12px 15px;
+  }
+
+  .home-mode-icon {
+    margin-bottom: 6px;
+    font-size: 22px;
+  }
+
+  .home-mode-title {
+    margin-bottom: 4px;
+    font-size: 16px;
+  }
+
+  .home-mode-description {
+    font-size: 10px;
+    line-height: 1.4;
+  }
+
+  .home-mode-action {
+    padding-top: 8px;
+    font-size: 10px;
+  }
+
+  .home-footer {
+    bottom: 5px;
+    font-size: 8px;
+  }
+}
+
+@media (max-height: 560px) and (min-width: 761px) {
+  .topbar {
+    min-height: 64px;
+    height: 64px;
+  }
+
+  .quiz-clue-sidebar {
+    padding-top: 14px;
+  }
+
+  .quiz-clue-sidebar-header {
+    padding-bottom: 10px;
+  }
+
+  .map-section {
+    padding-top: 10px;
+    padding-bottom: 10px;
+  }
+
+  .map-toolbar {
+    margin-bottom: 8px;
+  }
+
+  .map-canvas {
+    min-height: 190px;
+  }
+
+  .map-settings {
+    padding-top: 8px;
+  }
+
+  .exploration-header {
+    min-height: 72px;
+    padding-top: 8px;
+    padding-bottom: 8px;
+  }
+
+  .exploration-map-frame {
+    min-height: 190px;
   }
 }

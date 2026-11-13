@@ -6,6 +6,11 @@ const EARTH_RADIUS_KM = 6371.0088
 const ZERO_SCORE_RADIUS_KM = 5000
 const anchorCache = new WeakMap<Geometry, [number, number] | null>()
 
+export type MapProximityResult = {
+  score: number
+  distanceKm: number | null
+}
+
 function normalizeLongitude(longitude: number): number {
   return ((((longitude + 180) % 360) + 360) % 360) - 180
 }
@@ -48,11 +53,11 @@ function getDistanceKm(
  * country's interior anchor. The score is guidance only and never reaches
  * 100 for a wrong answer.
  */
-export function getMapProximityScore(
+export function getMapProximityResult(
   sourceFeatureId: string | number,
   longitude: number,
   latitude: number
-): number {
+): MapProximityResult {
   const sourceFeatureKey = normalizeSourceFeatureId(sourceFeatureId)
   const feature = world10m.features.find((candidate) => {
     const properties = candidate.properties as Record<string, unknown> | null
@@ -70,14 +75,25 @@ export function getMapProximityScore(
     !Number.isFinite(longitude) ||
     !Number.isFinite(latitude)
   ) {
-    return 0
+    return { score: 0, distanceKm: null }
   }
 
   const countryCenter = getInteriorPoint(geometry)
-  if (!countryCenter) return 0
+  if (!countryCenter) return { score: 0, distanceKm: null }
 
   const distanceKm = getDistanceKm(countryCenter, [normalizeLongitude(longitude), latitude])
   const remainingScore = 100 * (1 - distanceKm / ZERO_SCORE_RADIUS_KM)
 
-  return Math.max(0, Math.min(99, Math.round(remainingScore)))
+  return {
+    score: Math.max(0, Math.min(99, Math.round(remainingScore))),
+    distanceKm: Math.round(distanceKm)
+  }
+}
+
+export function getMapProximityScore(
+  sourceFeatureId: string | number,
+  longitude: number,
+  latitude: number
+): number {
+  return getMapProximityResult(sourceFeatureId, longitude, latitude).score
 }

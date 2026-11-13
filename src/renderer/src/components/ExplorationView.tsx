@@ -3,15 +3,18 @@ import WorldMap from './WorldMap'
 import { getExplorationDetails, type ExplorationDetails } from '../data/geography/exploration'
 import { ExplorationPlaceDetails } from './ExplorationPlaceDetails'
 import { useLanguage } from '../data/i18n'
+import { AppModeSwitcher, type AppPrimaryMode } from './AppModeSwitcher'
 
 type ExplorationViewProps = {
   onBack: () => void
+  onModeChange: (mode: AppPrimaryMode) => void
 }
 
-export function ExplorationView({ onBack }: ExplorationViewProps): React.JSX.Element {
+export function ExplorationView({ onBack, onModeChange }: ExplorationViewProps): React.JSX.Element {
   const { t } = useLanguage()
   const [showBorders, setShowBorders] = useState(true)
   const [showLabels, setShowLabels] = useState(false)
+  const [showFlagTerritories, setShowFlagTerritories] = useState(false)
   const [selectedPlace, setSelectedPlace] = useState<ExplorationDetails | null>(null)
 
   const handlePlaceSelected = (
@@ -47,6 +50,8 @@ export function ExplorationView({ onBack }: ExplorationViewProps): React.JSX.Ele
         </div>
       </header>
 
+      <AppModeSwitcher active="exploration" onChange={onModeChange} />
+
       <main className="exploration-workspace">
         <section className="exploration-map-panel" aria-label={t('Carte interactive')}>
           <div className="exploration-map-toolbar">
@@ -62,6 +67,7 @@ export function ExplorationView({ onBack }: ExplorationViewProps): React.JSX.Ele
             <WorldMap
               showBorders={showBorders}
               showLabels={showLabels}
+              showFlagTerritories={showFlagTerritories}
               onCountrySelected={handlePlaceSelected}
               onCountryDeselected={() => setSelectedPlace(null)}
             />
@@ -84,6 +90,17 @@ export function ExplorationView({ onBack }: ExplorationViewProps): React.JSX.Ele
                 onChange={(event) => setShowLabels(event.target.checked)}
               />
               <span>{t('Noms des pays')}</span>
+            </label>
+            <label
+              className="setting-item"
+              title={t('Intégrer le drapeau dans le contour des pays et territoires')}
+            >
+              <input
+                type="checkbox"
+                checked={showFlagTerritories}
+                onChange={(event) => setShowFlagTerritories(event.target.checked)}
+              />
+              <span>{t('Drapeaux')}</span>
             </label>
           </div>
         </section>

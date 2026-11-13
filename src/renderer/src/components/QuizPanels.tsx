@@ -21,6 +21,7 @@ import {
   type QuizClues,
   normalizeQuizAnswer
 } from '../data/quiz/countryQuiz'
+import type { MapProximityResult } from '../data/quiz/mapProximity'
 
 type QuizPanelFrameProps<Question> = {
   heading?: string
@@ -289,7 +290,7 @@ type CountryQuizPanelProps = {
   clues: QuizClues
   answers: QuizAnswers
   selectedMapCountry: SelectedMapCountry
-  mapProximityScore: number | null
+  mapProximity: MapProximityResult | null
   showPanelActions?: boolean
   onAnswer: (answers: {
     countryName: string
@@ -630,14 +631,14 @@ export function CountryQuizPanel({
   clues,
   answers,
   selectedMapCountry,
-  mapProximityScore,
+  mapProximity,
   showPanelActions = true,
   onAnswer,
   onRevealAnswer,
   onNext,
   onRestart
 }: CountryQuizPanelProps): React.JSX.Element {
-  const { t } = useLanguage()
+  const { language, t } = useLanguage()
   const question = session.questionOrder[session.questionIndex]
   const revealText = [
     question.frenchCountryName,
@@ -668,9 +669,15 @@ export function CountryQuizPanel({
         countryIsHighlighted={clues.countryOnMap}
         onAnswer={onAnswer}
       />
-      {answers.countryOnMap && mapProximityScore !== null && (
+      {answers.countryOnMap && mapProximity !== null && (
         <div className="quiz-feedback quiz-map-proximity" aria-live="polite">
-          <strong>{t('Proximité estimée :')} {mapProximityScore} %</strong>
+          <strong>{t('Proximité estimée :')} {mapProximity.score} %</strong>
+          {mapProximity.distanceKm !== null && (
+            <span>
+              {t('Distance estimée jusqu’au centre du pays cible :')}{' '}
+              {mapProximity.distanceKm.toLocaleString(language)} km
+            </span>
+          )}
           <span>{t('Indice pour ton prochain clic · sans effet sur le score du quiz.')}</span>
         </div>
       )}
