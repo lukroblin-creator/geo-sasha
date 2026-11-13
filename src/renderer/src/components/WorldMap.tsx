@@ -35,6 +35,11 @@ import {
 } from '../data/quiz/mapFlagTerritories'
 import type { MapProximityResult } from '../data/quiz/mapProximity'
 import { MapFlagOverlay } from './MapFlagOverlay'
+import {
+  GLOBE_TRANSITION_END_ZOOM,
+  GLOBE_TRANSITION_START_ZOOM,
+  isGlobeLabelVisible
+} from './mapProjectionUtils'
 import { useLanguage } from '../data/i18n'
 
 import {
@@ -272,6 +277,7 @@ function WorldMap({
   const [mapInstance, setMapInstance] = useState<MapLibreMap | null>(null)
   const [mapZoom, setMapZoom] = useState(1.5)
   const [mapViewRevision, setMapViewRevision] = useState(0)
+  const [globeLabelRevision, setGlobeLabelRevision] = useState(0)
   const flagOverlayRafRef = useRef<number | null>(null)
   const lastGlobeOverlayUpdateRef = useRef(0)
   const [clickMarker, setClickMarker] = useState<{
@@ -344,6 +350,7 @@ function WorldMap({
   const workerBusyRef = useRef(false)
   const pendingLabelUpdateRef = useRef<LabelUpdateRequest | null>(null)
   const latestLabelRequestId = useRef(0)
+  const globeLabelsRequestedRef = useRef(false)
 
   const [visibleLabels, setVisibleLabels] = useState<
     FeatureCollection<Point, LabelProperties>
@@ -370,7 +377,17 @@ function WorldMap({
 
     const projection = globeMode
       ? {
-          type: ['interpolate', ['linear'], ['zoom'], 1.5, 'globe', 3.5, 'mercator']
+          type: [
+            'interpolate',
+            ['linear'],
+            ['zoom'],
+            GLOBE_TRANSITION_END_ZOOM,
+            // MapLibre interpolates through vertical-perspective; `globe` here
+            // is treated as an already-complete projection and causes a snap.
+            'vertical-perspective',
+            GLOBE_TRANSITION_START_ZOOM,
+            'mercator'
+          ]
         }
       : { type: 'mercator' }
 
@@ -502,34 +519,47 @@ function WorldMap({
     const height = canvas.clientHeight
     if (width <= 0 || height <= 0) return
 
-    // Keep label anchors far enough from the canvas edge for their text to fit.
-    const horizontalInset = Math.min(60, width * 0.1)
-    const verticalInset = Math.min(24, height * 0.08)
-    const corners = [
-      mapInstance.unproject([horizontalInset, verticalInset]),
-      mapInstance.unproject([width - horizontalInset, verticalInset]),
-      mapInstance.unproject([
-        width - horizontalInset,
-        height - verticalInset
-      ]),
-      mapInstance.unproject([horizontalInset, height - verticalInset])
-    ]
-    const longitudes = corners.map((corner) => corner.lng)
-    const latitudes = corners.map((corner) => corner.lat)
+    const zoom = mapInstance.getZoom()
+    let bbox: [number, number, number, number]
+    if (globeMode && zoom < GLOBE_TRANSITION_START_ZOOM) {
+      // Screen-corner unprojection is not a reliable viewport on a sphere:
+      // it can leave out countries on the visible hemisphere. Load all anchors
+      // once, then let the globe projection show the ones facing the camera.
+      bbox = [-180, -90, 180, 90]
+    } else {
+      // Keep label anchors far enough from the canvas edge for their text to fit.
+      const horizontalInset = Math.min(60, width * 0.1)
+      const verticalInset = Math.min(24, height * 0.08)
+      const corners = [
+        mapInstance.unproject([horizontalInset, verticalInset]),
+        mapInstance.unproject([width - horizontalInset, verticalInset]),
+        mapInstance.unproject([
+          width - horizontalInset,
+          height - verticalInset
+        ]),
+        mapInstance.unproject([horizontalInset, height - verticalInset])
+      ]
+      const longitudes = corners.map((corner) => corner.lng)
+      const latitudes = corners.map((corner) => corner.lat)
 
-    const bbox: [number, number, number, number] = [
-      Math.min(...longitudes),
-      Math.min(...latitudes),
-      Math.max(...longitudes),
-      Math.max(...latitudes)
-    ]
+      bbox = [
+        Math.min(...longitudes),
+        Math.min(...latitudes),
+        Math.max(...longitudes),
+        Math.max(...latitudes)
+      ]
+    }
     const requestId = latestLabelRequestId.current + 1
     latestLabelRequestId.current = requestId
 
     const request: LabelUpdateRequest = {
       type: 'update',
       bbox,
-      zoom: map.getZoom(),
+      // Stable precision avoids recomputing every country label at each globe
+      // zoom step; their geographic anchors do not change while the globe moves.
+      zoom: globeMode && zoom < GLOBE_TRANSITION_START_ZOOM
+        ? GLOBE_TRANSITION_END_ZOOM
+        : zoom,
       requestId
     }
 
@@ -942,14 +972,45 @@ function WorldMap({
     'line-opacity-transition': { duration: 320, delay: 0 }
   })
 
+  const globeLabelsActive = globeMode && mapZoom < GLOBE_TRANSITION_START_ZOOM
+  const labelsForMap = useMemo(() => {
+    if (!globeLabelsActive || !mapInstance) return visibleLabels
+
+    return {
+      ...visibleLabels,
+      features: visibleLabels.features.filter((feature) => {
+        const [longitude, latitude] = feature.geometry.coordinates
+        return isGlobeLabelVisible(
+          mapInstance,
+          [longitude, latitude],
+          mapZoom,
+          GLOBE_TRANSITION_START_ZOOM,
+          GLOBE_TRANSITION_END_ZOOM
+        )
+      })
+    }
+  }, [globeLabelRevision, globeLabelsActive, mapInstance, mapZoom, visibleLabels])
+
   const labelLayout: SymbolLayerSpecification['layout'] = {
     'text-field': ['get', 'name'],
-    'text-size': ['interpolate', ['linear'], ['zoom'], 1, 8, 3, 9, 5, 10, 12, 11],
+    'text-size': globeLabelsActive
+      ? [
+          'interpolate',
+          ['linear'],
+          ['zoom'],
+          -1,
+          6,
+          GLOBE_TRANSITION_END_ZOOM,
+          7,
+          GLOBE_TRANSITION_START_ZOOM,
+          9.25
+        ]
+      : ['interpolate', ['linear'], ['zoom'], 1, 8, 3, 9, 5, 10, 12, 11],
     'text-font': ['Open Sans Regular'],
     'symbol-sort-key': ['get', 'priority'],
-    'text-padding': 2,
-    'text-allow-overlap': false,
-    'text-ignore-placement': false
+    'text-padding': globeLabelsActive ? 0 : 2,
+    'text-allow-overlap': globeLabelsActive,
+    'text-ignore-placement': globeLabelsActive
   }
 
   const labelPaint: SymbolLayerSpecification['paint'] = {
@@ -972,16 +1033,31 @@ function WorldMap({
           scheduleFlagOverlayUpdate()
         }}
         onMove={(event) => {
-          if (!globeMode || !showFlagTerritories || event.viewState.zoom >= 3.5) {
+          if (
+            !globeMode ||
+            event.viewState.zoom >= GLOBE_TRANSITION_START_ZOOM
+          ) {
+            globeLabelsRequestedRef.current = false
             scheduleFlagOverlayUpdate()
             return
+          }
+          if (!globeLabelsRequestedRef.current) {
+            globeLabelsRequestedRef.current = true
+            updateVisibleLabels()
           }
           const now = performance.now()
           if (now - lastGlobeOverlayUpdateRef.current < 100) return
           lastGlobeOverlayUpdateRef.current = now
-          scheduleFlagOverlayUpdate()
+          setMapZoom(event.viewState.zoom)
+          setGlobeLabelRevision((current) => current + 1)
+          if (showFlagTerritories) scheduleFlagOverlayUpdate()
         }}
         onMoveEnd={() => {
+          const map = mapRef.current?.getMap()
+          if (map) {
+            setMapZoom(map.getZoom())
+            setGlobeLabelRevision((current) => current + 1)
+          }
           updateVisibleLabels()
           scheduleFlagOverlayUpdate()
         }}
@@ -1119,7 +1195,7 @@ function WorldMap({
           <Source
             id="country-labels"
             type="geojson"
-            data={visibleLabels}
+            data={labelsForMap}
           >
             <Layer
               id="countries-labels"
@@ -1172,7 +1248,7 @@ function WorldMap({
       {showFlagTerritories && mapInstance && (
         <MapFlagOverlay
           map={mapInstance}
-          globeMode={globeMode && mapZoom < 3.5}
+          globeMode={globeMode && mapZoom < GLOBE_TRANSITION_START_ZOOM}
           revision={mapViewRevision}
           zoom={mapZoom}
           world110m={world110mFlagMap}

@@ -2,6 +2,11 @@ import { memo, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'rea
 import type { Feature, FeatureCollection, Geometry, Point, Position } from 'geojson'
 import type { Map as MapLibreMap } from 'maplibre-gl'
 import { getFlagEdgeImages, getFlagImageLayers, subscribeToFlagImage } from './mapFlagImage'
+import {
+  GLOBE_TRANSITION_END_ZOOM,
+  GLOBE_TRANSITION_START_ZOOM,
+  isGlobeLabelVisible
+} from './mapProjectionUtils'
 
 type LabelProperties = {
   name: string
@@ -218,6 +223,20 @@ function getOverlayLabelSize(zoom: number): number {
   return Math.min(11, 10 + (zoom - 5) * 0.2)
 }
 
+function getGlobeOverlayLabelSize(zoom: number): number {
+  const progress = Math.max(
+    0,
+    Math.min(
+      1,
+      (GLOBE_TRANSITION_START_ZOOM - zoom) /
+        (GLOBE_TRANSITION_START_ZOOM - GLOBE_TRANSITION_END_ZOOM)
+    )
+  )
+  const regularSize = getOverlayLabelSize(zoom)
+  const globeSize = Math.min(7, getOverlayLabelSize(GLOBE_TRANSITION_END_ZOOM))
+  return regularSize + (globeSize - regularSize) * progress
+}
+
 let labelMeasureContext: CanvasRenderingContext2D | null | undefined
 
 function getLabelMeasureContext(): CanvasRenderingContext2D | null {
@@ -321,7 +340,7 @@ export const MapFlagOverlay = memo(function MapFlagOverlay({
       if (!overlaySvg || !baseCamera) return
 
       const camera = getCameraSnapshot(map)
-      if (globeMode && zoom < 3.5) {
+      if (globeMode && zoom < GLOBE_TRANSITION_START_ZOOM) {
         // Les transformations affines ne suivent pas la courbure du globe.
         // Le calque détaillé est recalculé régulièrement pendant le déplacement.
         overlaySvg.style.transform = 'none'
@@ -538,7 +557,7 @@ export const MapFlagOverlay = memo(function MapFlagOverlay({
 
   const overlayLabels = useMemo<FlagOverlayLabel[]>(() => {
     if (!showLabels) return []
-    const textSize = getOverlayLabelSize(zoom)
+    const textSize = globeMode ? getGlobeOverlayLabelSize(zoom) : getOverlayLabelSize(zoom)
     const context = getLabelMeasureContext()
     if (context) context.font = `${textSize}px "Open Sans", Arial, sans-serif`
 
@@ -550,7 +569,14 @@ export const MapFlagOverlay = memo(function MapFlagOverlay({
         point.x < -100 ||
         point.y < -40 ||
         point.x > map.getCanvas().clientWidth + 100 ||
-        point.y > map.getCanvas().clientHeight + 40
+        point.y > map.getCanvas().clientHeight + 40 ||
+        (globeMode && !isGlobeLabelVisible(
+          map,
+          [longitude, latitude],
+          zoom,
+          GLOBE_TRANSITION_START_ZOOM,
+          GLOBE_TRANSITION_END_ZOOM
+        ))
       ) {
         return []
       }
@@ -572,6 +598,11 @@ export const MapFlagOverlay = memo(function MapFlagOverlay({
     const occupied: Bounds[] = []
 
     for (const candidate of candidates) {
+      if (globeMode) {
+        placed.push(candidate)
+        continue
+      }
+
       const textWidth = context
         ? context.measureText(candidate.name).width
         : candidate.name.length * textSize * 0.58
@@ -600,7 +631,7 @@ export const MapFlagOverlay = memo(function MapFlagOverlay({
 
   if (width <= 0 || height <= 0) return <></>
 
-  const textSize = getOverlayLabelSize(zoom)
+  const textSize = globeMode ? getGlobeOverlayLabelSize(zoom) : getOverlayLabelSize(zoom)
   const selectionLineWidth = 1.2 + (Math.min(zoom, 8) / 8) * 1.2
 
   const isSelected = (feature: FlagOverlayFeature): boolean => {
