@@ -2,6 +2,7 @@
 import { useState, useRef, useEffect, useMemo, useCallback } from 'react'
 import type { CSSProperties, JSX, ReactNode } from 'react'
 import Map, { Source, Layer, Marker } from 'react-map-gl/maplibre'
+import { LngLat } from 'maplibre-gl'
 
 import type {
   MapLayerMouseEvent,
@@ -31,6 +32,10 @@ import countryCatalog from '../data/quiz/countryCatalog.json'
 import { additionalMapFlagRegions } from '../data/quiz/additionalMapFlagRegions'
 import { getFlagImageSource } from '../data/quiz/flagAssets'
 import {
+  getQuizRegionFocusBounds,
+  type QuizRegion
+} from '../data/quiz/countryContinents'
+import {
   addFlagTerritoryProperties
 } from '../data/quiz/mapFlagTerritories'
 import type { MapProximityResult } from '../data/quiz/mapProximity'
@@ -55,9 +60,13 @@ type WorldMapProps = {
   showBorders: boolean
   showLabels: boolean
   globeMode?: boolean
+  onToggleGlobeMode: () => void
   showFlagTerritories?: boolean
   showSelectionFeedback?: boolean
   quizTargetFeatureId?: string | number | null
+  quizBaseRegion?: QuizRegion | null
+  quizTargetMaxZoom?: number
+  quizTargetViewKey?: string
   quizRevealCard?: ReactNode
   showQuizRevealCard?: boolean
   interactionResetKey?: string | number
@@ -261,9 +270,13 @@ function WorldMap({
   showBorders,
   showLabels,
   globeMode = false,
+  onToggleGlobeMode,
   showFlagTerritories = false,
   showSelectionFeedback = false,
   quizTargetFeatureId = null,
+  quizBaseRegion = null,
+  quizTargetMaxZoom,
+  quizTargetViewKey,
   quizRevealCard,
   showQuizRevealCard = false,
   interactionResetKey,
@@ -277,6 +290,13 @@ function WorldMap({
   const [mapInstance, setMapInstance] = useState<MapLibreMap | null>(null)
   const [mapZoom, setMapZoom] = useState(1.5)
   const [mapViewRevision, setMapViewRevision] = useState(0)
+  const [flagProjectionRevision, setFlagProjectionRevision] = useState(0)
+  const [savedQuizTargetView, setSavedQuizTargetView] = useState<{
+    key: string
+    center: [number, number]
+    zoom: number
+  } | null>(null)
+  const savedQuizTargetViewRef = useRef<typeof savedQuizTargetView>(null)
   const [globeLabelRevision, setGlobeLabelRevision] = useState(0)
   const flagOverlayRafRef = useRef<number | null>(null)
   const lastGlobeOverlayUpdateRef = useRef(0)
@@ -375,6 +395,12 @@ function WorldMap({
     const map = mapRef.current?.getMap()
     if (!map) return
 
+    const updateFlagProjectionRevision = (): void => {
+      map.off('render', updateFlagProjectionRevision)
+      setFlagProjectionRevision((current) => current + 1)
+    }
+    map.on('render', updateFlagProjectionRevision)
+
     const projection = globeMode
       ? {
           type: [
@@ -393,6 +419,10 @@ function WorldMap({
 
     map.setProjection(projection as Parameters<MapLibreMap['setProjection']>[0])
     scheduleFlagOverlayUpdate()
+
+    return () => {
+      map.off('render', updateFlagProjectionRevision)
+    }
   }, [globeMode, mapLoaded, scheduleFlagOverlayUpdate])
 
   useEffect(() => () => {
@@ -571,7 +601,10 @@ function WorldMap({
     sendLabelUpdate(request)
   }
 
-  const focusOnQuizTarget = useCallback((): void => {
+  const focusOnQuizTarget = useCallback((moveToTarget = true): void => {
+    const map = mapRef.current?.getMap()
+    if (!map) return
+
     if (quizTargetFeatureId === null) return
 
     const target = world10m.features.find((feature) => {
@@ -584,9 +617,9 @@ function WorldMap({
       )
     })
     const bounds = target?.geometry ? getGeometryBounds(target.geometry) : null
-    const map = mapRef.current?.getMap()
 
     if (bounds && map) {
+      const viewKey = quizTargetViewKey ?? String(quizTargetFeatureId)
       const padding = showQuizRevealCard
         ? {
             top: 56,
@@ -594,23 +627,69 @@ function WorldMap({
             bottom: 56,
             left: 56
           }
-        : 64
-      map.fitBounds(
-        [[bounds[0], bounds[1]], [bounds[2], bounds[3]]],
-        {
-          padding,
-          maxZoom: showQuizRevealCard ? 7 : 4.5,
-          duration: 650
+        : quizTargetMaxZoom !== undefined
+          ? 112
+          : 64
+      const maxZoom = showQuizRevealCard ? 7 : (quizTargetMaxZoom ?? 4.5)
+      const targetBounds: [[number, number], [number, number]] = [
+        [bounds[0], bounds[1]],
+        [bounds[2], bounds[3]]
+      ]
+      const targetCamera = map.cameraForBounds(targetBounds, { padding, maxZoom })
+      if (targetCamera?.center && typeof targetCamera.zoom === 'number') {
+        const center = LngLat.convert(targetCamera.center).toArray()
+        const savedView = { key: viewKey, center, zoom: targetCamera.zoom }
+        if (savedQuizTargetViewRef.current?.key !== viewKey) {
+          savedQuizTargetViewRef.current = savedView
+          setSavedQuizTargetView(savedView)
         }
-      )
+      }
+      if (moveToTarget) {
+        map.fitBounds(targetBounds, {
+          padding,
+          maxZoom,
+          duration: 650
+        })
+      }
     }
-  }, [quizTargetFeatureId, showQuizRevealCard])
+  }, [
+    quizTargetFeatureId,
+    quizTargetMaxZoom,
+    quizTargetViewKey,
+    showQuizRevealCard
+  ])
+
+  const focusOnQuizBaseView = useCallback((): void => {
+    const map = mapRef.current?.getMap()
+    if (!map) return
+
+    const regionBounds = quizBaseRegion
+      ? getQuizRegionFocusBounds(quizBaseRegion)
+      : null
+    if (regionBounds) {
+      // Keep the quick target-view button available while the base view frames
+      // the whole continent.
+      if (quizTargetFeatureId !== null) focusOnQuizTarget(false)
+      const padding = Math.min(48, map.getCanvas().clientWidth * 0.04)
+      map.fitBounds(regionBounds, {
+        padding,
+        maxZoom: 3.4,
+        duration: 650
+      })
+      return
+    }
+
+    focusOnQuizTarget()
+  }, [focusOnQuizTarget, quizBaseRegion, quizTargetFeatureId])
 
   useEffect(() => {
     if (interactionResetKey === undefined) return
 
-    if (quizTargetFeatureId !== null) {
-      focusOnQuizTarget()
+    if (
+      quizTargetFeatureId !== null ||
+      (quizBaseRegion !== null && quizBaseRegion !== 'world')
+    ) {
+      focusOnQuizBaseView()
       return
     }
 
@@ -619,7 +698,7 @@ function WorldMap({
       zoom: 1.5,
       duration: 650
     })
-  }, [focusOnQuizTarget, interactionResetKey, quizTargetFeatureId])
+  }, [focusOnQuizBaseView, interactionResetKey, quizBaseRegion, quizTargetFeatureId])
 
   useEffect(() => {
     const worker = new Worker(
@@ -1029,7 +1108,7 @@ function WorldMap({
           setMapLoaded(true)
           setMapZoom(event.target.getZoom())
           updateVisibleLabels()
-          focusOnQuizTarget()
+          focusOnQuizBaseView()
           scheduleFlagOverlayUpdate()
         }}
         onMove={(event) => {
@@ -1061,6 +1140,7 @@ function WorldMap({
           updateVisibleLabels()
           scheduleFlagOverlayUpdate()
         }}
+        onIdle={scheduleFlagOverlayUpdate}
         onResize={scheduleFlagOverlayUpdate}
         onMouseMove={handleCountryHover}
         onMouseLeave={() => setHoveredCountry(null)}
@@ -1249,6 +1329,7 @@ function WorldMap({
         <MapFlagOverlay
           map={mapInstance}
           globeMode={globeMode && mapZoom < GLOBE_TRANSITION_START_ZOOM}
+          projectionRevision={flagProjectionRevision}
           revision={mapViewRevision}
           zoom={mapZoom}
           world110m={world110mFlagMap}
@@ -1267,6 +1348,26 @@ function WorldMap({
 
       <div className="map-controls world-map-controls" aria-label={t('Contrôles de la carte')}>
         <button
+          className="map-control-button map-projection-control"
+          type="button"
+          title={t(globeMode ? 'Passer au plan' : 'Passer au globe')}
+          aria-label={t(globeMode ? 'Passer au plan' : 'Passer au globe')}
+          aria-pressed={globeMode}
+          onClick={onToggleGlobeMode}
+        >
+          {globeMode ? (
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <rect x="3" y="4" width="18" height="16" rx="1.5" />
+              <path d="M3 9h18M3 15h18M9 4v16M15 4v16" />
+            </svg>
+          ) : (
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <circle cx="12" cy="12" r="9" />
+              <path d="M3.5 12h17M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18M5.5 6.5a14 14 0 0 0 13 11M18.5 6.5a14 14 0 0 1-13 11" />
+            </svg>
+          )}
+        </button>
+        <button
           className="map-control-button"
           type="button"
           title={t('Vue mondiale')}
@@ -1279,6 +1380,29 @@ function WorldMap({
         >
           ◎
         </button>
+        {quizTargetFeatureId !== null &&
+          savedQuizTargetView?.key === (quizTargetViewKey ?? String(quizTargetFeatureId)) && (
+            <button
+              className="map-control-button map-projection-control"
+              type="button"
+              title={t('Revenir à la vue de la question')}
+              aria-label={t('Revenir à la vue de la question')}
+              onClick={() => {
+                const view = savedQuizTargetViewRef.current
+                if (!view || view.key !== (quizTargetViewKey ?? String(quizTargetFeatureId))) return
+                mapRef.current?.getMap().easeTo({
+                  center: view.center,
+                  zoom: view.zoom,
+                  duration: 450
+                })
+              }}
+            >
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <circle cx="12" cy="12" r="6.5" />
+                <path d="M12 2v3M12 19v3M2 12h3M19 12h3" />
+              </svg>
+            </button>
+          )}
         <button
           className="map-control-button"
           type="button"

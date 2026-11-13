@@ -15,6 +15,22 @@ const continentLabels: Record<ContinentId, string> = {
 
 export type QuizRegion = 'world' | ContinentId
 export type QuizQuestionCount = number
+export type QuizRegionBounds = [[number, number], [number, number]]
+
+// Quiz framing extents include a little surrounding ocean so the continent is
+// visible as a whole rather than filling the map edge to edge.
+const quizRegionFocusBounds: Partial<Record<ContinentId, QuizRegionBounds>> = {
+  africa: [[-18, -35], [52, 38]],
+  'north-america': [[-170, 5], [-52, 83]],
+  'south-america': [[-82, -57], [-34, 14]],
+  asia: [[25, -12], [190, 82]],
+  europe: [[-25, 34], [45, 72]],
+  oceania: [[110, -48], [195, -5]]
+}
+
+export function getQuizRegionFocusBounds(region: QuizRegion): QuizRegionBounds | null {
+  return region === 'world' ? null : (quizRegionFocusBounds[region] ?? null)
+}
 
 export const quizRegions: { id: QuizRegion; label: string }[] = [
   { id: 'world', label: 'Tous les continents' },

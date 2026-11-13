@@ -3,6 +3,7 @@ import type { Feature, FeatureCollection, Geometry, Point, Position } from 'geoj
 import type { Map as MapLibreMap } from 'maplibre-gl'
 import { getFlagEdgeImages, getFlagImageLayers, subscribeToFlagImage } from './mapFlagImage'
 import {
+  getGlobeVisibilityThreshold,
   GLOBE_TRANSITION_END_ZOOM,
   GLOBE_TRANSITION_START_ZOOM,
   isGlobeLabelVisible
@@ -22,6 +23,17 @@ type HoveredCountry = {
 } | null
 
 type Bounds = [number, number, number, number]
+type GlobeClipContext = {
+  centerLongitudeRadians: number
+  sinCenterLatitude: number
+  cosCenterLatitude: number
+  visibilityThreshold: number
+}
+type SphericalCoordinate = {
+  longitudeRadians: number
+  sinLatitude: number
+  cosLatitude: number
+}
 type MapCameraSnapshot = {
   longitude: number
   latitude: number
@@ -32,8 +44,7 @@ type MapCameraSnapshot = {
 
 type FlagOverlayFeature = {
   key: string
-  paths: string[]
-  bounds: Bounds
+  polygons: Array<{ path: string; imageBounds: Bounds; opacity: number }>
   alpha2: string | null
   sourceFeatureIds: Array<string | number>
   entityId: string | null
@@ -55,6 +66,7 @@ type FlagOverlayLabel = {
 type MapFlagOverlayProps = {
   map: MapLibreMap
   globeMode: boolean
+  projectionRevision: number
   revision: number
   zoom: number
   world110m: FeatureCollection<Geometry>
@@ -72,6 +84,7 @@ type MapFlagOverlayProps = {
 
 const boundsCache = new WeakMap<object, Bounds | null>()
 const polygonBoundsCache = new WeakMap<object, Bounds | null>()
+const sphericalCoordinateCache = new WeakMap<Position, SphericalCoordinate>()
 
 function mercatorY(latitude: number): number {
   const clampedLatitude = Math.max(-85.051129, Math.min(85.051129, latitude))
@@ -161,9 +174,277 @@ function boundsIntersectViewport(bounds: Bounds, viewport: Bounds): boolean {
   return longitudeIntersects && bounds[1] <= north && bounds[3] >= south
 }
 
+function createGlobeClipContext(map: MapLibreMap, visibilityThreshold: number): GlobeClipContext {
+  const center = map.getCenter()
+  const centerLatitude = (center.lat * Math.PI) / 180
+  return {
+    centerLongitudeRadians: (center.lng * Math.PI) / 180,
+    sinCenterLatitude: Math.sin(centerLatitude),
+    cosCenterLatitude: Math.cos(centerLatitude),
+    visibilityThreshold
+  }
+}
+
+function getHemisphereDot(coordinate: Position, context: GlobeClipContext): number {
+  let sphericalCoordinate = sphericalCoordinateCache.get(coordinate)
+  if (!sphericalCoordinate) {
+    const latitude = (coordinate[1] * Math.PI) / 180
+    sphericalCoordinate = {
+      longitudeRadians: (coordinate[0] * Math.PI) / 180,
+      sinLatitude: Math.sin(latitude),
+      cosLatitude: Math.cos(latitude)
+    }
+    sphericalCoordinateCache.set(coordinate, sphericalCoordinate)
+  }
+
+  return (
+    context.sinCenterLatitude * sphericalCoordinate.sinLatitude +
+    context.cosCenterLatitude * sphericalCoordinate.cosLatitude *
+      Math.cos(sphericalCoordinate.longitudeRadians - context.centerLongitudeRadians)
+  )
+}
+
+function isPointInsideRing(point: Position, ring: Position[]): boolean {
+  if (ring.length < 4) return false
+
+  const pointLongitude = point[0]
+  const pointLatitude = point[1]
+  let inside = false
+  let previousLongitude = pointLongitude + getShortestLongitudeDelta(pointLongitude, ring[0][0])
+  const queryLongitude =
+    previousLongitude + getShortestLongitudeDelta(previousLongitude, pointLongitude)
+  let previousLatitude = ring[0][1]
+
+  for (let index = 1; index < ring.length; index += 1) {
+    const longitude = previousLongitude + getShortestLongitudeDelta(
+      previousLongitude,
+      ring[index][0]
+    )
+    const latitude = ring[index][1]
+    const crossesLatitude = (latitude > pointLatitude) !== (previousLatitude > pointLatitude)
+    if (
+      crossesLatitude &&
+      queryLongitude <
+        ((longitude - previousLongitude) * (pointLatitude - previousLatitude)) /
+          (latitude - previousLatitude) +
+          previousLongitude
+    ) {
+      inside = !inside
+    }
+    previousLongitude = longitude
+    previousLatitude = latitude
+  }
+
+  return inside
+}
+
+function getGlobeBoundaryCoordinate(angle: number, context: GlobeClipContext): Position {
+  const centerLongitude = context.centerLongitudeRadians
+  const center = [
+    context.cosCenterLatitude * Math.cos(centerLongitude),
+    context.cosCenterLatitude * Math.sin(centerLongitude),
+    context.sinCenterLatitude
+  ]
+  const east = [-Math.sin(centerLongitude), Math.cos(centerLongitude), 0]
+  const north = [
+    -context.sinCenterLatitude * Math.cos(centerLongitude),
+    -context.sinCenterLatitude * Math.sin(centerLongitude),
+    context.cosCenterLatitude
+  ]
+  const boundaryDot = context.visibilityThreshold
+  const boundaryRadius = Math.sqrt(Math.max(0, 1 - boundaryDot * boundaryDot))
+  const x =
+    boundaryDot * center[0] +
+    boundaryRadius * (east[0] * Math.cos(angle) + north[0] * Math.sin(angle))
+  const y =
+    boundaryDot * center[1] +
+    boundaryRadius * (east[1] * Math.cos(angle) + north[1] * Math.sin(angle))
+  const z =
+    boundaryDot * center[2] +
+    boundaryRadius * (east[2] * Math.cos(angle) + north[2] * Math.sin(angle))
+
+  return [(Math.atan2(y, x) * 180) / Math.PI, (Math.asin(z) * 180) / Math.PI]
+}
+
+function getGlobeBoundaryAngle(coordinate: Position, context: GlobeClipContext): number {
+  const longitude = (coordinate[0] * Math.PI) / 180
+  const latitude = (coordinate[1] * Math.PI) / 180
+  const centerLongitude = context.centerLongitudeRadians
+  const centerX = context.cosCenterLatitude * Math.cos(centerLongitude)
+  const centerY = context.cosCenterLatitude * Math.sin(centerLongitude)
+  const centerZ = context.sinCenterLatitude
+  const x = Math.cos(latitude) * Math.cos(longitude)
+  const y = Math.cos(latitude) * Math.sin(longitude)
+  const z = Math.sin(latitude)
+  const tangentX = x - context.visibilityThreshold * centerX
+  const tangentY = y - context.visibilityThreshold * centerY
+  const tangentZ = z - context.visibilityThreshold * centerZ
+  const east = -Math.sin(centerLongitude) * tangentX + Math.cos(centerLongitude) * tangentY
+  const north =
+    -context.sinCenterLatitude * Math.cos(centerLongitude) * tangentX -
+    context.sinCenterLatitude * Math.sin(centerLongitude) * tangentY +
+    context.cosCenterLatitude * tangentZ
+
+  return Math.atan2(north, east)
+}
+
+function getGlobeBoundaryScreenPath(map: MapLibreMap, context: GlobeClipContext): string {
+  const steps = 180
+  const points = Array.from({ length: steps }, (_, index) => {
+    const coordinate = getGlobeBoundaryCoordinate((index / steps) * Math.PI * 2, context)
+    const point = map.project([coordinate[0], coordinate[1]])
+    return [point.x, point.y] as const
+  })
+
+  if (points.some(([x, y]) => !Number.isFinite(x) || !Number.isFinite(y))) return ''
+  return `M ${points.map(([x, y]) => `${x.toFixed(1)} ${y.toFixed(1)}`).join(' L ')} Z`
+}
+
+function getVisibleBoundaryArc(
+  from: Position,
+  to: Position,
+  ring: Position[],
+  context: GlobeClipContext
+): Position[] {
+  const startAngle = getGlobeBoundaryAngle(from, context)
+  const endAngle = getGlobeBoundaryAngle(to, context)
+  const positiveDelta = ((endAngle - startAngle + Math.PI * 2) % (Math.PI * 2))
+  const negativeDelta = positiveDelta - Math.PI * 2
+  const positiveMidpoint = getGlobeBoundaryCoordinate(startAngle + positiveDelta / 2, context)
+  const negativeMidpoint = getGlobeBoundaryCoordinate(startAngle + negativeDelta / 2, context)
+  const positiveIsInside = isPointInsideRing(positiveMidpoint, ring)
+  const negativeIsInside = isPointInsideRing(negativeMidpoint, ring)
+  const delta =
+    positiveIsInside !== negativeIsInside
+      ? positiveIsInside
+        ? positiveDelta
+        : negativeDelta
+      : Math.abs(positiveDelta) <= Math.abs(negativeDelta)
+        ? positiveDelta
+        : negativeDelta
+  const steps = Math.max(1, Math.ceil(Math.abs(delta) / (Math.PI / 24)))
+
+  return Array.from({ length: steps }, (_, index) =>
+    index === steps - 1
+      ? to
+      : getGlobeBoundaryCoordinate(startAngle + (delta * (index + 1)) / steps, context)
+  )
+}
+
+function getShortestLongitudeDelta(from: number, to: number): number {
+  return ((to - from + 540) % 360) - 180
+}
+
+function findVisibilityIntersection(
+  from: Position,
+  to: Position,
+  fromIsVisible: boolean,
+  fromDot: number,
+  toDot: number,
+  context: GlobeClipContext
+): Position {
+  const longitudeDelta = getShortestLongitudeDelta(from[0], to[0])
+  let lower = 0
+  let upper = 1
+  const dotDelta = toDot - fromDot
+  const estimate = Math.max(
+    0,
+    Math.min(1, dotDelta === 0 ? 0.5 : (context.visibilityThreshold - fromDot) / dotDelta)
+  )
+  const estimatedCoordinate: Position = [
+    from[0] + longitudeDelta * estimate,
+    from[1] + (to[1] - from[1]) * estimate
+  ]
+  const estimatedDot = getHemisphereDot(estimatedCoordinate, context)
+  if (Math.abs(estimatedDot - context.visibilityThreshold) < 0.0005) {
+    return estimatedCoordinate
+  }
+
+  const estimateIsVisible = estimatedDot >= context.visibilityThreshold
+  if (estimateIsVisible === fromIsVisible) lower = estimate
+  else upper = estimate
+
+  // Refine a linear estimate with a few steps, avoiding the longer search that
+  // made each redraw during globe movement expensive.
+  for (let step = 0; step < 8; step += 1) {
+    const middle = (lower + upper) / 2
+    const coordinate: Position = [
+      from[0] + longitudeDelta * middle,
+      from[1] + (to[1] - from[1]) * middle
+    ]
+    const middleIsVisible = getHemisphereDot(coordinate, context) >= context.visibilityThreshold
+    if (middleIsVisible === fromIsVisible) lower = middle
+    else upper = middle
+  }
+
+  const fraction = (lower + upper) / 2
+  return [from[0] + longitudeDelta * fraction, from[1] + (to[1] - from[1]) * fraction]
+}
+
+function clipRingToVisibleGlobe(ring: Position[], context: GlobeClipContext): Position[][] {
+  if (ring.length < 4) return []
+  if (context.visibilityThreshold <= -1) return [ring]
+
+  const isClosed =
+    ring[0][0] === ring[ring.length - 1][0] && ring[0][1] === ring[ring.length - 1][1]
+  const vertices = isClosed ? ring.slice(0, -1) : ring
+  if (vertices.length < 3) return []
+
+  const dots = vertices.map((coordinate) => getHemisphereDot(coordinate, context))
+  const isVisible = dots.map((dot) => dot >= context.visibilityThreshold)
+  if (isVisible.every(Boolean)) return [isClosed ? ring : [...vertices, vertices[0]]]
+  if (isVisible.every((visible) => !visible)) return []
+
+  const visibleParts: Position[][] = []
+  for (let startIndex = 0; startIndex < vertices.length; startIndex += 1) {
+    const previousIndex = (startIndex + vertices.length - 1) % vertices.length
+    if (!isVisible[startIndex] || isVisible[previousIndex]) continue
+
+    const part: Position[] = [
+      findVisibilityIntersection(
+        vertices[previousIndex],
+        vertices[startIndex],
+        false,
+        dots[previousIndex],
+        dots[startIndex],
+        context
+      )
+    ]
+    let currentIndex = startIndex
+
+    while (isVisible[currentIndex]) {
+      part.push(vertices[currentIndex])
+      const nextIndex = (currentIndex + 1) % vertices.length
+      if (!isVisible[nextIndex]) {
+        part.push(
+          findVisibilityIntersection(
+            vertices[currentIndex],
+            vertices[nextIndex],
+            true,
+            dots[currentIndex],
+            dots[nextIndex],
+            context
+          )
+        )
+        break
+      }
+      currentIndex = nextIndex
+    }
+
+    if (part.length >= 3) {
+      const exit = part[part.length - 1]
+      const boundaryArc = getVisibleBoundaryArc(exit, part[0], ring, context)
+      visibleParts.push([...part, ...boundaryArc, part[0]])
+    }
+  }
+
+  return visibleParts
+}
+
 function geometryToScreenShape(
   geometry: Geometry,
-  map: MapLibreMap
+  map: MapLibreMap,
+  globeClipContext?: GlobeClipContext
 ): { path: string; bounds: Bounds } | null {
   const polygons =
     geometry.type === 'Polygon'
@@ -176,24 +457,39 @@ function geometryToScreenShape(
   let east = -Infinity
   let south = -Infinity
 
-  const path = polygons
-    .flatMap((polygon) =>
-      polygon.flatMap((ring) => {
-        if (ring.length < 4) return []
-        const points = ring.map(([longitude, latitude]) => {
-          const point = map.project([longitude, latitude])
-          west = Math.min(west, point.x)
-          north = Math.min(north, point.y)
-          east = Math.max(east, point.x)
-          south = Math.max(south, point.y)
-          return `${point.x.toFixed(1)} ${point.y.toFixed(1)}`
-        })
-        return [`M ${points.join(' L ')} Z`]
-      })
-    )
-    .join(' ')
+  const paths: string[] = []
+  for (const polygon of polygons) {
+    const outerRings = globeClipContext
+      ? clipRingToVisibleGlobe(polygon[0] ?? [], globeClipContext)
+      : polygon[0]
+        ? [polygon[0]]
+        : []
+    if (outerRings.length === 0) continue
 
-  if (!Number.isFinite(west + north + east + south)) return null
+    const rings = [
+      ...outerRings,
+      ...polygon.slice(1).flatMap((ring) =>
+        globeClipContext ? clipRingToVisibleGlobe(ring, globeClipContext) : [ring]
+      )
+    ]
+    const polygonPaths = rings.flatMap((ring) => {
+      if (ring.length < 4) return []
+      const points = ring.map(([longitude, latitude]) => {
+        const point = map.project([longitude, latitude])
+        west = Math.min(west, point.x)
+        north = Math.min(north, point.y)
+        east = Math.max(east, point.x)
+        south = Math.max(south, point.y)
+        return `${point.x.toFixed(1)} ${point.y.toFixed(1)}`
+      })
+      return [`M ${points.join(' L ')} Z`]
+    })
+    if (polygonPaths.length > 0) paths.push(polygonPaths.join(' '))
+  }
+
+  const path = paths.join(' ')
+
+  if (!path || !Number.isFinite(west + north + east + south)) return null
   return { path, bounds: [west, north, east, south] }
 }
 
@@ -207,13 +503,10 @@ function getVisibleScreenBounds(bounds: Bounds, map: MapLibreMap): Bounds | null
   return visible[0] < visible[2] && visible[1] < visible[3] ? visible : null
 }
 
-function unionBounds(first: Bounds, second: Bounds): Bounds {
-  return [
-    Math.min(first[0], second[0]),
-    Math.min(first[1], second[1]),
-    Math.max(first[2], second[2]),
-    Math.max(first[3], second[3])
-  ]
+function getResolutionOpacity(resolution: '110m' | '50m' | '10m', zoom: number): number {
+  if (resolution === '110m') return Math.max(0, Math.min(1, 3 - zoom))
+  if (resolution === '50m') return Math.max(0, Math.min(1, zoom < 3 ? zoom - 2 : 5 - zoom))
+  return Math.max(0, Math.min(1, zoom - 4))
 }
 
 function getOverlayLabelSize(zoom: number): number {
@@ -258,6 +551,7 @@ function readProperties(feature: Feature<Geometry>): Record<string, unknown> {
 export const MapFlagOverlay = memo(function MapFlagOverlay({
   map,
   globeMode,
+  projectionRevision,
   revision,
   zoom,
   world110m,
@@ -281,6 +575,23 @@ export const MapFlagOverlay = memo(function MapFlagOverlay({
   const [cameraRevision, setCameraRevision] = useState(0)
   const width = map.getCanvas().clientWidth
   const height = map.getCanvas().clientHeight
+  const globeClipContext = useMemo(
+    () =>
+      globeMode
+        ? createGlobeClipContext(
+            map,
+            getGlobeVisibilityThreshold(zoom, GLOBE_TRANSITION_START_ZOOM, GLOBE_TRANSITION_END_ZOOM)
+          )
+        : undefined,
+    [cameraRevision, globeMode, map, revision, zoom]
+  )
+  const globeBoundaryPath = useMemo(
+    () =>
+      globeClipContext && globeClipContext.visibilityThreshold >= 0
+        ? getGlobeBoundaryScreenPath(map, globeClipContext)
+        : '',
+    [globeClipContext, height, map, width]
+  )
 
   // Le rendu mondial 110m sert de fond temporaire pendant le déplacement.
   // Le calque détaillé le recouvre après le recalcul limité à la zone visible.
@@ -295,9 +606,6 @@ export const MapFlagOverlay = memo(function MapFlagOverlay({
       const alpha2 = typeof properties.flagAlpha2 === 'string' ? properties.flagAlpha2 : null
       if (!alpha2) return []
 
-      const screenShape = geometryToScreenShape(geometry, map)
-      if (!screenShape) return []
-
       const sourceFeatureId =
         typeof properties.sourceId === 'string' || typeof properties.sourceId === 'number'
           ? properties.sourceId
@@ -305,24 +613,36 @@ export const MapFlagOverlay = memo(function MapFlagOverlay({
       const entityId = typeof properties.entityId === 'string' ? properties.entityId : null
       const rawKey = String(feature.id ?? `${sourceFeatureId ?? 'feature'}-${index}`)
 
-      return [
-        {
-          key: `baseline-${rawKey.replace(/[^a-zA-Z0-9_-]/g, '-')}`,
-          paths: [screenShape.path],
-          bounds: screenShape.bounds,
-          alpha2,
-          sourceFeatureIds: sourceFeatureId === null ? [] : [sourceFeatureId],
-          entityId
-        }
-      ]
+      const polygons = geometry.type === 'Polygon' ? [geometry.coordinates] : geometry.coordinates
+
+      return polygons.flatMap((polygon, polygonIndex) => {
+        const screenShape = geometryToScreenShape(
+          { type: 'Polygon', coordinates: polygon },
+          map
+        )
+        if (!screenShape) return []
+
+        return [
+          {
+            key: `baseline-${rawKey.replace(/[^a-zA-Z0-9_-]/g, '-')}-${polygonIndex}`,
+            polygons: [{ path: screenShape.path, imageBounds: screenShape.bounds, opacity: 1 }],
+            alpha2,
+            sourceFeatureIds: sourceFeatureId === null ? [] : [sourceFeatureId],
+            entityId
+          }
+        ]
+      })
     })
 
     return { camera: getCameraSnapshot(map), features }
-  }, [height, map, width, world110m])
+  }, [globeMode, height, map, projectionRevision, width, world110m])
 
   useLayoutEffect(() => {
     baselineCameraRef.current = baseline.camera
-    if (baselineSvgRef.current) baselineSvgRef.current.style.transform = 'none'
+    if (baselineSvgRef.current) {
+      baselineSvgRef.current.style.transform = 'none'
+      baselineSvgRef.current.style.opacity = '0'
+    }
   }, [baseline])
 
   useLayoutEffect(() => {
@@ -433,6 +753,11 @@ export const MapFlagOverlay = memo(function MapFlagOverlay({
     const groupedFeatures = new Map<string, FlagOverlayFeature>()
 
     for (const { dataset, id: resolutionId } of resolutions) {
+      const resolutionOpacity = getResolutionOpacity(
+        resolutionId as '110m' | '50m' | '10m',
+        zoom
+      )
+      if (resolutionOpacity <= 0) continue
       dataset.features.forEach((feature, index) => {
         const geometry = feature.geometry
         if (!geometry || (geometry.type !== 'Polygon' && geometry.type !== 'MultiPolygon')) {
@@ -463,7 +788,11 @@ export const MapFlagOverlay = memo(function MapFlagOverlay({
           const polygonBounds = getPolygonBounds(polygon)
           if (!polygonBounds || !boundsIntersectViewport(polygonBounds, viewport)) continue
 
-          const screenShape = geometryToScreenShape({ type: 'Polygon', coordinates: polygon }, map)
+          const screenShape = geometryToScreenShape(
+            { type: 'Polygon', coordinates: polygon },
+            map,
+            globeClipContext
+          )
           if (!screenShape) continue
           const visibleBounds = getVisibleScreenBounds(screenShape.bounds, map)
           if (!visibleBounds) continue
@@ -472,17 +801,22 @@ export const MapFlagOverlay = memo(function MapFlagOverlay({
           if (!group) {
             group = {
               key,
-              paths: [],
-              bounds: visibleBounds,
+              polygons: [],
               alpha2,
               sourceFeatureIds: [],
               entityId
             }
             groupedFeatures.set(key, group)
-          } else group.bounds = unionBounds(group.bounds, visibleBounds)
+          }
           if (!group.alpha2 && alpha2) group.alpha2 = alpha2
 
-          if (!group.paths.includes(screenShape.path)) group.paths.push(screenShape.path)
+          if (!group.polygons.some((polygon) => polygon.path === screenShape.path)) {
+            group.polygons.push({
+              path: screenShape.path,
+              imageBounds: visibleBounds,
+              opacity: resolutionOpacity
+            })
+          }
           if (
             sourceFeatureId !== null &&
             !group.sourceFeatureIds.some((id) => normalizeId(id) === normalizeId(sourceFeatureId))
@@ -494,7 +828,7 @@ export const MapFlagOverlay = memo(function MapFlagOverlay({
     }
 
     return Array.from(groupedFeatures.values())
-  }, [cameraRevision, map, revision, world10m, world110m, world50m, zoom])
+  }, [cameraRevision, globeMode, map, revision, world10m, world110m, world50m, zoom])
 
   const allFlagFeatures = useMemo(
     () => [...baseline.features, ...overlayFeatures],
@@ -542,11 +876,15 @@ export const MapFlagOverlay = memo(function MapFlagOverlay({
             ? [
                 [
                   feature.key,
-                  getFlagImageLayers(
-                    feature.alpha2,
-                    feature.bounds,
-                    getFlagEdgeImages(feature.alpha2)
-                  )
+                  feature.polygons.map((polygon, index) => ({
+                    clipId: `${feature.key}-${index}`,
+                    opacity: polygon.opacity,
+                    layers: getFlagImageLayers(
+                      feature.alpha2!,
+                      polygon.imageBounds,
+                      getFlagEdgeImages(feature.alpha2!)
+                    )
+                  }))
                 ] as const
               ]
             : []
@@ -570,13 +908,14 @@ export const MapFlagOverlay = memo(function MapFlagOverlay({
         point.y < -40 ||
         point.x > map.getCanvas().clientWidth + 100 ||
         point.y > map.getCanvas().clientHeight + 40 ||
-        (globeMode && !isGlobeLabelVisible(
-          map,
-          [longitude, latitude],
-          zoom,
-          GLOBE_TRANSITION_START_ZOOM,
-          GLOBE_TRANSITION_END_ZOOM
-        ))
+        (globeMode &&
+          !isGlobeLabelVisible(
+            map,
+            [longitude, latitude],
+            zoom,
+            GLOBE_TRANSITION_START_ZOOM,
+            GLOBE_TRANSITION_END_ZOOM
+          ))
       ) {
         return []
       }
@@ -672,39 +1011,49 @@ export const MapFlagOverlay = memo(function MapFlagOverlay({
         style={{ opacity: 0 }}
       >
         <defs>
-          {baseline.features.map((feature) => (
-            <clipPath
-              key={feature.key}
-              id={`map-flag-clip-${feature.key}`}
-              clipPathUnits="userSpaceOnUse"
-            >
-              {feature.paths.map((path, index) => (
-                <path
-                  key={`${feature.key}-${index}`}
-                  d={path}
-                  fillRule="evenodd"
-                  clipRule="evenodd"
-                />
-              ))}
+          {globeBoundaryPath && (
+            <clipPath id="map-flag-globe-boundary-baseline" clipPathUnits="userSpaceOnUse">
+              <path d={globeBoundaryPath} />
             </clipPath>
-          ))}
+          )}
+          {baseline.features.flatMap((feature) =>
+            feature.polygons.map(({ path }, index) => (
+              <clipPath
+                key={`${feature.key}-${index}`}
+                id={`map-flag-clip-baseline-${feature.key}-${index}`}
+                clipPathUnits="userSpaceOnUse"
+              >
+                <path d={path} fillRule="evenodd" clipRule="evenodd" />
+              </clipPath>
+            ))
+          )}
         </defs>
 
-        {baseline.features.map((feature) => (
-          <g key={feature.key} clipPath={`url(#map-flag-clip-${feature.key})`}>
-            {(flagImageLayers.get(feature.key) ?? []).map((layer) => (
-              <image
-                key={layer.key}
-                href={layer.href}
-                x={layer.x}
-                y={layer.y}
-                width={layer.width}
-                height={layer.height}
-                preserveAspectRatio="none"
-              />
-            ))}
-          </g>
-        ))}
+        <g
+          clipPath={
+            globeBoundaryPath ? 'url(#map-flag-globe-boundary-baseline)' : undefined
+          }
+        >
+          {baseline.features.map((feature) => (
+            <g key={feature.key}>
+              {(flagImageLayers.get(feature.key) ?? []).map(({ clipId, layers }) => (
+                <g key={clipId} clipPath={`url(#map-flag-clip-baseline-${clipId})`}>
+                  {layers.map((layer) => (
+                    <image
+                      key={layer.key}
+                      href={layer.href}
+                      x={layer.x}
+                      y={layer.y}
+                      width={layer.width}
+                      height={layer.height}
+                      preserveAspectRatio="none"
+                    />
+                  ))}
+                </g>
+              ))}
+            </g>
+          ))}
+        </g>
       </svg>
 
       <svg
@@ -716,95 +1065,109 @@ export const MapFlagOverlay = memo(function MapFlagOverlay({
         aria-hidden="true"
       >
         <defs>
+          {globeBoundaryPath && (
+            <clipPath id="map-flag-globe-boundary" clipPathUnits="userSpaceOnUse">
+              <path d={globeBoundaryPath} />
+            </clipPath>
+          )}
           {overlayFeatures.flatMap((feature) =>
             feature.alpha2
               ? [
-                  <clipPath
-                    key={feature.key}
-                    id={`map-flag-clip-${feature.key}`}
-                    clipPathUnits="userSpaceOnUse"
-                  >
-                    {feature.paths.map((path, index) => (
+                  ...feature.polygons.map(({ path }, index) => (
+                    <clipPath
+                      key={`${feature.key}-${index}`}
+                      id={`map-flag-clip-detail-${feature.key}-${index}`}
+                      clipPathUnits="userSpaceOnUse"
+                    >
                       <path
-                        key={`${feature.key}-${index}`}
                         d={path}
                         fillRule="evenodd"
                         clipRule="evenodd"
                       />
-                    ))}
-                  </clipPath>
+                    </clipPath>
+                  ))
                 ]
               : []
           )}
         </defs>
 
-        {overlayFeatures.map((feature) => (
-          <g key={feature.key}>
-            {feature.alpha2 && (
-              <g clipPath={`url(#map-flag-clip-${feature.key})`}>
-                {(flagImageLayers.get(feature.key) ?? []).map((layer) => (
-                  <image
-                    key={layer.key}
-                    href={layer.href}
-                    x={layer.x}
-                    y={layer.y}
-                    width={layer.width}
-                    height={layer.height}
-                    preserveAspectRatio="none"
-                  />
-                ))}
-              </g>
-            )}
-            {feature.paths.map((path, index) => (
-              <g key={`${feature.key}-shape-${index}`}>
-                {isSelected(feature) && <path d={path} fill="#e5a63b" />}
-                {!isSelected(feature) && isHovered(feature) && (
-                  <path d={path} fill="#ffffff" fillOpacity={0.24} />
-                )}
-                {showBorders && (
-                  <path
-                    d={path}
-                    fill="none"
-                    stroke="#64748b"
-                    strokeWidth="0.7"
-                    strokeLinejoin="round"
-                    strokeLinecap="round"
-                  />
-                )}
-                {selectionBoundaryOpacity > 0 && isSelected(feature) && (
-                  <path
-                    d={path}
-                    fill="none"
-                    stroke="#f4c45e"
-                    strokeWidth={selectionLineWidth}
-                    strokeLinejoin="round"
-                    strokeLinecap="round"
-                    opacity={selectionBoundaryOpacity}
-                  />
-                )}
-              </g>
-            ))}
-          </g>
-        ))}
+        <g clipPath={globeBoundaryPath ? 'url(#map-flag-globe-boundary)' : undefined}>
+          {overlayFeatures.map((feature) => (
+            <g key={feature.key}>
+              {feature.alpha2 && (
+                <g>
+                  {(flagImageLayers.get(feature.key) ?? []).map(({ clipId, layers, opacity }) => (
+                    <g
+                      key={clipId}
+                      clipPath={`url(#map-flag-clip-detail-${clipId})`}
+                      opacity={opacity}
+                    >
+                      {layers.map((layer) => (
+                        <image
+                          key={layer.key}
+                          href={layer.href}
+                          x={layer.x}
+                          y={layer.y}
+                          width={layer.width}
+                          height={layer.height}
+                          preserveAspectRatio="none"
+                        />
+                      ))}
+                    </g>
+                  ))}
+                </g>
+              )}
+              {feature.polygons.map(({ path }, index) => (
+                <g key={`${feature.key}-shape-${index}`}>
+                  {isSelected(feature) && <path d={path} fill="#e5a63b" />}
+                  {!isSelected(feature) && isHovered(feature) && (
+                    <path d={path} fill="#ffffff" fillOpacity={0.24} />
+                  )}
+                  {showBorders && (
+                    <path
+                      d={path}
+                      fill="none"
+                      stroke="#64748b"
+                      strokeWidth="0.7"
+                      strokeLinejoin="round"
+                      strokeLinecap="round"
+                    />
+                  )}
+                  {selectionBoundaryOpacity > 0 && isSelected(feature) && (
+                    <path
+                      d={path}
+                      fill="none"
+                      stroke="#f4c45e"
+                      strokeWidth={selectionLineWidth}
+                      strokeLinejoin="round"
+                      strokeLinecap="round"
+                      opacity={selectionBoundaryOpacity}
+                    />
+                  )}
+                </g>
+              ))}
+            </g>
+          ))}
 
-        {overlayLabels.map((label) => (
-          <text
-            key={label.key}
-            x={label.x}
-            y={label.y}
-            fill="#ffffff"
-            stroke="#101820"
-            strokeWidth="2"
-            strokeLinejoin="round"
-            paintOrder="stroke"
-            fontFamily="Open Sans, Arial, sans-serif"
-            fontSize={textSize}
-            textAnchor="middle"
-            dominantBaseline="central"
-          >
-            {label.name}
-          </text>
-        ))}
+          {overlayLabels.map((label) => (
+            <text
+              key={label.key}
+              x={label.x}
+              y={label.y}
+              fill="#ffffff"
+              stroke="#101820"
+              strokeWidth="2"
+              strokeLinejoin="round"
+              paintOrder="stroke"
+              fontFamily="Open Sans, Arial, sans-serif"
+              fontSize={textSize}
+              textAnchor="middle"
+              dominantBaseline="central"
+            >
+              {label.name}
+            </text>
+          ))}
+        </g>
       </svg>
     </div>
   )

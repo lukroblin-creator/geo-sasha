@@ -150,11 +150,12 @@ function getContentLabels(
 
 function App(): React.JSX.Element {
   const { language, t } = useLanguage()
-  const [appView, setAppView] = useState<
-    'quiz' | 'exploration' | 'statistics' | 'country-select' | 'country-quiz'
-  >('quiz')
+  type AppView = 'quiz' | 'exploration' | 'statistics' | 'country-select' | 'country-quiz'
+  const [appView, setAppView] = useState<AppView>('quiz')
+  const [statisticsReturnView, setStatisticsReturnView] = useState<Exclude<AppView, 'statistics'>>('quiz')
   const [contentSettingsOpen, setContentSettingsOpen] = useState(false)
   const [isQuizFullscreen, setIsQuizFullscreen] = useState(false)
+  const [isMapFullscreen, setIsMapFullscreen] = useState(false)
   const [fullscreenAnswersOpen, setFullscreenAnswersOpen] = useState(false)
   const [mapLayers, setMapLayers] = useState<MapLayerVisibility>({
     borders: true,
@@ -198,6 +199,27 @@ function App(): React.JSX.Element {
   const [presetFeedback, setPresetFeedback] = useState('')
   const lastRecordedQuestionRef = useRef<string | null>(null)
   const countryKnowledgeRecordedQuestionRef = useRef<string | null>(null)
+
+  const toggleGlobeMode = (): void => setGlobeMode((current) => !current)
+
+  const toggleMapFullscreen = (): void => {
+    const entering = !isMapFullscreen
+    setIsMapFullscreen(entering)
+    if (entering) {
+      if (document.fullscreenEnabled && !document.fullscreenElement) {
+        void document.documentElement.requestFullscreen().catch(() => undefined)
+      }
+    } else if (document.fullscreenElement) {
+      void document.exitFullscreen().catch(() => undefined)
+    }
+  }
+
+  const openStatistics = (): void => {
+    if (appView !== 'statistics') setStatisticsReturnView(appView)
+    setIsMapFullscreen(false)
+    if (document.fullscreenElement) void document.exitFullscreen().catch(() => undefined)
+    setAppView('statistics')
+  }
 
   useEffect(() => {
     if (!selectedQuizPresetId) return
@@ -280,12 +302,159 @@ function App(): React.JSX.Element {
     const handleFullscreenChange = (): void => {
       if (!document.fullscreenElement) {
         setIsQuizFullscreen(false)
+        setIsMapFullscreen(false)
         setFullscreenAnswersOpen(false)
       }
     }
 
     document.addEventListener('fullscreenchange', handleFullscreenChange)
     return () => document.removeEventListener('fullscreenchange', handleFullscreenChange)
+  }, [])
+
+  useEffect(() => {
+    const tooltip = document.createElement('div')
+    tooltip.id = 'app-button-tooltip'
+    tooltip.className = 'app-button-tooltip'
+    tooltip.setAttribute('role', 'tooltip')
+    tooltip.hidden = true
+    document.body.appendChild(tooltip)
+
+    let activeButton: HTMLButtonElement | null = null
+    let timer: number | null = null
+    let originalTitle: string | null = null
+    let originalDescription: string | null = null
+
+    const restoreActiveButton = (): void => {
+      if (!activeButton) return
+      if (originalTitle !== null) activeButton.setAttribute('title', originalTitle)
+      if (originalDescription !== null) {
+        activeButton.setAttribute('aria-describedby', originalDescription)
+      } else {
+        activeButton.removeAttribute('aria-describedby')
+      }
+      activeButton = null
+      originalTitle = null
+      originalDescription = null
+    }
+
+    const hideTooltip = (): void => {
+      if (timer !== null) window.clearTimeout(timer)
+      timer = null
+      tooltip.classList.remove('visible')
+      tooltip.hidden = true
+      restoreActiveButton()
+    }
+
+    const showTooltip = (button: HTMLButtonElement): void => {
+      if (activeButton === button) return
+      hideTooltip()
+      const label = (
+        button.getAttribute('data-tooltip') ||
+        button.getAttribute('title') ||
+        button.getAttribute('aria-label') ||
+        button.innerText
+      ).trim()
+      if (!label) return
+
+      activeButton = button
+      originalTitle = button.getAttribute('title')
+      originalDescription = button.getAttribute('aria-describedby')
+      if (originalTitle !== null) button.setAttribute('title', '')
+
+      timer = window.setTimeout(() => {
+        timer = null
+        if (!activeButton || !activeButton.isConnected) {
+          hideTooltip()
+          return
+        }
+
+        tooltip.textContent = label
+        tooltip.hidden = false
+        const buttonBounds = activeButton.getBoundingClientRect()
+        const tooltipBounds = tooltip.getBoundingClientRect()
+        const left = Math.max(
+          8,
+          Math.min(
+            window.innerWidth - tooltipBounds.width - 8,
+            buttonBounds.left + (buttonBounds.width - tooltipBounds.width) / 2
+          )
+        )
+        const above = buttonBounds.top - tooltipBounds.height - 8
+        const top =
+          above >= 8
+            ? above
+            : Math.min(window.innerHeight - tooltipBounds.height - 8, buttonBounds.bottom + 8)
+
+        tooltip.style.left = `${left}px`
+        tooltip.style.top = `${Math.max(8, top)}px`
+        activeButton.setAttribute(
+          'aria-describedby',
+          [originalDescription, tooltip.id].filter(Boolean).join(' ')
+        )
+        window.requestAnimationFrame(() => tooltip.classList.add('visible'))
+      }, 500)
+    }
+
+    const getButton = (target: EventTarget | null): HTMLButtonElement | null => {
+      if (!(target instanceof Element)) return null
+      const button = target.closest('button')
+      return button instanceof HTMLButtonElement ? button : null
+    }
+
+    const handlePointerOver = (event: PointerEvent): void => {
+      const button = getButton(event.target)
+      if (!button || (event.relatedTarget instanceof Node && button.contains(event.relatedTarget))) {
+        return
+      }
+      showTooltip(button)
+    }
+
+    const handlePointerOut = (event: PointerEvent): void => {
+      const button = getButton(event.target)
+      if (
+        !button ||
+        button !== activeButton ||
+        (event.relatedTarget instanceof Node && button.contains(event.relatedTarget))
+      ) {
+        return
+      }
+      hideTooltip()
+    }
+
+    const handleFocusIn = (event: FocusEvent): void => {
+      const button = getButton(event.target)
+      if (button) showTooltip(button)
+    }
+
+    const handleFocusOut = (event: FocusEvent): void => {
+      const button = getButton(event.target)
+      if (
+        !button ||
+        button !== activeButton ||
+        (event.relatedTarget instanceof Node && button.contains(event.relatedTarget))
+      ) {
+        return
+      }
+      hideTooltip()
+    }
+
+    document.addEventListener('pointerover', handlePointerOver)
+    document.addEventListener('pointerout', handlePointerOut)
+    document.addEventListener('focusin', handleFocusIn)
+    document.addEventListener('focusout', handleFocusOut)
+    window.addEventListener('scroll', hideTooltip, true)
+    window.addEventListener('resize', hideTooltip)
+
+    return () => {
+      hideTooltip()
+      document.removeEventListener('pointerover', handlePointerOver)
+      document.removeEventListener('pointerout', handlePointerOut)
+      document.removeEventListener('focusin', handleFocusIn)
+      document.removeEventListener('focusout', handleFocusOut)
+      window.removeEventListener('scroll', hideTooltip, true)
+      window.removeEventListener('resize', hideTooltip)
+      tooltip.remove()
+    }
   }, [])
 
   const maxQuizQuestionCount = selectedQuizCountry
@@ -577,7 +746,11 @@ function App(): React.JSX.Element {
       (!activeQuizAnswers.countryOnMap ||
         Number(selectedMapCountry?.sourceFeatureId) === question.sourceFeatureId) &&
       (!activeQuizAnswers.countryName ||
-        [question.countryName, question.frenchCountryName].some(
+        [
+          question.countryName,
+          question.frenchCountryName,
+          new Intl.DisplayNames([language], { type: 'region' }).of(question.alpha2) ?? ''
+        ].some(
           (name) => normalizeQuizAnswer(answers.countryName) === normalizeQuizAnswer(name)
         )) &&
       (!activeQuizAnswers.capital ||
@@ -641,7 +814,16 @@ function App(): React.JSX.Element {
   }
 
 if (appView === 'exploration') {
-  return <ExplorationView onBack={() => setAppView('quiz')} onModeChange={setAppView} />
+  return (
+    <ExplorationView
+      globeMode={globeMode}
+      onToggleGlobeMode={toggleGlobeMode}
+      isFullscreen={isMapFullscreen}
+      onToggleFullscreen={toggleMapFullscreen}
+      onOpenStatistics={openStatistics}
+      onModeChange={setAppView}
+    />
+  )
 }
 
 if (appView === 'statistics') {
@@ -649,8 +831,9 @@ if (appView === 'statistics') {
     <StatisticsView
       countryStats={countryQuizStats}
       quizProgress={quizProgress}
-      onBack={() => setAppView('quiz')}
-      onOpenQuiz={() => setAppView('quiz')}
+      globeMode={globeMode}
+      onToggleGlobeMode={toggleGlobeMode}
+      onReturn={() => setAppView(statisticsReturnView)}
       onOpenCountryQuiz={startCountryQuiz}
       onModeChange={setAppView}
     />
@@ -661,6 +844,11 @@ if (appView === 'country-quiz' && countryKnowledgeAlpha2) {
   return (
     <CountryKnowledgeQuizView
       alpha2={countryKnowledgeAlpha2}
+      globeMode={globeMode}
+      onToggleGlobeMode={toggleGlobeMode}
+      isFullscreen={isMapFullscreen}
+      onToggleFullscreen={toggleMapFullscreen}
+      onOpenStatistics={openStatistics}
       session={countryKnowledgeQuiz.session}
       onAnswer={answerCountryKnowledgeQuestion}
       onRevealAnswer={revealCountryKnowledgeAnswer}
@@ -674,9 +862,13 @@ if (appView === 'country-quiz' && countryKnowledgeAlpha2) {
 if (appView === 'country-select') {
   return (
     <CountryQuizSelectionView
-      onBack={() => setAppView('quiz')}
       onStart={startCountryQuiz}
       onModeChange={setAppView}
+      globeMode={globeMode}
+      onToggleGlobeMode={toggleGlobeMode}
+      isFullscreen={isMapFullscreen}
+      onToggleFullscreen={toggleMapFullscreen}
+      onOpenStatistics={openStatistics}
     />
   )
 }
@@ -686,6 +878,11 @@ if (appView === 'quiz' && showExpandedQuizCountry && currentQuizQuestion && reve
     <QuizCountryStudyView
       place={revealedQuizPlace}
       sourceFeatureId={currentQuizQuestion.sourceFeatureId}
+      globeMode={globeMode}
+      onToggleGlobeMode={toggleGlobeMode}
+      isFullscreen={isMapFullscreen}
+      onToggleFullscreen={toggleMapFullscreen}
+      onOpenStatistics={openStatistics}
       onReturnToQuiz={() => setShowExpandedQuizCountry(false)}
     />
   )
@@ -736,12 +933,9 @@ return (
               <button
                 className="home-back-button"
                 type="button"
-                onClick={() => setAppView('statistics')}
+                onClick={openStatistics}
               >
                 {t('Statistiques')}
-              </button>
-              <button className="home-back-button" type="button" onClick={stopQuiz}>
-                {t('← Accueil')}
               </button>
               <button
                 className="home-back-button quiz-fullscreen-toggle"
@@ -1013,6 +1207,7 @@ return (
             session={quiz.session}
             clues={activeQuizClues}
             answers={activeQuizAnswers}
+            regionLabel={quizRegions.find((region) => region.id === activeQuizRegion)?.label ?? 'Tous les continents'}
             onExit={exitQuizFullscreen}
             onStop={stopQuiz}
             onOpenAnswers={() => setFullscreenAnswersOpen(true)}
@@ -1031,26 +1226,6 @@ return (
                   {t('Explorez le monde et apprenez à le reconnaître')}
                 </div>
               </div>
-              <button
-                className="map-projection-toggle"
-                type="button"
-                title={t(globeMode ? 'Passer au plan' : 'Passer au globe')}
-                aria-label={t(globeMode ? 'Passer au plan' : 'Passer au globe')}
-                aria-pressed={globeMode}
-                onClick={() => setGlobeMode((current) => !current)}
-              >
-                {globeMode ? (
-                  <svg viewBox="0 0 24 24" aria-hidden="true">
-                    <rect x="3" y="4" width="18" height="16" rx="1.5" />
-                    <path d="M3 9h18M3 15h18M9 4v16M15 4v16" />
-                  </svg>
-                ) : (
-                  <svg viewBox="0 0 24 24" aria-hidden="true">
-                    <circle cx="12" cy="12" r="9" />
-                    <path d="M3.5 12h17M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18M5.5 6.5a14 14 0 0 0 13 11M18.5 6.5a14 14 0 0 1-13 11" />
-                  </svg>
-                )}
-              </button>
             </div>
 
             <div className="map-canvas">
@@ -1058,11 +1233,19 @@ return (
                 showBorders={mapLayers.borders}
                 showLabels={mapLayers.labels}
                 globeMode={globeMode}
+                onToggleGlobeMode={toggleGlobeMode}
                 showFlagTerritories={mapLayers.flags}
                 showSelectionFeedback={activeQuizAnswers.countryOnMap}
                 quizTargetFeatureId={activeQuizClues.countryOnMap || quiz.session.answerRevealed
                   ? quiz.session.questionOrder[quiz.session.questionIndex]?.sourceFeatureId ?? null
                   : null}
+                quizBaseRegion={
+                  isQuizRunning && !quiz.session.answerRevealed ? activeQuizRegion : null
+                }
+                quizTargetMaxZoom={
+                  activeQuizClues.countryOnMap && !quiz.session.answerRevealed ? 3.5 : undefined
+                }
+                quizTargetViewKey={`${sessionMode}:${sessionGeneration}:${quiz.session.questionIndex}:${quiz.session.questionOrder[quiz.session.questionIndex]?.sourceFeatureId ?? ''}`}
                 interactionResetKey={`${sessionMode}:${sessionGeneration}:${quiz.session.questionIndex}:${quiz.session.questionOrder[quiz.session.questionIndex]?.sourceFeatureId ?? ''}:${quiz.session.answerRevealed}`}
                 showQuizRevealCard={showQuizRevealCard && !isQuizFullscreen}
                 quizRevealCard={showQuizRevealCard && !isQuizFullscreen && revealedQuizPlace ? (

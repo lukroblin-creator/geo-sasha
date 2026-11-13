@@ -4,17 +4,26 @@ import countryCatalog from '../data/quiz/countryCatalog.json'
 import { getFlagImageSource } from '../data/quiz/flagAssets'
 import { useLanguage } from '../data/i18n'
 import { AppModeSwitcher, type AppPrimaryMode } from './AppModeSwitcher'
+import { MapFullscreenBar } from './MapFullscreenBar'
 
 type CountryQuizSelectionViewProps = {
-  onBack: () => void
+  globeMode: boolean
+  onToggleGlobeMode: () => void
+  isFullscreen: boolean
+  onToggleFullscreen: () => void
+  onOpenStatistics: () => void
   onStart: (alpha2: string) => void
   onModeChange: (mode: AppPrimaryMode) => void
 }
 
 export function CountryQuizSelectionView({
-  onBack,
   onStart,
-  onModeChange
+  onModeChange,
+  globeMode,
+  onToggleGlobeMode,
+  isFullscreen,
+  onToggleFullscreen,
+  onOpenStatistics
 }: CountryQuizSelectionViewProps): React.JSX.Element {
   const { language, t } = useLanguage()
   const [selectedAlpha2, setSelectedAlpha2] = useState<string | null>(null)
@@ -31,14 +40,28 @@ export function CountryQuizSelectionView({
   const selectedCountry = countries.find((country) => country.alpha2 === selectedAlpha2)
 
   return (
-    <main className="country-quiz-selection-screen">
+    <main className={`country-quiz-selection-screen${isFullscreen ? ' map-fullscreen-screen country-select-map-fullscreen' : ''}`}>
+      {isFullscreen && (
+        <MapFullscreenBar
+          title={t('Quiz pays')}
+          onOpenStatistics={onOpenStatistics}
+          onExit={onToggleFullscreen}
+        />
+      )}
       <header className="statistics-header">
         <div>
           <div className="breadcrumb">{t('APPRENTISSAGE / QUIZ PAYS')}</div>
           <h1>{t('Choisir un pays à travailler')}</h1>
           <p>{t('Utilise la recherche ou sélectionne un pays sur la carte.')}</p>
         </div>
-        <button className="home-back-button" type="button" onClick={onBack}>{t('← Accueil')}</button>
+        <div className="statistics-actions">
+          <button className="home-back-button" type="button" onClick={onOpenStatistics}>
+            {t('Statistiques')}
+          </button>
+          <button className="home-back-button" type="button" onClick={onToggleFullscreen}>
+            {t('Plein écran')}
+          </button>
+        </div>
       </header>
 
       <AppModeSwitcher active="country-select" onChange={onModeChange} />
@@ -48,6 +71,8 @@ export function CountryQuizSelectionView({
           <WorldMap
             showBorders
             showLabels
+            globeMode={globeMode}
+            onToggleGlobeMode={onToggleGlobeMode}
             onCountrySelected={(sourceFeatureId) => {
               const country = countries.find(
                 (item) => item.sourceFeatureId === Number(sourceFeatureId)
@@ -58,7 +83,7 @@ export function CountryQuizSelectionView({
           />
         </section>
 
-        <aside className="country-quiz-selection-card">
+        <aside className={`country-quiz-selection-card${selectedCountry ? ' is-selected' : ''}`}>
           <div className="section-label">{t('Quiz pays')}</div>
           {selectedCountry ? (
             <>

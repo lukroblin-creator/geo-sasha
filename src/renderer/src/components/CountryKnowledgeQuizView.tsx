@@ -6,9 +6,16 @@ import {
 } from '../data/quiz/countryKnowledge'
 import type { QuizSession } from '../data/quiz/useQuizSession'
 import { useLanguage } from '../data/i18n'
+import { CorrectAnswerBanner } from './QuizPanels'
+import { MapFullscreenBar } from './MapFullscreenBar'
 
 type CountryKnowledgeQuizViewProps = {
   alpha2: string
+  globeMode: boolean
+  onToggleGlobeMode: () => void
+  isFullscreen: boolean
+  onToggleFullscreen: () => void
+  onOpenStatistics: () => void
   session: QuizSession<CountryKnowledgeQuestion>
   onAnswer: (answer: string) => void
   onRevealAnswer: () => void
@@ -19,6 +26,11 @@ type CountryKnowledgeQuizViewProps = {
 
 export function CountryKnowledgeQuizView({
   alpha2,
+  globeMode,
+  onToggleGlobeMode,
+  isFullscreen,
+  onToggleFullscreen,
+  onOpenStatistics,
   session,
   onAnswer,
   onRevealAnswer,
@@ -37,16 +49,31 @@ export function CountryKnowledgeQuizView({
   const progress = total ? (completedCount / total) * 100 : 0
 
   return (
-    <main className="country-knowledge-screen">
+    <main className={`country-knowledge-screen${isFullscreen ? ' map-fullscreen-screen country-knowledge-map-fullscreen' : ''}`}>
+      {isFullscreen && (
+        <MapFullscreenBar
+          title={`${t('Quiz pays')} · ${countryName}`}
+          onOpenStatistics={onOpenStatistics}
+          onExit={onToggleFullscreen}
+        />
+      )}
       <header className="statistics-header">
         <div>
           <div className="breadcrumb">{t('APPRENTISSAGE / QUIZ PAYS')}</div>
           <h1>{t('À la découverte de')} {countryName}</h1>
           <p>{t('Réponds à des questions sur ses villes, ses reliefs, sa capitale et sa géographie.')}</p>
         </div>
-        <button className="home-back-button" type="button" onClick={onStop}>
-          {t('Arrêter le quiz')}
-        </button>
+        <div className="statistics-actions">
+          <button className="home-back-button" type="button" onClick={onOpenStatistics}>
+            {t('Statistiques')}
+          </button>
+          <button className="home-back-button" type="button" onClick={onStop}>
+            {t('Arrêter le quiz')}
+          </button>
+          <button className="home-back-button" type="button" onClick={onToggleFullscreen}>
+            {t(isFullscreen ? 'Quitter le plein écran' : 'Plein écran')}
+          </button>
+        </div>
       </header>
 
       <div className="country-knowledge-content">
@@ -54,6 +81,8 @@ export function CountryKnowledgeQuizView({
           <WorldMap
             showBorders
             showLabels={false}
+            globeMode={globeMode}
+            onToggleGlobeMode={onToggleGlobeMode}
             quizTargetFeatureId={country?.sourceFeatureId ?? null}
           />
           <div className="country-knowledge-country-card">
@@ -138,21 +167,25 @@ export function CountryKnowledgeQuizView({
                   })}
                 </div>
 
-                <div className="country-knowledge-feedback" aria-live="polite">
-                  {!questionSettled ? (
-                    <span>{t('Choisis une réponse parmi les propositions.')}</span>
-                  ) : session.answerCorrect ? (
-                    <span>{t('Bonne réponse !')} {question.explanation}</span>
-                  ) : session.answerRevealed ? (
-                    <span>
-                      {t('Réponse')} : <strong>{question.answer}</strong>. {question.explanation}
-                    </span>
-                  ) : (
-                    <span>
-                      {t('Ce n’est pas la bonne réponse. Tu peux voir la solution ou passer à la suite.')}
-                    </span>
-                  )}
-                </div>
+                {session.answerCorrect ? (
+                  <CorrectAnswerBanner answer={question.answer}>
+                    <span>{question.explanation}</span>
+                  </CorrectAnswerBanner>
+                ) : (
+                  <div className="country-knowledge-feedback" aria-live="polite">
+                    {!questionSettled ? (
+                      <span>{t('Choisis une réponse parmi les propositions.')}</span>
+                    ) : session.answerRevealed ? (
+                      <span>
+                        {t('Réponse')} : <strong>{question.answer}</strong>. {question.explanation}
+                      </span>
+                    ) : (
+                      <span>
+                        {t('Ce n’est pas la bonne réponse. Tu peux voir la solution ou passer à la suite.')}
+                      </span>
+                    )}
+                  </div>
+                )}
               </div>
 
               <div className="country-knowledge-actions">

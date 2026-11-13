@@ -1,0 +1,9 @@
+IDÉES POUR PLUS TARD
+
+Ajoute ici les idées que tu souhaites garder pour le projet.
+
+Modes d’affichage
+- Créer un long menu déroulant qui regroupe les modes d’affichage du logiciel.
+- Imaginer des modes Matrix, sobre en noir et blanc, carte au trésor, couches de données et d’autres styles à définir.
+
+

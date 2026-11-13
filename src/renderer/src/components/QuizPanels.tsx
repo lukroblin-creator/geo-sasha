@@ -1,6 +1,7 @@
-import { useState } from 'react'
-import type { FormEvent, ReactNode } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
+import type { ReactNode } from 'react'
 import { useLanguage } from '../data/i18n'
+import countryCatalog from '../data/quiz/countryCatalog.json'
 import type { CountryFlagQuestion } from '../data/quiz/countryQuestions'
 import { flagEmojiFromAlpha2 } from '../data/quiz/flagEmoji'
 import type { CountryCapitalQuestion } from '../data/quiz/countryCapitals'
@@ -37,6 +38,27 @@ type QuizPanelFrameProps<Question> = {
   onRestart: () => void
   onStop?: () => void
   children: ReactNode
+}
+
+export function CorrectAnswerBanner({
+  answer,
+  children
+}: {
+  answer?: string
+  children?: ReactNode
+}): React.JSX.Element {
+  const { t } = useLanguage()
+
+  return (
+    <div className="quiz-correct-banner" role="status" aria-live="polite">
+      <span className="quiz-correct-banner-icon" aria-hidden="true">✓</span>
+      <div className="quiz-correct-banner-content">
+        <strong className="quiz-correct-banner-title">{t('Bonne réponse !')}</strong>
+        {answer && <span className="quiz-correct-banner-answer">{answer}</span>}
+        {children && <div className="quiz-correct-answer-details">{children}</div>}
+      </div>
+    </div>
+  )
 }
 
 function QuizPanelFrame<Question>({
@@ -187,22 +209,24 @@ export function FlagsQuizPanel({
       <div className="question-instruction">
         {t('Sélectionnez le pays correspondant sur la carte.')}
       </div>
-      <div className="answer-placeholder" aria-live="polite">
-        {session.answerCorrect === null && !session.answerRevealed ? (
-          <>
-            <span className="answer-placeholder-icon">⌖</span>
-            <span>{t('En attente de sélection sur la carte')}</span>
-          </>
-        ) : (
-          <span>
-            {session.answerCorrect
-              ? `${t('Bonne réponse')} : ${question.countryName} !`
-              : session.answerRevealed
+      {session.answerCorrect ? (
+        <CorrectAnswerBanner answer={question.countryName} />
+      ) : (
+        <div className="answer-placeholder" aria-live="polite">
+          {session.answerCorrect === null && !session.answerRevealed ? (
+            <>
+              <span className="answer-placeholder-icon">⌖</span>
+              <span>{t('En attente de sélection sur la carte')}</span>
+            </>
+          ) : (
+            <span>
+              {session.answerRevealed
                 ? `${t('Réponse')} : ${question.countryName}.`
                 : t('Mauvaise réponse. Réessaie ou passe à la suite.')}
-          </span>
-        )}
-      </div>
+            </span>
+          )}
+        </div>
+      )}
     </QuizPanelFrame>
   )
 }
@@ -260,19 +284,21 @@ export function CapitalsQuizPanel({
           )
         })}
       </div>
-      <div className="answer-placeholder" aria-live="polite">
-        {session.answerCorrect === null && !session.answerRevealed ? (
-          <span>{t('Choisis une réponse parmi les quatre propositions.')}</span>
-        ) : (
-          <span>
-            {session.answerCorrect
-              ? `${t('Bonne réponse')} : ${question.capitalName} !`
-              : session.answerRevealed
+      {session.answerCorrect ? (
+        <CorrectAnswerBanner answer={question.capitalName} />
+      ) : (
+        <div className="answer-placeholder" aria-live="polite">
+          {session.answerCorrect === null && !session.answerRevealed ? (
+            <span>{t('Choisis une réponse parmi les quatre propositions.')}</span>
+          ) : (
+            <span>
+              {session.answerRevealed
                 ? `${t('Réponse')} : ${question.capitalName}.`
                 : t('Pas tout à fait. Réessaie ou passe à la suite.')}
-          </span>
-        )}
-      </div>
+            </span>
+          )}
+        </div>
+      )}
       {(session.answerCorrect === true || session.answerRevealed) && question.note && (
         <p className="capital-note">{question.note}</p>
       )}
@@ -419,15 +445,27 @@ function CountryQuizAnswerForm({
 }): React.JSX.Element {
   const { language, t } = useLanguage()
   const [countryName, setCountryName] = useState('')
+  const [countryNameSuggestionsOpen, setCountryNameSuggestionsOpen] = useState(false)
   const [capital, setCapital] = useState('')
   const [flagAlpha2, setFlagAlpha2] = useState<string | null>(null)
   const [flagSearch, setFlagSearch] = useState('')
+  const [flagSuggestionsOpen, setFlagSuggestionsOpen] = useState(false)
   const [flagColorDraft, setFlagColorDraft] = useState('#e53935')
   const [flagColorFilters, setFlagColorFilters] = useState<string[]>([])
   const [flagAspectRatioRange, setFlagAspectRatioRange] = useState<FlagRatioRange | null>(null)
   const [flagPolygonDrawing, setFlagPolygonDrawing] = useState<FlagPolygonDrawing | null>(null)
   const disabled = session.answerCorrect === true || session.answerRevealed
   const localizedCountryNames = new Intl.DisplayNames([language], { type: 'region' })
+  const countryNameChoices = useMemo(() => {
+    const names = new Intl.DisplayNames([language], { type: 'region' })
+    return countryCatalog
+      .map((country) => ({
+        alpha2: country.alpha2,
+        name: names.of(country.alpha2) ?? country.countryName,
+        alternateName: country.countryName
+      }))
+      .sort((first, second) => first.name.localeCompare(second.name, language))
+  }, [language])
   const mapOnly =
     answers.countryOnMap &&
     !answers.countryName &&
@@ -472,50 +510,131 @@ function CountryQuizAnswerForm({
       )
     )
 
-  const canSubmit =
-    (!answers.countryOnMap || selectedMapCountry !== null) &&
-    (!answers.countryName || countryName.trim().length > 0) &&
-    (!answers.capital || capital.trim().length > 0) &&
-    (!answers.flag || flagAlpha2 !== null)
+  const normalizedCountryNameQuery = normalizeQuizAnswer(countryName)
+  const countryNameSuggestions = normalizedCountryNameQuery
+    ? countryNameChoices.filter((choice) =>
+        normalizeQuizAnswer(choice.name).includes(normalizedCountryNameQuery) ||
+        normalizeQuizAnswer(choice.alternateName).includes(normalizedCountryNameQuery)
+      )
+    : []
 
-  const handleSubmit = (event: FormEvent<HTMLFormElement>): void => {
-    event.preventDefault()
+  const countryNameIsCorrect =
+    !answers.countryName ||
+    [
+      question.countryName,
+      question.frenchCountryName,
+      localizedCountryNames.of(question.alpha2) ?? ''
+    ].some(
+      (name) => normalizeQuizAnswer(countryName) === normalizeQuizAnswer(name)
+    )
+  const capitalIsCorrect =
+    !answers.capital || normalizeQuizAnswer(capital) === normalizeQuizAnswer(question.capitalName)
+  const flagIsCorrect = !answers.flag || flagAlpha2 === question.alpha2
+  const mapAnswerIsCorrect =
+    !answers.countryOnMap || Number(selectedMapCountry?.sourceFeatureId) === question.sourceFeatureId
+  const allAnswersAreCorrect =
+    countryNameIsCorrect && capitalIsCorrect && flagIsCorrect && mapAnswerIsCorrect
+  const autoAnswerSentRef = useRef(false)
+
+  useEffect(() => {
+    if (disabled || mapOnly || !allAnswersAreCorrect || autoAnswerSentRef.current) return
+    autoAnswerSentRef.current = true
     onAnswer({ countryName, capital, flagAlpha2 })
-  }
+  }, [
+    allAnswersAreCorrect,
+    capital,
+    countryName,
+    disabled,
+    flagAlpha2,
+    mapOnly,
+    onAnswer
+  ])
 
   return (
-    <form className="country-quiz-answer-form" onSubmit={handleSubmit}>
+    <div className="country-quiz-answer-form">
       {answers.countryOnMap && (
-        <div className="country-answer-map-selection" aria-live="polite">
+        <div
+          className={`country-answer-map-selection${mapAnswerIsCorrect ? ' is-correct' : ''}`}
+          aria-live="polite"
+        >
           <span className="answer-placeholder-icon">⌖</span>
           <span>
             {selectedMapCountry
               ? `${t('Pays sélectionné')} : ${selectedMapCountry.name}`
               : t('Sélectionne un pays sur la carte.')}
           </span>
+          {mapAnswerIsCorrect && (
+            <span className="country-answer-field-status">✓ {t('Bonne réponse !')}</span>
+          )}
         </div>
       )}
 
       {answers.countryName && (
-        <label className="country-answer-field">
-          <span>{t(countryIsHighlighted ? 'Nom du pays mis en évidence' : 'Nom du pays')}</span>
-          <input
-            type="text"
-            autoComplete="off"
-            value={countryName}
-            onChange={(event) => setCountryName(event.target.value)}
-            disabled={disabled}
-            placeholder={countryIsHighlighted
-              ? t('Écris le nom du pays sur la carte')
-              : t('Écris le nom du pays')}
-          />
-        </label>
+        <div
+          className={`country-answer-field${countryNameIsCorrect && countryName ? ' is-correct' : ''}`}
+        >
+          <label htmlFor="quiz-country-name-answer">
+            {t(countryIsHighlighted ? 'Nom du pays mis en évidence' : 'Nom du pays')}
+          </label>
+          <div className="country-answer-input-wrap">
+            <input
+              id="quiz-country-name-answer"
+              className="country-answer-text-input"
+              type="text"
+              autoComplete="off"
+              value={countryName}
+              onFocus={() => setCountryNameSuggestionsOpen(true)}
+              onBlur={() => setCountryNameSuggestionsOpen(false)}
+              onChange={(event) => {
+                setCountryName(event.target.value)
+                setCountryNameSuggestionsOpen(true)
+              }}
+              disabled={disabled}
+              placeholder={countryIsHighlighted
+                ? t('Écris le nom du pays sur la carte')
+                : t('Écris le nom du pays')}
+              aria-autocomplete="list"
+              aria-expanded={countryNameSuggestionsOpen && countryNameSuggestions.length > 0}
+              aria-controls="quiz-country-name-suggestions"
+            />
+            {countryNameSuggestionsOpen && countryNameSuggestions.length > 0 && !disabled && (
+              <div
+                id="quiz-country-name-suggestions"
+                className="country-answer-suggestions"
+                role="listbox"
+              >
+                {countryNameSuggestions.map((choice) => (
+                  <button
+                    key={choice.alpha2}
+                    type="button"
+                    className="country-answer-suggestion"
+                    role="option"
+                    aria-selected={false}
+                    onPointerDown={(event) => event.preventDefault()}
+                    onClick={() => {
+                      setCountryName(choice.name)
+                      setCountryNameSuggestionsOpen(false)
+                    }}
+                  >
+                    <span>{choice.name}</span>
+                    <img src={getFlagImageSource(choice.alpha2)} alt="" />
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+          {countryNameIsCorrect && countryName && (
+            <span className="country-answer-field-status">✓ {t('Bonne réponse !')}</span>
+          )}
+        </div>
       )}
 
       {answers.capital && (
-        <label className="country-answer-field">
-          <span>{t('Capitale')}</span>
+        <div className={`country-answer-field${capitalIsCorrect && capital ? ' is-correct' : ''}`}>
+          <label htmlFor="quiz-capital-answer">{t('Capitale')}</label>
           <input
+            id="quiz-capital-answer"
+            className="country-answer-text-input"
             type="text"
             autoComplete="off"
             value={capital}
@@ -523,21 +642,69 @@ function CountryQuizAnswerForm({
             disabled={disabled}
             placeholder={t('Écris le nom de la capitale')}
           />
-        </label>
+          {capitalIsCorrect && capital && (
+            <span className="country-answer-field-status">✓ {t('Bonne réponse !')}</span>
+          )}
+        </div>
       )}
 
       {answers.flag && (
-        <div className="country-answer-field">
-          <span>{t('Choisis le drapeau correspondant')}</span>
-          <input
-            className="country-flag-search"
-            type="search"
-            value={flagSearch}
-            onChange={(event) => setFlagSearch(event.target.value)}
-            placeholder={t('Chercher un pays')}
-            aria-label={t('Chercher un drapeau par pays')}
-            disabled={disabled}
-          />
+        <div
+          className={`country-answer-field country-flag-answer-field${flagIsCorrect && flagAlpha2 ? ' is-correct' : ''}`}
+        >
+          <label htmlFor="quiz-flag-search">{t('Choisis le drapeau correspondant')}</label>
+          <div className="country-answer-input-wrap">
+            <input
+              id="quiz-flag-search"
+              className={`country-flag-search${flagIsCorrect && flagAlpha2 ? ' is-correct' : ''}`}
+              type="search"
+              value={flagSearch}
+              onFocus={() => setFlagSuggestionsOpen(true)}
+              onBlur={() => setFlagSuggestionsOpen(false)}
+              onChange={(event) => {
+                setFlagSearch(event.target.value)
+                setFlagSuggestionsOpen(true)
+              }}
+              placeholder={t('Chercher un pays')}
+              aria-label={t('Chercher un drapeau par pays')}
+              aria-autocomplete="list"
+              aria-expanded={flagSuggestionsOpen && flagSearch.trim().length > 0}
+              aria-controls="quiz-flag-suggestions"
+              disabled={disabled}
+            />
+            {flagSuggestionsOpen && flagSearch.trim() && !disabled && (
+              <div
+                id="quiz-flag-suggestions"
+                className="country-answer-suggestions"
+                role="listbox"
+              >
+                {filteredFlagChoices.map((choice) => (
+                  <button
+                    key={choice.alpha2}
+                    type="button"
+                    className="country-answer-suggestion"
+                    role="option"
+                    aria-selected={flagAlpha2 === choice.alpha2}
+                    onPointerDown={(event) => event.preventDefault()}
+                    onClick={() => {
+                      setFlagAlpha2(choice.alpha2)
+                      setFlagSearch(localizedCountryNames.of(choice.alpha2) ?? choice.frenchName)
+                      setFlagSuggestionsOpen(false)
+                    }}
+                  >
+                    <span>{localizedCountryNames.of(choice.alpha2) ?? choice.frenchName}</span>
+                    <img src={getFlagImageSource(choice.alpha2)} alt="" />
+                  </button>
+                ))}
+                {filteredFlagChoices.length === 0 && (
+                  <p className="country-flag-no-results">{t('Aucun drapeau ne correspond à ces filtres.')}</p>
+                )}
+              </div>
+            )}
+          </div>
+          {flagIsCorrect && flagAlpha2 && (
+            <span className="country-answer-field-status">✓ {t('Bonne réponse !')}</span>
+          )}
           <div className="country-flag-filters">
             <div className="country-flag-color-filter">
               <label htmlFor="flag-color-picker">{t('Couleur du drapeau')}</label>
@@ -585,44 +752,66 @@ function CountryQuizAnswerForm({
               disabled={disabled}
             />
           </div>
-          <div className="country-flag-choices" role="group" aria-label={t('Choisir un drapeau')}>
-            {filteredFlagChoices.map((choice, index) => (
-              <button
-                key={choice.alpha2}
-                className={`country-flag-choice${flagAlpha2 === choice.alpha2 ? ' selected' : ''}`}
-                type="button"
-                onClick={() => setFlagAlpha2(choice.alpha2)}
-                disabled={disabled}
-                aria-label={`${t('Choisir le drapeau')} ${index + 1}`}
-                aria-pressed={flagAlpha2 === choice.alpha2}
-              >
-                <img src={getFlagImageSource(choice.alpha2)} alt="" />
-              </button>
-            ))}
-            {filteredFlagChoices.length === 0 && (
-              <p className="country-flag-no-results">{t('Aucun drapeau ne correspond à ces filtres.')}</p>
-            )}
-          </div>
+          {!(flagSuggestionsOpen && flagSearch.trim()) && (
+            <div className="country-flag-choices" role="group" aria-label={t('Choisir un drapeau')}>
+              {filteredFlagChoices.map((choice) => (
+                <button
+                  key={choice.alpha2}
+                  className={`country-flag-choice${flagAlpha2 === choice.alpha2 ? ' selected' : ''}`}
+                  type="button"
+                  onClick={() => {
+                    setFlagAlpha2(choice.alpha2)
+                    setFlagSearch(localizedCountryNames.of(choice.alpha2) ?? choice.frenchName)
+                  }}
+                  disabled={disabled}
+                  aria-label={`${t('Choisir le drapeau')} ${localizedCountryNames.of(choice.alpha2) ?? choice.frenchName}`}
+                  aria-pressed={flagAlpha2 === choice.alpha2}
+                >
+                  <img src={getFlagImageSource(choice.alpha2)} alt="" />
+                </button>
+              ))}
+              {filteredFlagChoices.length === 0 && (
+                <p className="country-flag-no-results">
+                  {t('Aucun drapeau ne correspond à ces filtres.')}
+                </p>
+              )}
+            </div>
+          )}
         </div>
-      )}
-
-      {!mapOnly && !disabled && (
-        <button className="quiz-next-button" type="submit" disabled={!canSubmit}>
-          {t('Vérifier mes réponses')}
-        </button>
       )}
 
       {session.answerCorrect === true && (
-        <div className="quiz-feedback quiz-feedback-correct" aria-live="polite">
-          {t('Bonne réponse !')}
-        </div>
+        <CorrectAnswerBanner>
+          {answers.countryOnMap && (
+            <span>
+              {t('Territoire sur la carte')} :{' '}
+              {localizedCountryNames.of(question.alpha2) ?? question.countryName}
+            </span>
+          )}
+          {answers.countryName && (
+            <span>
+              {t('Nom du pays')} :{' '}
+              {localizedCountryNames.of(question.alpha2) ?? question.countryName}
+            </span>
+          )}
+          {answers.capital && <span>{t('Capitale')} : {question.capitalName}</span>}
+          {answers.flag && (
+            <span className="quiz-correct-answer-flag-row">
+              {t('Drapeau')} :{' '}
+              <img
+                src={getFlagImageSource(question.alpha2)}
+                alt={`${t('Drapeau de')} ${localizedCountryNames.of(question.alpha2) ?? question.countryName}`}
+              />
+            </span>
+          )}
+        </CorrectAnswerBanner>
       )}
       {session.answerCorrect === false && !session.answerRevealed && (
         <div className="quiz-feedback quiz-feedback-incorrect" aria-live="polite">
           {t('Il y a au moins une erreur. Corrige tes réponses ou regarde la solution.')}
         </div>
       )}
-    </form>
+    </div>
   )
 }
 
@@ -694,6 +883,7 @@ type QuizFullscreenBarProps = {
   session: QuizSession<CountryQuizQuestion>
   clues: QuizClues
   answers: QuizAnswers
+  regionLabel: string
   onExit: () => void
   onStop: () => void
   onOpenAnswers: () => void
@@ -706,6 +896,7 @@ export function QuizFullscreenBar({
   session,
   clues,
   answers,
+  regionLabel,
   onExit,
   onStop,
   onOpenAnswers,
@@ -720,13 +911,17 @@ export function QuizFullscreenBar({
   const completedCount = session.questionIndex + (questionSettled ? 1 : 0)
   const progress = total > 0 ? (completedCount / total) * 100 : 0
   const hasNonMapAnswer = answers.countryName || answers.capital || answers.flag
+  const answerLabels = [
+    answers.countryOnMap ? t('Territoire sur la carte') : null,
+    answers.countryName ? t('Nom du pays') : null,
+    answers.capital ? t('Capitale') : null,
+    answers.flag ? t('Drapeau') : null
+  ].filter((label): label is string => label !== null)
+  const answerIsShown = session.answerCorrect === true || session.answerRevealed
 
   return (
     <header className="quiz-fullscreen-bar">
       <div className="quiz-fullscreen-session">
-        <button className="quiz-fullscreen-exit" type="button" onClick={onExit}>
-          {t('Quitter le plein écran')}
-        </button>
         <div className="quiz-fullscreen-progress-info">
           <strong>
             {session.completed
@@ -734,6 +929,12 @@ export function QuizFullscreenBar({
               : `${t('Question')} ${String(Math.min(session.questionIndex + 1, total)).padStart(2, '0')} / ${total}`}
           </strong>
           <span>{t('Score :')} {session.score} / {total}</span>
+          <span
+            className="quiz-fullscreen-context"
+            title={`${t(regionLabel)} · ${total} ${t('pays')} · ${t('Réponses')} : ${answerLabels.join(', ')}`}
+          >
+            {t(regionLabel)} · {total} {t('pays')} · {t('Réponses')} : {answerLabels.join(', ')}
+          </span>
           <div
             className="quiz-fullscreen-progress-track"
             role="progressbar"
@@ -747,9 +948,9 @@ export function QuizFullscreenBar({
         </div>
       </div>
 
-      {question && !session.completed && (
+      {question && (
         <div className="quiz-fullscreen-clues" aria-label={t('Indices de la question')}>
-          {clues.flag && (
+          {!session.completed && clues.flag && (
             <div className="quiz-fullscreen-flag-clue">
               <span>{t('Drapeau')}</span>
               <img
@@ -758,30 +959,46 @@ export function QuizFullscreenBar({
               />
             </div>
           )}
-          {clues.countryName && (
+          {!session.completed && clues.countryName && (
             <div className="quiz-fullscreen-text-clue">
               <span>{t('Nom du pays')}</span>
               <strong>{question.frenchCountryName}</strong>
             </div>
           )}
-          {clues.capital && (
+          {!session.completed && clues.capital && (
             <div className="quiz-fullscreen-text-clue">
               <span>{t('Capitale')}</span>
               <strong>{question.capitalName}</strong>
             </div>
           )}
-          {clues.countryOnMap && (
+          {!session.completed && clues.countryOnMap && (
             <div className="quiz-fullscreen-text-clue">
               <span>{t('Carte')}</span>
               <strong>{t('Territoire mis en évidence')}</strong>
             </div>
           )}
-        </div>
-      )}
-
-      {question && session.answerRevealed && (
-        <div className="quiz-fullscreen-revealed-answer" aria-live="polite">
-          {t('Réponse')} : {question.frenchCountryName} · {question.capitalName}
+          {answerIsShown && !session.completed && (
+            <div
+              className={`quiz-fullscreen-revealed-answer${session.answerCorrect === true ? ' is-correct' : ''}`}
+              aria-live="polite"
+            >
+              <strong>{t(session.answerCorrect === true ? 'Bonne réponse !' : 'Réponse')}</strong>
+              {answers.countryOnMap && (
+                <span>{t('Territoire sur la carte')} : {question.frenchCountryName}</span>
+              )}
+              {answers.countryName && (
+                <span>{t('Nom du pays')} : {question.frenchCountryName}</span>
+              )}
+              {answers.capital && (
+                <span>{t('Capitale')} : {question.capitalName}</span>
+              )}
+              {answers.flag && (
+                <span className="quiz-fullscreen-answer-flag">
+                  {t('Drapeau')} : <img src={getFlagImageSource(question.alpha2)} alt="" />
+                </span>
+              )}
+            </div>
+          )}
         </div>
       )}
 
@@ -800,7 +1017,7 @@ export function QuizFullscreenBar({
             {!hasNonMapAnswer && answers.countryOnMap && !questionSettled && (
               <span className="quiz-fullscreen-map-instruction">{t('Clique le territoire sur la carte')}</span>
             )}
-            {questionSettled ? (
+            {answerIsShown ? (
               <button className="quiz-fullscreen-primary" type="button" onClick={onNext}>
                 {t(session.questionIndex === total - 1 ? 'Voir le résultat' : 'Question suivante')}
               </button>
@@ -814,6 +1031,9 @@ export function QuizFullscreenBar({
             </button>
           </>
         )}
+        <button className="quiz-fullscreen-exit" type="button" onClick={onExit}>
+          {t('Quitter le plein écran')}
+        </button>
       </div>
     </header>
   )

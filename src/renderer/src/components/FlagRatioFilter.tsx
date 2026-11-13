@@ -108,6 +108,54 @@ function resizeAroundCenter(
   }
 }
 
+function getMarginSideHitStyles(
+  margin: Rectangle,
+  inner: Rectangle,
+  stageWidth: number,
+  stageHeight: number,
+  scale: number
+): Record<'n' | 'e' | 's' | 'w', React.CSSProperties> {
+  const marginWidth = Math.max(Number.EPSILON, margin.right - margin.left)
+  const marginHeight = Math.max(Number.EPSILON, margin.bottom - margin.top)
+  const toleranceX = 14 / (stageWidth * scale)
+  const toleranceY = 14 / (stageHeight * scale)
+  const safeInsetX = 6 / (stageWidth * scale)
+  const safeInsetY = 6 / (stageHeight * scale)
+  const topLimit = clamp(inner.top - safeInsetY, margin.top, margin.bottom)
+  const bottomLimit = clamp(inner.bottom + safeInsetY, margin.top, margin.bottom)
+  const leftLimit = clamp(inner.left - safeInsetX, margin.left, margin.right)
+  const rightLimit = clamp(inner.right + safeInsetX, margin.left, margin.right)
+  const percentWithin = (value: number, start: number, size: number): number =>
+    ((value - start) / size) * 100
+
+  return {
+    n: {
+      left: 0,
+      right: 0,
+      top: `${-percentWithin(toleranceY, 0, marginHeight)}%`,
+      bottom: `${100 - percentWithin(topLimit, margin.top, marginHeight)}%`
+    },
+    e: {
+      top: 0,
+      bottom: 0,
+      left: `${percentWithin(rightLimit, margin.left, marginWidth)}%`,
+      right: `${-percentWithin(toleranceX, 0, marginWidth)}%`
+    },
+    s: {
+      left: 0,
+      right: 0,
+      top: `${percentWithin(bottomLimit, margin.top, marginHeight)}%`,
+      bottom: `${-percentWithin(toleranceY, 0, marginHeight)}%`
+    },
+    w: {
+      top: 0,
+      bottom: 0,
+      left: `${-percentWithin(toleranceX, 0, marginWidth)}%`,
+      right: `${100 - percentWithin(leftLimit, margin.left, marginWidth)}%`
+    }
+  }
+}
+
 export function FlagRatioFilter({
   availableRatios,
   availablePolygonShapes,
@@ -132,6 +180,7 @@ export function FlagRatioFilter({
   const [polygonCursorPoint, setPolygonCursorPoint] = useState<FlagOutlinePoint | null>(null)
   const [polygonClosingTarget, setPolygonClosingTarget] = useState(false)
   const [polygonFinished, setPolygonFinished] = useState(false)
+  const [showDrawingHelp, setShowDrawingHelp] = useState(true)
   const [viewport, setViewport] = useState({ scale: 1, x: 0, y: 0 })
 
   const pushUndoSnapshot = (): void => {
@@ -670,11 +719,34 @@ export function FlagRatioFilter({
         </div>
       )}
       <div className="country-flag-shape-instruction-row">
-        <p className="country-flag-ratio-instruction">
-          {shapeMode === 'rectangle'
-            ? t('Dessine la forme du drapeau')
-            : t('Clique pour placer chaque sommet')}
-        </p>
+        {showDrawingHelp ? (
+          <p className="country-flag-ratio-instruction">
+            {shapeMode === 'rectangle'
+              ? t('Dessine la forme du drapeau')
+              : t('Clique pour placer chaque sommet')}
+          </p>
+        ) : (
+          <button
+            type="button"
+            className="country-flag-help-toggle"
+            onClick={() => setShowDrawingHelp(true)}
+            aria-label={t('Afficher les instructions')}
+            title={t('Afficher les instructions')}
+          >
+            ?
+          </button>
+        )}
+        {showDrawingHelp && (
+          <button
+            type="button"
+            className="country-flag-help-close"
+            onClick={() => setShowDrawingHelp(false)}
+            aria-label={t('Masquer les instructions')}
+            title={t('Masquer les instructions')}
+          >
+            ×
+          </button>
+        )}
         {shapeMode === 'polygon' && polygonPoints.length >= 3 && !polygonFinished && (
           <button
             type="button"
@@ -686,7 +758,7 @@ export function FlagRatioFilter({
           </button>
         )}
       </div>
-      {shapeMode === 'polygon' && (
+      {showDrawingHelp && shapeMode === 'polygon' && (
         <p className="country-flag-polygon-hint">
           {polygonFinished
             ? `${polygonPoints.length} ${t(polygonPoints.length === 1 ? 'sommet' : 'sommets')} · ${expectedVertexLabel}`
@@ -697,11 +769,29 @@ export function FlagRatioFilter({
                 : `${polygonPoints.length} ${t('sommets')} · ${t('Le nombre de sommets ne correspond pas aux formes disponibles. Efface le tracé pour recommencer.')}`}
         </p>
       )}
-      <div className="flag-drawing-toolbar">
-        <div className="flag-drawing-instructions" aria-label={t('Gestes de navigation')}>
-          <span>{t('2 doigts sur le pavé tactile pour déplacer')}</span>
-          <span>{t('⌘ + défilement pour zoomer')}</span>
+      {showDrawingHelp && shapeMode === 'rectangle' && (
+        <div className="country-flag-ratio-help">
+          <p>
+            {t(
+              'Le rectangle central définit le ratio recherché ; la zone claire autour indique la marge de tolérance.'
+            )}
+          </p>
+          <p>
+            {t(
+              'Les poignées intérieures modifient le rectangle et sa marge. Pour ajuster seulement la marge, tire une poignée ou n’importe quel point de son bord extérieur lorsque le curseur affiche deux flèches.'
+            )}
+          </p>
         </div>
+      )}
+      <div className="flag-drawing-toolbar">
+        {showDrawingHelp ? (
+          <div className="flag-drawing-instructions" aria-label={t('Gestes de navigation')}>
+            <span>{t('2 doigts sur le pavé tactile pour déplacer')}</span>
+            <span>{t('⌘ + défilement pour zoomer')}</span>
+          </div>
+        ) : (
+          <span className="flag-drawing-instructions-empty" aria-hidden="true" />
+        )}
         <div className="flag-drawing-controls">
           <span className="flag-drawing-zoom-level">{Math.round(viewport.scale * 100)} %</span>
           <button
@@ -747,6 +837,25 @@ export function FlagRatioFilter({
         >
           {shapeMode === 'rectangle' && rectangle && marginRectangle && (
             <div className="flag-ratio-margin-box" style={rectangleStyle(marginRectangle)}>
+              {(() => {
+                const bounds = stageRef.current?.getBoundingClientRect()
+                if (!bounds) return null
+                const sideHitStyles = getMarginSideHitStyles(
+                  marginRectangle,
+                  rectangle,
+                  bounds.width,
+                  bounds.height,
+                  viewport.scale
+                )
+                return (['n', 'e', 's', 'w'] as const).map((handle) => (
+                  <span
+                    key={`side-${handle}`}
+                    className={`flag-ratio-margin-side-hit ${handle}`}
+                    data-margin-resize-handle={handle}
+                    style={sideHitStyles[handle]}
+                  />
+                ))
+              })()}
               {(['nw', 'n', 'ne', 'e', 'se', 's', 'sw', 'w'] as const).map((handle) => (
                 <span
                   key={handle}
@@ -823,14 +932,21 @@ export function FlagRatioFilter({
                   {formatRatio(selectedRatioRange.maximum)}
                 </span>
               )}
-              {snappedRatioLabel && <span>{t('cran')} {snappedRatioLabel}</span>}
+              {snappedRatioLabel && (
+                <span>
+                  {t('cran')} {snappedRatioLabel}
+                </span>
+              )}
             </div>
           )}
         </div>
       </div>
       {shapeMode === 'rectangle' ? (
         <>
-          <div className="flag-ratio-scale" aria-label={t('Ratios présents dans les drapeaux proposés')}>
+          <div
+            className="flag-ratio-scale"
+            aria-label={t('Ratios présents dans les drapeaux proposés')}
+          >
             <div className="flag-ratio-scale-line" />
             {availableRatios.map((item) => {
               const position = ((item.ratio - minRatio) / ratioSpan) * 100
@@ -857,7 +973,9 @@ export function FlagRatioFilter({
         </>
       ) : (
         <p className="flag-ratio-scale-caption">
-          {t('Le contour filtre quand il est fermé, avec le bon nombre de sommets et une forme proche.')}
+          {t(
+            'Le contour filtre quand il est fermé, avec le bon nombre de sommets et une forme proche.'
+          )}
         </p>
       )}
     </section>

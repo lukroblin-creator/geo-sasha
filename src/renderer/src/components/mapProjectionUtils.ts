@@ -1,7 +1,28 @@
 import type { Map as MapLibreMap } from 'maplibre-gl'
 
 export const GLOBE_TRANSITION_START_ZOOM = 3.5
-export const GLOBE_TRANSITION_END_ZOOM = 1
+export const GLOBE_TRANSITION_END_ZOOM = 2.5
+
+export function getGlobeTransitionProgress(
+  zoom: number,
+  transitionStartZoom: number,
+  transitionEndZoom: number
+): number {
+  return Math.max(
+    0,
+    Math.min(1, (transitionStartZoom - zoom) / (transitionStartZoom - transitionEndZoom))
+  )
+}
+
+export function getGlobeVisibilityThreshold(
+  zoom: number,
+  transitionStartZoom: number,
+  transitionEndZoom: number
+): number {
+  // The flat map is fully visible at the start. The globe shows only its front
+  // hemisphere once the projection transition is complete.
+  return -1 + getGlobeTransitionProgress(zoom, transitionStartZoom, transitionEndZoom)
+}
 
 /** Filters label anchors gradually as the flat world folds onto its visible globe face. */
 export function isGlobeLabelVisible(
@@ -11,10 +32,6 @@ export function isGlobeLabelVisible(
   transitionStartZoom: number,
   transitionEndZoom: number
 ): boolean {
-  const progress = Math.max(
-    0,
-    Math.min(1, (transitionStartZoom - zoom) / (transitionStartZoom - transitionEndZoom))
-  )
   const center = map.getCenter()
   const latitude = (coordinates[1] * Math.PI) / 180
   const centerLatitude = (center.lat * Math.PI) / 180
@@ -23,12 +40,14 @@ export function isGlobeLabelVisible(
     Math.sin(centerLatitude) * Math.sin(latitude) +
     Math.cos(centerLatitude) * Math.cos(latitude) * Math.cos(longitudeDifference)
 
-  // At the start, the full flat map is visible. As it bends, progressively
-  // more of the far side is hidden, reaching the front hemisphere at the end.
-  if (visibleHemisphereDot < -1 + progress) return false
+  if (
+    visibleHemisphereDot < getGlobeVisibilityThreshold(zoom, transitionStartZoom, transitionEndZoom)
+  )
+    return false
 
   const point = map.project(coordinates)
   const canvas = map.getCanvas()
-  return point.x >= 0 && point.x <= canvas.clientWidth &&
-    point.y >= 0 && point.y <= canvas.clientHeight
+  return (
+    point.x >= 0 && point.x <= canvas.clientWidth && point.y >= 0 && point.y <= canvas.clientHeight
+  )
 }

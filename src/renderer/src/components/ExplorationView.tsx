@@ -4,13 +4,25 @@ import { getExplorationDetails, type ExplorationDetails } from '../data/geograph
 import { ExplorationPlaceDetails } from './ExplorationPlaceDetails'
 import { useLanguage } from '../data/i18n'
 import { AppModeSwitcher, type AppPrimaryMode } from './AppModeSwitcher'
+import { MapFullscreenBar } from './MapFullscreenBar'
 
 type ExplorationViewProps = {
-  onBack: () => void
+  globeMode: boolean
+  onToggleGlobeMode: () => void
+  isFullscreen: boolean
+  onToggleFullscreen: () => void
+  onOpenStatistics: () => void
   onModeChange: (mode: AppPrimaryMode) => void
 }
 
-export function ExplorationView({ onBack, onModeChange }: ExplorationViewProps): React.JSX.Element {
+export function ExplorationView({
+  globeMode,
+  onToggleGlobeMode,
+  isFullscreen,
+  onToggleFullscreen,
+  onOpenStatistics,
+  onModeChange
+}: ExplorationViewProps): React.JSX.Element {
   const { t } = useLanguage()
   const [showBorders, setShowBorders] = useState(true)
   const [showLabels, setShowLabels] = useState(false)
@@ -26,7 +38,14 @@ export function ExplorationView({ onBack, onModeChange }: ExplorationViewProps):
   }
 
   return (
-    <div className="exploration-screen">
+    <div className={`exploration-screen${isFullscreen ? ' map-fullscreen-screen exploration-map-fullscreen' : ''}`}>
+      {isFullscreen && (
+        <MapFullscreenBar
+          title={t('Exploration')}
+          onOpenStatistics={onOpenStatistics}
+          onExit={onToggleFullscreen}
+        />
+      )}
       <header className="exploration-header">
         <div className="exploration-brand">
           <div className="brand-icon">W</div>
@@ -44,8 +63,11 @@ export function ExplorationView({ onBack, onModeChange }: ExplorationViewProps):
         <div className="exploration-header-actions">
           <span className="status-dot" />
           <span className="status-text">{t('Application locale')}</span>
-          <button className="home-back-button" type="button" onClick={onBack}>
-            {t('← Accueil')}
+          <button className="home-back-button" type="button" onClick={onOpenStatistics}>
+            {t('Statistiques')}
+          </button>
+          <button className="home-back-button" type="button" onClick={onToggleFullscreen}>
+            {t(isFullscreen ? 'Quitter le plein écran' : 'Plein écran')}
           </button>
         </div>
       </header>
@@ -67,6 +89,8 @@ export function ExplorationView({ onBack, onModeChange }: ExplorationViewProps):
             <WorldMap
               showBorders={showBorders}
               showLabels={showLabels}
+              globeMode={globeMode}
+              onToggleGlobeMode={onToggleGlobeMode}
               showFlagTerritories={showFlagTerritories}
               onCountrySelected={handlePlaceSelected}
               onCountryDeselected={() => setSelectedPlace(null)}
@@ -105,7 +129,10 @@ export function ExplorationView({ onBack, onModeChange }: ExplorationViewProps):
           </div>
         </section>
 
-        <aside className="exploration-details-panel" aria-live="polite">
+        <aside
+          className={`exploration-details-panel${selectedPlace ? ' has-selection' : ''}`}
+          aria-live="polite"
+        >
           <ExplorationPlaceDetails place={selectedPlace} />
         </aside>
       </main>

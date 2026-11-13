@@ -14,8 +14,9 @@ import { AppModeSwitcher, type AppPrimaryMode } from './AppModeSwitcher'
 type StatisticsViewProps = {
   countryStats: CountryQuizStatsByAlpha2
   quizProgress: QuizProgress
-  onBack: () => void
-  onOpenQuiz: () => void
+  globeMode: boolean
+  onToggleGlobeMode: () => void
+  onReturn: () => void
   onOpenCountryQuiz: (alpha2: string) => void
   onModeChange: (mode: AppPrimaryMode) => void
 }
@@ -63,8 +64,9 @@ function getCountryRows(stats: CountryQuizStatsByAlpha2, language: AppLanguage):
 export function StatisticsView({
   countryStats,
   quizProgress,
-  onBack,
-  onOpenQuiz,
+  globeMode,
+  onToggleGlobeMode,
+  onReturn,
   onOpenCountryQuiz,
   onModeChange
 }: StatisticsViewProps): React.JSX.Element {
@@ -123,8 +125,7 @@ export function StatisticsView({
           <p>{t('Retrouve tes résultats par quiz et par pays.')}</p>
         </div>
         <div className="statistics-actions">
-          <button className="home-back-button" type="button" onClick={onBack}>{t('← Accueil')}</button>
-          <button className="quiz-start-button" type="button" onClick={onOpenQuiz}>{t('Retour au quiz')}</button>
+          <button className="quiz-start-button" type="button" onClick={onReturn}>{t('Retour')}</button>
         </div>
       </header>
 
@@ -187,6 +188,8 @@ export function StatisticsView({
               <WorldMap
                 showBorders
                 showLabels
+                globeMode={globeMode}
+                onToggleGlobeMode={onToggleGlobeMode}
                 countryAccuracyByAlpha2={countryStats}
                 onCountrySelected={(sourceFeatureId) => {
                   const alpha2 = countryBySourceId.get(Number(sourceFeatureId))
