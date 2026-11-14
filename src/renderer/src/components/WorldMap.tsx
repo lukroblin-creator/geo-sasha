@@ -12,6 +12,7 @@ import type {
 import type {
   Map as MapLibreMap,
   FillLayerSpecification,
+  FilterSpecification,
   LineLayerSpecification,
   SymbolLayerSpecification
 } from 'maplibre-gl'
@@ -63,6 +64,7 @@ type WorldMapProps = {
   onToggleGlobeMode: () => void
   showFlagTerritories?: boolean
   showSelectionFeedback?: boolean
+  showWrongAnswerFeedback?: boolean
   quizTargetFeatureId?: string | number | null
   quizBaseRegion?: QuizRegion | null
   quizTargetMaxZoom?: number
@@ -70,7 +72,12 @@ type WorldMapProps = {
   quizRevealCard?: ReactNode
   showQuizRevealCard?: boolean
   interactionResetKey?: string | number
-  countryAccuracyByAlpha2?: Record<string, { answered: number; correct: number }>
+  countryAccuracyByAlpha2?: Record<string, {
+    answered: number
+    correct: number
+    pointsEarned?: number
+    pointsPossible?: number
+  }>
   onCountryDeselected?: () => void
   onMapClick?: (position: [number, number]) => MapProximityResult | null
   onCountrySelected?: (
@@ -97,6 +104,19 @@ type WorkerResponse = {
   requestId?: number
   labels?: FeatureCollection<Point, LabelProperties>
 }
+
+type WrongAnswerTarget = {
+  sourceFeatureId: string | number
+  entityId: string | null
+  id: number
+  interactionResetKey: string | number | undefined
+}
+
+const wrongAnswerFillLayerIds = [
+  'countries-wrong-answer-110m',
+  'countries-wrong-answer-50m',
+  'countries-wrong-answer-10m'
+] as const
 
 type LabelUpdateRequest = {
   type: 'update'
@@ -273,6 +293,7 @@ function WorldMap({
   onToggleGlobeMode,
   showFlagTerritories = false,
   showSelectionFeedback = false,
+  showWrongAnswerFeedback = false,
   quizTargetFeatureId = null,
   quizBaseRegion = null,
   quizTargetMaxZoom,
@@ -316,9 +337,12 @@ function WorldMap({
   const [selectionBoundaryResetKey, setSelectionBoundaryResetKey] = useState<
     string | number | undefined | null
   >(null)
+  const [wrongAnswerTarget, setWrongAnswerTarget] = useState<WrongAnswerTarget | null>(null)
   const clickMarkerIdRef = useRef(0)
   const proximityMarkerIdRef = useRef(0)
   const proximityMarkerTimeoutRef = useRef<number | null>(null)
+  const wrongAnswerAnimationFrameRef = useRef<number | null>(null)
+  const wrongAnswerIdRef = useRef(0)
   const [interactionState, setInteractionState] = useState<MapInteractionState>(() => ({
     resetKey: interactionResetKey,
     selectedEntityIds: [],
@@ -459,7 +483,65 @@ function WorldMap({
     proximityMarker?.interactionResetKey === interactionResetKey
     ? proximityMarker
     : null
+  const activeWrongAnswerTarget = showWrongAnswerFeedback &&
+    wrongAnswerTarget?.interactionResetKey === interactionResetKey
+    ? wrongAnswerTarget
+    : null
   const selectionBoundaryOpacity = selectionBoundaryResetKey === interactionResetKey ? 1 : 0
+
+  const wrongAnswerFeatureFilter = (activeWrongAnswerTarget
+    ? activeWrongAnswerTarget.entityId
+      ? ['==', ['get', 'entityId'], activeWrongAnswerTarget.entityId]
+      : ['==', ['to-string', ['get', 'sourceId']], String(activeWrongAnswerTarget.sourceFeatureId)]
+    : ['==', 1, 0]) as unknown as FilterSpecification
+
+  useEffect(() => {
+    const map = mapRef.current?.getMap()
+    if (!mapLoaded || !map) return
+
+    const setWrongAnswerOpacity = (opacity: number): void => {
+      for (const layerId of wrongAnswerFillLayerIds) {
+        if (map.getLayer(layerId)) {
+          map.setPaintProperty(layerId, 'fill-opacity', opacity, { validate: false })
+        }
+      }
+    }
+
+    const target = activeWrongAnswerTarget
+    if (!target) {
+      setWrongAnswerOpacity(0)
+      return
+    }
+
+    setWrongAnswerOpacity(1)
+    const startedAt = performance.now()
+    const holdDuration = 55
+    const totalDuration = 500
+    const animate = (now: number): void => {
+      const elapsed = now - startedAt
+      const opacity = elapsed <= holdDuration
+        ? 1
+        : Math.max(0, 1 - (elapsed - holdDuration) / (totalDuration - holdDuration))
+      setWrongAnswerOpacity(opacity)
+
+      if (elapsed >= totalDuration) {
+        wrongAnswerAnimationFrameRef.current = null
+        setWrongAnswerTarget((current) => current?.id === target.id ? null : current)
+        return
+      }
+
+      wrongAnswerAnimationFrameRef.current = window.requestAnimationFrame(animate)
+    }
+
+    wrongAnswerAnimationFrameRef.current = window.requestAnimationFrame(animate)
+    return () => {
+      if (wrongAnswerAnimationFrameRef.current !== null) {
+        window.cancelAnimationFrame(wrongAnswerAnimationFrameRef.current)
+        wrongAnswerAnimationFrameRef.current = null
+      }
+      setWrongAnswerOpacity(0)
+    }
+  }, [activeWrongAnswerTarget?.id, mapLoaded])
 
   useEffect(() => {
     scheduleFlagOverlayUpdate()
@@ -820,10 +902,22 @@ function WorldMap({
 
     const accepted = onCountrySelected?.(sourceFeatureId, displayName, entityId)
     if (accepted === false) {
+      if (showWrongAnswerFeedback) {
+        wrongAnswerIdRef.current += 1
+        setWrongAnswerTarget({
+          sourceFeatureId,
+          entityId,
+          id: wrongAnswerIdRef.current,
+          interactionResetKey
+        })
+      }
       showMapProximityFeedback(event.lngLat.lng, event.lngLat.lat)
       return
     }
-    if (accepted === true) clearMapProximityFeedback()
+    if (accepted === true) {
+      clearMapProximityFeedback()
+      setWrongAnswerTarget(null)
+    }
 
     updateInteractionState({
       selectedEntityIds: entityId ? [entityId] : [],
@@ -928,8 +1022,10 @@ function WorldMap({
   ] as unknown as NonNullable<FillLayerSpecification['paint']>['fill-color']
   const accuracyBySourceId = countryCatalog.flatMap((country) => {
     const stats = countryAccuracyByAlpha2?.[country.alpha2]
-    return stats?.answered
-      ? [country.sourceFeatureId, stats.correct / stats.answered]
+    const pointsEarned = stats?.pointsEarned ?? stats?.correct ?? 0
+    const pointsPossible = stats?.pointsPossible ?? stats?.answered ?? 0
+    return pointsPossible > 0
+      ? [country.sourceFeatureId, pointsEarned / pointsPossible]
       : []
   })
   const accuracyRateExpression = accuracyBySourceId.length
@@ -980,13 +1076,14 @@ function WorldMap({
     2, 0,
     3, 1,
     4, 1,
+    4.5, 1,
     5, 0
   ]
   const fillOpacity10m: NonNullable<FillLayerSpecification['paint']>['fill-opacity'] = [
     'interpolate',
     ['linear'],
     ['zoom'],
-    4, 0,
+    4.5, 0,
     5, 1
   ]
 
@@ -1028,6 +1125,7 @@ function WorldMap({
       2, 0,
       3, 1,
       4, 1,
+      4.5, 1,
       5, 0
     ]
   }
@@ -1039,7 +1137,7 @@ function WorldMap({
       'interpolate',
       ['linear'],
       ['zoom'],
-      4, 0,
+      4.5, 0,
       5, 1
     ]
   }
@@ -1179,6 +1277,21 @@ function WorldMap({
             paint={fillPaint110m}
           />
 
+          {showWrongAnswerFeedback && (
+            <Layer
+              id="countries-wrong-answer-110m"
+              type="fill"
+              minzoom={0}
+              maxzoom={3}
+              filter={wrongAnswerFeatureFilter}
+              paint={{
+                'fill-color': '#ef4444',
+                'fill-antialias': false,
+                'fill-opacity': 0
+              }}
+            />
+          )}
+
           {showBorders && (
             <Layer
               id="countries-borders-110m"
@@ -1215,6 +1328,21 @@ function WorldMap({
             paint={fillPaint50m}
           />
 
+          {showWrongAnswerFeedback && (
+            <Layer
+              id="countries-wrong-answer-50m"
+              type="fill"
+              minzoom={2}
+              maxzoom={5}
+              filter={wrongAnswerFeatureFilter}
+              paint={{
+                'fill-color': '#ef4444',
+                'fill-antialias': false,
+                'fill-opacity': 0
+              }}
+            />
+          )}
+
           {showBorders && (
             <Layer
               id="countries-borders-50m"
@@ -1249,6 +1377,20 @@ function WorldMap({
             minzoom={4}
             paint={fillPaint10m}
           />
+
+          {showWrongAnswerFeedback && (
+            <Layer
+              id="countries-wrong-answer-10m"
+              type="fill"
+              minzoom={4}
+              filter={wrongAnswerFeatureFilter}
+              paint={{
+                'fill-color': '#ef4444',
+                'fill-antialias': false,
+                'fill-opacity': 0
+              }}
+            />
+          )}
 
           {showBorders && (
             <Layer
@@ -1343,6 +1485,7 @@ function WorldMap({
           hoveredCountry={hoveredCountry}
           quizTargetFeatureId={quizTargetFeatureId}
           selectionBoundaryOpacity={selectionBoundaryOpacity}
+          wrongAnswerTarget={activeWrongAnswerTarget}
         />
       )}
 

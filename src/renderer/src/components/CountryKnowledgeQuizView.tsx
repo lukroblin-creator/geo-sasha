@@ -4,7 +4,7 @@ import {
   getCountryKnowledgeCountry,
   type CountryKnowledgeQuestion
 } from '../data/quiz/countryKnowledge'
-import type { QuizSession } from '../data/quiz/useQuizSession'
+import { formatQuizScore, type QuizSession } from '../data/quiz/useQuizSession'
 import { useLanguage } from '../data/i18n'
 import { CorrectAnswerBanner } from './QuizPanels'
 import { MapFullscreenBar } from './MapFullscreenBar'
@@ -44,7 +44,7 @@ export function CountryKnowledgeQuizView({
   const countryName = countryNames.of(alpha2) ?? country?.countryName ?? alpha2
   const question = session.questionOrder[session.questionIndex]
   const total = session.questionOrder.length
-  const questionSettled = session.answerCorrect !== null || session.answerRevealed
+  const questionSettled = session.answerCorrect === true || session.answerRevealed
   const completedCount = session.questionIndex + (questionSettled ? 1 : 0)
   const progress = total ? (completedCount / total) * 100 : 0
 
@@ -100,11 +100,8 @@ export function CountryKnowledgeQuizView({
               <div className="section-label">{t('QUIZ TERMINÉ')}</div>
               <h2>{t('Bien joué !')}</h2>
               <p>
-                {t('Tu as obtenu')}{' '}
-                <strong>
-                  {session.score} {t(session.score > 1 ? 'bonnes réponses' : 'bonne réponse')}
-                </strong>{' '}
-                {t('sur')} {total}.
+                {t('Score :')}{' '}
+                <strong>{formatQuizScore(session.score, language)} / {total}</strong>
               </p>
               <div className="country-knowledge-complete-actions">
                 <button className="quiz-start-button" type="button" onClick={onRestart}>
@@ -122,7 +119,9 @@ export function CountryKnowledgeQuizView({
                   <span className="quiz-step">
                     {t('QUESTION')} {String(session.questionIndex + 1).padStart(2, '0')} / {total}
                   </span>
-                  <span className="country-knowledge-score">{t('Score :')} {session.score}</span>
+                  <span className="country-knowledge-score">
+                    {t('Score :')} {formatQuizScore(session.score, language)}
+                  </span>
                 </div>
                 <div
                   className="quiz-progress-track"
@@ -174,7 +173,11 @@ export function CountryKnowledgeQuizView({
                 ) : (
                   <div className="country-knowledge-feedback" aria-live="polite">
                     {!questionSettled ? (
-                      <span>{t('Choisis une réponse parmi les propositions.')}</span>
+                      <span>
+                        {session.answerCorrect === false
+                          ? `${t('Essai')} ${session.attemptCount} · ${t('Essaie encore.')}`
+                          : t('Choisis une réponse parmi les propositions.')}
+                      </span>
                     ) : session.answerRevealed ? (
                       <span>
                         {t('Réponse')} : <strong>{question.answer}</strong>. {question.explanation}

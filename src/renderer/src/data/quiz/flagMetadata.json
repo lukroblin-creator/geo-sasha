@@ -6,6 +6,9 @@
     "ratio": 1.4285714285714286,
     "ratioLabel": "10:7",
     "shape": "rectangle",
+    "horizontalBands": 1,
+    "verticalBands": 3,
+    "obliqueBands": 1,
     "colors": [
       "#D0103A",
       "#FEDF00",
@@ -25,6 +28,9 @@
     "ratio": 2,
     "ratioLabel": "2:1",
     "shape": "rectangle",
+    "horizontalBands": 3,
+    "verticalBands": 2,
+    "obliqueBands": 1,
     "colors": [
       "#00732F",
       "#FFFFFF",
@@ -38,6 +44,9 @@
     "ratio": 1.5,
     "ratioLabel": "3:2",
     "shape": "rectangle",
+    "horizontalBands": 1,
+    "verticalBands": 3,
+    "obliqueBands": 1,
     "colors": [
       "#D32011",
       "#007A36",
@@ -51,6 +60,9 @@
     "ratio": 1.5,
     "ratioLabel": "3:2",
     "shape": "rectangle",
+    "horizontalBands": 3,
+    "verticalBands": 1,
+    "obliqueBands": 1,
     "colors": [
       "#FFFFFF",
       "#FCD116",
@@ -65,6 +77,9 @@
     "ratio": 2,
     "ratioLabel": "2:1",
     "shape": "rectangle",
+    "horizontalBands": 1,
+    "verticalBands": 1,
+    "obliqueBands": 1,
     "colors": [
       "#012169",
       "#FFFFFF",
@@ -81,6 +96,9 @@
     "ratio": 1.4,
     "ratioLabel": "7:5",
     "shape": "rectangle",
+    "horizontalBands": 1,
+    "verticalBands": 1,
+    "obliqueBands": 1,
     "colors": [
       "#FF0000"
     ]
@@ -92,6 +110,9 @@
     "ratio": 2,
     "ratioLabel": "2:1",
     "shape": "rectangle",
+    "horizontalBands": 3,
+    "verticalBands": 1,
+    "obliqueBands": 1,
     "colors": [
       "#F2A800",
       "#0033A0",
@@ -105,6 +126,9 @@
     "ratio": 1.5,
     "ratioLabel": "3:2",
     "shape": "rectangle",
+    "horizontalBands": 1,
+    "verticalBands": 1,
+    "obliqueBands": 1,
     "colors": [
       "#FFFFFF",
       "#DC171D",
@@ -119,6 +143,9 @@
     "ratio": 1.5,
     "ratioLabel": "3:2",
     "shape": "rectangle",
+    "horizontalBands": 2,
+    "verticalBands": 1,
+    "obliqueBands": 1,
     "colors": [
       "#CC092F",
       "#FFCB00"
@@ -131,6 +158,9 @@
     "ratio": 1.5,
     "ratioLabel": "3:2",
     "shape": "rectangle",
+    "horizontalBands": 3,
+    "verticalBands": 1,
+    "obliqueBands": 1,
     "colors": [
       "#FF0000",
       "#FFFFFF",
@@ -144,6 +174,9 @@
     "ratio": 1.6,
     "ratioLabel": "8:5",
     "shape": "rectangle",
+    "horizontalBands": 3,
+    "verticalBands": 1,
+    "obliqueBands": 1,
     "colors": [
       "#74ACDF",
       "#FFFFFF",
@@ -159,6 +192,9 @@
     "ratio": 2,
     "ratioLabel": "2:1",
     "shape": "rectangle",
+    "horizontalBands": 1,
+    "verticalBands": 1,
+    "obliqueBands": 3,
     "colors": [
       "#000066",
       "#BD1021",
@@ -177,6 +213,9 @@
     "ratio": 1.5,
     "ratioLabel": "3:2",
     "shape": "rectangle",
+    "horizontalBands": 3,
+    "verticalBands": 1,
+    "obliqueBands": 1,
     "colors": [
       "#ED2939",
       "#FFFFFF"
@@ -189,6 +228,9 @@
     "ratio": 2,
     "ratioLabel": "2:1",
     "shape": "rectangle",
+    "horizontalBands": 1,
+    "verticalBands": 1,
+    "obliqueBands": 3,
     "colors": [
       "#012169",
       "#FFFFFF",
@@ -202,6 +244,9 @@
     "ratio": 1.5,
     "ratioLabel": "3:2",
     "shape": "rectangle",
+    "horizontalBands": 1,
+    "verticalBands": 1,
+    "obliqueBands": 1,
     "colors": [
       "#418FDE",
       "#FFD100",
@@ -216,6 +261,9 @@
     "ratio": 1.5294117647058822,
     "ratioLabel": "26:17",
     "shape": "rectangle",
+    "horizontalBands": 5,
+    "verticalBands": 5,
+    "obliqueBands": 1,
     "colors": [
       "#0053A5",
       "#FFCE00",
@@ -229,6 +277,9 @@
     "ratio": 2,
     "ratioLabel": "2:1",
     "shape": "rectangle",
+    "horizontalBands": 3,
+    "verticalBands": 1,
+    "obliqueBands": 1,
     "colors": [
       "#3F9C35",
       "#ED2939",
@@ -243,6 +294,9 @@
     "ratio": 2,
     "ratioLabel": "2:1",
     "shape": "rectangle",
+    "horizontalBands": 1,
+    "verticalBands": 1,
+    "obliqueBands": 3,
     "colors": [
       "#002395",
       "#FECB00",
@@ -256,6 +310,9 @@
     "ratio": 1.5,
     "ratioLabel": "3:2",
     "shape": "rectangle",
+    "horizontalBands": 1,
+    "verticalBands": 3,
+    "obliqueBands": 1,
     "colors": [
       "#00267F",
       "#FFC726",
@@ -269,6 +326,9 @@
     "ratio": 1.6666666666666667,
     "ratioLabel": "5:3",
     "shape": "rectangle",
+    "horizontalBands": 1,
+    "verticalBands": 1,
+    "obliqueBands": 1,
     "colors": [
       "#006A4E",
       "#F42A41"
@@ -281,6 +341,9 @@
     "ratio": 1.1538461538461537,
     "ratioLabel": "15:13",
     "shape": "rectangle",
+    "horizontalBands": 1,
+    "verticalBands": 3,
+    "obliqueBands": 1,
     "colors": [
       "#ED2939",
       "#FAE042"
@@ -293,6 +356,9 @@
     "ratio": 1.5,
     "ratioLabel": "3:2",
     "shape": "rectangle",
+    "horizontalBands": 2,
+    "verticalBands": 1,
+    "obliqueBands": 1,
     "colors": [
       "#009E49",
       "#EF2B2D",
@@ -306,6 +372,9 @@
     "ratio": 1.6666666666666667,
     "ratioLabel": "5:3",
     "shape": "rectangle",
+    "horizontalBands": 3,
+    "verticalBands": 1,
+    "obliqueBands": 1,
     "colors": [
       "#FFFFFF",
       "#00966E",
@@ -319,6 +388,9 @@
     "ratio": 1.6666666666666667,
     "ratioLabel": "5:3",
     "shape": "rectangle",
+    "horizontalBands": 1,
+    "verticalBands": 1,
+    "obliqueBands": 1,
     "colors": [
       "#FFFFFF",
       "#CE1126"
@@ -331,6 +403,9 @@
     "ratio": 1.6666666666666667,
     "ratioLabel": "5:3",
     "shape": "rectangle",
+    "horizontalBands": 1,
+    "verticalBands": 1,
+    "obliqueBands": 3,
     "colors": [
       "#1EB53A",
       "#CE1126",
@@ -344,6 +419,9 @@
     "ratio": 1.5,
     "ratioLabel": "3:2",
     "shape": "rectangle",
+    "horizontalBands": 2,
+    "verticalBands": 2,
+    "obliqueBands": 1,
     "colors": [
       "#E8112D",
       "#FCD116",
@@ -357,6 +435,9 @@
     "ratio": 1.5,
     "ratioLabel": "3:2",
     "shape": "rectangle",
+    "horizontalBands": 1,
+    "verticalBands": 1,
+    "obliqueBands": 1,
     "colors": [
       "#FFFFFF",
       "#CE0F25",
@@ -388,6 +469,9 @@
     "ratio": 2,
     "ratioLabel": "2:1",
     "shape": "rectangle",
+    "horizontalBands": 1,
+    "verticalBands": 1,
+    "obliqueBands": 1,
     "colors": [
       "#C8102E",
       "#012169",
@@ -407,6 +491,9 @@
     "ratio": 2,
     "ratioLabel": "2:1",
     "shape": "rectangle",
+    "horizontalBands": 1,
+    "verticalBands": 1,
+    "obliqueBands": 1,
     "colors": [
       "#F7E017",
       "#FFFFFF",
@@ -421,6 +508,9 @@
     "ratio": 1.4666646509237142,
     "ratioLabel": "22:15",
     "shape": "rectangle",
+    "horizontalBands": 3,
+    "verticalBands": 1,
+    "obliqueBands": 1,
     "colors": [
       "#00702D",
       "#F0E53C",
@@ -455,6 +545,9 @@
     "ratio": 1.5,
     "ratioLabel": "3:2",
     "shape": "rectangle",
+    "horizontalBands": 3,
+    "verticalBands": 1,
+    "obliqueBands": 1,
     "colors": [
       "#21468B",
       "#FFFFFF",
@@ -468,6 +561,9 @@
     "ratio": 1.4285714285714286,
     "ratioLabel": "10:7",
     "shape": "rectangle",
+    "horizontalBands": 1,
+    "verticalBands": 1,
+    "obliqueBands": 1,
     "colors": [
       "#FFFFFF",
       "#009B3A",
@@ -482,6 +578,9 @@
     "ratio": 2,
     "ratioLabel": "2:1",
     "shape": "rectangle",
+    "horizontalBands": 3,
+    "verticalBands": 1,
+    "obliqueBands": 3,
     "colors": [
       "#00ABC9",
       "#FAE042",
@@ -495,6 +594,9 @@
     "ratio": 1.5,
     "ratioLabel": "3:2",
     "shape": "rectangle",
+    "horizontalBands": 1,
+    "verticalBands": 1,
+    "obliqueBands": 2,
     "colors": [
       "#FFD520",
       "#FF4E12",
@@ -509,6 +611,9 @@
     "ratio": 1.375,
     "ratioLabel": "11:8",
     "shape": "rectangle",
+    "horizontalBands": 5,
+    "verticalBands": 5,
+    "obliqueBands": 1,
     "colors": [
       "#EF2B2D",
       "#FFFFFF",
@@ -522,6 +627,9 @@
     "ratio": 1.5,
     "ratioLabel": "3:2",
     "shape": "rectangle",
+    "horizontalBands": 5,
+    "verticalBands": 1,
+    "obliqueBands": 1,
     "colors": [
       "#75AADB",
       "#FFFFFF"
@@ -534,6 +642,9 @@
     "ratio": 2,
     "ratioLabel": "2:1",
     "shape": "rectangle",
+    "horizontalBands": 2,
+    "verticalBands": 2,
+    "obliqueBands": 1,
     "colors": [
       "#C8313E",
       "#4AA657",
@@ -547,6 +658,9 @@
     "ratio": 1.6666666666666667,
     "ratioLabel": "5:3",
     "shape": "rectangle",
+    "horizontalBands": 3,
+    "verticalBands": 1,
+    "obliqueBands": 1,
     "colors": [
       "#D90F19",
       "#171696",
@@ -582,6 +696,9 @@
     "ratio": 2,
     "ratioLabel": "2:1",
     "shape": "rectangle",
+    "horizontalBands": 1,
+    "verticalBands": 1,
+    "obliqueBands": 1,
     "colors": [
       "#D52B1E",
       "#FFFFFF"
@@ -594,6 +711,9 @@
     "ratio": 2,
     "ratioLabel": "2:1",
     "shape": "rectangle",
+    "horizontalBands": 1,
+    "verticalBands": 1,
+    "obliqueBands": 1,
     "colors": [
       "#008000",
       "#FFE000",
@@ -608,6 +728,9 @@
     "ratio": 1.3333333333333333,
     "ratioLabel": "4:3",
     "shape": "rectangle",
+    "horizontalBands": 1,
+    "verticalBands": 1,
+    "obliqueBands": 3,
     "colors": [
       "#007FFF",
       "#F7D618",
@@ -621,6 +744,9 @@
     "ratio": 1.5,
     "ratioLabel": "3:2",
     "shape": "rectangle",
+    "horizontalBands": 4,
+    "verticalBands": 3,
+    "obliqueBands": 1,
     "colors": [
       "#FFCE00",
       "#289728",
@@ -636,6 +762,9 @@
     "ratio": 1.5,
     "ratioLabel": "3:2",
     "shape": "rectangle",
+    "horizontalBands": 1,
+    "verticalBands": 1,
+    "obliqueBands": 3,
     "colors": [
       "#009543",
       "#FBDE4A",
@@ -649,6 +778,9 @@
     "ratio": 1,
     "ratioLabel": "1:1",
     "shape": "rectangle",
+    "horizontalBands": 3,
+    "verticalBands": 3,
+    "obliqueBands": 1,
     "colors": [
       "#D52B1E",
       "#FFFFFF"
@@ -661,6 +793,9 @@
     "ratio": 1.5,
     "ratioLabel": "3:2",
     "shape": "rectangle",
+    "horizontalBands": 1,
+    "verticalBands": 3,
+    "obliqueBands": 1,
     "colors": [
       "#009E60",
       "#FFFFFF",
@@ -674,6 +809,9 @@
     "ratio": 2,
     "ratioLabel": "2:1",
     "shape": "rectangle",
+    "horizontalBands": 1,
+    "verticalBands": 1,
+    "obliqueBands": 1,
     "colors": [
       "#012169",
       "#FFFFFF",
@@ -687,6 +825,9 @@
     "ratio": 1.5,
     "ratioLabel": "3:2",
     "shape": "rectangle",
+    "horizontalBands": 1,
+    "verticalBands": 1,
+    "obliqueBands": 1,
     "colors": [
       "#D52B1E",
       "#FFFFFF",
@@ -700,6 +841,9 @@
     "ratio": 1.5,
     "ratioLabel": "3:2",
     "shape": "rectangle",
+    "horizontalBands": 1,
+    "verticalBands": 3,
+    "obliqueBands": 1,
     "colors": [
       "#007A5E",
       "#CE1126",
@@ -713,6 +857,9 @@
     "ratio": 1.5,
     "ratioLabel": "3:2",
     "shape": "rectangle",
+    "horizontalBands": 1,
+    "verticalBands": 1,
+    "obliqueBands": 1,
     "colors": [
       "#FFDE00",
       "#DE2910"
@@ -725,6 +872,9 @@
     "ratio": 1.5,
     "ratioLabel": "3:2",
     "shape": "rectangle",
+    "horizontalBands": 3,
+    "verticalBands": 1,
+    "obliqueBands": 1,
     "colors": [
       "#CE1126",
       "#003893",
@@ -738,6 +888,9 @@
     "ratio": 1.6666666666666667,
     "ratioLabel": "5:3",
     "shape": "rectangle",
+    "horizontalBands": 5,
+    "verticalBands": 1,
+    "obliqueBands": 1,
     "colors": [
       "#FBD55F",
       "#CB8E32",
@@ -767,6 +920,9 @@
     "ratio": 2,
     "ratioLabel": "2:1",
     "shape": "rectangle",
+    "horizontalBands": 1,
+    "verticalBands": 1,
+    "obliqueBands": 1,
     "colors": [
       "#002A8F",
       "#FFFFFF",
@@ -780,6 +936,9 @@
     "ratio": 1.7,
     "ratioLabel": "17:10",
     "shape": "rectangle",
+    "horizontalBands": 5,
+    "verticalBands": 1,
+    "obliqueBands": 1,
     "colors": [
       "#003893",
       "#FFFFFF",
@@ -794,6 +953,9 @@
     "ratio": 1.5,
     "ratioLabel": "3:2",
     "shape": "rectangle",
+    "horizontalBands": 3,
+    "verticalBands": 1,
+    "obliqueBands": 1,
     "colors": [
       "#002B7F",
       "#F9E814",
@@ -807,6 +969,9 @@
     "ratio": 2,
     "ratioLabel": "2:1",
     "shape": "rectangle",
+    "horizontalBands": 1,
+    "verticalBands": 1,
+    "obliqueBands": 1,
     "colors": [
       "#0021AD",
       "#1C8A42",
@@ -821,6 +986,9 @@
     "ratio": 1.5,
     "ratioLabel": "3:2",
     "shape": "rectangle",
+    "horizontalBands": 1,
+    "verticalBands": 1,
+    "obliqueBands": 1,
     "colors": [
       "#FFFFFF",
       "#4E5B31",
@@ -834,6 +1002,9 @@
     "ratio": 1.5,
     "ratioLabel": "3:2",
     "shape": "rectangle",
+    "horizontalBands": 2,
+    "verticalBands": 1,
+    "obliqueBands": 3,
     "colors": [
       "#D7141A",
       "#FFFFFF",
@@ -847,6 +1018,9 @@
     "ratio": 1.6666666666666667,
     "ratioLabel": "5:3",
     "shape": "rectangle",
+    "horizontalBands": 3,
+    "verticalBands": 1,
+    "obliqueBands": 1,
     "colors": [
       "#000000",
       "#DD0000",
@@ -860,6 +1034,9 @@
     "ratio": 1.5,
     "ratioLabel": "3:2",
     "shape": "rectangle",
+    "horizontalBands": 2,
+    "verticalBands": 1,
+    "obliqueBands": 3,
     "colors": [
       "#6AB2E7",
       "#12AD2B",
@@ -874,6 +1051,9 @@
     "ratio": 1.3214285714285714,
     "ratioLabel": "37:28",
     "shape": "rectangle",
+    "horizontalBands": 3,
+    "verticalBands": 3,
+    "obliqueBands": 1,
     "colors": [
       "#C60C30",
       "#FFFFFF"
@@ -886,6 +1066,9 @@
     "ratio": 2,
     "ratioLabel": "2:1",
     "shape": "rectangle",
+    "horizontalBands": 5,
+    "verticalBands": 5,
+    "obliqueBands": 1,
     "colors": [
       "#006B3F",
       "#FCD116",
@@ -903,6 +1086,9 @@
     "ratio": 1.5,
     "ratioLabel": "3:2",
     "shape": "rectangle",
+    "horizontalBands": 3,
+    "verticalBands": 3,
+    "obliqueBands": 1,
     "colors": [
       "#FFFFFF",
       "#002D62",
@@ -926,6 +1112,9 @@
     "ratio": 1.5,
     "ratioLabel": "3:2",
     "shape": "rectangle",
+    "horizontalBands": 1,
+    "verticalBands": 2,
+    "obliqueBands": 1,
     "colors": [
       "#FFFFFF",
       "#006233",
@@ -939,6 +1128,9 @@
     "ratio": 1.5,
     "ratioLabel": "3:2",
     "shape": "rectangle",
+    "horizontalBands": 3,
+    "verticalBands": 1,
+    "obliqueBands": 1,
     "colors": [
       "#FFFFFF",
       "#1EA8D1",
@@ -1021,6 +1213,9 @@
     "ratio": 1.5714285714285714,
     "ratioLabel": "11:7",
     "shape": "rectangle",
+    "horizontalBands": 3,
+    "verticalBands": 1,
+    "obliqueBands": 1,
     "colors": [
       "#FFFFFF",
       "#4891D9"
@@ -1033,6 +1228,9 @@
     "ratio": 1.5,
     "ratioLabel": "3:2",
     "shape": "rectangle",
+    "horizontalBands": 3,
+    "verticalBands": 1,
+    "obliqueBands": 1,
     "colors": [
       "#000000",
       "#FFFFFF",
@@ -1047,6 +1245,9 @@
     "ratio": 2,
     "ratioLabel": "2:1",
     "shape": "rectangle",
+    "horizontalBands": 3,
+    "verticalBands": 1,
+    "obliqueBands": 4,
     "colors": [
       "#000000",
       "#007A3D",
@@ -1061,6 +1262,9 @@
     "ratio": 2,
     "ratioLabel": "2:1",
     "shape": "rectangle",
+    "horizontalBands": 1,
+    "verticalBands": 1,
+    "obliqueBands": 1,
     "colors": [
       "#EA0437",
       "#4189DD",
@@ -1075,6 +1279,9 @@
     "ratio": 1.5,
     "ratioLabel": "3:2",
     "shape": "rectangle",
+    "horizontalBands": 3,
+    "verticalBands": 1,
+    "obliqueBands": 1,
     "colors": [
       "#C60B1E",
       "#FFC400",
@@ -1098,6 +1305,9 @@
     "ratio": 2,
     "ratioLabel": "2:1",
     "shape": "rectangle",
+    "horizontalBands": 3,
+    "verticalBands": 1,
+    "obliqueBands": 1,
     "colors": [
       "#DA121A",
       "#FCDD09",
@@ -1112,6 +1322,9 @@
     "ratio": 1.5,
     "ratioLabel": "3:2",
     "shape": "rectangle",
+    "horizontalBands": 1,
+    "verticalBands": 1,
+    "obliqueBands": 1,
     "colors": [
       "#003399",
       "#FFCC00"
@@ -1124,6 +1337,9 @@
     "ratio": 1.6363636363636365,
     "ratioLabel": "18:11",
     "shape": "rectangle",
+    "horizontalBands": 3,
+    "verticalBands": 3,
+    "obliqueBands": 1,
     "colors": [
       "#FFFFFF",
       "#003580"
@@ -1136,6 +1352,9 @@
     "ratio": 2,
     "ratioLabel": "2:1",
     "shape": "rectangle",
+    "horizontalBands": 1,
+    "verticalBands": 1,
+    "obliqueBands": 1,
     "colors": [
       "#012169",
       "#FFFFFF",
@@ -1154,6 +1373,9 @@
     "ratio": 2,
     "ratioLabel": "2:1",
     "shape": "rectangle",
+    "horizontalBands": 1,
+    "verticalBands": 1,
+    "obliqueBands": 1,
     "colors": [
       "#012169",
       "#FFFFFF",
@@ -1232,6 +1454,9 @@
     "ratio": 1.9,
     "ratioLabel": "19:10",
     "shape": "rectangle",
+    "horizontalBands": 1,
+    "verticalBands": 1,
+    "obliqueBands": 1,
     "colors": [
       "#75B2DD",
       "#FFFFFF"
@@ -1244,6 +1469,9 @@
     "ratio": 1.375,
     "ratioLabel": "11:8",
     "shape": "rectangle",
+    "horizontalBands": 5,
+    "verticalBands": 5,
+    "obliqueBands": 1,
     "colors": [
       "#FFFFFF",
       "#0065BD",
@@ -1257,6 +1485,9 @@
     "ratio": 1.5,
     "ratioLabel": "3:2",
     "shape": "rectangle",
+    "horizontalBands": 1,
+    "verticalBands": 3,
+    "obliqueBands": 1,
     "colors": [
       "#ED2939",
       "#FFFFFF",
@@ -1270,6 +1501,9 @@
     "ratio": 1.3333333333333333,
     "ratioLabel": "4:3",
     "shape": "rectangle",
+    "horizontalBands": 3,
+    "verticalBands": 1,
+    "obliqueBands": 1,
     "colors": [
       "#3A75C4",
       "#FCD116",
@@ -1283,6 +1517,9 @@
     "ratio": 2,
     "ratioLabel": "2:1",
     "shape": "rectangle",
+    "horizontalBands": 5,
+    "verticalBands": 5,
+    "obliqueBands": 3,
     "colors": [
       "#012169",
       "#FFFFFF",
@@ -1296,6 +1533,9 @@
     "ratio": 1.6666666666666667,
     "ratioLabel": "5:3",
     "shape": "rectangle",
+    "horizontalBands": 3,
+    "verticalBands": 3,
+    "obliqueBands": 1,
     "colors": [
       "#FCD116",
       "#CE1126",
@@ -1309,6 +1549,9 @@
     "ratio": 1.5,
     "ratioLabel": "3:2",
     "shape": "rectangle",
+    "horizontalBands": 1,
+    "verticalBands": 1,
+    "obliqueBands": 1,
     "colors": [
       "#FFFFFF",
       "#FF0000"
@@ -1321,6 +1564,9 @@
     "ratio": 1.5,
     "ratioLabel": "3:2",
     "shape": "rectangle",
+    "horizontalBands": 1,
+    "verticalBands": 3,
+    "obliqueBands": 1,
     "colors": [
       "#ED2939",
       "#FFFFFF",
@@ -1334,6 +1580,9 @@
     "ratio": 1.5,
     "ratioLabel": "3:2",
     "shape": "rectangle",
+    "horizontalBands": 1,
+    "verticalBands": 1,
+    "obliqueBands": 1,
     "colors": [
       "#FFFFFF",
       "#E8112D",
@@ -1347,6 +1596,9 @@
     "ratio": 1.5,
     "ratioLabel": "3:2",
     "shape": "rectangle",
+    "horizontalBands": 3,
+    "verticalBands": 1,
+    "obliqueBands": 1,
     "colors": [
       "#006B3F",
       "#FCD116",
@@ -1361,6 +1613,9 @@
     "ratio": 2,
     "ratioLabel": "2:1",
     "shape": "rectangle",
+    "horizontalBands": 2,
+    "verticalBands": 3,
+    "obliqueBands": 1,
     "colors": [
       "#DA000C",
       "#FFFFFF",
@@ -1375,6 +1630,9 @@
     "ratio": 1.5,
     "ratioLabel": "3:2",
     "shape": "rectangle",
+    "horizontalBands": 1,
+    "verticalBands": 1,
+    "obliqueBands": 1,
     "colors": [
       "#FFFFFF",
       "#D00C33"
@@ -1387,6 +1645,9 @@
     "ratio": 1.5,
     "ratioLabel": "3:2",
     "shape": "rectangle",
+    "horizontalBands": 2,
+    "verticalBands": 1,
+    "obliqueBands": 1,
     "colors": [
       "#3A7728",
       "#0C1C8C",
@@ -1401,6 +1662,9 @@
     "ratio": 1.5,
     "ratioLabel": "3:2",
     "shape": "rectangle",
+    "horizontalBands": 1,
+    "verticalBands": 3,
+    "obliqueBands": 1,
     "colors": [
       "#CE1126",
       "#FCD116",
@@ -1414,6 +1678,9 @@
     "ratio": 1.5,
     "ratioLabel": "3:2",
     "shape": "rectangle",
+    "horizontalBands": 1,
+    "verticalBands": 3,
+    "obliqueBands": 1,
     "colors": [
       "#ED2939",
       "#FFFFFF",
@@ -1427,6 +1694,9 @@
     "ratio": 1.5,
     "ratioLabel": "3:2",
     "shape": "rectangle",
+    "horizontalBands": 3,
+    "verticalBands": 1,
+    "obliqueBands": 1,
     "colors": [
       "#E32118",
       "#FFFFFF",
@@ -1446,6 +1716,9 @@
     "ratio": 1.5,
     "ratioLabel": "3:2",
     "shape": "rectangle",
+    "horizontalBands": 9,
+    "verticalBands": 1,
+    "obliqueBands": 1,
     "colors": [
       "#0D5EAF",
       "#FFFFFF"
@@ -1458,6 +1731,9 @@
     "ratio": 2,
     "ratioLabel": "2:1",
     "shape": "rectangle",
+    "horizontalBands": 1,
+    "verticalBands": 1,
+    "obliqueBands": 1,
     "colors": [
       "#D5DFFF",
       "#FFFFFF",
@@ -1501,6 +1777,9 @@
     "ratio": 1.6,
     "ratioLabel": "8:5",
     "shape": "rectangle",
+    "horizontalBands": 1,
+    "verticalBands": 3,
+    "obliqueBands": 1,
     "colors": [
       "#F9F0AA",
       "#B07E09",
@@ -1534,6 +1813,9 @@
     "ratio": 1.863636527624139,
     "ratioLabel": "41:22",
     "shape": "rectangle",
+    "horizontalBands": 1,
+    "verticalBands": 1,
+    "obliqueBands": 1,
     "colors": [
       "#C62139",
       "#00297B",
@@ -1555,6 +1837,9 @@
     "ratio": 2,
     "ratioLabel": "2:1",
     "shape": "rectangle",
+    "horizontalBands": 1,
+    "verticalBands": 1,
+    "obliqueBands": 1,
     "colors": [
       "#CE1126",
       "#FCD116",
@@ -1569,6 +1854,9 @@
     "ratio": 1.6666666666666667,
     "ratioLabel": "5:3",
     "shape": "rectangle",
+    "horizontalBands": 1,
+    "verticalBands": 1,
+    "obliqueBands": 5,
     "colors": [
       "#009E49",
       "#FFFFFF",
@@ -1584,6 +1872,9 @@
     "ratio": 1.5,
     "ratioLabel": "3:2",
     "shape": "rectangle",
+    "horizontalBands": 1,
+    "verticalBands": 1,
+    "obliqueBands": 1,
     "colors": [
       "#DE2910",
       "#FFFFFF"
@@ -1596,6 +1887,9 @@
     "ratio": 2,
     "ratioLabel": "2:1",
     "shape": "rectangle",
+    "horizontalBands": 1,
+    "verticalBands": 1,
+    "obliqueBands": 3,
     "colors": [
       "#012169",
       "#FFFFFF",
@@ -1609,6 +1903,9 @@
     "ratio": 2,
     "ratioLabel": "2:1",
     "shape": "rectangle",
+    "horizontalBands": 3,
+    "verticalBands": 1,
+    "obliqueBands": 1,
     "colors": [
       "#0073CF",
       "#FFFFFF"
@@ -1621,6 +1918,9 @@
     "ratio": 2,
     "ratioLabel": "2:1",
     "shape": "rectangle",
+    "horizontalBands": 3,
+    "verticalBands": 1,
+    "obliqueBands": 1,
     "colors": [
       "#171796",
       "#FFFFFF",
@@ -1637,6 +1937,9 @@
     "ratio": 1.6666666666666667,
     "ratioLabel": "5:3",
     "shape": "rectangle",
+    "horizontalBands": 2,
+    "verticalBands": 1,
+    "obliqueBands": 1,
     "colors": [
       "#D21034",
       "#00209F",
@@ -1656,6 +1959,9 @@
     "ratio": 2,
     "ratioLabel": "2:1",
     "shape": "rectangle",
+    "horizontalBands": 3,
+    "verticalBands": 1,
+    "obliqueBands": 1,
     "colors": [
       "#436F4D",
       "#FFFFFF",
@@ -1669,6 +1975,9 @@
     "ratio": 1.5,
     "ratioLabel": "3:2",
     "shape": "rectangle",
+    "horizontalBands": 2,
+    "verticalBands": 1,
+    "obliqueBands": 1,
     "colors": [
       "#FFFFFF",
       "#CE1126"
@@ -1681,6 +1990,9 @@
     "ratio": 2,
     "ratioLabel": "2:1",
     "shape": "rectangle",
+    "horizontalBands": 1,
+    "verticalBands": 3,
+    "obliqueBands": 1,
     "colors": [
       "#169B62",
       "#FFFFFF",
@@ -1694,6 +2006,9 @@
     "ratio": 1.375,
     "ratioLabel": "11:8",
     "shape": "rectangle",
+    "horizontalBands": 5,
+    "verticalBands": 1,
+    "obliqueBands": 1,
     "colors": [
       "#FFFFFF",
       "#0038B8"
@@ -1706,6 +2021,9 @@
     "ratio": 2,
     "ratioLabel": "2:1",
     "shape": "rectangle",
+    "horizontalBands": 1,
+    "verticalBands": 1,
+    "obliqueBands": 1,
     "colors": [
       "#CF142B",
       "#F9DD16",
@@ -1721,6 +2039,9 @@
     "ratio": 1.5,
     "ratioLabel": "3:2",
     "shape": "rectangle",
+    "horizontalBands": 3,
+    "verticalBands": 1,
+    "obliqueBands": 1,
     "colors": [
       "#FF9933",
       "#FFFFFF",
@@ -1735,6 +2056,9 @@
     "ratio": 2,
     "ratioLabel": "2:1",
     "shape": "rectangle",
+    "horizontalBands": 1,
+    "verticalBands": 1,
+    "obliqueBands": 1,
     "colors": [
       "#FFFFFF",
       "#002B7F",
@@ -1756,6 +2080,9 @@
     "ratio": 1.5,
     "ratioLabel": "3:2",
     "shape": "rectangle",
+    "horizontalBands": 3,
+    "verticalBands": 1,
+    "obliqueBands": 1,
     "colors": [
       "#CE1126",
       "#FFFFFF",
@@ -1769,6 +2096,9 @@
     "ratio": 1.75,
     "ratioLabel": "7:4",
     "shape": "rectangle",
+    "horizontalBands": 3,
+    "verticalBands": 1,
+    "obliqueBands": 1,
     "colors": [
       "#DA0000",
       "#FFFFFF",
@@ -1782,6 +2112,9 @@
     "ratio": 1.3888888888888888,
     "ratioLabel": "25:18",
     "shape": "rectangle",
+    "horizontalBands": 1,
+    "verticalBands": 1,
+    "obliqueBands": 1,
     "colors": [
       "#003897",
       "#FFFFFF",
@@ -1795,6 +2128,9 @@
     "ratio": 1.5,
     "ratioLabel": "3:2",
     "shape": "rectangle",
+    "horizontalBands": 1,
+    "verticalBands": 3,
+    "obliqueBands": 1,
     "colors": [
       "#009246",
       "#FFFFFF",
@@ -1808,6 +2144,9 @@
     "ratio": 1.6666666666666667,
     "ratioLabel": "5:3",
     "shape": "rectangle",
+    "horizontalBands": 1,
+    "verticalBands": 1,
+    "obliqueBands": 2,
     "colors": [
       "#FFFFFF",
       "#DF112D",
@@ -1825,6 +2164,9 @@
     "ratio": 2,
     "ratioLabel": "2:1",
     "shape": "rectangle",
+    "horizontalBands": 1,
+    "verticalBands": 1,
+    "obliqueBands": 1,
     "colors": [
       "#009B3A",
       "#FED100"
@@ -1837,6 +2179,9 @@
     "ratio": 2,
     "ratioLabel": "2:1",
     "shape": "rectangle",
+    "horizontalBands": 3,
+    "verticalBands": 1,
+    "obliqueBands": 4,
     "colors": [
       "#007A3D",
       "#FFFFFF",
@@ -1851,6 +2196,9 @@
     "ratio": 1.5,
     "ratioLabel": "3:2",
     "shape": "rectangle",
+    "horizontalBands": 1,
+    "verticalBands": 1,
+    "obliqueBands": 1,
     "colors": [
       "#FFFFFF",
       "#BC002D"
@@ -1863,6 +2211,9 @@
     "ratio": 1.5,
     "ratioLabel": "3:2",
     "shape": "rectangle",
+    "horizontalBands": 1,
+    "verticalBands": 1,
+    "obliqueBands": 1,
     "colors": [
       "#FFFFFF",
       "#006600",
@@ -1877,6 +2228,9 @@
     "ratio": 1.6666666666666667,
     "ratioLabel": "5:3",
     "shape": "rectangle",
+    "horizontalBands": 1,
+    "verticalBands": 1,
+    "obliqueBands": 1,
     "colors": [
       "#FF0000",
       "#FFFF00"
@@ -1889,6 +2243,9 @@
     "ratio": 1.5625,
     "ratioLabel": "25:16",
     "shape": "rectangle",
+    "horizontalBands": 3,
+    "verticalBands": 1,
+    "obliqueBands": 1,
     "colors": [
       "#032EA1",
       "#E00025",
@@ -1903,6 +2260,9 @@
     "ratio": 2,
     "ratioLabel": "2:1",
     "shape": "rectangle",
+    "horizontalBands": 2,
+    "verticalBands": 1,
+    "obliqueBands": 1,
     "colors": [
       "#000000",
       "#C81010",
@@ -1918,6 +2278,9 @@
     "ratio": 1.6666666666666667,
     "ratioLabel": "5:3",
     "shape": "rectangle",
+    "horizontalBands": 4,
+    "verticalBands": 1,
+    "obliqueBands": 5,
     "colors": [
       "#3A75C4",
       "#CE1126",
@@ -1933,6 +2296,9 @@
     "ratio": 1.5,
     "ratioLabel": "3:2",
     "shape": "rectangle",
+    "horizontalBands": 1,
+    "verticalBands": 1,
+    "obliqueBands": 5,
     "colors": [
       "#009E49",
       "#CE1126",
@@ -1948,6 +2314,9 @@
     "ratio": 2,
     "ratioLabel": "2:1",
     "shape": "rectangle",
+    "horizontalBands": 5,
+    "verticalBands": 1,
+    "obliqueBands": 1,
     "colors": [
       "#024FA2",
       "#FFFFFF",
@@ -1961,6 +2330,9 @@
     "ratio": 1.5,
     "ratioLabel": "3:2",
     "shape": "rectangle",
+    "horizontalBands": 1,
+    "verticalBands": 1,
+    "obliqueBands": 1,
     "colors": [
       "#FFFFFF",
       "#000000",
@@ -1975,6 +2347,9 @@
     "ratio": 2,
     "ratioLabel": "2:1",
     "shape": "rectangle",
+    "horizontalBands": 3,
+    "verticalBands": 1,
+    "obliqueBands": 1,
     "colors": [
       "#007A3D",
       "#FFFFFF",
@@ -1988,6 +2363,9 @@
     "ratio": 2,
     "ratioLabel": "2:1",
     "shape": "rectangle",
+    "horizontalBands": 1,
+    "verticalBands": 1,
+    "obliqueBands": 1,
     "colors": [
       "#012169",
       "#FFFFFF",
@@ -2022,6 +2400,9 @@
     "ratio": 2,
     "ratioLabel": "2:1",
     "shape": "rectangle",
+    "horizontalBands": 1,
+    "verticalBands": 1,
+    "obliqueBands": 1,
     "colors": [
       "#00AFCA",
       "#FEC50C"
@@ -2034,6 +2415,9 @@
     "ratio": 1.5,
     "ratioLabel": "3:2",
     "shape": "rectangle",
+    "horizontalBands": 3,
+    "verticalBands": 1,
+    "obliqueBands": 1,
     "colors": [
       "#CE1126",
       "#002868",
@@ -2047,6 +2431,9 @@
     "ratio": 1.5,
     "ratioLabel": "3:2",
     "shape": "rectangle",
+    "horizontalBands": 3,
+    "verticalBands": 1,
+    "obliqueBands": 1,
     "colors": [
       "#ED1C24",
       "#FFFFFF",
@@ -2060,6 +2447,9 @@
     "ratio": 2,
     "ratioLabel": "2:1",
     "shape": "rectangle",
+    "horizontalBands": 1,
+    "verticalBands": 1,
+    "obliqueBands": 1,
     "colors": [
       "#66CCFF",
       "#FFFFFF",
@@ -2073,6 +2463,9 @@
     "ratio": 1.6666666666666667,
     "ratioLabel": "5:3",
     "shape": "rectangle",
+    "horizontalBands": 2,
+    "verticalBands": 1,
+    "obliqueBands": 1,
     "colors": [
       "#002B7F",
       "#CE1126",
@@ -2087,6 +2480,9 @@
     "ratio": 2,
     "ratioLabel": "2:1",
     "shape": "rectangle",
+    "horizontalBands": 3,
+    "verticalBands": 5,
+    "obliqueBands": 1,
     "colors": [
       "#FFB700",
       "#FF5B00",
@@ -2102,6 +2498,9 @@
     "ratio": 1.9,
     "ratioLabel": "19:10",
     "shape": "rectangle",
+    "horizontalBands": 11,
+    "verticalBands": 1,
+    "obliqueBands": 1,
     "colors": [
       "#BF0A30",
       "#FFFFFF",
@@ -2115,6 +2514,9 @@
     "ratio": 1.5,
     "ratioLabel": "3:2",
     "shape": "rectangle",
+    "horizontalBands": 3,
+    "verticalBands": 1,
+    "obliqueBands": 1,
     "colors": [
       "#009543",
       "#FFFFFF",
@@ -2129,6 +2531,9 @@
     "ratio": 1.6666666666666667,
     "ratioLabel": "5:3",
     "shape": "rectangle",
+    "horizontalBands": 3,
+    "verticalBands": 1,
+    "obliqueBands": 1,
     "colors": [
       "#C1272D",
       "#006A44",
@@ -2142,6 +2547,9 @@
     "ratio": 1.6666666666666667,
     "ratioLabel": "5:3",
     "shape": "rectangle",
+    "horizontalBands": 3,
+    "verticalBands": 1,
+    "obliqueBands": 1,
     "colors": [
       "#00A1DE",
       "#ED2939",
@@ -2155,6 +2563,9 @@
     "ratio": 2,
     "ratioLabel": "2:1",
     "shape": "rectangle",
+    "horizontalBands": 1,
+    "verticalBands": 1,
+    "obliqueBands": 1,
     "colors": [
       "#9E3039",
       "#FFFFFF"
@@ -2167,6 +2578,9 @@
     "ratio": 2,
     "ratioLabel": "2:1",
     "shape": "rectangle",
+    "horizontalBands": 3,
+    "verticalBands": 1,
+    "obliqueBands": 1,
     "colors": [
       "#239E46",
       "#000000",
@@ -2181,6 +2595,9 @@
     "ratio": 1.5,
     "ratioLabel": "3:2",
     "shape": "rectangle",
+    "horizontalBands": 1,
+    "verticalBands": 1,
+    "obliqueBands": 1,
     "colors": [
       "#C1272D",
       "#006233"
@@ -2193,6 +2610,9 @@
     "ratio": 1.25,
     "ratioLabel": "5:4",
     "shape": "rectangle",
+    "horizontalBands": 2,
+    "verticalBands": 1,
+    "obliqueBands": 1,
     "colors": [
       "#FFFFFF",
       "#CE1126"
@@ -2205,6 +2625,9 @@
     "ratio": 2,
     "ratioLabel": "2:1",
     "shape": "rectangle",
+    "horizontalBands": 1,
+    "verticalBands": 3,
+    "obliqueBands": 1,
     "colors": [
       "#CC092F",
       "#FFD200",
@@ -2224,6 +2647,9 @@
     "ratio": 2,
     "ratioLabel": "2:1",
     "shape": "rectangle",
+    "horizontalBands": 3,
+    "verticalBands": 3,
+    "obliqueBands": 1,
     "colors": [
       "#D3AE3B",
       "#C40308",
@@ -2241,6 +2667,9 @@
     "ratio": 1.5,
     "ratioLabel": "3:2",
     "shape": "rectangle",
+    "horizontalBands": 1,
+    "verticalBands": 3,
+    "obliqueBands": 1,
     "colors": [
       "#ED2939",
       "#FFFFFF",
@@ -2254,6 +2683,9 @@
     "ratio": 1.5,
     "ratioLabel": "3:2",
     "shape": "rectangle",
+    "horizontalBands": 2,
+    "verticalBands": 2,
+    "obliqueBands": 1,
     "colors": [
       "#007E3A",
       "#FC3D32",
@@ -2267,6 +2699,9 @@
     "ratio": 1.9,
     "ratioLabel": "19:10",
     "shape": "rectangle",
+    "horizontalBands": 1,
+    "verticalBands": 1,
+    "obliqueBands": 1,
     "colors": [
       "#003893",
       "#FFFFFF",
@@ -2280,6 +2715,9 @@
     "ratio": 2,
     "ratioLabel": "2:1",
     "shape": "rectangle",
+    "horizontalBands": 3,
+    "verticalBands": 1,
+    "obliqueBands": 1,
     "colors": [
       "#D20000",
       "#FFE600"
@@ -2292,6 +2730,9 @@
     "ratio": 1.5,
     "ratioLabel": "3:2",
     "shape": "rectangle",
+    "horizontalBands": 1,
+    "verticalBands": 3,
+    "obliqueBands": 1,
     "colors": [
       "#CE1126",
       "#FCD116",
@@ -2305,6 +2746,9 @@
     "ratio": 1.5,
     "ratioLabel": "3:2",
     "shape": "rectangle",
+    "horizontalBands": 3,
+    "verticalBands": 1,
+    "obliqueBands": 1,
     "colors": [
       "#FECB00",
       "#EA2839",
@@ -2319,6 +2763,9 @@
     "ratio": 2,
     "ratioLabel": "2:1",
     "shape": "rectangle",
+    "horizontalBands": 1,
+    "verticalBands": 1,
+    "obliqueBands": 1,
     "colors": [
       "#F9CF02",
       "#C4272F",
@@ -2332,6 +2779,9 @@
     "ratio": 1.5,
     "ratioLabel": "3:2",
     "shape": "rectangle",
+    "horizontalBands": 1,
+    "verticalBands": 1,
+    "obliqueBands": 1,
     "colors": [
       "#00785E",
       "#FBD116",
@@ -2345,6 +2795,9 @@
     "ratio": 2,
     "ratioLabel": "2:1",
     "shape": "rectangle",
+    "horizontalBands": 1,
+    "verticalBands": 1,
+    "obliqueBands": 1,
     "colors": [
       "#0071BC",
       "#000000",
@@ -2367,6 +2820,9 @@
     "ratio": 1.5,
     "ratioLabel": "3:2",
     "shape": "rectangle",
+    "horizontalBands": 1,
+    "verticalBands": 1,
+    "obliqueBands": 3,
     "colors": [
       "#CE1126",
       "#007A3D",
@@ -2380,6 +2836,9 @@
     "ratio": 1.5,
     "ratioLabel": "3:2",
     "shape": "rectangle",
+    "horizontalBands": 1,
+    "verticalBands": 1,
+    "obliqueBands": 1,
     "colors": [
       "#CD2A3E",
       "#006233",
@@ -2393,6 +2852,9 @@
     "ratio": 2,
     "ratioLabel": "2:1",
     "shape": "rectangle",
+    "horizontalBands": 1,
+    "verticalBands": 1,
+    "obliqueBands": 1,
     "colors": [
       "#012169",
       "#FFFFFF",
@@ -2414,6 +2876,9 @@
     "ratio": 1.5,
     "ratioLabel": "3:2",
     "shape": "rectangle",
+    "horizontalBands": 1,
+    "verticalBands": 2,
+    "obliqueBands": 1,
     "colors": [
       "#CF142B",
       "#FFFFFF",
@@ -2431,6 +2896,9 @@
     "ratio": 1.5,
     "ratioLabel": "3:2",
     "shape": "rectangle",
+    "horizontalBands": 4,
+    "verticalBands": 1,
+    "obliqueBands": 1,
     "colors": [
       "#00A551",
       "#FFD500",
@@ -2445,6 +2913,9 @@
     "ratio": 1.5,
     "ratioLabel": "3:2",
     "shape": "rectangle",
+    "horizontalBands": 3,
+    "verticalBands": 1,
+    "obliqueBands": 1,
     "colors": [
       "#D21034",
       "#007E3A",
@@ -2458,6 +2929,9 @@
     "ratio": 1.5,
     "ratioLabel": "3:2",
     "shape": "rectangle",
+    "horizontalBands": 1,
+    "verticalBands": 1,
+    "obliqueBands": 1,
     "colors": [
       "#CE1126",
       "#339E35"
@@ -2470,6 +2944,9 @@
     "ratio": 1.75,
     "ratioLabel": "7:4",
     "shape": "rectangle",
+    "horizontalBands": 1,
+    "verticalBands": 3,
+    "obliqueBands": 1,
     "colors": [
       "#FFFFFF",
       "#F15770",
@@ -2543,6 +3020,9 @@
     "ratio": 2,
     "ratioLabel": "2:1",
     "shape": "rectangle",
+    "horizontalBands": 14,
+    "verticalBands": 1,
+    "obliqueBands": 1,
     "colors": [
       "#CC0001",
       "#FFFFFF",
@@ -2557,6 +3037,9 @@
     "ratio": 1.5,
     "ratioLabel": "3:2",
     "shape": "rectangle",
+    "horizontalBands": 5,
+    "verticalBands": 1,
+    "obliqueBands": 1,
     "colors": [
       "#000000",
       "#FFFFFF",
@@ -2572,6 +3055,9 @@
     "ratio": 1.5,
     "ratioLabel": "3:2",
     "shape": "rectangle",
+    "horizontalBands": 1,
+    "verticalBands": 1,
+    "obliqueBands": 1,
     "colors": [
       "#003580",
       "#009543",
@@ -2587,6 +3073,9 @@
     "ratio": 2,
     "ratioLabel": "2:1",
     "shape": "rectangle",
+    "horizontalBands": 3,
+    "verticalBands": 1,
+    "obliqueBands": 1,
     "colors": [
       "#009543",
       "#ED4135",
@@ -2602,6 +3091,9 @@
     "ratio": 1.1666666666666667,
     "ratioLabel": "7:6",
     "shape": "rectangle",
+    "horizontalBands": 3,
+    "verticalBands": 1,
+    "obliqueBands": 1,
     "colors": [
       "#0DB02B",
       "#FFFFFF",
@@ -2615,6 +3107,9 @@
     "ratio": 2,
     "ratioLabel": "2:1",
     "shape": "rectangle",
+    "horizontalBands": 1,
+    "verticalBands": 3,
+    "obliqueBands": 1,
     "colors": [
       "#007934",
       "#FFFFFF"
@@ -2627,6 +3122,9 @@
     "ratio": 2,
     "ratioLabel": "2:1",
     "shape": "rectangle",
+    "horizontalBands": 1,
+    "verticalBands": 3,
+    "obliqueBands": 1,
     "colors": [
       "#008751",
       "#FFFFFF"
@@ -2639,6 +3137,9 @@
     "ratio": 1.6666666666666667,
     "ratioLabel": "5:3",
     "shape": "rectangle",
+    "horizontalBands": 3,
+    "verticalBands": 1,
+    "obliqueBands": 1,
     "colors": [
       "#510000",
       "#8A0000",
@@ -2676,6 +3177,9 @@
     "ratio": 1.5,
     "ratioLabel": "3:2",
     "shape": "rectangle",
+    "horizontalBands": 3,
+    "verticalBands": 1,
+    "obliqueBands": 1,
     "colors": [
       "#21468B",
       "#FFFFFF",
@@ -2689,6 +3193,9 @@
     "ratio": 1.375,
     "ratioLabel": "11:8",
     "shape": "rectangle",
+    "horizontalBands": 5,
+    "verticalBands": 5,
+    "obliqueBands": 1,
     "colors": [
       "#EF2B2D",
       "#FFFFFF",
@@ -2724,6 +3231,9 @@
         1
       ]
     ],
+    "horizontalBands": 2,
+    "verticalBands": 1,
+    "obliqueBands": 2,
     "colors": [
       "#003893",
       "#DC143C",
@@ -2737,6 +3247,9 @@
     "ratio": 2,
     "ratioLabel": "2:1",
     "shape": "rectangle",
+    "horizontalBands": 3,
+    "verticalBands": 1,
+    "obliqueBands": 1,
     "colors": [
       "#002B7F",
       "#FFC61E",
@@ -2750,6 +3263,9 @@
     "ratio": 2,
     "ratioLabel": "2:1",
     "shape": "rectangle",
+    "horizontalBands": 1,
+    "verticalBands": 1,
+    "obliqueBands": 1,
     "colors": [
       "#012169",
       "#C8102E",
@@ -2764,6 +3280,9 @@
     "ratio": 2,
     "ratioLabel": "2:1",
     "shape": "rectangle",
+    "horizontalBands": 1,
+    "verticalBands": 1,
+    "obliqueBands": 3,
     "colors": [
       "#012169",
       "#FFFFFF",
@@ -2777,6 +3296,9 @@
     "ratio": 2,
     "ratioLabel": "2:1",
     "shape": "rectangle",
+    "horizontalBands": 3,
+    "verticalBands": 1,
+    "obliqueBands": 1,
     "colors": [
       "#DB161B",
       "#FFFFFF",
@@ -2790,6 +3312,9 @@
     "ratio": 1.5,
     "ratioLabel": "3:2",
     "shape": "rectangle",
+    "horizontalBands": 2,
+    "verticalBands": 2,
+    "obliqueBands": 1,
     "colors": [
       "#FFFFFF",
       "#005293",
@@ -2803,6 +3328,9 @@
     "ratio": 1.5,
     "ratioLabel": "3:2",
     "shape": "rectangle",
+    "horizontalBands": 1,
+    "verticalBands": 3,
+    "obliqueBands": 1,
     "colors": [
       "#D91023",
       "#FFFFFF",
@@ -2830,6 +3358,9 @@
     "ratio": 1.5,
     "ratioLabel": "3:2",
     "shape": "rectangle",
+    "horizontalBands": 3,
+    "verticalBands": 1,
+    "obliqueBands": 1,
     "colors": [
       "#CE1126",
       "#FFFFFF",
@@ -2845,6 +3376,9 @@
     "ratio": 1.3333333333333333,
     "ratioLabel": "4:3",
     "shape": "rectangle",
+    "horizontalBands": 1,
+    "verticalBands": 1,
+    "obliqueBands": 2,
     "colors": [
       "#000000",
       "#CE1126",
@@ -2859,6 +3393,9 @@
     "ratio": 2,
     "ratioLabel": "2:1",
     "shape": "rectangle",
+    "horizontalBands": 2,
+    "verticalBands": 1,
+    "obliqueBands": 1,
     "colors": [
       "#0038A8",
       "#CE1126",
@@ -2873,6 +3410,9 @@
     "ratio": 1.5,
     "ratioLabel": "3:2",
     "shape": "rectangle",
+    "horizontalBands": 1,
+    "verticalBands": 1,
+    "obliqueBands": 1,
     "colors": [
       "#FFFFFF",
       "#01411C"
@@ -2885,6 +3425,9 @@
     "ratio": 1.6,
     "ratioLabel": "8:5",
     "shape": "rectangle",
+    "horizontalBands": 2,
+    "verticalBands": 1,
+    "obliqueBands": 1,
     "colors": [
       "#FFFFFF",
       "#DC143C"
@@ -2897,6 +3440,9 @@
     "ratio": 1.5,
     "ratioLabel": "3:2",
     "shape": "rectangle",
+    "horizontalBands": 1,
+    "verticalBands": 3,
+    "obliqueBands": 1,
     "colors": [
       "#ED2939",
       "#FFFFFF",
@@ -2910,6 +3456,9 @@
     "ratio": 2,
     "ratioLabel": "2:1",
     "shape": "rectangle",
+    "horizontalBands": 1,
+    "verticalBands": 1,
+    "obliqueBands": 1,
     "colors": [
       "#012169",
       "#FFFFFF",
@@ -2930,6 +3479,9 @@
     "ratio": 1.5,
     "ratioLabel": "3:2",
     "shape": "rectangle",
+    "horizontalBands": 3,
+    "verticalBands": 1,
+    "obliqueBands": 1,
     "colors": [
       "#FFFFFF",
       "#EE0000",
@@ -2943,6 +3495,9 @@
     "ratio": 2,
     "ratioLabel": "2:1",
     "shape": "rectangle",
+    "horizontalBands": 3,
+    "verticalBands": 1,
+    "obliqueBands": 4,
     "colors": [
       "#007A3D",
       "#FFFFFF",
@@ -2956,6 +3511,9 @@
     "ratio": 1.5,
     "ratioLabel": "3:2",
     "shape": "rectangle",
+    "horizontalBands": 1,
+    "verticalBands": 2,
+    "obliqueBands": 1,
     "colors": [
       "#FF0000",
       "#006600",
@@ -2972,6 +3530,9 @@
     "ratio": 1.6,
     "ratioLabel": "8:5",
     "shape": "rectangle",
+    "horizontalBands": 1,
+    "verticalBands": 1,
+    "obliqueBands": 1,
     "colors": [
       "#4AADD6",
       "#FFDE00"
@@ -2984,6 +3545,9 @@
     "ratio": 1.8181818181818181,
     "ratioLabel": "20:11",
     "shape": "rectangle",
+    "horizontalBands": 3,
+    "verticalBands": 1,
+    "obliqueBands": 1,
     "colors": [
       "#0038A8",
       "#FFFFFF",
@@ -3000,6 +3564,9 @@
     "ratio": 2.5454545454545454,
     "ratioLabel": "28:11",
     "shape": "rectangle",
+    "horizontalBands": 1,
+    "verticalBands": 1,
+    "obliqueBands": 1,
     "colors": [
       "#8D1B3D",
       "#FFFFFF"
@@ -3012,6 +3579,9 @@
     "ratio": 1.5,
     "ratioLabel": "3:2",
     "shape": "rectangle",
+    "horizontalBands": 1,
+    "verticalBands": 3,
+    "obliqueBands": 1,
     "colors": [
       "#ED2939",
       "#FFFFFF",
@@ -3025,6 +3595,9 @@
     "ratio": 1.5,
     "ratioLabel": "3:2",
     "shape": "rectangle",
+    "horizontalBands": 1,
+    "verticalBands": 3,
+    "obliqueBands": 1,
     "colors": [
       "#002B7F",
       "#FCD116",
@@ -3038,6 +3611,9 @@
     "ratio": 1.5,
     "ratioLabel": "3:2",
     "shape": "rectangle",
+    "horizontalBands": 3,
+    "verticalBands": 1,
+    "obliqueBands": 1,
     "colors": [
       "#FFFFFF",
       "#0C4076",
@@ -3053,6 +3629,9 @@
     "ratio": 1.5,
     "ratioLabel": "3:2",
     "shape": "rectangle",
+    "horizontalBands": 3,
+    "verticalBands": 1,
+    "obliqueBands": 1,
     "colors": [
       "#FFFFFF",
       "#D52B1E",
@@ -3066,6 +3645,9 @@
     "ratio": 1.5,
     "ratioLabel": "3:2",
     "shape": "rectangle",
+    "horizontalBands": 3,
+    "verticalBands": 1,
+    "obliqueBands": 1,
     "colors": [
       "#20603D",
       "#FAD201",
@@ -3080,6 +3662,9 @@
     "ratio": 1.5,
     "ratioLabel": "3:2",
     "shape": "rectangle",
+    "horizontalBands": 1,
+    "verticalBands": 1,
+    "obliqueBands": 1,
     "colors": [
       "#006C35",
       "#FFFFFF"
@@ -3092,6 +3677,9 @@
     "ratio": 2,
     "ratioLabel": "2:1",
     "shape": "rectangle",
+    "horizontalBands": 1,
+    "verticalBands": 1,
+    "obliqueBands": 1,
     "colors": [
       "#0051BA",
       "#215B33",
@@ -3106,6 +3694,9 @@
     "ratio": 2,
     "ratioLabel": "2:1",
     "shape": "rectangle",
+    "horizontalBands": 1,
+    "verticalBands": 1,
+    "obliqueBands": 1,
     "colors": [
       "#D62828",
       "#FCD856",
@@ -3121,6 +3712,9 @@
     "ratio": 2,
     "ratioLabel": "2:1",
     "shape": "rectangle",
+    "horizontalBands": 3,
+    "verticalBands": 1,
+    "obliqueBands": 1,
     "colors": [
       "#FFFFFF",
       "#D21034",
@@ -3134,6 +3728,9 @@
     "ratio": 1.6,
     "ratioLabel": "8:5",
     "shape": "rectangle",
+    "horizontalBands": 3,
+    "verticalBands": 3,
+    "obliqueBands": 1,
     "colors": [
       "#006AA7",
       "#FECC00"
@@ -3146,6 +3743,9 @@
     "ratio": 1.5,
     "ratioLabel": "3:2",
     "shape": "rectangle",
+    "horizontalBands": 2,
+    "verticalBands": 1,
+    "obliqueBands": 1,
     "colors": [
       "#ED2939",
       "#FFFFFF"
@@ -3158,6 +3758,9 @@
     "ratio": 2,
     "ratioLabel": "2:1",
     "shape": "rectangle",
+    "horizontalBands": 5,
+    "verticalBands": 5,
+    "obliqueBands": 3,
     "colors": [
       "#012169",
       "#FFFFFF",
@@ -3171,6 +3774,9 @@
     "ratio": 2,
     "ratioLabel": "2:1",
     "shape": "rectangle",
+    "horizontalBands": 3,
+    "verticalBands": 1,
+    "obliqueBands": 1,
     "colors": [
       "#ED1C24",
       "#005DA4",
@@ -3185,6 +3791,9 @@
     "ratio": 1.375,
     "ratioLabel": "11:8",
     "shape": "rectangle",
+    "horizontalBands": 5,
+    "verticalBands": 5,
+    "obliqueBands": 1,
     "colors": [
       "#EF2B2D",
       "#FFFFFF",
@@ -3198,6 +3807,9 @@
     "ratio": 1.5,
     "ratioLabel": "3:2",
     "shape": "rectangle",
+    "horizontalBands": 3,
+    "verticalBands": 1,
+    "obliqueBands": 1,
     "colors": [
       "#EE1C25",
       "#0B4EA2",
@@ -3211,6 +3823,9 @@
     "ratio": 1.5,
     "ratioLabel": "3:2",
     "shape": "rectangle",
+    "horizontalBands": 3,
+    "verticalBands": 1,
+    "obliqueBands": 1,
     "colors": [
       "#0072C6",
       "#FFFFFF",
@@ -3224,6 +3839,9 @@
     "ratio": 1.3333333333333333,
     "ratioLabel": "4:3",
     "shape": "rectangle",
+    "horizontalBands": 2,
+    "verticalBands": 1,
+    "obliqueBands": 1,
     "colors": [
       "#5EB6E4",
       "#FFFFFF",
@@ -3247,6 +3865,9 @@
     "ratio": 1.5,
     "ratioLabel": "3:2",
     "shape": "rectangle",
+    "horizontalBands": 1,
+    "verticalBands": 3,
+    "obliqueBands": 1,
     "colors": [
       "#00853F",
       "#FDEF42",
@@ -3260,6 +3881,9 @@
     "ratio": 1.5,
     "ratioLabel": "3:2",
     "shape": "rectangle",
+    "horizontalBands": 1,
+    "verticalBands": 1,
+    "obliqueBands": 1,
     "colors": [
       "#4189DD",
       "#FFFFFF"
@@ -3272,6 +3896,9 @@
     "ratio": 1.5,
     "ratioLabel": "3:2",
     "shape": "rectangle",
+    "horizontalBands": 5,
+    "verticalBands": 1,
+    "obliqueBands": 1,
     "colors": [
       "#377E3F",
       "#FFFFFF",
@@ -3286,6 +3913,9 @@
     "ratio": 2,
     "ratioLabel": "2:1",
     "shape": "rectangle",
+    "horizontalBands": 5,
+    "verticalBands": 1,
+    "obliqueBands": 1,
     "colors": [
       "#078930",
       "#FFFFFF",
@@ -3301,6 +3931,9 @@
     "ratio": 2,
     "ratioLabel": "2:1",
     "shape": "rectangle",
+    "horizontalBands": 3,
+    "verticalBands": 1,
+    "obliqueBands": 1,
     "colors": [
       "#12AD2B",
       "#FFCE00",
@@ -3315,6 +3948,9 @@
     "ratio": 1.7724867724867726,
     "ratioLabel": "39:22",
     "shape": "rectangle",
+    "horizontalBands": 3,
+    "verticalBands": 1,
+    "obliqueBands": 1,
     "colors": [
       "#FFFFFF",
       "#0047AB",
@@ -3490,6 +4126,9 @@
     "ratio": 1.5,
     "ratioLabel": "3:2",
     "shape": "rectangle",
+    "horizontalBands": 1,
+    "verticalBands": 1,
+    "obliqueBands": 1,
     "colors": [
       "#000000",
       "#FFFF00",
@@ -3511,6 +4150,9 @@
     "ratio": 1.5,
     "ratioLabel": "3:2",
     "shape": "rectangle",
+    "horizontalBands": 3,
+    "verticalBands": 1,
+    "obliqueBands": 1,
     "colors": [
       "#000000",
       "#FFFFFF",
@@ -3525,6 +4167,9 @@
     "ratio": 1.5,
     "ratioLabel": "3:2",
     "shape": "rectangle",
+    "horizontalBands": 1,
+    "verticalBands": 1,
+    "obliqueBands": 1,
     "colors": [
       "#3E5EB9",
       "#FFD900",
@@ -3542,6 +4187,9 @@
     "ratio": 2,
     "ratioLabel": "2:1",
     "shape": "rectangle",
+    "horizontalBands": 1,
+    "verticalBands": 1,
+    "obliqueBands": 1,
     "colors": [
       "#012169",
       "#FFFFFF",
@@ -3562,6 +4210,9 @@
     "ratio": 1.5,
     "ratioLabel": "3:2",
     "shape": "rectangle",
+    "horizontalBands": 1,
+    "verticalBands": 3,
+    "obliqueBands": 1,
     "colors": [
       "#C60C30",
       "#FECB00",
@@ -3575,6 +4226,9 @@
     "ratio": 1.5,
     "ratioLabel": "3:2",
     "shape": "rectangle",
+    "horizontalBands": 1,
+    "verticalBands": 1,
+    "obliqueBands": 1,
     "colors": [
       "#FFFFFF",
       "#002395",
@@ -3588,6 +4242,9 @@
     "ratio": 1.618,
     "ratioLabel": "144:89",
     "shape": "rectangle",
+    "horizontalBands": 5,
+    "verticalBands": 1,
+    "obliqueBands": 1,
     "colors": [
       "#006A4E",
       "#FFCE00",
@@ -3602,6 +4259,9 @@
     "ratio": 1.5,
     "ratioLabel": "3:2",
     "shape": "rectangle",
+    "horizontalBands": 5,
+    "verticalBands": 1,
+    "obliqueBands": 1,
     "colors": [
       "#A51931",
       "#F4F5F8",
@@ -3615,6 +4275,9 @@
     "ratio": 2,
     "ratioLabel": "2:1",
     "shape": "rectangle",
+    "horizontalBands": 3,
+    "verticalBands": 1,
+    "obliqueBands": 1,
     "colors": [
       "#006600",
       "#FFFFFF",
@@ -3629,6 +4292,9 @@
     "ratio": 2,
     "ratioLabel": "2:1",
     "shape": "rectangle",
+    "horizontalBands": 1,
+    "verticalBands": 1,
+    "obliqueBands": 1,
     "colors": [
       "#00247D",
       "#FED100",
@@ -3642,6 +4308,9 @@
     "ratio": 2,
     "ratioLabel": "2:1",
     "shape": "rectangle",
+    "horizontalBands": 1,
+    "verticalBands": 1,
+    "obliqueBands": 1,
     "colors": [
       "#DC241F",
       "#FFC726",
@@ -3655,6 +4324,9 @@
     "ratio": 1.5,
     "ratioLabel": "3:2",
     "shape": "rectangle",
+    "horizontalBands": 1,
+    "verticalBands": 1,
+    "obliqueBands": 1,
     "colors": [
       "#28AE66",
       "#FFFFFF",
@@ -3670,6 +4342,9 @@
     "ratio": 1.5,
     "ratioLabel": "3:2",
     "shape": "rectangle",
+    "horizontalBands": 1,
+    "verticalBands": 1,
+    "obliqueBands": 1,
     "colors": [
       "#E70013",
       "#FFFFFF"
@@ -3682,6 +4357,9 @@
     "ratio": 2,
     "ratioLabel": "2:1",
     "shape": "rectangle",
+    "horizontalBands": 1,
+    "verticalBands": 1,
+    "obliqueBands": 1,
     "colors": [
       "#C10000",
       "#FFFFFF"
@@ -3694,6 +4372,9 @@
     "ratio": 1.5,
     "ratioLabel": "3:2",
     "shape": "rectangle",
+    "horizontalBands": 1,
+    "verticalBands": 1,
+    "obliqueBands": 1,
     "colors": [
       "#E30A17",
       "#FFFFFF"
@@ -3706,6 +4387,9 @@
     "ratio": 1.6666666666666667,
     "ratioLabel": "5:3",
     "shape": "rectangle",
+    "horizontalBands": 1,
+    "verticalBands": 1,
+    "obliqueBands": 1,
     "colors": [
       "#CE1126",
       "#FFFFFF"
@@ -3718,6 +4402,9 @@
     "ratio": 2,
     "ratioLabel": "2:1",
     "shape": "rectangle",
+    "horizontalBands": 1,
+    "verticalBands": 1,
+    "obliqueBands": 1,
     "colors": [
       "#012169",
       "#FFFFFF",
@@ -3733,6 +4420,9 @@
     "ratio": 1.5,
     "ratioLabel": "3:2",
     "shape": "rectangle",
+    "horizontalBands": 1,
+    "verticalBands": 1,
+    "obliqueBands": 1,
     "colors": [
       "#FE0000",
       "#000095",
@@ -3746,6 +4436,9 @@
     "ratio": 1.5,
     "ratioLabel": "3:2",
     "shape": "rectangle",
+    "horizontalBands": 1,
+    "verticalBands": 1,
+    "obliqueBands": 5,
     "colors": [
       "#1EB53A",
       "#00A3DD",
@@ -3760,6 +4453,9 @@
     "ratio": 1.5,
     "ratioLabel": "3:2",
     "shape": "rectangle",
+    "horizontalBands": 2,
+    "verticalBands": 1,
+    "obliqueBands": 1,
     "colors": [
       "#005BBB",
       "#FFD500"
@@ -3772,6 +4468,9 @@
     "ratio": 1.5,
     "ratioLabel": "3:2",
     "shape": "rectangle",
+    "horizontalBands": 6,
+    "verticalBands": 1,
+    "obliqueBands": 1,
     "colors": [
       "#FCDC04",
       "#D90000",
@@ -3787,6 +4486,9 @@
     "ratio": 1.9,
     "ratioLabel": "19:10",
     "shape": "rectangle",
+    "horizontalBands": 13,
+    "verticalBands": 1,
+    "obliqueBands": 1,
     "colors": [
       "#B22234",
       "#FFFFFF",
@@ -3800,6 +4502,9 @@
     "ratio": 1.9,
     "ratioLabel": "19:10",
     "shape": "rectangle",
+    "horizontalBands": 13,
+    "verticalBands": 1,
+    "obliqueBands": 1,
     "colors": [
       "#B22234",
       "#FFFFFF",
@@ -3813,6 +4518,9 @@
     "ratio": 1.5,
     "ratioLabel": "3:2",
     "shape": "rectangle",
+    "horizontalBands": 9,
+    "verticalBands": 1,
+    "obliqueBands": 1,
     "colors": [
       "#FFFFFF",
       "#0038A8",
@@ -3827,6 +4535,9 @@
     "ratio": 2,
     "ratioLabel": "2:1",
     "shape": "rectangle",
+    "horizontalBands": 5,
+    "verticalBands": 1,
+    "obliqueBands": 1,
     "colors": [
       "#1EB53A",
       "#0099B5",
@@ -3841,6 +4552,9 @@
     "ratio": 1,
     "ratioLabel": "1:1",
     "shape": "rectangle",
+    "horizontalBands": 1,
+    "verticalBands": 2,
+    "obliqueBands": 1,
     "colors": [
       "#FFFFFF",
       "#FFE000",
@@ -3857,6 +4571,9 @@
     "ratio": 1.5,
     "ratioLabel": "3:2",
     "shape": "rectangle",
+    "horizontalBands": 1,
+    "verticalBands": 3,
+    "obliqueBands": 1,
     "colors": [
       "#009E60",
       "#FCD116",
@@ -3870,6 +4587,9 @@
     "ratio": 1.5,
     "ratioLabel": "3:2",
     "shape": "rectangle",
+    "horizontalBands": 3,
+    "verticalBands": 1,
+    "obliqueBands": 1,
     "colors": [
       "#FFFFFF",
       "#CF142B",
@@ -3884,6 +4604,9 @@
     "ratio": 2,
     "ratioLabel": "2:1",
     "shape": "rectangle",
+    "horizontalBands": 1,
+    "verticalBands": 1,
+    "obliqueBands": 1,
     "colors": [
       "#FF0000",
       "#FFFF00",
@@ -3904,6 +4627,9 @@
     "ratio": 1.5,
     "ratioLabel": "3:2",
     "shape": "rectangle",
+    "horizontalBands": 1,
+    "verticalBands": 1,
+    "obliqueBands": 1,
     "colors": [
       "#FFFFFF",
       "#369443",
@@ -3921,6 +4647,9 @@
     "ratio": 1.5,
     "ratioLabel": "3:2",
     "shape": "rectangle",
+    "horizontalBands": 1,
+    "verticalBands": 1,
+    "obliqueBands": 1,
     "colors": [
       "#DA251D",
       "#FFFF00"
@@ -3933,6 +4662,9 @@
     "ratio": 1.6666666666666667,
     "ratioLabel": "5:3",
     "shape": "rectangle",
+    "horizontalBands": 5,
+    "verticalBands": 1,
+    "obliqueBands": 5,
     "colors": [
       "#D21034",
       "#009543",
@@ -3947,6 +4679,9 @@
     "ratio": 1.5,
     "ratioLabel": "3:2",
     "shape": "rectangle",
+    "horizontalBands": 1,
+    "verticalBands": 1,
+    "obliqueBands": 1,
     "colors": [
       "#ED2939",
       "#FFFFFF",
@@ -3960,6 +4695,9 @@
     "ratio": 2,
     "ratioLabel": "2:1",
     "shape": "rectangle",
+    "horizontalBands": 1,
+    "verticalBands": 1,
+    "obliqueBands": 1,
     "colors": [
       "#CE1126",
       "#002B7F",
@@ -3973,6 +4711,9 @@
     "ratio": 1.4,
     "ratioLabel": "7:5",
     "shape": "rectangle",
+    "horizontalBands": 1,
+    "verticalBands": 1,
+    "obliqueBands": 1,
     "colors": [
       "#244AA5",
       "#D0A650",
@@ -3986,6 +4727,9 @@
     "ratio": 1.5,
     "ratioLabel": "3:2",
     "shape": "rectangle",
+    "horizontalBands": 3,
+    "verticalBands": 1,
+    "obliqueBands": 1,
     "colors": [
       "#FFFFFF",
       "#CE1126"
@@ -3998,6 +4742,9 @@
     "ratio": 1.5,
     "ratioLabel": "3:2",
     "shape": "rectangle",
+    "horizontalBands": 1,
+    "verticalBands": 3,
+    "obliqueBands": 1,
     "colors": [
       "#ED2939",
       "#FFFFFF",
@@ -4011,6 +4758,9 @@
     "ratio": 1.5,
     "ratioLabel": "3:2",
     "shape": "rectangle",
+    "horizontalBands": 2,
+    "verticalBands": 1,
+    "obliqueBands": 6,
     "colors": [
       "#001489",
       "#E03C31",
@@ -4026,6 +4776,9 @@
     "ratio": 1.5,
     "ratioLabel": "3:2",
     "shape": "rectangle",
+    "horizontalBands": 1,
+    "verticalBands": 4,
+    "obliqueBands": 1,
     "colors": [
       "#198A00",
       "#EF7D00",
@@ -4040,6 +4793,9 @@
     "ratio": 2,
     "ratioLabel": "2:1",
     "shape": "rectangle",
+    "horizontalBands": 7,
+    "verticalBands": 1,
+    "obliqueBands": 4,
     "colors": [
       "#319208",
       "#FFD200",

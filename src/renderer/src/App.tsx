@@ -1,5 +1,6 @@
 
 import { useEffect, useRef, useState } from 'react'
+import type { CSSProperties } from 'react'
 import WorldMap from './components/WorldMap'
 import { ExplorationView } from './components/ExplorationView'
 import {
@@ -13,16 +14,16 @@ import { StatisticsView } from './components/StatisticsView'
 import { CountryQuizSelectionView } from './components/CountryQuizSelectionView'
 import { AppModeSwitcher } from './components/AppModeSwitcher'
 import { CountryKnowledgeQuizView } from './components/CountryKnowledgeQuizView'
-import { useQuizSession } from './data/quiz/useQuizSession'
+import { getQuizAttemptPoints, useQuizSession } from './data/quiz/useQuizSession'
 import {
   createCountryQuizQuestions,
-  normalizeQuizAnswer,
   type QuizAnswers,
   type QuizClues,
   type CountryQuizQuestion
 } from './data/quiz/countryQuiz'
 import {
   createCountryKnowledgeQuestions,
+  type CountryKnowledgeQuestionKind,
   type CountryKnowledgeQuestion
 } from './data/quiz/countryKnowledge'
 import {
@@ -40,7 +41,8 @@ import {
 import {
   loadCountryQuizStats,
   saveCountryQuizStats,
-  updateCountryQuizStats
+  updateCountryQuizStats,
+  type CountryQuizQuestionResult
 } from './data/quiz/countryQuizStats'
 import { getMapProximityResult, type MapProximityResult } from './data/quiz/mapProximity'
 import { getExplorationDetails } from './data/geography/exploration'
@@ -127,6 +129,33 @@ function getQuizModeForContent(clues: QuizClues, answers: QuizAnswers): QuizMode
   return 'custom'
 }
 
+function getQuizAnswerWeights(answers: QuizAnswers): Record<string, number> {
+  const enabledAnswers = Object.entries(answers).filter(([, enabled]) => enabled)
+  const weight = enabledAnswers.length > 0 ? 1 / enabledAnswers.length : 1
+  return Object.fromEntries(enabledAnswers.map(([id]) => [id, weight]))
+}
+
+function getCountryQuizQuestionResult(
+  answerWeights: Record<string, number>,
+  answerResults: Record<string, boolean | null>,
+  answerPoints: Record<string, number>
+): CountryQuizQuestionResult {
+  const answers = Object.entries(answerWeights).map(([id]) => ({
+    id,
+    correct: answerResults[id] === true,
+    pointsEarned: answerResults[id] === true ? answerPoints[id] ?? 0 : 0
+  }))
+  const pointsEarned = answers.reduce(
+    (sum, answer) => sum + (answerWeights[answer.id] ?? 0) * answer.pointsEarned,
+    0
+  )
+  return { pointsEarned, answers }
+}
+
+function getKnowledgeStatId(kind: CountryKnowledgeQuestionKind): string {
+  return `knowledge:${kind}`
+}
+
 function isTextEditingTarget(target: EventTarget | null): boolean {
   if (!(target instanceof HTMLElement)) return false
   if (target.isContentEditable || target.tagName === 'TEXTAREA') return true
@@ -188,6 +217,7 @@ function App(): React.JSX.Element {
     sourceFeatureId: string | number
     name: string
     entityId: string | null
+    revealed?: boolean
   } | null>(null)
   const [mapProximity, setMapProximity] = useState<MapProximityResult | null>(null)
   const [quizProgress, setQuizProgress] = useState(loadQuizProgress)
@@ -398,7 +428,9 @@ function App(): React.JSX.Element {
     const getButton = (target: EventTarget | null): HTMLButtonElement | null => {
       if (!(target instanceof Element)) return null
       const button = target.closest('button')
-      return button instanceof HTMLButtonElement ? button : null
+      if (!(button instanceof HTMLButtonElement)) return null
+      if (button.matches('.country-flag-choices .country-flag-choice')) return null
+      return button
     }
 
     const handlePointerOver = (event: PointerEvent): void => {
@@ -460,6 +492,10 @@ function App(): React.JSX.Element {
   const maxQuizQuestionCount = selectedQuizCountry
     ? 1
     : getAvailableQuizQuestionCount(quizRegion)
+  const quizCountProgress =
+    ((Math.min(quizQuestionCount, maxQuizQuestionCount) - 1) /
+      Math.max(1, maxQuizQuestionCount - 1)) *
+    100
 
   const getCurrentQuestionBank = (): CountryQuizQuestion[] => {
     const allQuestions = createCountryQuizQuestions()
@@ -514,18 +550,30 @@ function App(): React.JSX.Element {
   const answerCountryKnowledgeQuestion = (answer: string): void => {
     const current = countryKnowledgeQuiz.session
     const question = current.questionOrder[current.questionIndex]
-    if (!question || current.answerCorrect !== null || current.answerRevealed) return
+    if (!question || current.answerCorrect === true || current.answerRevealed) return
     const questionKey = `${question.alpha2}:${current.questionIndex}:${question.id}`
-    if (countryKnowledgeRecordedQuestionRef.current === questionKey) return
-    countryKnowledgeRecordedQuestionRef.current = questionKey
 
     const isCorrect = answer === question.answer
+    const attemptPoints = isCorrect
+      ? getQuizAttemptPoints((current.answerAttempts.answer ?? 0) + 1)
+      : 0
     countryKnowledgeQuiz.answer(isCorrect, answer)
+    if (!isCorrect || countryKnowledgeRecordedQuestionRef.current === questionKey) return
+    countryKnowledgeRecordedQuestionRef.current = questionKey
+
     const updatedStats = updateCountryQuizStats(
       countryQuizStats,
       question.alpha2,
       'knowledge',
-      isCorrect
+      true,
+      {
+        pointsEarned: attemptPoints,
+        answers: [{
+          id: getKnowledgeStatId(question.kind),
+          correct: true,
+          pointsEarned: attemptPoints
+        }]
+      }
     )
     setCountryQuizStats(updatedStats)
     saveCountryQuizStats(updatedStats)
@@ -537,7 +585,6 @@ function App(): React.JSX.Element {
     if (!question || current.answerCorrect === true || current.answerRevealed) return
 
     countryKnowledgeQuiz.revealAnswer()
-    if (current.answerCorrect !== null) return
     const questionKey = `${question.alpha2}:${current.questionIndex}:${question.id}`
     if (countryKnowledgeRecordedQuestionRef.current === questionKey) return
     countryKnowledgeRecordedQuestionRef.current = questionKey
@@ -546,7 +593,15 @@ function App(): React.JSX.Element {
       countryQuizStats,
       question.alpha2,
       'knowledge',
-      false
+      false,
+      {
+        pointsEarned: current.answerPoints.answer ?? 0,
+        answers: [{
+          id: getKnowledgeStatId(question.kind),
+          correct: false,
+          pointsEarned: 0
+        }]
+      }
     )
     setCountryQuizStats(updatedStats)
     saveCountryQuizStats(updatedStats)
@@ -586,7 +641,7 @@ function App(): React.JSX.Element {
     setFullscreenAnswersOpen(false)
     setIsQuizRunning(true)
     setIsQuizSetupOpen(false)
-    quiz.restart(getCurrentQuestionBank())
+    quiz.restart(getCurrentQuestionBank(), getQuizAnswerWeights(quizAnswers))
   }
 
   const applyQuizPreset = (presetId: string): void => {
@@ -679,25 +734,22 @@ function App(): React.JSX.Element {
     if (
       !activeQuizAnswers.countryOnMap ||
       !question ||
-      quiz.session.answerCorrect === true ||
+      quiz.session.answerResults.countryOnMap === true ||
       quiz.session.answerRevealed
     ) {
       return false
     }
 
     const isCorrect = Number(sourceFeatureId) === question.sourceFeatureId
-    if (!isCorrect) return false
+    if (!isCorrect) {
+      setSelectedMapCountry(null)
+      quiz.answerItems({ countryOnMap: false }, name)
+      return false
+    }
 
     setMapProximity(null)
-    setSelectedMapCountry({ sourceFeatureId, name, entityId })
-
-    if (
-      !activeQuizAnswers.countryName &&
-      !activeQuizAnswers.capital &&
-      !activeQuizAnswers.flag
-    ) {
-      quiz.answer(true, name)
-    }
+    setSelectedMapCountry({ sourceFeatureId, name, entityId, revealed: false })
+    quiz.answerItems({ countryOnMap: true }, name)
 
     return true
   }
@@ -707,7 +759,7 @@ function App(): React.JSX.Element {
     if (
       !activeQuizAnswers.countryOnMap ||
       !question ||
-      quiz.session.answerCorrect !== null ||
+      quiz.session.answerResults.countryOnMap === true ||
       quiz.session.answerRevealed
     ) {
       return null
@@ -728,37 +780,16 @@ function App(): React.JSX.Element {
     setSelectedMapCountry({
       sourceFeatureId: question.sourceFeatureId,
       name: question.frenchCountryName,
-      entityId: null
+      entityId: null,
+      revealed: true
     })
     setShowExpandedQuizCountry(false)
     setShowQuizRevealCard(!isQuizFullscreen)
   }
 
-  const submitCountryQuizAnswers = (answers: {
-    countryName: string
-    capital: string
-    flagAlpha2: string | null
-  }): void => {
-    const question = quiz.session.questionOrder[quiz.session.questionIndex]
-    if (!question) return
-
-    const correct =
-      (!activeQuizAnswers.countryOnMap ||
-        Number(selectedMapCountry?.sourceFeatureId) === question.sourceFeatureId) &&
-      (!activeQuizAnswers.countryName ||
-        [
-          question.countryName,
-          question.frenchCountryName,
-          new Intl.DisplayNames([language], { type: 'region' }).of(question.alpha2) ?? ''
-        ].some(
-          (name) => normalizeQuizAnswer(answers.countryName) === normalizeQuizAnswer(name)
-        )) &&
-      (!activeQuizAnswers.capital ||
-        normalizeQuizAnswer(answers.capital) === normalizeQuizAnswer(question.capitalName)) &&
-      (!activeQuizAnswers.flag || answers.flagAlpha2 === question.alpha2)
-
-    quiz.answer(correct, JSON.stringify(answers))
-    if (correct) setFullscreenAnswersOpen(false)
+  const submitCountryQuizAnswers = (outcomes: Record<string, boolean>): void => {
+    quiz.answerItems(outcomes, JSON.stringify(outcomes))
+    if (Object.values(outcomes).every(Boolean)) setFullscreenAnswersOpen(false)
   }
 
   const nextQuizQuestion = (): void => {
@@ -773,7 +804,7 @@ function App(): React.JSX.Element {
 
   const recordCurrentQuestionResult = (): void => {
     const current = quiz.session
-    if (current.answerCorrect === null && !current.answerRevealed) return
+    if (current.answerCorrect !== true && !current.answerRevealed) return
 
     const question = current.questionOrder[current.questionIndex]
     if (!question) return
@@ -782,11 +813,17 @@ function App(): React.JSX.Element {
     if (lastRecordedQuestionRef.current === questionKey) return
 
     lastRecordedQuestionRef.current = questionKey
+    const questionResult = getCountryQuizQuestionResult(
+      current.answerWeights,
+      current.answerResults,
+      current.answerPoints
+    )
     const updatedStats = updateCountryQuizStats(
       countryQuizStats,
       question.alpha2,
       sessionMode,
-      current.answerCorrect === true
+      current.answerCorrect === true,
+      questionResult
     )
     setCountryQuizStats(updatedStats)
     saveCountryQuizStats(updatedStats)
@@ -893,6 +930,7 @@ return (
       <QuizCluesSidebar session={quiz.session} clues={activeQuizClues} />
 
       <main className="main-content">
+        <div className={`quiz-configuration-area${isQuizRunning ? ' is-running' : ''}`}>
         {isQuizRunning ? (
           <header className="quiz-live-topbar">
             <div className="quiz-live-settings">
@@ -926,7 +964,7 @@ return (
           <header className="topbar">
             <div>
               <div className="breadcrumb">{t('APPRENTISSAGE / MONDE')}</div>
-              <h1>{t('Quiz du monde')}</h1>
+              <h1>{t('Quizz monde')}</h1>
             </div>
 
             <div className="topbar-right">
@@ -954,7 +992,10 @@ return (
         {!isQuizRunning && <AppModeSwitcher active="quiz" onChange={setAppView} />}
 
         {(!isQuizRunning || isQuizSetupOpen) && (
-          <>
+          <div
+            className={`quiz-configuration-menu${isQuizRunning ? ' is-open' : ''}`}
+            aria-label={t('Réglages de la partie')}
+          >
           <section className="quiz-toolbar" aria-label={t('Réglages de la partie')}>
           <label className="quiz-region-field">
             <span>{t('RÉGION')}</span>
@@ -1011,6 +1052,7 @@ return (
                 max={maxQuizQuestionCount}
                 step={1}
                 value={Math.min(quizQuestionCount, maxQuizQuestionCount)}
+                style={{ '--quiz-count-progress': `${quizCountProgress}%` } as CSSProperties}
                 onChange={(event) =>
                   setQuizQuestionCount(
                     snapQuestionCountToMark(Number(event.target.value))
@@ -1199,8 +1241,9 @@ return (
               </span>
             )}
           </section>
-          </>
+          </div>
         )}
+        </div>
 
         {isQuizFullscreen && (
           <QuizFullscreenBar
@@ -1214,6 +1257,8 @@ return (
             onRevealAnswer={revealQuizAnswer}
             onNext={nextQuizQuestion}
             onRestart={startNewQuiz}
+            onToggleSettings={() => setIsQuizSetupOpen((open) => !open)}
+            settingsOpen={isQuizSetupOpen}
           />
         )}
 
@@ -1236,6 +1281,13 @@ return (
                 onToggleGlobeMode={toggleGlobeMode}
                 showFlagTerritories={mapLayers.flags}
                 showSelectionFeedback={activeQuizAnswers.countryOnMap}
+                showWrongAnswerFeedback={
+                  activeQuizAnswers.countryOnMap &&
+                  quiz.session.answerResults.countryOnMap === false &&
+                  !quiz.session.answerRevealed &&
+                  Number(selectedMapCountry?.sourceFeatureId) !==
+                    quiz.session.questionOrder[quiz.session.questionIndex]?.sourceFeatureId
+                }
                 quizTargetFeatureId={activeQuizClues.countryOnMap || quiz.session.answerRevealed
                   ? quiz.session.questionOrder[quiz.session.questionIndex]?.sourceFeatureId ?? null
                   : null}

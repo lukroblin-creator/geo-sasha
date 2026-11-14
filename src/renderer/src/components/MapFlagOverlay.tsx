@@ -80,6 +80,11 @@ type MapFlagOverlayProps = {
   hoveredCountry: HoveredCountry
   quizTargetFeatureId: string | number | null
   selectionBoundaryOpacity: number
+  wrongAnswerTarget: {
+    sourceFeatureId: string | number
+    entityId: string | null
+    id: number
+  } | null
 }
 
 const boundsCache = new WeakMap<object, Bounds | null>()
@@ -564,7 +569,8 @@ export const MapFlagOverlay = memo(function MapFlagOverlay({
   selectedSourceFeatureId,
   hoveredCountry,
   quizTargetFeatureId,
-  selectionBoundaryOpacity
+  selectionBoundaryOpacity,
+  wrongAnswerTarget
 }: MapFlagOverlayProps): React.JSX.Element {
   const overlayViewportRef = useRef<HTMLDivElement>(null)
   const overlaySvgRef = useRef<SVGSVGElement>(null)
@@ -999,6 +1005,16 @@ export const MapFlagOverlay = memo(function MapFlagOverlay({
         )
   }
 
+  const isWrongAnswer = (feature: FlagOverlayFeature): boolean => {
+    if (!wrongAnswerTarget) return false
+    return wrongAnswerTarget.entityId !== null
+      ? feature.entityId === wrongAnswerTarget.entityId
+      : feature.sourceFeatureIds.some(
+          (sourceFeatureId) =>
+            normalizeId(sourceFeatureId) === normalizeId(wrongAnswerTarget.sourceFeatureId)
+        )
+  }
+
   return (
     <div ref={overlayViewportRef} className="map-flag-overlay-viewport">
       <svg
@@ -1050,6 +1066,13 @@ export const MapFlagOverlay = memo(function MapFlagOverlay({
                     />
                   ))}
                 </g>
+              ))}
+              {isWrongAnswer(feature) && feature.polygons.map(({ path }, index) => (
+                <path
+                  key={`wrong-answer-${wrongAnswerTarget?.id}-${feature.key}-${index}`}
+                  className="map-wrong-answer-highlight"
+                  d={path}
+                />
               ))}
             </g>
           ))}
@@ -1122,6 +1145,13 @@ export const MapFlagOverlay = memo(function MapFlagOverlay({
                   {isSelected(feature) && <path d={path} fill="#e5a63b" />}
                   {!isSelected(feature) && isHovered(feature) && (
                     <path d={path} fill="#ffffff" fillOpacity={0.24} />
+                  )}
+                  {isWrongAnswer(feature) && (
+                    <path
+                      key={`wrong-answer-${wrongAnswerTarget?.id}`}
+                      className="map-wrong-answer-highlight"
+                      d={path}
+                    />
                   )}
                   {showBorders && (
                     <path

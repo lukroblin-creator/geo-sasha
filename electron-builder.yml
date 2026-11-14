@@ -1,4 +1,4 @@
-appId: com.electron.app
+appId: com.worldatlas.desktop
 productName: world-atlas
 directories:
   buildResources: build
@@ -19,6 +19,9 @@ nsis:
   uninstallDisplayName: ${productName}
   createDesktopShortcut: always
 mac:
+  target:
+    - dmg
+    - zip
   entitlementsInherit: build/entitlements.mac.plist
   extendInfo:
     - NSCameraUsageDescription: Application requests access to the device's camera.
@@ -39,7 +42,8 @@ appImage:
   artifactName: ${name}-${version}.${ext}
 npmRebuild: false
 publish:
-  provider: generic
-  url: https://example.com/auto-updates
+  provider: github
+  owner: lukroblin-creator
+  repo: geo-sasha
 electronDownload:
   mirror: https://npmmirror.com/mirrors/electron/

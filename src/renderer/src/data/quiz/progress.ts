@@ -31,16 +31,20 @@ function toStats(value: unknown): QuizStats | null {
   const lastScore = stats.lastScore
   if (
     !Number.isInteger(completedSessions) ||
-    !Number.isInteger(bestScore) ||
-    !Number.isInteger(lastScore)
+    typeof bestScore !== 'number' ||
+    !Number.isFinite(bestScore) ||
+    typeof lastScore !== 'number' ||
+    !Number.isFinite(lastScore) ||
+    bestScore < 0 ||
+    lastScore < 0
   ) {
     return null
   }
 
   return {
     completedSessions: Math.max(0, completedSessions as number),
-    bestScore: Math.max(0, bestScore as number),
-    lastScore: Math.max(0, lastScore as number)
+    bestScore,
+    lastScore
   }
 }
 

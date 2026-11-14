@@ -33,8 +33,17 @@ type FlagMetadata = {
   ratio: number
   ratioLabel: string | null
   shape: 'rectangle' | 'polygon'
+  horizontalBands?: number
+  verticalBands?: number
+  obliqueBands?: number
   outline?: FlagOutlinePoint[]
   colors: string[]
+}
+
+export type FlagBandCounts = {
+  horizontal: number
+  vertical: number
+  oblique: number
 }
 
 const metadataByCode = new Map<string, FlagMetadata>(
@@ -67,21 +76,28 @@ export function getFlagOutline(alpha2: string): FlagOutlinePoint[] | null {
   return metadata.outline
 }
 
+export function getFlagBandCounts(alpha2: string): FlagBandCounts {
+  const metadata = metadataByCode.get(alpha2.toUpperCase())
+  return {
+    horizontal: metadata?.horizontalBands ?? 1,
+    vertical: metadata?.verticalBands ?? 1,
+    oblique: metadata?.obliqueBands ?? 1
+  }
+}
+
 export function flagOutlineMatches(alpha2: string, drawing: FlagPolygonDrawing): boolean {
   const metadata = metadataByCode.get(alpha2.toUpperCase())
   const reference = getFlagOutline(alpha2)
   if (!metadata || !reference || drawing.points.length !== reference.length) return false
 
-  const ratioTolerance = Math.max(0.12, metadata.ratio * 0.25)
-  if (Math.abs(metadata.ratio - drawing.ratio) > ratioTolerance) return false
-
+  // Compare the contour independently from the drawn size and aspect ratio so a rough sketch can match.
   const drawnSamples = sampleClosedOutline(drawing.points)
   const referenceSamples = sampleClosedOutline(reference)
   const outlineDistance =
     (meanDistanceToOutline(drawnSamples, reference) +
       meanDistanceToOutline(referenceSamples, drawing.points)) /
     2
-  return outlineDistance <= 0.18
+  return outlineDistance <= 0.28
 }
 
 function sampleClosedOutline(points: FlagOutlinePoint[], count = 64): FlagOutlinePoint[] {
@@ -156,23 +172,48 @@ export function flagHasColorNear(alpha2: string, selectedColor: string): boolean
   const metadata = metadataByCode.get(alpha2.toUpperCase())
   if (!metadata) return false
 
-  const selected = rgb(selectedColor)
+  const selected = hsl(selectedColor)
   return metadata.colors.some((color) => {
-    const candidate = rgb(color)
-    const distance = Math.sqrt(
-      (selected[0] - candidate[0]) ** 2 +
-        (selected[1] - candidate[1]) ** 2 +
-        (selected[2] - candidate[2]) ** 2
-    )
-    return distance <= 95
+    const candidate = hsl(color)
+    const selectedIsNeutral = selected[1] < 0.12
+    const candidateIsNeutral = candidate[1] < 0.12
+
+    if (selectedIsNeutral || candidateIsNeutral) {
+      return (
+        selectedIsNeutral &&
+        candidateIsNeutral &&
+        Math.abs(selected[1] - candidate[1]) <= 0.1 &&
+        Math.abs(selected[2] - candidate[2]) <= 0.2
+      )
+    }
+
+    const hueDistance = Math.abs(selected[0] - candidate[0])
+    return Math.min(hueDistance, 360 - hueDistance) <= 18
   })
 }
 
-function rgb(color: string): [number, number, number] {
+function hsl(color: string): [number, number, number] {
   const value = color.slice(1)
-  return [0, 2, 4].map((offset) => parseInt(value.slice(offset, offset + 2), 16)) as [
-    number,
-    number,
-    number
-  ]
+  const [red, green, blue] = [0, 2, 4].map(
+    (offset) => parseInt(value.slice(offset, offset + 2), 16) / 255
+  ) as [number, number, number]
+  const maximum = Math.max(red, green, blue)
+  const minimum = Math.min(red, green, blue)
+  const lightness = (maximum + minimum) / 2
+  const difference = maximum - minimum
+
+  if (difference === 0) return [0, 0, lightness]
+
+  const saturation = difference / (1 - Math.abs(2 * lightness - 1))
+  let hue: number
+  if (maximum === red) {
+    hue = ((green - blue) / difference) % 6
+  } else if (maximum === green) {
+    hue = (blue - red) / difference + 2
+  } else {
+    hue = (red - green) / difference + 4
+  }
+
+  hue = (hue * 60 + 360) % 360
+  return [hue, saturation, lightness]
 }

@@ -8,7 +8,7 @@ type AppModeSwitcherProps = {
 }
 
 const modes: { id: AppPrimaryMode; label: string }[] = [
-  { id: 'quiz', label: 'Quiz' },
+  { id: 'quiz', label: 'Quizz monde' },
   { id: 'exploration', label: 'Exploration' },
   { id: 'country-select', label: 'Quiz pays' }
 ]

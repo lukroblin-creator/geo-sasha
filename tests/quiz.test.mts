@@ -9,7 +9,8 @@ import {
 import {
   advanceQuizSession,
   createQuizSession,
-  submitQuizAnswer
+  submitQuizAnswer,
+  submitQuizAnswerItems
 } from '../src/renderer/src/data/quiz/useQuizSession.ts'
 import { loadQuizProgress, saveCompletedQuiz } from '../src/renderer/src/data/quiz/progress.ts'
 import {
@@ -86,35 +87,75 @@ test('la génération signale une capitale manquante', (): void => {
   assert.throws(() => buildCapitalQuestions(catalog.slice(0, 1), []), /Missing capital for/)
 })
 
-test('une session mélange les questions et gère les réponses et la fin', (): void => {
-  const questions = ['A', 'B', 'C']
+test('une session garde la question après erreur et réduit le score selon les essais', (): void => {
+  const questions = ['A', 'B', 'C', 'D']
   let session = createQuizSession(questions)
 
   assert.deepEqual([...session.questionOrder].sort(), questions)
   assert.equal(session.questionIndex, 0)
   assert.equal(session.score, 0)
+  assert.equal(session.attemptCount, 0)
   assert.equal(session.completed, false)
 
   session = submitQuizAnswer(session, false, 'incorrect')
   assert.equal(session.score, 0)
+  assert.equal(session.attemptCount, 1)
   assert.equal(session.answerCorrect, false)
   session = submitQuizAnswer(session, true, 'correct')
-  assert.equal(session.score, 1)
+  assert.equal(session.score, 0.5)
+  assert.equal(session.attemptCount, 2)
   assert.equal(session.answerCorrect, true)
   assert.equal(submitQuizAnswer(session, true), session)
 
   session = advanceQuizSession(session)
   assert.equal(session.questionIndex, 1)
+  assert.equal(session.attemptCount, 0)
   assert.equal(session.answerCorrect, null)
   assert.equal(session.selectedAnswer, null)
 
   session = submitQuizAnswer(session, true)
+  assert.equal(session.score, 1.5)
   session = advanceQuizSession(session)
   session = submitQuizAnswer(session, false)
+  assert.equal(advanceQuizSession(session), session)
+  session = submitQuizAnswer(session, false)
+  session = submitQuizAnswer(session, true)
+  assert.equal(session.score, 1.75)
+  assert.equal(session.attemptCount, 3)
+  session = advanceQuizSession(session)
+
+  session = submitQuizAnswer(session, false)
+  session = submitQuizAnswer(session, false)
+  session = submitQuizAnswer(session, false)
+  session = submitQuizAnswer(session, true)
+  assert.equal(session.score, 1.75)
+  assert.equal(session.attemptCount, 4)
   session = advanceQuizSession(session)
   assert.equal(session.completed, true)
-  assert.equal(session.score, 2)
+  assert.equal(session.score, 1.75)
   assert.equal(advanceQuizSession(session), session)
+})
+
+test('une question combinée répartit son point et garde les essais séparés par réponse', (): void => {
+  const weights = { countryOnMap: 1 / 3, flag: 1 / 3, capital: 1 / 3 }
+  let session = createQuizSession(['question'], weights)
+
+  session = submitQuizAnswerItems(session, { countryOnMap: true, flag: false })
+  assert.equal(session.score, 1 / 3)
+  assert.equal(session.answerResults.countryOnMap, true)
+  assert.equal(session.answerResults.flag, false)
+  assert.equal(session.answerResults.capital, null)
+
+  session = submitQuizAnswerItems(session, { flag: true })
+  assert.equal(session.score, 1 / 3 + 0.5 / 3)
+  assert.equal(session.answerAttempts.flag, 2)
+  assert.equal(session.answerResults.flag, true)
+
+  session = submitQuizAnswerItems(session, { capital: false })
+  session = submitQuizAnswerItems(session, { capital: true })
+  assert.equal(session.score, 1 / 3 + 0.5 / 3 + 0.5 / 3)
+  assert.equal(session.answerAttempts.capital, 2)
+  assert.equal(session.answerCorrect, true)
 })
 
 test('la progression sauvegarde les scores séparément par quiz', (): void => {
@@ -138,6 +179,17 @@ test('la progression sauvegarde les scores séparément par quiz', (): void => {
   assert.deepEqual(loadQuizProgress(), progress)
 })
 
+test('les scores décimaux restent lisibles après rechargement', (): void => {
+  setLocalStorage()
+
+  saveCompletedQuiz('custom', 1.75)
+  assert.deepEqual(loadQuizProgress().custom, {
+    completedSessions: 1,
+    bestScore: 1.75,
+    lastScore: 1.75
+  })
+})
+
 test('les statistiques par pays suivent les bonnes réponses et le mode de quiz', (): void => {
   setLocalStorage()
 
@@ -149,13 +201,73 @@ test('les statistiques par pays suivent les bonnes réponses et le mode de quiz'
   assert.deepEqual(loadCountryQuizStats().FR, {
     answered: 2,
     correct: 1,
+    pointsEarned: 1,
+    pointsPossible: 2,
     byMode: {
-      flags: { answered: 1, correct: 0 },
-      capitals: { answered: 1, correct: 1 },
-      custom: { answered: 0, correct: 0 },
-      knowledge: { answered: 0, correct: 0 }
-    }
+      flags: { answered: 1, correct: 0, pointsEarned: 0, pointsPossible: 1 },
+      capitals: { answered: 1, correct: 1, pointsEarned: 1, pointsPossible: 1 },
+      custom: { answered: 0, correct: 0, pointsEarned: 0, pointsPossible: 0 },
+      knowledge: { answered: 0, correct: 0, pointsEarned: 0, pointsPossible: 0 }
+    },
+    byAnswer: {}
   })
+})
+
+test('les statistiques distinguent les éléments d’une question personnalisée', (): void => {
+  setLocalStorage()
+  const points = 1 / 3
+  const result = {
+    pointsEarned: points,
+    answers: [
+      { id: 'countryOnMap', correct: true, pointsEarned: 1 },
+      { id: 'flag', correct: false, pointsEarned: 0 },
+      { id: 'capital', correct: false, pointsEarned: 0 }
+    ]
+  }
+  const updated = updateCountryQuizStats(loadCountryQuizStats(), 'FR', 'custom', false, result)
+  saveCountryQuizStats(updated)
+
+  const france = loadCountryQuizStats().FR
+  assert.ok(france)
+  assert.equal(france.correct, 0)
+  assert.equal(france.pointsEarned, points)
+  assert.equal(france.pointsPossible, 1)
+  assert.deepEqual(france.byAnswer.countryOnMap, {
+    answered: 1,
+    correct: 1,
+    pointsEarned: 1,
+    pointsPossible: 1
+  })
+  assert.deepEqual(france.byAnswer.flag, {
+    answered: 1,
+    correct: 0,
+    pointsEarned: 0,
+    pointsPossible: 1
+  })
+  assert.equal(france.byMode.custom.pointsEarned, points)
+})
+
+test('les anciennes statistiques restent lisibles sans fabriquer de détails par élément', (): void => {
+  setLocalStorage({
+    'world-atlas:country-quiz-stats:v1': JSON.stringify({
+      FR: {
+        answered: 3,
+        correct: 2,
+        byMode: {
+          flags: { answered: 2, correct: 2 },
+          capitals: { answered: 1, correct: 0 }
+        }
+      }
+    })
+  })
+
+  const france = loadCountryQuizStats().FR
+  assert.ok(france)
+  assert.equal(france.pointsEarned, 2)
+  assert.equal(france.pointsPossible, 3)
+  assert.equal(france.byMode.flags.pointsEarned, 2)
+  assert.equal(france.byMode.capitals.pointsPossible, 1)
+  assert.deepEqual(france.byAnswer, {})
 })
 
 test('la progression v2 des drapeaux est reprise sans inventer un score capitales', (): void => {

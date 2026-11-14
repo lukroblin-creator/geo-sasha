@@ -180,7 +180,7 @@ export function FlagRatioFilter({
   const [polygonCursorPoint, setPolygonCursorPoint] = useState<FlagOutlinePoint | null>(null)
   const [polygonClosingTarget, setPolygonClosingTarget] = useState(false)
   const [polygonFinished, setPolygonFinished] = useState(false)
-  const [showDrawingHelp, setShowDrawingHelp] = useState(true)
+  const [showDrawingHelp, setShowDrawingHelp] = useState(false)
   const [viewport, setViewport] = useState({ scale: 1, x: 0, y: 0 })
 
   const pushUndoSnapshot = (): void => {
