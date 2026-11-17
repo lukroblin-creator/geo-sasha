@@ -23,6 +23,8 @@ type MapResourceOverlayProps = {
   zoom: number
   revision: number
   maxItems?: number
+  opacity?: number
+  overlayZIndex?: number
 }
 
 type ResourceMarker = {
@@ -193,7 +195,9 @@ export const MapResourceOverlay = memo(function MapResourceOverlay({
   labels,
   zoom,
   revision,
-  maxItems = Number.POSITIVE_INFINITY
+  maxItems = Number.POSITIVE_INFINITY,
+  opacity = 1,
+  overlayZIndex = 1
 }: MapResourceOverlayProps): React.JSX.Element {
   const [selectedIndustryKey, setSelectedIndustryKey] = useState<string | null>(null)
   const layoutZoom = Math.round(zoom * 2) / 2
@@ -341,7 +345,11 @@ export const MapResourceOverlay = memo(function MapResourceOverlay({
             longitude={marker.longitude}
             latitude={marker.latitude}
             anchor="center"
-            style={{ zIndex: selectedIndustryKey === markerKey ? 5 : 3 }}
+            style={{
+              zIndex: selectedIndustryKey === markerKey ? 10000 : overlayZIndex,
+              opacity,
+              pointerEvents: opacity > 0 ? 'auto' : 'none'
+            }}
           >
             <div
               className="map-resource-marker"

@@ -1371,6 +1371,13 @@ const filteredDrawCountryOptions = drawCountrySearch.trim()
     )
   : []
 
+const selectDrawCountry = (alpha2: string): void => {
+  setDrawCountryAlpha2(alpha2)
+  setDrawContinents([])
+  setDrawCountrySearch('')
+  setDrawCountrySearchOpen(false)
+}
+
 const estimationSelectionLabel = estimationAlpha2s.length
   ? (() => {
       const displayNames = new Intl.DisplayNames([language], { type: 'region' })
@@ -1818,6 +1825,10 @@ return (
                         }}
                         onKeyDown={(event) => {
                           if (event.key === 'Escape') setDrawCountrySearchOpen(false)
+                          if (event.key === 'Enter' && filteredDrawCountryOptions[0]) {
+                            event.preventDefault()
+                            selectDrawCountry(filteredDrawCountryOptions[0].alpha2)
+                          }
                         }}
                       />
                       {drawCountrySearchOpen && drawCountrySearch.trim() && (
@@ -1828,12 +1839,7 @@ return (
                                 type="button"
                                 role="option"
                                 aria-selected={drawCountryAlpha2 === country.alpha2}
-                                onClick={() => {
-                                  setDrawCountryAlpha2(country.alpha2)
-                                  setDrawContinents([])
-                                  setDrawCountrySearch('')
-                                  setDrawCountrySearchOpen(false)
-                                }}
+                                onClick={() => selectDrawCountry(country.alpha2)}
                               >{country.name}</button>
                             </li>
                           )) : (

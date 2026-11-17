@@ -1,0 +1,1555 @@
+{
+  "metadata": {
+    "snapshotDate": "2026-11-17",
+    "generatedAt": "2026-11-17",
+    "currencySource": "Frankfurter v2, daily blended mid-market reference rates from central banks and official sources",
+    "currencySourceUrl": "https://api.frankfurter.dev/v2/rates?base=EUR",
+    "salarySource": "ILOSTAT indicator EAR_EMTM_SEX_CUR_NB, with official country-specific source overrides where needed",
+    "salarySourceUrl": "https://rplumber.ilo.org/data/indicator/?id=EAR_EMTM_SEX_CUR_NB",
+    "notes": [
+      "FX values are reference rates in units of currency per 1 EUR; 1 unit to EUR is calculated as the reciprocal.",
+      "Each currency rate retains its own latest observation date; no live network lookup is required by the app.",
+      "Salary observations are the latest non-unreliable annual median monthly earnings for employees (sex: total), reported in local currency. The observation year is shown in the country card.",
+      "Country-specific source overrides include their own source URL and definition in the country record.",
+      "ILOSTAT earnings are gross to the extent possible, but national sources and definitions may differ; this is not a net-pay estimate.",
+      "The EUR salary equivalent uses the latest cached currency reference rate and is illustrative, not a purchasing-power comparison."
+    ]
+  },
+  "ratesByCurrency": {
+    "AED": {
+      "unitsPerEuro": 4.0476,
+      "date": "2026-11-17"
+    },
+    "AFN": {
+      "unitsPerEuro": 72.194,
+      "date": "2026-11-17"
+    },
+    "ALL": {
+      "unitsPerEuro": 90.64,
+      "date": "2026-11-17"
+    },
+    "AMD": {
+      "unitsPerEuro": 396.83,
+      "date": "2026-11-17"
+    },
+    "AOA": {
+      "unitsPerEuro": 1012.36,
+      "date": "2026-11-17"
+    },
+    "ARS": {
+      "unitsPerEuro": 1705.23,
+      "date": "2026-11-17"
+    },
+    "AUD": {
+      "unitsPerEuro": 1.632,
+      "date": "2026-11-17"
+    },
+    "AWG": {
+      "unitsPerEuro": 1.9778,
+      "date": "2026-11-16"
+    },
+    "AZN": {
+      "unitsPerEuro": 1.8737,
+      "date": "2026-11-17"
+    },
+    "BAM": {
+      "unitsPerEuro": 1.9558,
+      "date": "2026-11-17"
+    },
+    "BBD": {
+      "unitsPerEuro": 2.2369,
+      "date": "2026-11-17"
+    },
+    "BDT": {
+      "unitsPerEuro": 137.33,
+      "date": "2026-11-17"
+    },
+    "BHD": {
+      "unitsPerEuro": 0.4144,
+      "date": "2026-11-17"
+    },
+    "BIF": {
+      "unitsPerEuro": 3320.3,
+      "date": "2026-11-17"
+    },
+    "BMD": {
+      "unitsPerEuro": 1.1021,
+      "date": "2026-11-17"
+    },
+    "BND": {
+      "unitsPerEuro": 1.4199,
+      "date": "2026-11-17"
+    },
+    "BOB": {
+      "unitsPerEuro": 12.8637,
+      "date": "2026-11-17"
+    },
+    "BRL": {
+      "unitsPerEuro": 6.2896,
+      "date": "2026-11-17"
+    },
+    "BSD": {
+      "unitsPerEuro": 1.1142,
+      "date": "2026-11-17"
+    },
+    "BTN": {
+      "unitsPerEuro": 103.33,
+      "date": "2026-11-17"
+    },
+    "BWP": {
+      "unitsPerEuro": 15.0906,
+      "date": "2026-11-17"
+    },
+    "BYN": {
+      "unitsPerEuro": 3.3071,
+      "date": "2026-11-17"
+    },
+    "BZD": {
+      "unitsPerEuro": 2.2407,
+      "date": "2026-11-17"
+    },
+    "CAD": {
+      "unitsPerEuro": 1.5739,
+      "date": "2026-11-17"
+    },
+    "CDF": {
+      "unitsPerEuro": 2525.75,
+      "date": "2026-11-17"
+    },
+    "CHF": {
+      "unitsPerEuro": 0.92489,
+      "date": "2026-11-17"
+    },
+    "CLP": {
+      "unitsPerEuro": 1100.65,
+      "date": "2026-11-17"
+    },
+    "CNY": {
+      "unitsPerEuro": 7.342,
+      "date": "2026-11-17"
+    },
+    "COP": {
+      "unitsPerEuro": 3660.25,
+      "date": "2026-11-17"
+    },
+    "CRC": {
+      "unitsPerEuro": 491.37,
+      "date": "2026-11-17"
+    },
+    "CUP": {
+      "unitsPerEuro": 26.451,
+      "date": "2026-11-17"
+    },
+    "CVE": {
+      "unitsPerEuro": 110.26,
+      "date": "2026-11-17"
+    },
+    "CZK": {
+      "unitsPerEuro": 24.438,
+      "date": "2026-11-17"
+    },
+    "DJF": {
+      "unitsPerEuro": 195.8,
+      "date": "2026-11-17"
+    },
+    "DKK": {
+      "unitsPerEuro": 7.4802,
+      "date": "2026-11-17"
+    },
+    "DOP": {
+      "unitsPerEuro": 67.523,
+      "date": "2026-11-17"
+    },
+    "DZD": {
+      "unitsPerEuro": 151.06,
+      "date": "2026-11-17"
+    },
+    "EGP": {
+      "unitsPerEuro": 59.196,
+      "date": "2026-11-17"
+    },
+    "ERN": {
+      "unitsPerEuro": 16.7998,
+      "date": "2026-11-17"
+    },
+    "ETB": {
+      "unitsPerEuro": 178.47,
+      "date": "2026-11-17"
+    },
+    "EUR": {
+      "unitsPerEuro": 1,
+      "date": "2026-11-17"
+    },
+    "FJD": {
+      "unitsPerEuro": 2.5103,
+      "date": "2026-11-17"
+    },
+    "FKP": {
+      "unitsPerEuro": 0.83342,
+      "date": "2026-11-16"
+    },
+    "GBP": {
+      "unitsPerEuro": 0.83434,
+      "date": "2026-11-17"
+    },
+    "GEL": {
+      "unitsPerEuro": 2.8562,
+      "date": "2026-11-17"
+    },
+    "GGP": {
+      "unitsPerEuro": 0.83434,
+      "date": "2026-11-17"
+    },
+    "GHS": {
+      "unitsPerEuro": 12.903,
+      "date": "2026-11-17"
+    },
+    "GIP": {
+      "unitsPerEuro": 0.84577,
+      "date": "2026-11-16"
+    },
+    "GMD": {
+      "unitsPerEuro": 81.19,
+      "date": "2026-11-17"
+    },
+    "GNF": {
+      "unitsPerEuro": 9777,
+      "date": "2026-11-17"
+    },
+    "GTQ": {
+      "unitsPerEuro": 8.438,
+      "date": "2026-11-17"
+    },
+    "GYD": {
+      "unitsPerEuro": 233.8,
+      "date": "2026-11-17"
+    },
+    "HKD": {
+      "unitsPerEuro": 8.6545,
+      "date": "2026-11-17"
+    },
+    "HNL": {
+      "unitsPerEuro": 29.705,
+      "date": "2026-11-17"
+    },
+    "HTG": {
+      "unitsPerEuro": 144.54,
+      "date": "2026-11-17"
+    },
+    "HUF": {
+      "unitsPerEuro": 364.94,
+      "date": "2026-11-17"
+    },
+    "IDR": {
+      "unitsPerEuro": 20109,
+      "date": "2026-11-17"
+    },
+    "ILS": {
+      "unitsPerEuro": 3.5577,
+      "date": "2026-11-17"
+    },
+    "IMP": {
+      "unitsPerEuro": 0.83434,
+      "date": "2026-11-17"
+    },
+    "INR": {
+      "unitsPerEuro": 103.33,
+      "date": "2026-11-17"
+    },
+    "IQD": {
+      "unitsPerEuro": 1671.06,
+      "date": "2026-11-17"
+    },
+    "IRR": {
+      "unitsPerEuro": 2117912,
+      "date": "2026-11-17"
+    },
+    "ISK": {
+      "unitsPerEuro": 136.85,
+      "date": "2026-11-17"
+    },
+    "JEP": {
+      "unitsPerEuro": 0.83434,
+      "date": "2026-11-17"
+    },
+    "JMD": {
+      "unitsPerEuro": 174.42,
+      "date": "2026-11-17"
+    },
+    "JOD": {
+      "unitsPerEuro": 0.78142,
+      "date": "2026-11-17"
+    },
+    "JPY": {
+      "unitsPerEuro": 175.91,
+      "date": "2026-11-17"
+    },
+    "KES": {
+      "unitsPerEuro": 143.2,
+      "date": "2026-11-17"
+    },
+    "KGS": {
+      "unitsPerEuro": 96.43,
+      "date": "2026-11-17"
+    },
+    "KHR": {
+      "unitsPerEuro": 4500.31,
+      "date": "2026-11-17"
+    },
+    "KMF": {
+      "unitsPerEuro": 493.1,
+      "date": "2026-11-17"
+    },
+    "KPW": {
+      "unitsPerEuro": 143.29,
+      "date": "2026-11-17"
+    },
+    "KRW": {
+      "unitsPerEuro": 1472.38,
+      "date": "2026-11-17"
+    },
+    "KWD": {
+      "unitsPerEuro": 0.34165,
+      "date": "2026-11-17"
+    },
+    "KYD": {
+      "unitsPerEuro": 0.92269,
+      "date": "2026-11-16"
+    },
+    "KZT": {
+      "unitsPerEuro": 490.2,
+      "date": "2026-11-17"
+    },
+    "LAK": {
+      "unitsPerEuro": 24714,
+      "date": "2026-11-17"
+    },
+    "LBP": {
+      "unitsPerEuro": 99694,
+      "date": "2026-11-17"
+    },
+    "LKR": {
+      "unitsPerEuro": 366.69,
+      "date": "2026-11-17"
+    },
+    "LRD": {
+      "unitsPerEuro": 185.8,
+      "date": "2026-11-17"
+    },
+    "LSL": {
+      "unitsPerEuro": 18.6728,
+      "date": "2026-11-17"
+    },
+    "LYD": {
+      "unitsPerEuro": 7.1153,
+      "date": "2026-11-17"
+    },
+    "MAD": {
+      "unitsPerEuro": 10.9926,
+      "date": "2026-11-17"
+    },
+    "MDL": {
+      "unitsPerEuro": 20.098,
+      "date": "2026-11-17"
+    },
+    "MGA": {
+      "unitsPerEuro": 5031,
+      "date": "2026-11-17"
+    },
+    "MKD": {
+      "unitsPerEuro": 61.683,
+      "date": "2026-11-17"
+    },
+    "MMK": {
+      "unitsPerEuro": 2314.0,
+      "date": "2026-11-17"
+    },
+    "MNT": {
+      "unitsPerEuro": 3974.34,
+      "date": "2026-11-17"
+    },
+    "MOP": {
+      "unitsPerEuro": 8.9142,
+      "date": "2026-11-17"
+    },
+    "MRU": {
+      "unitsPerEuro": 44.674,
+      "date": "2026-11-17"
+    },
+    "MUR": {
+      "unitsPerEuro": 52.74,
+      "date": "2026-11-17"
+    },
+    "MVR": {
+      "unitsPerEuro": 17.0242,
+      "date": "2026-11-17"
+    },
+    "MWK": {
+      "unitsPerEuro": 1912.04,
+      "date": "2026-11-17"
+    },
+    "MXN": {
+      "unitsPerEuro": 20.456,
+      "date": "2026-11-17"
+    },
+    "MYR": {
+      "unitsPerEuro": 4.5099,
+      "date": "2026-11-17"
+    },
+    "MZN": {
+      "unitsPerEuro": 70.188,
+      "date": "2026-11-17"
+    },
+    "NAD": {
+      "unitsPerEuro": 18.6703,
+      "date": "2026-11-17"
+    },
+    "NGN": {
+      "unitsPerEuro": 1490.7,
+      "date": "2026-11-17"
+    },
+    "NIO": {
+      "unitsPerEuro": 40.365,
+      "date": "2026-11-17"
+    },
+    "NOK": {
+      "unitsPerEuro": 10.5928,
+      "date": "2026-11-17"
+    },
+    "NPR": {
+      "unitsPerEuro": 165.82,
+      "date": "2026-11-17"
+    },
+    "NZD": {
+      "unitsPerEuro": 1.998,
+      "date": "2026-11-17"
+    },
+    "OMR": {
+      "unitsPerEuro": 0.42377,
+      "date": "2026-11-17"
+    },
+    "PAB": {
+      "unitsPerEuro": 1.1038,
+      "date": "2026-11-17"
+    },
+    "PEN": {
+      "unitsPerEuro": 3.7564,
+      "date": "2026-11-17"
+    },
+    "PGK": {
+      "unitsPerEuro": 4.9786,
+      "date": "2026-11-17"
+    },
+    "PHP": {
+      "unitsPerEuro": 70.398,
+      "date": "2026-11-17"
+    },
+    "PKR": {
+      "unitsPerEuro": 305.25,
+      "date": "2026-11-17"
+    },
+    "PLN": {
+      "unitsPerEuro": 4.4081,
+      "date": "2026-11-17"
+    },
+    "PYG": {
+      "unitsPerEuro": 6850,
+      "date": "2026-11-17"
+    },
+    "QAR": {
+      "unitsPerEuro": 4.0118,
+      "date": "2026-11-17"
+    },
+    "RON": {
+      "unitsPerEuro": 5.3538,
+      "date": "2026-11-17"
+    },
+    "RSD": {
+      "unitsPerEuro": 117.75,
+      "date": "2026-11-17"
+    },
+    "RUB": {
+      "unitsPerEuro": 90.97,
+      "date": "2026-11-17"
+    },
+    "RWF": {
+      "unitsPerEuro": 1628.26,
+      "date": "2026-11-17"
+    },
+    "SAR": {
+      "unitsPerEuro": 4.133,
+      "date": "2026-11-17"
+    },
+    "SBD": {
+      "unitsPerEuro": 8.8999,
+      "date": "2026-11-17"
+    },
+    "SCR": {
+      "unitsPerEuro": 16.1454,
+      "date": "2026-11-17"
+    },
+    "SDG": {
+      "unitsPerEuro": 608.38,
+      "date": "2026-11-17"
+    },
+    "SEK": {
+      "unitsPerEuro": 11.1102,
+      "date": "2026-11-17"
+    },
+    "SGD": {
+      "unitsPerEuro": 1.4199,
+      "date": "2026-11-17"
+    },
+    "SHP": {
+      "unitsPerEuro": 0.83342,
+      "date": "2026-11-16"
+    },
+    "SLE": {
+      "unitsPerEuro": 25.642,
+      "date": "2026-11-17"
+    },
+    "SOS": {
+      "unitsPerEuro": 629.89,
+      "date": "2026-11-17"
+    },
+    "SRD": {
+      "unitsPerEuro": 41.407,
+      "date": "2026-11-17"
+    },
+    "SSP": {
+      "unitsPerEuro": 6531,
+      "date": "2026-11-16"
+    },
+    "STN": {
+      "unitsPerEuro": 24.124,
+      "date": "2026-11-16"
+    },
+    "SYP": {
+      "unitsPerEuro": 134.59,
+      "date": "2026-11-17"
+    },
+    "SZL": {
+      "unitsPerEuro": 18.6597,
+      "date": "2026-11-17"
+    },
+    "THB": {
+      "unitsPerEuro": 37.337,
+      "date": "2026-11-17"
+    },
+    "TJS": {
+      "unitsPerEuro": 10.1462,
+      "date": "2026-11-17"
+    },
+    "TMT": {
+      "unitsPerEuro": 3.8575,
+      "date": "2026-11-17"
+    },
+    "TND": {
+      "unitsPerEuro": 3.345,
+      "date": "2026-11-17"
+    },
+    "TOP": {
+      "unitsPerEuro": 2.6604,
+      "date": "2026-11-17"
+    },
+    "TRY": {
+      "unitsPerEuro": 55.534,
+      "date": "2026-11-17"
+    },
+    "TTD": {
+      "unitsPerEuro": 7.44,
+      "date": "2026-11-16"
+    },
+    "TWD": {
+      "unitsPerEuro": 36.312,
+      "date": "2026-11-17"
+    },
+    "TZS": {
+      "unitsPerEuro": 2913.87,
+      "date": "2026-11-17"
+    },
+    "UAH": {
+      "unitsPerEuro": 50.06,
+      "date": "2026-11-17"
+    },
+    "UGX": {
+      "unitsPerEuro": 4566.46,
+      "date": "2026-11-17"
+    },
+    "USD": {
+      "unitsPerEuro": 1.1021,
+      "date": "2026-11-17"
+    },
+    "UYU": {
+      "unitsPerEuro": 44.771,
+      "date": "2026-11-17"
+    },
+    "UZS": {
+      "unitsPerEuro": 13233,
+      "date": "2026-11-17"
+    },
+    "VES": {
+      "unitsPerEuro": 1006.78,
+      "date": "2026-11-17"
+    },
+    "VND": {
+      "unitsPerEuro": 28429,
+      "date": "2026-11-17"
+    },
+    "VUV": {
+      "unitsPerEuro": 132.59,
+      "date": "2026-11-16"
+    },
+    "WST": {
+      "unitsPerEuro": 3.0675,
+      "date": "2026-11-17"
+    },
+    "XAF": {
+      "unitsPerEuro": 655.96,
+      "date": "2026-11-17"
+    },
+    "XCD": {
+      "unitsPerEuro": 3.0402,
+      "date": "2026-11-16"
+    },
+    "XCG": {
+      "unitsPerEuro": 1.9845,
+      "date": "2026-11-16"
+    },
+    "XOF": {
+      "unitsPerEuro": 655.96,
+      "date": "2026-11-17"
+    },
+    "XPF": {
+      "unitsPerEuro": 119.51,
+      "date": "2026-11-16"
+    },
+    "YER": {
+      "unitsPerEuro": 260.81,
+      "date": "2026-11-17"
+    },
+    "ZAR": {
+      "unitsPerEuro": 18.6511,
+      "date": "2026-11-17"
+    },
+    "ZMW": {
+      "unitsPerEuro": 22.624,
+      "date": "2026-11-17"
+    },
+    "ZWG": {
+      "unitsPerEuro": 29.471,
+      "date": "2026-11-16"
+    }
+  },
+  "medianMonthlyEarningsByAlpha2": {
+    "DZ": {
+      "amount": 24468,
+      "currencyCode": "DZD",
+      "year": 2011,
+      "status": null,
+      "sourceName": "ONS Algérie",
+      "sourceUrl": "https://www.ons.dz/img/pdf/pubfinsal13-2.pdf",
+      "definition": "Salaire net mensuel estimé sur l’enquête nationale ONS menée en 2011."
+    },
+    "AF": {
+      "amount": 10209.259,
+      "currencyCode": "AFN",
+      "year": 2020,
+      "status": "B"
+    },
+    "AO": {
+      "amount": 60000.0,
+      "currencyCode": "AOA",
+      "year": 2024,
+      "status": null
+    },
+    "AR": {
+      "amount": 800000.0,
+      "currencyCode": "ARS",
+      "year": 2025,
+      "status": null
+    },
+    "AM": {
+      "amount": 140000.0,
+      "currencyCode": "AMD",
+      "year": 2023,
+      "status": null
+    },
+    "AG": {
+      "amount": 2500.0,
+      "currencyCode": "XCD",
+      "year": 2023,
+      "status": null
+    },
+    "AU": {
+      "amount": 5000.0,
+      "currencyCode": "AUD",
+      "year": 2021,
+      "status": null
+    },
+    "AT": {
+      "amount": 4835.428,
+      "currencyCode": "EUR",
+      "year": 2025,
+      "status": null
+    },
+    "BI": {
+      "amount": 43300.0,
+      "currencyCode": "BIF",
+      "year": 2020,
+      "status": null
+    },
+    "BE": {
+      "amount": 5779.566,
+      "currencyCode": "EUR",
+      "year": 2025,
+      "status": null
+    },
+    "BJ": {
+      "amount": 60000.0,
+      "currencyCode": "XOF",
+      "year": 2022,
+      "status": null
+    },
+    "BF": {
+      "amount": 50000.0,
+      "currencyCode": "XOF",
+      "year": 2025,
+      "status": null
+    },
+    "BD": {
+      "amount": 14000.0,
+      "currencyCode": "BDT",
+      "year": 2024,
+      "status": null
+    },
+    "BG": {
+      "amount": 1066.245,
+      "currencyCode": "EUR",
+      "year": 2025,
+      "status": null
+    },
+    "BS": {
+      "amount": 1700.0,
+      "currencyCode": "BSD",
+      "year": 2024,
+      "status": null
+    },
+    "BA": {
+      "amount": 2000.0,
+      "currencyCode": "BAM",
+      "year": 2025,
+      "status": null
+    },
+    "BZ": {
+      "amount": 1080.901,
+      "currencyCode": "BZD",
+      "year": 2019,
+      "status": null
+    },
+    "BO": {
+      "amount": 2800.0,
+      "currencyCode": "BOB",
+      "year": 2025,
+      "status": null
+    },
+    "BR": {
+      "amount": 2200.0,
+      "currencyCode": "BRL",
+      "year": 2025,
+      "status": null
+    },
+    "BB": {
+      "amount": 2005.874,
+      "currencyCode": "BBD",
+      "year": 2016,
+      "status": null
+    },
+    "BN": {
+      "amount": 1115.0,
+      "currencyCode": "BND",
+      "year": 2014,
+      "status": "B"
+    },
+    "BT": {
+      "amount": 25000.0,
+      "currencyCode": "BTN",
+      "year": 2025,
+      "status": null
+    },
+    "BW": {
+      "amount": 2500.0,
+      "currencyCode": "BWP",
+      "year": 2024,
+      "status": null
+    },
+    "CA": {
+      "amount": 5026.666,
+      "currencyCode": "CAD",
+      "year": 2025,
+      "status": null
+    },
+    "CH": {
+      "amount": 5989.0,
+      "currencyCode": "CHF",
+      "year": 2025,
+      "status": null
+    },
+    "CL": {
+      "amount": 700000.0,
+      "currencyCode": "CLP",
+      "year": 2024,
+      "status": null
+    },
+    "CI": {
+      "amount": 81000.0,
+      "currencyCode": "XOF",
+      "year": 2022,
+      "status": null
+    },
+    "CM": {
+      "amount": 60000.0,
+      "currencyCode": "XAF",
+      "year": 2014,
+      "status": null
+    },
+    "CD": {
+      "amount": 90000.0,
+      "currencyCode": "CDF",
+      "year": 2016,
+      "status": null
+    },
+    "CG": {
+      "amount": 80000.0,
+      "currencyCode": "XAF",
+      "year": 2009,
+      "status": "B"
+    },
+    "CK": {
+      "amount": 2066.933,
+      "currencyCode": "CKD",
+      "year": 2023,
+      "status": null
+    },
+    "CO": {
+      "amount": 1500000.0,
+      "currencyCode": "COP",
+      "year": 2025,
+      "status": null
+    },
+    "KM": {
+      "amount": 75000.0,
+      "currencyCode": "KMF",
+      "year": 2021,
+      "status": null
+    },
+    "CV": {
+      "amount": 21822.921,
+      "currencyCode": "CVE",
+      "year": 2015,
+      "status": "B"
+    },
+    "CR": {
+      "amount": 450000.0,
+      "currencyCode": "CRC",
+      "year": 2025,
+      "status": null
+    },
+    "CY": {
+      "amount": 2281.048,
+      "currencyCode": "EUR",
+      "year": 2025,
+      "status": null
+    },
+    "CZ": {
+      "amount": 2174.71,
+      "currencyCode": "CZK",
+      "year": 2025,
+      "status": null
+    },
+    "DE": {
+      "amount": 3774.424,
+      "currencyCode": "EUR",
+      "year": 2022,
+      "status": null
+    },
+    "DJ": {
+      "amount": 80000.0,
+      "currencyCode": "DJF",
+      "year": 2017,
+      "status": "B"
+    },
+    "DK": {
+      "amount": 5733.394,
+      "currencyCode": "DKK",
+      "year": 2025,
+      "status": null
+    },
+    "DO": {
+      "amount": 23987.502,
+      "currencyCode": "DOP",
+      "year": 2025,
+      "status": null
+    },
+    "EC": {
+      "amount": 470.0,
+      "currencyCode": "USD",
+      "year": 2025,
+      "status": null
+    },
+    "EG": {
+      "amount": 4562.5,
+      "currencyCode": "EGP",
+      "year": 2024,
+      "status": "B"
+    },
+    "ES": {
+      "amount": 2648.508,
+      "currencyCode": "EUR",
+      "year": 2025,
+      "status": null
+    },
+    "EE": {
+      "amount": 2431.472,
+      "currencyCode": "EUR",
+      "year": 2025,
+      "status": null
+    },
+    "ET": {
+      "amount": 3200.0,
+      "currencyCode": "ETB",
+      "year": 2021,
+      "status": null
+    },
+    "FI": {
+      "amount": 4448.46,
+      "currencyCode": "EUR",
+      "year": 2025,
+      "status": null
+    },
+    "FJ": {
+      "amount": 1082.5,
+      "currencyCode": "FJD",
+      "year": 2024,
+      "status": null
+    },
+    "FR": {
+      "amount": 2000.0,
+      "currencyCode": "EUR",
+      "year": 2025,
+      "status": null
+    },
+    "GB": {
+      "amount": 2708.333,
+      "currencyCode": "GBP",
+      "year": 2025,
+      "status": null
+    },
+    "GE": {
+      "amount": 800.0,
+      "currencyCode": "GEL",
+      "year": 2023,
+      "status": null
+    },
+    "GH": {
+      "amount": 1732.0,
+      "currencyCode": "GHS",
+      "year": 2025,
+      "status": null
+    },
+    "GN": {
+      "amount": 1600000.0,
+      "currencyCode": "GNF",
+      "year": 2019,
+      "status": null
+    },
+    "GM": {
+      "amount": 2750.0,
+      "currencyCode": "GMD",
+      "year": 2018,
+      "status": "B"
+    },
+    "GW": {
+      "amount": 60000.0,
+      "currencyCode": "XOF",
+      "year": 2022,
+      "status": null
+    },
+    "GQ": {
+      "amount": 170000.0,
+      "currencyCode": "XAF",
+      "year": 2023,
+      "status": null
+    },
+    "GR": {
+      "amount": 1739.332,
+      "currencyCode": "EUR",
+      "year": 2025,
+      "status": null
+    },
+    "GT": {
+      "amount": 3296.0,
+      "currencyCode": "GTQ",
+      "year": 2025,
+      "status": null
+    },
+    "GY": {
+      "amount": 120000.0,
+      "currencyCode": "GYD",
+      "year": 2024,
+      "status": null
+    },
+    "HN": {
+      "amount": 9000.0,
+      "currencyCode": "HNL",
+      "year": 2025,
+      "status": null
+    },
+    "HR": {
+      "amount": 1836.417,
+      "currencyCode": "EUR",
+      "year": 2025,
+      "status": null
+    },
+    "HU": {
+      "amount": 1010.271,
+      "currencyCode": "HUF",
+      "year": 2025,
+      "status": null
+    },
+    "ID": {
+      "amount": 2302539.127,
+      "currencyCode": "IDR",
+      "year": 2024,
+      "status": null
+    },
+    "IN": {
+      "amount": 15000.0,
+      "currencyCode": "INR",
+      "year": 2025,
+      "status": null
+    },
+    "IE": {
+      "amount": 3998.662,
+      "currencyCode": "EUR",
+      "year": 2025,
+      "status": null
+    },
+    "IS": {
+      "amount": 4983.12,
+      "currencyCode": "ISK",
+      "year": 2020,
+      "status": null
+    },
+    "IT": {
+      "amount": 3123.367,
+      "currencyCode": "EUR",
+      "year": 2025,
+      "status": null
+    },
+    "JM": {
+      "amount": 17329.0,
+      "currencyCode": "JMD",
+      "year": 2014,
+      "status": null
+    },
+    "JO": {
+      "amount": 300.0,
+      "currencyCode": "JOD",
+      "year": 2024,
+      "status": null
+    },
+    "KE": {
+      "amount": 6000.0,
+      "currencyCode": "KES",
+      "year": 2019,
+      "status": null
+    },
+    "KH": {
+      "amount": 1040000.0,
+      "currencyCode": "KHR",
+      "year": 2025,
+      "status": null
+    },
+    "KI": {
+      "amount": 430.0,
+      "currencyCode": "AUD",
+      "year": 2023,
+      "status": null
+    },
+    "XK": {
+      "amount": 300.0,
+      "currencyCode": "EUR",
+      "year": 2000,
+      "status": null
+    },
+    "LA": {
+      "amount": 2000000.0,
+      "currencyCode": "LAK",
+      "year": 2022,
+      "status": "B"
+    },
+    "LB": {
+      "amount": 1000000.0,
+      "currencyCode": "LBP",
+      "year": 2019,
+      "status": "B"
+    },
+    "LR": {
+      "amount": 125.0,
+      "currencyCode": "LRD",
+      "year": 2017,
+      "status": "B"
+    },
+    "LC": {
+      "amount": 1509.613,
+      "currencyCode": "XCD",
+      "year": 2016,
+      "status": null
+    },
+    "LK": {
+      "amount": 41152.081,
+      "currencyCode": "LKR",
+      "year": 2024,
+      "status": null
+    },
+    "LS": {
+      "amount": 1400.0,
+      "currencyCode": "LSL",
+      "year": 2024,
+      "status": null
+    },
+    "LT": {
+      "amount": 1938.722,
+      "currencyCode": "EUR",
+      "year": 2025,
+      "status": null
+    },
+    "LU": {
+      "amount": 6633.886,
+      "currencyCode": "EUR",
+      "year": 2025,
+      "status": null
+    },
+    "LV": {
+      "amount": 1922.865,
+      "currencyCode": "EUR",
+      "year": 2025,
+      "status": null
+    },
+    "MD": {
+      "amount": 7200.0,
+      "currencyCode": "MDL",
+      "year": 2025,
+      "status": null
+    },
+    "MG": {
+      "amount": 150.0,
+      "currencyCode": "MGA",
+      "year": 2022,
+      "status": "B"
+    },
+    "MV": {
+      "amount": 10000.0,
+      "currencyCode": "MVR",
+      "year": 2019,
+      "status": null
+    },
+    "MX": {
+      "amount": 8764.269,
+      "currencyCode": "MXN",
+      "year": 2025,
+      "status": null
+    },
+    "MH": {
+      "amount": 600.0,
+      "currencyCode": "USD",
+      "year": 2019,
+      "status": null
+    },
+    "ML": {
+      "amount": 70000.0,
+      "currencyCode": "XOF",
+      "year": 2024,
+      "status": null
+    },
+    "MT": {
+      "amount": 1826.747,
+      "currencyCode": "EUR",
+      "year": 2020,
+      "status": null
+    },
+    "MM": {
+      "amount": 180000.0,
+      "currencyCode": "MMK",
+      "year": 2020,
+      "status": null
+    },
+    "MN": {
+      "amount": 1800000.0,
+      "currencyCode": "MNT",
+      "year": 2025,
+      "status": null
+    },
+    "MZ": {
+      "amount": 7500.0,
+      "currencyCode": "MZN",
+      "year": 2022,
+      "status": null
+    },
+    "MR": {
+      "amount": 40000.0,
+      "currencyCode": "MRU",
+      "year": 2025,
+      "status": null
+    },
+    "MU": {
+      "amount": 25000.0,
+      "currencyCode": "MUR",
+      "year": 2024,
+      "status": null
+    },
+    "MW": {
+      "amount": 10000.0,
+      "currencyCode": "MWK",
+      "year": 2013,
+      "status": "B"
+    },
+    "NA": {
+      "amount": 2800.0,
+      "currencyCode": "NAD",
+      "year": 2018,
+      "status": null
+    },
+    "NC": {
+      "amount": 192000.0,
+      "currencyCode": "XPF",
+      "year": 2017,
+      "status": null
+    },
+    "NE": {
+      "amount": 50000.0,
+      "currencyCode": "XOF",
+      "year": 2022,
+      "status": null
+    },
+    "NG": {
+      "amount": 50000.0,
+      "currencyCode": "NGN",
+      "year": 2024,
+      "status": null
+    },
+    "NI": {
+      "amount": 6953.007,
+      "currencyCode": "NIO",
+      "year": 2014,
+      "status": "B"
+    },
+    "NL": {
+      "amount": 5092.278,
+      "currencyCode": "EUR",
+      "year": 2025,
+      "status": null
+    },
+    "NO": {
+      "amount": 5216.666,
+      "currencyCode": "NOK",
+      "year": 2025,
+      "status": null
+    },
+    "NP": {
+      "amount": 15208.333,
+      "currencyCode": "NPR",
+      "year": 2017,
+      "status": "B"
+    },
+    "NR": {
+      "amount": 8303.441,
+      "currencyCode": "AUD",
+      "year": 2006,
+      "status": null
+    },
+    "PK": {
+      "amount": 25980.0,
+      "currencyCode": "PKR",
+      "year": 2025,
+      "status": null
+    },
+    "PA": {
+      "amount": 700.0,
+      "currencyCode": "PAB",
+      "year": 2025,
+      "status": null
+    },
+    "PE": {
+      "amount": 1520.0,
+      "currencyCode": "PEN",
+      "year": 2025,
+      "status": null
+    },
+    "PH": {
+      "amount": 16425.0,
+      "currencyCode": "PHP",
+      "year": 2025,
+      "status": null
+    },
+    "PW": {
+      "amount": 831.092,
+      "currencyCode": "USD",
+      "year": 2023,
+      "status": null
+    },
+    "PL": {
+      "amount": 1774.854,
+      "currencyCode": "PLN",
+      "year": 2025,
+      "status": null
+    },
+    "PR": {
+      "amount": 1575.0,
+      "currencyCode": "USD",
+      "year": 2020,
+      "status": null
+    },
+    "PT": {
+      "amount": 1050.0,
+      "currencyCode": "EUR",
+      "year": 2025,
+      "status": null
+    },
+    "PY": {
+      "amount": 2800000.0,
+      "currencyCode": "PYG",
+      "year": 2025,
+      "status": null
+    },
+    "PS": {
+      "amount": 2499.808,
+      "currencyCode": "ILS",
+      "year": 2025,
+      "status": null
+    },
+    "RO": {
+      "amount": 1373.812,
+      "currencyCode": "RON",
+      "year": 2025,
+      "status": null
+    },
+    "RW": {
+      "amount": 35000.0,
+      "currencyCode": "RWF",
+      "year": 2024,
+      "status": null
+    },
+    "SD": {
+      "amount": 80277.572,
+      "currencyCode": "SDG",
+      "year": 2022,
+      "status": "B"
+    },
+    "SN": {
+      "amount": 86666.664,
+      "currencyCode": "XOF",
+      "year": 2025,
+      "status": null
+    },
+    "SB": {
+      "amount": 8591.596,
+      "currencyCode": "SBD",
+      "year": 2005,
+      "status": null
+    },
+    "SL": {
+      "amount": 779558.104,
+      "currencyCode": "SLE",
+      "year": 2018,
+      "status": null
+    },
+    "SV": {
+      "amount": 433.333,
+      "currencyCode": "USD",
+      "year": 2025,
+      "status": null
+    },
+    "SO": {
+      "amount": 192.0,
+      "currencyCode": "SOS",
+      "year": 2022,
+      "status": null
+    },
+    "RS": {
+      "amount": 1191.388,
+      "currencyCode": "RSD",
+      "year": 2025,
+      "status": null
+    },
+    "SR": {
+      "amount": 5000.0,
+      "currencyCode": "SRD",
+      "year": 2022,
+      "status": null
+    },
+    "SK": {
+      "amount": 2008.665,
+      "currencyCode": "EUR",
+      "year": 2025,
+      "status": null
+    },
+    "SI": {
+      "amount": 2823.832,
+      "currencyCode": "EUR",
+      "year": 2025,
+      "status": null
+    },
+    "SE": {
+      "amount": 3886.1,
+      "currencyCode": "SEK",
+      "year": 2025,
+      "status": null
+    },
+    "SZ": {
+      "amount": 4000.0,
+      "currencyCode": "SZL",
+      "year": 2025,
+      "status": null
+    },
+    "TD": {
+      "amount": 75000.0,
+      "currencyCode": "XAF",
+      "year": 2022,
+      "status": null
+    },
+    "TG": {
+      "amount": 52000.0,
+      "currencyCode": "XOF",
+      "year": 2022,
+      "status": null
+    },
+    "TH": {
+      "amount": 13000.0,
+      "currencyCode": "THB",
+      "year": 2025,
+      "status": null
+    },
+    "TJ": {
+      "amount": 200.0,
+      "currencyCode": "TJS",
+      "year": 2009,
+      "status": null
+    },
+    "TK": {
+      "amount": 563.374,
+      "currencyCode": "NZD",
+      "year": 2016,
+      "status": null
+    },
+    "TL": {
+      "amount": 200.0,
+      "currencyCode": "USD",
+      "year": 2021,
+      "status": null
+    },
+    "TO": {
+      "amount": 1295.197,
+      "currencyCode": "TOP",
+      "year": 2023,
+      "status": null
+    },
+    "TT": {
+      "amount": 5250.0,
+      "currencyCode": "TTD",
+      "year": 2016,
+      "status": null
+    },
+    "TN": {
+      "amount": 600.0,
+      "currencyCode": "TND",
+      "year": 2019,
+      "status": null
+    },
+    "TR": {
+      "amount": 30000.0,
+      "currencyCode": "TRY",
+      "year": 2025,
+      "status": null
+    },
+    "TZ": {
+      "amount": 345583.29,
+      "currencyCode": "TZS",
+      "year": 2025,
+      "status": null
+    },
+    "UG": {
+      "amount": 240000.0,
+      "currencyCode": "UGX",
+      "year": 2021,
+      "status": null
+    },
+    "UY": {
+      "amount": 39527.16,
+      "currencyCode": "UYU",
+      "year": 2024,
+      "status": null
+    },
+    "US": {
+      "amount": 4480.666,
+      "currencyCode": "USD",
+      "year": 2025,
+      "status": "B"
+    },
+    "VE": {
+      "amount": 250000.0,
+      "currencyCode": "VEF",
+      "year": 2017,
+      "status": null
+    },
+    "VN": {
+      "amount": 8000000.0,
+      "currencyCode": "VND",
+      "year": 2024,
+      "status": null
+    },
+    "VU": {
+      "amount": 29000.0,
+      "currencyCode": "VUV",
+      "year": 2010,
+      "status": null
+    },
+    "WF": {
+      "amount": 180000.0,
+      "currencyCode": "XPF",
+      "year": 2019,
+      "status": null
+    },
+    "WS": {
+      "amount": 1125.8,
+      "currencyCode": "WST",
+      "year": 2022,
+      "status": "B"
+    },
+    "YE": {
+      "amount": 41000.0,
+      "currencyCode": "YER",
+      "year": 2014,
+      "status": "B"
+    },
+    "ZA": {
+      "amount": 4200.0,
+      "currencyCode": "ZAR",
+      "year": 2020,
+      "status": null
+    },
+    "ZM": {
+      "amount": 2500.0,
+      "currencyCode": "ZMW",
+      "year": 2024,
+      "status": null
+    },
+    "ZW": {
+      "amount": 250.0,
+      "currencyCode": "BWP",
+      "year": 2014,
+      "status": null
+    }
+  }
+}

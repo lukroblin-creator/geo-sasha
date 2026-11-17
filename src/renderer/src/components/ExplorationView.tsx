@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useRef, useState } from 'react'
 import WorldMap from './WorldMap'
 import {
   getExplorationDetails,
@@ -12,8 +12,18 @@ import { SettingsMenu } from './SettingsMenu'
 import { MapFullscreenBar } from './MapFullscreenBar'
 import { useSkin } from '../data/skin'
 import { MapLayerControls } from './MapLayerControls'
+import { MapLayerManager, type MapLayerManagerItem } from './MapLayerManager'
 import { fullMapLayerDensities, mapLayerDensityMaximums, type DensityLayerId, type MapLayerDensities } from '../data/geography/mapLayerDensity'
 import { mountainRanges } from '../data/geography/physical/mountainRanges'
+import {
+  defaultMapLayerOpacities,
+  defaultMapLayerOrder,
+  type MapLayerOpacityValues,
+  type MapLayerStackId,
+  type MapOpacityMask,
+  type MapOpacityMaskDraft,
+  type ManagedMapLayerId
+} from '../data/geography/mapLayerManager'
 
 type ExplorationViewProps = {
   globeMode: boolean
@@ -37,6 +47,7 @@ export function ExplorationView({
   const { t } = useLanguage()
   const { skin } = useSkin()
   const [showBorders, setShowBorders] = useState(true)
+  const [showTerritories, setShowTerritories] = useState(true)
   const [showLabels, setShowLabels] = useState(false)
   const [showFlagTerritories, setShowFlagTerritories] = useState(false)
   const [showResources, setShowResources] = useState(false)
@@ -50,8 +61,12 @@ export function ExplorationView({
   const [perspectiveComparisonPortal, setPerspectiveComparisonPortal] = useState<HTMLDivElement | null>(null)
   const [layerDensities, setLayerDensities] = useState<MapLayerDensities>(fullMapLayerDensities)
   const [realLayer, setRealLayer] = useState<'day' | 'night' | 'clouds' | null>(null)
-  const [realLayerOptionsOpen, setRealLayerOptionsOpen] = useState(false)
-  const [textureMenuOpen, setTextureMenuOpen] = useState(false)
+  const [realLayerVariant, setRealLayerVariant] = useState<'day' | 'night' | 'clouds'>('day')
+  const [layerOrder, setLayerOrder] = useState<MapLayerStackId[]>(defaultMapLayerOrder)
+  const [layerOpacities, setLayerOpacities] = useState<MapLayerOpacityValues>(defaultMapLayerOpacities)
+  const [opacityMasks, setOpacityMasks] = useState<MapOpacityMask[]>([])
+  const [pendingMaskDraft, setPendingMaskDraft] = useState<MapOpacityMaskDraft | null>(null)
+  const [pendingMaskId, setPendingMaskId] = useState<string | null>(null)
   const [selectedPlace, setSelectedPlace] = useState<ExplorationDetails | null>(null)
   const explorationPanelsCollapsed = chromeCollapsed && layerControlsCollapsed && detailsCollapsed
   const [focusEntityRequest, setFocusEntityRequest] = useState<{
@@ -59,27 +74,6 @@ export function ExplorationView({
     sequence: number
   } | null>(null)
   const focusSequenceRef = useRef(0)
-  const textureMenuRef = useRef<HTMLDivElement | null>(null)
-
-  useEffect(() => {
-    if (!textureMenuOpen) return
-
-    const closeOnOutsidePointer = (event: PointerEvent): void => {
-      if (!textureMenuRef.current?.contains(event.target as Node)) {
-        setTextureMenuOpen(false)
-      }
-    }
-    const closeOnEscape = (event: KeyboardEvent): void => {
-      if (event.key === 'Escape') setTextureMenuOpen(false)
-    }
-
-    window.addEventListener('pointerdown', closeOnOutsidePointer)
-    window.addEventListener('keydown', closeOnEscape)
-    return () => {
-      window.removeEventListener('pointerdown', closeOnOutsidePointer)
-      window.removeEventListener('keydown', closeOnEscape)
-    }
-  }, [textureMenuOpen])
 
   const handlePlaceSelected = (
     sourceFeatureId: string | number,
@@ -130,6 +124,99 @@ export function ExplorationView({
     if (id === 'resources') setShowResources(enabled)
   }
 
+  const addOpacityMask = (draft: MapOpacityMaskDraft, center?: [number, number]): void => {
+    const id = typeof crypto !== 'undefined' && 'randomUUID' in crypto
+      ? crypto.randomUUID()
+      : `mask-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
+    const mask: MapOpacityMask = { ...draft, id, ...(center ? { center } : {}) }
+    setOpacityMasks((current) => [...current, mask])
+    setLayerOrder((current) => [`mask:${id}`, ...current.filter((item) => item !== `mask:${id}`)])
+  }
+
+  const handleCreateOpacityMask = (draft: MapOpacityMaskDraft): void => {
+    if (draft.kind === 'circle' || draft.kind === 'rectangle') {
+      setPendingMaskDraft(draft)
+      setPendingMaskId(null)
+      return
+    }
+    addOpacityMask(draft)
+  }
+
+  const handlePlaceOpacityMask = (position: [number, number]): void => {
+    if (!pendingMaskDraft) return
+    if (pendingMaskId) {
+      setOpacityMasks((current) => current.map((mask) => mask.id === pendingMaskId ? { ...mask, center: position } : mask))
+    } else {
+      addOpacityMask(pendingMaskDraft, position)
+    }
+    setPendingMaskDraft(null)
+    setPendingMaskId(null)
+  }
+
+  const cancelOpacityMaskPlacement = (): void => {
+    setPendingMaskDraft(null)
+    setPendingMaskId(null)
+  }
+
+  const relocateOpacityMask = (mask: MapOpacityMask): void => {
+    if (mask.kind !== 'circle' && mask.kind !== 'rectangle') return
+    setPendingMaskDraft({
+      kind: mask.kind,
+      name: mask.name,
+      opacity: mask.opacity,
+      ...(mask.radiusKm !== undefined ? { radiusKm: mask.radiusKm } : {}),
+      ...(mask.widthKm !== undefined ? { widthKm: mask.widthKm } : {}),
+      ...(mask.heightKm !== undefined ? { heightKm: mask.heightKm } : {})
+    })
+    setPendingMaskId(mask.id)
+  }
+
+  const handleLayerManagerToggle = (id: ManagedMapLayerId, enabled: boolean): void => {
+    if (id === 'texture') {
+      setRealLayer(enabled ? realLayerVariant : null)
+      return
+    }
+    if (id === 'territories') {
+      setShowTerritories(enabled)
+      return
+    }
+    toggleLayer(id, enabled)
+  }
+
+  const managerLayers: MapLayerManagerItem[] = [
+    {
+      id: 'territories', label: 'Territoires', description: 'Fond neutre',
+      enabled: showTerritories, opacity: layerOpacities.territories
+    },
+    {
+      id: 'texture',
+      label: 'Réelle',
+      enabled: realLayer !== null,
+      opacity: layerOpacities.texture,
+      activeVariant: realLayerVariant,
+      variants: [
+        { id: 'day', label: 'Jour' },
+        { id: 'night', label: 'Nuit' },
+        { id: 'clouds', label: 'Nuages' }
+      ]
+    }
+  ]
+
+  const managerOrder = layerOrder.filter((id) =>
+    id === 'texture' || id === 'territories' || id.startsWith('mask:')
+  )
+
+  const updateManagerOrder = (nextManagerOrder: MapLayerStackId[]): void => {
+    setLayerOrder((current) => {
+      const isManaged = (id: MapLayerStackId): boolean =>
+        id === 'texture' || id === 'territories' || id.startsWith('mask:')
+      const firstManagedIndex = current.findIndex(isManaged)
+      const preservedBefore = current.slice(0, firstManagedIndex).filter((id) => !isManaged(id))
+      const preservedAfter = current.slice(firstManagedIndex).filter((id) => !isManaged(id))
+      return [...preservedBefore, ...nextManagerOrder, ...preservedAfter]
+    })
+  }
+
   const layerOptions = (
     <>
       <MapLayerControls
@@ -159,82 +246,31 @@ export function ExplorationView({
         onToggle={toggleLayer}
         onDensityChange={changeLayerDensity}
       />
-      <div className="texture-layer-menu" ref={textureMenuRef}>
-        <button
-          type="button"
-          className={`texture-layer-menu-trigger${textureMenuOpen ? ' is-open' : ''}`}
-          aria-label={t('Texture')}
-          aria-expanded={textureMenuOpen}
-          aria-controls="texture-layer-popover"
-          onClick={() => setTextureMenuOpen((open) => !open)}
-        >
-          <span>{t('Texture')}</span>
-          <span className="texture-layer-menu-chevron" aria-hidden="true">
-            {textureMenuOpen ? '⌃' : '⌄'}
-          </span>
-        </button>
-        {textureMenuOpen && (
-          <div
-            className="texture-layer-menu-popover"
-            id="texture-layer-popover"
-            role="group"
-            aria-label={t('Texture')}
-          >
-            <div className="real-map-layer-control">
-              <div className="real-map-layer-heading">
-                <label className="setting-item" title={t('Afficher une image globale de la Terre, disponible hors ligne')}>
-                  <input
-                    type="checkbox"
-                    checked={realLayer !== null}
-                    onChange={(event) => {
-                      if (event.target.checked) {
-                        setRealLayer('day')
-                      } else {
-                        setRealLayer(null)
-                        setRealLayerOptionsOpen(false)
-                      }
-                    }}
-                  />
-                  <span>{t('Réelle')}</span>
-                </label>
-                <button
-                  type="button"
-                  className="real-map-layer-disclosure"
-                  aria-label={t(realLayerOptionsOpen ? 'Masquer les variantes de la couche réelle' : 'Afficher les variantes de la couche réelle')}
-                  aria-expanded={realLayerOptionsOpen}
-                  disabled={realLayer === null}
-                  onClick={() => setRealLayerOptionsOpen((open) => !open)}
-                >
-                  <span aria-hidden="true">{realLayerOptionsOpen ? '⌃' : '⌄'}</span>
-                </button>
-              </div>
-              {realLayer !== null && realLayerOptionsOpen && (
-                <div className="real-map-layer-options" role="radiogroup" aria-label={t('Variantes de la couche réelle')}>
-                  {([
-                    ['day', 'Jour'],
-                    ['night', 'Nuit'],
-                    ['clouds', 'Nuages']
-                  ] as const).map(([value, label]) => (
-                    <label
-                      key={value}
-                      className={realLayer === value ? 'is-active' : ''}
-                    >
-                      <input
-                        type="radio"
-                        name="real-earth-imagery"
-                        value={value}
-                        checked={realLayer === value}
-                        onChange={() => setRealLayer(value)}
-                      />
-                      {t(label)}
-                    </label>
-                  ))}
-                </div>
-              )}
-            </div>
-          </div>
-        )}
-      </div>
+      <MapLayerManager
+        layers={managerLayers}
+        masks={opacityMasks}
+        order={managerOrder}
+        isPlacingMask={pendingMaskDraft !== null}
+        relocatingMaskId={pendingMaskId}
+        onToggleLayer={handleLayerManagerToggle}
+        onLayerOpacityChange={(id, opacity) => setLayerOpacities((current) => ({ ...current, [id]: opacity }))}
+        onLayerDensityChange={changeLayerDensity}
+        onSelectLayerVariant={(id, variantId) => {
+          if (id !== 'texture' || !['day', 'night', 'clouds'].includes(variantId)) return
+          const nextVariant = variantId as 'day' | 'night' | 'clouds'
+          setRealLayerVariant(nextVariant)
+          setRealLayer(nextVariant)
+        }}
+        onOrderChange={updateManagerOrder}
+        onCreateMask={handleCreateOpacityMask}
+        onCancelMaskPlacement={cancelOpacityMaskPlacement}
+        onRelocateMask={relocateOpacityMask}
+        onUpdateMask={(id, patch) => setOpacityMasks((current) => current.map((mask) => mask.id === id ? { ...mask, ...patch } : mask))}
+        onDeleteMask={(id) => {
+          setOpacityMasks((current) => current.filter((mask) => mask.id !== id))
+          setLayerOrder((current) => current.filter((item) => item !== `mask:${id}`))
+        }}
+      />
     </>
   )
 
@@ -332,6 +368,7 @@ export function ExplorationView({
           <div className="exploration-map-frame">
             <WorldMap
               showBorders={showBorders}
+              showTerritories={showTerritories}
               showLabels={showLabels}
               globeMode={globeMode}
               onToggleGlobeMode={onToggleGlobeMode}
@@ -342,6 +379,11 @@ export function ExplorationView({
               showSummits={showSummits}
               layerDensities={layerDensities}
               realLayer={realLayer}
+              layerOrder={layerOrder}
+              layerOpacities={layerOpacities}
+              opacityMasks={opacityMasks}
+              opacityMaskPlacement={pendingMaskDraft !== null}
+              onOpacityMaskPlace={handlePlaceOpacityMask}
               perspectiveComparisonPortal={
                 isFullscreen || mapIntroCollapsed || explorationPanelsCollapsed
                   ? null

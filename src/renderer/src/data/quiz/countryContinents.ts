@@ -244,6 +244,10 @@ export function getContinentLabelForCountry(alpha2: string): string | undefined 
   return continent ? continentLabels[continent] : undefined
 }
 
+export function getContinentIdForCountry(alpha2: string): ContinentId | undefined {
+  return continentByAlpha2.get(alpha2.toUpperCase())
+}
+
 export function getAvailableQuizQuestionCount(region: QuizRegion): number {
   if (region === 'world') return countryCatalog.length
 

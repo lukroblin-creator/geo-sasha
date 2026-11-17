@@ -1,5 +1,8 @@
 import { getFlagImageSource } from '../data/quiz/flagAssets'
-import type { ExplorationDetails } from '../data/geography/exploration'
+import {
+  explorationEconomicSources,
+  type ExplorationDetails
+} from '../data/geography/exploration'
 import { useLanguage } from '../data/i18n'
 import { ResourceIndustryDescription } from './ResourceIndustryDescription'
 
@@ -26,6 +29,26 @@ export function ExplorationPlaceDetails({
       dateStyle: 'medium',
       timeZone: 'UTC'
     }).format(new Date(`${value}T00:00:00Z`))
+  const formatMoney = (amount: number, currencyCode: string): string => {
+    try {
+      return new Intl.NumberFormat(
+        language === 'fr' ? 'fr-FR' : language === 'es' ? 'es-ES' : 'en-US',
+        { style: 'currency', currency: currencyCode, maximumFractionDigits: 0 }
+      ).format(amount)
+    } catch {
+      return `${formatNumber(amount)} ${currencyCode}`
+    }
+  }
+  const formatWholeNumber = (amount: number): string =>
+    new Intl.NumberFormat(language === 'fr' ? 'fr-FR' : language === 'es' ? 'es-ES' : 'en-US', {
+      maximumFractionDigits: 0
+    }).format(amount)
+  const formatEuroPerUnit = (amount: number): string =>
+    new Intl.NumberFormat(language === 'fr' ? 'fr-FR' : language === 'es' ? 'es-ES' : 'en-US', {
+      style: 'currency',
+      currency: 'EUR',
+      maximumSignificantDigits: 4
+    }).format(amount)
   const profileText = (value: { en: string; fr: string } | null | undefined): string =>
     value ? (language === 'fr' ? value.fr : value.en) : 'ND'
   const languageNames = new Intl.DisplayNames([language], { type: 'language' })
@@ -219,9 +242,61 @@ export function ExplorationPlaceDetails({
                         <span className="exploration-culture-value" key={currency.code}>
                           {displayCurrency(currency.code, currency.name)} ({currency.code})
                           {currency.symbol ? ` · ${currency.symbol}` : ''}
+                          <span className="exploration-fact-note">
+                            {currency.euroPerUnit === null || currency.euroPerUnit === undefined
+                              ? `${t('Conversion en euros')} : ND`
+                              : `1 ${currency.code} = ${formatEuroPerUnit(currency.euroPerUnit)}`}
+                            {currency.exchangeRateDate
+                              ? ` · ${t('Cours au')} ${formatDate(currency.exchangeRateDate)}`
+                              : ''}
+                          </span>
                         </span>
                       ))
                     : 'ND'}
+                </dd>
+              </div>
+              <div>
+                <dt>{t('Salaire médian mensuel des salariés')}</dt>
+                <dd>
+                  {place.medianMonthlyEarnings ? (
+                    <>
+                      {formatWholeNumber(place.medianMonthlyEarnings.amount)}{' '}
+                      {place.medianMonthlyEarnings.currencyCode} / {t('mois')}
+                      {place.medianMonthlyEarnings.euroPerUnit !== null && (
+                        <span className="exploration-culture-value">
+                          ≈{' '}
+                          {formatMoney(
+                            place.medianMonthlyEarnings.amount * place.medianMonthlyEarnings.euroPerUnit,
+                            'EUR'
+                          )}{' '}
+                          / {t('mois')}
+                        </span>
+                      )}
+                      <span className="exploration-fact-note">
+                        {t('Dernière donnée disponible')} · {place.medianMonthlyEarnings.year}
+                        {place.medianMonthlyEarnings.status === 'B' ? ` · ${t('Rupture de série')}` : ''}
+                        {place.medianMonthlyEarnings.definition
+                          ? ` · ${t(place.medianMonthlyEarnings.definition)}`
+                          : ''}
+                        {place.medianMonthlyEarnings.exchangeRateDate
+                          ? ` · ${t('Cours au')} ${formatDate(place.medianMonthlyEarnings.exchangeRateDate)}`
+                          : ''}
+                        {' · '}
+                        <a
+                          href={
+                            place.medianMonthlyEarnings.sourceUrl ??
+                            explorationEconomicSources.medianEarnings
+                          }
+                          target="_blank"
+                          rel="noreferrer"
+                        >
+                          {place.medianMonthlyEarnings.sourceName ?? 'ILOSTAT'}
+                        </a>
+                      </span>
+                    </>
+                  ) : (
+                    'ND'
+                  )}
                 </dd>
               </div>
               <div>
@@ -237,6 +312,17 @@ export function ExplorationPlaceDetails({
                 </dd>
               </div>
             </dl>
+            <p className="exploration-fact-note">
+              {t('Les taux sont des références indicatives, pas des cours de transaction.')} {' '}
+              <a href={explorationEconomicSources.currencyRates} target="_blank" rel="noreferrer">
+                {t('Source des taux')}
+              </a>
+              {' · '}
+              {t('Les montants salariaux correspondent à la dernière médiane mensuelle publiée pour les salariés. La définition et l’année de référence varient selon la source ; la conversion en euros est indicative et ne reflète pas le pouvoir d’achat.')}{' '}
+              <a href={explorationEconomicSources.medianEarnings} target="_blank" rel="noreferrer">
+                {t('Base internationale ILOSTAT')}
+              </a>
+            </p>
             <h4>{t('Alphabet et systèmes d’écriture')}</h4>
             {place.culture?.writingSystems.length ? (
               <div className="exploration-writing-systems">

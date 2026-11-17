@@ -80,6 +80,8 @@ type MapFlagOverlayProps = {
   showBorders: boolean
   showLabels: boolean
   flagOpacity?: number
+  overlayOpacity?: number
+  overlayZIndex?: number
   realLayerActive?: boolean
   selectedEntityIds: string[]
   selectedSourceFeatureId: string | number | null
@@ -575,6 +577,8 @@ export const MapFlagOverlay = memo(function MapFlagOverlay({
   showBorders,
   showLabels,
   flagOpacity = 1,
+  overlayOpacity = 1,
+  overlayZIndex = 1,
   realLayerActive = false,
   selectedEntityIds,
   selectedSourceFeatureId,
@@ -1068,7 +1072,11 @@ export const MapFlagOverlay = memo(function MapFlagOverlay({
     : hasSelection ? 1 : 0
 
   return (
-    <div ref={overlayViewportRef} className="map-flag-overlay-viewport">
+    <div
+      ref={overlayViewportRef}
+      className="map-flag-overlay-viewport"
+      style={{ opacity: overlayOpacity, zIndex: overlayZIndex }}
+    >
       <svg
         ref={baselineSvgRef}
         className="map-flag-overlay map-flag-overlay-baseline"

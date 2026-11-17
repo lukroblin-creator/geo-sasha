@@ -537,6 +537,24 @@ function CountryQuizAnswerForm({
     (answers.countryName && countryName.trim().length > 0 && !countryNameIsCorrect) ||
     (answers.capital && capital.trim().length > 0 && !capitalIsCorrect) ||
     (answers.flag && flagAlpha2 !== null && !flagIsCorrect)
+  const submitAnswers = (): void => {
+    const outcomes: Record<string, boolean> = {}
+    if (answers.countryName && countryName.trim() && !countryNameIsCorrect) {
+      outcomes.countryName = countryNameMatches
+    }
+    if (answers.capital && capital.trim() && !capitalIsCorrect) {
+      outcomes.capital = capitalMatches
+    }
+    if (answers.flag && flagAlpha2 && !flagIsCorrect) {
+      outcomes.flag = flagAlpha2 === question.alpha2
+    }
+    if (Object.keys(outcomes).length > 0) onAnswer(outcomes)
+  }
+  const handleAnswerKeyDown = (event: React.KeyboardEvent<HTMLInputElement>): void => {
+    if (event.key !== 'Enter' || questionDisabled || mapOnly || !hasSubmittableAnswer) return
+    event.preventDefault()
+    submitAnswers()
+  }
   const autoAnswerSentRef = useRef<{
     questionOrder: QuizSession<CountryQuizQuestion>['questionOrder']
     questionIndex: number
@@ -657,6 +675,7 @@ function CountryQuizAnswerForm({
                 setCountryName(event.target.value)
                 setCountryNameSuggestionsOpen(true)
               }}
+              onKeyDown={handleAnswerKeyDown}
               disabled={questionDisabled || countryNameIsCorrect}
               placeholder={countryIsHighlighted
                 ? t('Écris le nom du pays sur la carte')
@@ -709,6 +728,7 @@ function CountryQuizAnswerForm({
             autoComplete="off"
             value={capital}
             onChange={(event) => setCapital(event.target.value)}
+            onKeyDown={handleAnswerKeyDown}
             disabled={questionDisabled || capitalIsCorrect}
             placeholder={t('Écris le nom de la capitale')}
           />
@@ -898,19 +918,7 @@ function CountryQuizAnswerForm({
           <button
             className="quiz-check-answers-button"
             type="button"
-            onClick={() => {
-              const outcomes: Record<string, boolean> = {}
-              if (answers.countryName && countryName.trim() && !countryNameIsCorrect) {
-                outcomes.countryName = countryNameMatches
-              }
-              if (answers.capital && capital.trim() && !capitalIsCorrect) {
-                outcomes.capital = capitalMatches
-              }
-              if (answers.flag && flagAlpha2 && !flagIsCorrect) {
-                outcomes.flag = flagAlpha2 === question.alpha2
-              }
-              onAnswer(outcomes)
-            }}
+            onClick={submitAnswers}
           >
             {t('Vérifier mes réponses')}
           </button>

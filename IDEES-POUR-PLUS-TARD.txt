@@ -6,4 +6,8 @@ Modes d’affichage
 - Créer un long menu déroulant qui regroupe les modes d’affichage du logiciel.
 - Imaginer des modes Matrix, sobre en noir et blanc, carte au trésor, couches de données et d’autres styles à définir.
 
+Aide à l’utilisation
+- Si la page Exploration devient trop complexe, expliquer les outils avec de courtes vidéos d’écran enregistrées ou du motion design, à la manière de Lightroom.
+- Au survol d’un bouton, afficher une brève explication avec un bouton « ? ». Cliquer sur « ? » ouvre la vidéo correspondante dans un encadré.
+
 

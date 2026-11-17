@@ -3,6 +3,7 @@ import countryCapitals from '../quiz/countryCapitals.json'
 import explorationData from '../quiz/countryExplorationData.json'
 import countryProfileFacts from '../quiz/countryProfileFacts.json'
 import countryCultureData from './countryCultureData.json'
+import countryEconomicData from './countryEconomicData.json'
 import { additionalMapFlagRegions } from '../quiz/additionalMapFlagRegions'
 import { getContinentLabelForCountry } from '../quiz/countryContinents'
 import { getEntityById, getEntityDisplayName } from './registry'
@@ -122,6 +123,8 @@ export type CountryCultureCurrency = {
   code: string
   name: string
   symbol: string | null
+  euroPerUnit?: number | null
+  exchangeRateDate?: string | null
 }
 
 export type CountryWritingSystem = {
@@ -137,6 +140,54 @@ export type CountryCultureFacts = {
   currencies: CountryCultureCurrency[]
   webDomains: string[]
   writingSystems: CountryWritingSystem[]
+}
+
+export type MedianMonthlyEarnings = {
+  amount: number
+  currencyCode: string
+  year: number
+  status: string | null
+  sourceName?: string
+  sourceUrl?: string
+  definition?: string
+  euroPerUnit: number | null
+  exchangeRateDate: string | null
+}
+
+type CountryEconomicData = {
+  metadata: {
+    currencySourceUrl: string
+    salarySourceUrl: string
+    snapshotDate: string
+  }
+  ratesByCurrency: Record<string, { unitsPerEuro: number; date: string }>
+  medianMonthlyEarningsByAlpha2: Record<
+    string,
+    {
+      amount: number
+      currencyCode: string
+      year: number
+      status: string | null
+      sourceName?: string
+      sourceUrl?: string
+      definition?: string
+    }
+  >
+}
+
+const economicData = countryEconomicData as CountryEconomicData
+const exchangeRatesByCurrency = economicData.ratesByCurrency
+const medianEarningsByAlpha2 = economicData.medianMonthlyEarningsByAlpha2
+export const explorationEconomicSources = {
+  currencyRates: economicData.metadata.currencySourceUrl,
+  medianEarnings: economicData.metadata.salarySourceUrl,
+  snapshotDate: economicData.metadata.snapshotDate
+}
+
+function getEuroPerCurrencyUnit(currencyCode: string): number | null {
+  if (currencyCode === 'EUR') return 1
+  const unitsPerEuro = exchangeRatesByCurrency[currencyCode]?.unitsPerEuro
+  return unitsPerEuro && unitsPerEuro > 0 ? 1 / unitsPerEuro : null
 }
 
 type CountryProfileFactsData = {
@@ -160,6 +211,7 @@ export type ExplorationDetails = {
   mountains: ExplorationDataRecord['mountains']
   profileFacts: ExplorationProfileFacts | null
   culture: CountryCultureFacts | null
+  medianMonthlyEarnings: MedianMonthlyEarnings | null
   resources: ResourceIndustryFact[]
   populationSource: string
   populationSourceUrl: string | null
@@ -279,6 +331,11 @@ export function getExplorationDetails(
         }))
     : []
   const record = territoryRecord ?? explorationRecord
+  const culture = alpha2 ? cultureByAlpha2[alpha2] ?? null : null
+  const medianEarnings = alpha2 ? medianEarningsByAlpha2[alpha2] ?? null : null
+  const medianEarningsRate = medianEarnings
+    ? exchangeRatesByCurrency[medianEarnings.currencyCode]
+    : undefined
   const profileFacts = entity?.kind === 'territory' && entityId
     ? profileFactsByEntity.byTerritoryId[entityId] ?? null
     : alpha2
@@ -300,7 +357,26 @@ export function getExplorationDetails(
     cities: record?.cities ?? [],
     mountains: record?.mountains ?? [],
     profileFacts,
-    culture: alpha2 ? cultureByAlpha2[alpha2] ?? null : null,
+    culture: culture
+      ? {
+          ...culture,
+          currencies: culture.currencies.map((currency) => ({
+            ...currency,
+            euroPerUnit: getEuroPerCurrencyUnit(currency.code),
+            exchangeRateDate: exchangeRatesByCurrency[currency.code]?.date ?? null
+          }))
+        }
+      : null,
+    medianMonthlyEarnings: medianEarnings
+      ? {
+          ...medianEarnings,
+          euroPerUnit: getEuroPerCurrencyUnit(medianEarnings.currencyCode),
+          exchangeRateDate:
+            medianEarnings.currencyCode === 'EUR'
+              ? economicData.metadata.snapshotDate
+              : medianEarningsRate?.date ?? null
+        }
+      : null,
     resources: getResourceIndustryFactsForMapFeature(entityId, sourceId),
     populationSource: record?.populationSource ?? territoryRecord?.populationSource ?? 'Banque mondiale',
     populationSourceUrl: record?.populationSourceUrl ?? null,

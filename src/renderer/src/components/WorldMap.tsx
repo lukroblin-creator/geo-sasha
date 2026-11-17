@@ -15,7 +15,6 @@ import type {
 import type {
   Map as MapLibreMap,
   MapMouseEvent,
-  CircleLayerSpecification,
   FillLayerSpecification,
   FilterSpecification,
   LineLayerSpecification,
@@ -42,9 +41,16 @@ import { getAcceptedCapitalNames, getLocalizedCapitalName } from '../data/quiz/c
 import { additionalMapFlagRegions } from '../data/quiz/additionalMapFlagRegions'
 import { getFlagImageSource } from '../data/quiz/flagAssets'
 import {
+  getContinentIdForCountry,
   getQuizRegionFocusBounds,
   type QuizRegion
 } from '../data/quiz/countryContinents'
+import type {
+  MapLayerOpacityValues,
+  MapLayerStackId,
+  MapOpacityMask
+} from '../data/geography/mapLayerManager'
+import { defaultMapLayerOpacities, defaultMapLayerOrder } from '../data/geography/mapLayerManager'
 import {
   addFlagTerritoryProperties
 } from '../data/quiz/mapFlagTerritories'
@@ -147,6 +153,7 @@ import 'maplibre-gl/dist/maplibre-gl.css'
 
 type WorldMapProps = {
   showBorders: boolean
+  showTerritories?: boolean
   showLabels: boolean
   globeMode?: boolean
   onToggleGlobeMode: () => void
@@ -162,6 +169,11 @@ type WorldMapProps = {
   drawingTool?: 'draw' | 'erase' | 'pan' | null
   onDrawingStrokesChange?: (strokes: [number, number][][]) => void
   realLayer?: 'day' | 'night' | 'clouds' | null
+  layerOrder?: MapLayerStackId[]
+  layerOpacities?: Partial<MapLayerOpacityValues>
+  opacityMasks?: MapOpacityMask[]
+  opacityMaskPlacement?: boolean
+  onOpacityMaskPlace?: (position: [number, number]) => void
   showSelectionFeedback?: boolean
   showWrongAnswerFeedback?: boolean
   quizTargetFeatureId?: string | number | null
@@ -719,6 +731,137 @@ function isGeographicBoundsNearPointer(
   )
 }
 
+function wrapLongitude(longitude: number): number {
+  return ((longitude + 180) % 360 + 360) % 360 - 180
+}
+
+function createCircleMaskGeometry(
+  center: [number, number],
+  radiusKm: number
+): Geometry {
+  const steps = 72
+  const angularDistance = Math.max(1, radiusKm) / 6371
+  const centerLatitude = (center[1] * Math.PI) / 180
+  const centerLongitude = (center[0] * Math.PI) / 180
+  const ring: Position[] = []
+
+  for (let index = 0; index <= steps; index += 1) {
+    const bearing = (index / steps) * Math.PI * 2
+    const latitude = Math.asin(
+      Math.sin(centerLatitude) * Math.cos(angularDistance) +
+      Math.cos(centerLatitude) * Math.sin(angularDistance) * Math.cos(bearing)
+    )
+    const longitude = centerLongitude + Math.atan2(
+      Math.sin(bearing) * Math.sin(angularDistance) * Math.cos(centerLatitude),
+      Math.cos(angularDistance) - Math.sin(centerLatitude) * Math.sin(latitude)
+    )
+    ring.push([wrapLongitude((longitude * 180) / Math.PI), (latitude * 180) / Math.PI])
+  }
+
+  return { type: 'Polygon', coordinates: [ring] }
+}
+
+function createRectangleMaskGeometry(
+  center: [number, number],
+  widthKm: number,
+  heightKm: number
+): Geometry {
+  const latitudeScale = Math.max(0.05, Math.cos((center[1] * Math.PI) / 180))
+  const halfWidth = widthKm / (2 * 111.32 * latitudeScale)
+  const halfHeight = heightKm / (2 * 110.574)
+  const west = wrapLongitude(center[0] - halfWidth)
+  const east = wrapLongitude(center[0] + halfWidth)
+  const south = Math.max(-85, center[1] - halfHeight)
+  const north = Math.min(85, center[1] + halfHeight)
+
+  if (west <= east) {
+    return {
+      type: 'Polygon',
+      coordinates: [[[west, south], [east, south], [east, north], [west, north], [west, south]]]
+    }
+  }
+
+  return {
+    type: 'MultiPolygon',
+    coordinates: [
+      [[[west, south], [180, south], [180, north], [west, north], [west, south]]],
+      [[[-180, south], [east, south], [east, north], [-180, north], [-180, south]]]
+    ]
+  }
+}
+
+function getOpacityMaskFeatureCollection(mask: MapOpacityMask): FeatureCollection<Geometry> {
+  if (mask.kind === 'circle' && mask.center) {
+    return {
+      type: 'FeatureCollection',
+      features: [{ type: 'Feature', properties: { maskId: mask.id }, geometry: createCircleMaskGeometry(mask.center, mask.radiusKm ?? 500) }]
+    }
+  }
+  if (mask.kind === 'rectangle' && mask.center) {
+    return {
+      type: 'FeatureCollection',
+      features: [{
+        type: 'Feature',
+        properties: { maskId: mask.id },
+        geometry: createRectangleMaskGeometry(mask.center, mask.widthKm ?? 1000, mask.heightKm ?? 700)
+      }]
+    }
+  }
+
+  const selectedCountryIds = mask.sourceFeatureIds ??
+    (mask.sourceFeatureId !== undefined ? [mask.sourceFeatureId] : [])
+  const selectedContinents = mask.continents ??
+    (mask.continent ? [mask.continent] : [])
+  const sourceFeatureIds = mask.kind === 'country'
+    ? new Set(selectedCountryIds.map(normalizeSourceFeatureId))
+    : mask.kind === 'continent'
+      ? new Set(countryCatalog
+          .filter((country) => {
+            const continentId = getContinentIdForCountry(country.alpha2)
+            return continentId !== undefined && selectedContinents.includes(continentId)
+          })
+          .map((country) => normalizeSourceFeatureId(country.sourceFeatureId)))
+      : new Set<string>()
+  const features = world10mFlagMap.features.filter((feature) => {
+    const sourceFeatureId = feature.properties?.sourceId
+    return (typeof sourceFeatureId === 'string' || typeof sourceFeatureId === 'number') &&
+      sourceFeatureIds.has(normalizeSourceFeatureId(sourceFeatureId))
+  })
+
+  return {
+    type: 'FeatureCollection',
+    features: features.map((feature) => ({
+      type: 'Feature',
+      id: `${mask.id}:${String(feature.properties?.sourceId ?? 'region')}`,
+      properties: { maskId: mask.id },
+      geometry: feature.geometry
+    }))
+  }
+}
+
+function scaleZoomOpacityExpression(
+  expression: unknown,
+  opacityScale: number
+): unknown {
+  if (!Array.isArray(expression) || expression[0] !== 'interpolate') {
+    return typeof expression === 'number' ? expression * opacityScale : opacityScale
+  }
+
+  const [operator, interpolation, zoomExpression, ...stops] = expression
+  const scaledStops: unknown[] = []
+  for (let index = 0; index < stops.length; index += 2) {
+    const zoomStop = stops[index]
+    const stopOpacity = stops[index + 1]
+    if (typeof stopOpacity !== 'number') return expression
+    scaledStops.push(zoomStop, stopOpacity * opacityScale)
+  }
+
+  // MapLibre only accepts zoom-dependent paint expressions when interpolate
+  // or step is the outermost expression. Scale each stop instead of wrapping
+  // the zoom expression in a multiply or case expression.
+  return [operator, interpolation, zoomExpression, ...scaledStops]
+}
+
 function getPerspectiveGhostRings(
   geometry: Geometry,
   map: MapLibreMap,
@@ -872,6 +1015,7 @@ function haveSameLabels(
 
 function WorldMap({
   showBorders,
+  showTerritories = true,
   showLabels,
   globeMode = false,
   onToggleGlobeMode,
@@ -887,6 +1031,11 @@ function WorldMap({
   drawingTool = null,
   onDrawingStrokesChange,
   realLayer = null,
+  layerOrder = defaultMapLayerOrder,
+  layerOpacities = defaultMapLayerOpacities,
+  opacityMasks = [],
+  opacityMaskPlacement = false,
+  onOpacityMaskPlace,
   showSelectionFeedback = false,
   showWrongAnswerFeedback = false,
   quizTargetFeatureId = null,
@@ -909,6 +1058,16 @@ function WorldMap({
   const isMinimalSkin = skin === 'minimal'
   const isMatrixSkin = skin === 'matrix'
   const density = { ...fullMapLayerDensities, ...layerDensities }
+  const layerAlpha = (id: keyof MapLayerOpacityValues): number =>
+    Math.max(0, Math.min(100, layerOpacities[id] ?? 100)) / 100
+  const layerStackAlpha = (id: MapLayerStackId): number => {
+    const index = layerOrder.indexOf(id)
+    return (layerOrder.length - Math.max(0, index)) * 10 + 2
+  }
+  const opacityMaskCollections = useMemo(
+    () => opacityMasks.map((mask) => ({ mask, data: getOpacityMaskFeatureCollection(mask) })),
+    [opacityMasks]
+  )
   const mapBackgroundColor = realLayer === 'day'
     ? '#153a68'
     : realLayer === 'night' || realLayer === 'clouds'
@@ -1020,6 +1179,35 @@ function WorldMap({
       mapBackgroundColor
     )
   }, [mapBackgroundColor, mapInstance])
+
+  useEffect(() => {
+    if (!mapLoaded || !mapInstance) return
+    const layerIdsForStackItem = (id: MapLayerStackId): string[] => {
+      if (id.startsWith('mask:')) return [`opacity-mask-layer-${id.slice(5)}`]
+      switch (id) {
+        case 'texture': return ['real-earth-imagery-raster']
+        case 'territories': return countryFillLayerIds
+        case 'borders': return ['countries-borders-110m', 'countries-borders-50m', 'countries-borders-10m']
+        case 'labels': return ['countries-labels', 'low-zoom-country-marker-symbols']
+        case 'rivers': return physicalRiverLayerIds
+        case 'summits': return ['physical-mountain-peaks-major', 'physical-mountain-peaks-regional', 'physical-mountain-peaks-local']
+        default: return []
+      }
+    }
+
+    // The stack is displayed top-to-bottom, so append its rows to the map style
+    // from the bottom upward. This keeps Canva-like drag ordering predictable.
+    for (const id of [...layerOrder].reverse()) {
+      for (const layerId of layerIdsForStackItem(id)) {
+        if (mapInstance.getLayer(layerId)) mapInstance.moveLayer(layerId)
+      }
+    }
+
+    // Quiz feedback remains legible above all data layers.
+    for (const layerId of wrongAnswerFillLayerIds) {
+      if (mapInstance.getLayer(layerId)) mapInstance.moveLayer(layerId)
+    }
+  }, [layerOrder, mapInstance, mapLoaded, showBorders, showLabels, showRivers, showSummits, realLayer, opacityMaskCollections, showWrongAnswerFeedback])
 
   useEffect(() => {
     if (!mapInstance) {
@@ -1986,6 +2174,11 @@ function WorldMap({
 
   const handleCountryClick = (event: MapLayerMouseEvent): void => {
     if (perspectiveCorrectionEnabled) return
+    if (opacityMaskPlacement) {
+      onOpacityMaskPlace?.([event.lngLat.lng, event.lngLat.lat])
+      setSelectedPhysicalFeature(null)
+      return
+    }
     const isComparisonClick = event.originalEvent.metaKey || event.originalEvent.ctrlKey
     const riverFeature = event.features?.find((candidate) =>
       candidate.layer.id.startsWith('physical-rivers-')
@@ -2223,6 +2416,17 @@ function WorldMap({
     comparisonSelectedCountries.length > 0
   const shouldShowSelectedBoundary = showSelectionFeedback || hasMapSelection
 
+  useEffect(() => {
+    if (!mapLoaded || !mapInstance || !shouldShowSelectedBoundary) return
+    for (const layerId of [
+      'countries-selected-boundary-110m',
+      'countries-selected-boundary-50m',
+      'countries-selected-boundary-10m'
+    ]) {
+      if (mapInstance.getLayer(layerId)) mapInstance.moveLayer(layerId)
+    }
+  }, [mapInstance, mapLoaded, shouldShowSelectedBoundary, selectedAlpha2SourceFeatureIds, selectedEntityIds, selectedSourceFeatureId, comparisonSelectedCountries])
+
   const selectedFillColor = [
     'case',
     ['any', ...selectedFeatureExpressions],
@@ -2297,17 +2501,14 @@ function WorldMap({
     4.5, 0,
     5, 1
   ]
+  const territoryAlpha = showTerritories ? layerAlpha('territories') : 0
   const getFillOpacity = (
     baseOpacity: NonNullable<FillLayerSpecification['paint']>['fill-opacity']
   ): NonNullable<FillLayerSpecification['paint']>['fill-opacity'] =>
-    realLayer
-      ? [
-          'case',
-          selectedFeatureFilter,
-          0.58,
-          ['*', baseOpacity, 0.18]
-        ] as unknown as NonNullable<FillLayerSpecification['paint']>['fill-opacity']
-      : baseOpacity
+    scaleZoomOpacityExpression(
+      baseOpacity,
+      territoryAlpha
+    ) as NonNullable<FillLayerSpecification['paint']>['fill-opacity']
 
   const fillPaint110m: FillLayerSpecification['paint'] = {
     'fill-color': fillColor,
@@ -2325,43 +2526,35 @@ function WorldMap({
     'fill-antialias': showBorders,
     'fill-opacity': getFillOpacity(fillOpacity10m)
   }
+  const borderOpacity110m = scaleZoomOpacityExpression(
+    ['interpolate', ['linear'], ['zoom'], 2, 1, 3, 0],
+    layerAlpha('borders')
+  ) as NonNullable<LineLayerSpecification['paint']>['line-opacity']
+  const borderOpacity50m = scaleZoomOpacityExpression(
+    ['interpolate', ['linear'], ['zoom'], 2, 0, 3, 1, 4, 1, 4.5, 1, 5, 0],
+    layerAlpha('borders')
+  ) as NonNullable<LineLayerSpecification['paint']>['line-opacity']
+  const borderOpacity10m = scaleZoomOpacityExpression(
+    ['interpolate', ['linear'], ['zoom'], 4.5, 0, 5, 1],
+    layerAlpha('borders')
+  ) as NonNullable<LineLayerSpecification['paint']>['line-opacity']
+
   const borderPaint110m: LineLayerSpecification['paint'] = {
     'line-color': isMinimalSkin ? '#77736b' : isMatrixSkin ? '#176b34' : '#64748b',
     'line-width': 0.7,
-    'line-opacity': [
-      'interpolate',
-      ['linear'],
-      ['zoom'],
-      2, 1,
-      3, 0
-    ]
+    'line-opacity': borderOpacity110m
   }
 
   const borderPaint50m: LineLayerSpecification['paint'] = {
     'line-color': isMinimalSkin ? '#77736b' : isMatrixSkin ? '#176b34' : '#64748b',
     'line-width': 0.7,
-    'line-opacity': [
-      'interpolate',
-      ['linear'],
-      ['zoom'],
-      2, 0,
-      3, 1,
-      4, 1,
-      4.5, 1,
-      5, 0
-    ]
+    'line-opacity': borderOpacity50m
   }
 
   const borderPaint10m: LineLayerSpecification['paint'] = {
     'line-color': isMinimalSkin ? '#77736b' : isMatrixSkin ? '#176b34' : '#64748b',
     'line-width': 0.7,
-    'line-opacity': [
-      'interpolate',
-      ['linear'],
-      ['zoom'],
-      4.5, 0,
-      5, 1
-    ]
+    'line-opacity': borderOpacity10m
   }
 
   const selectionBoundaryPaint = (minZoom: number, maxZoom: number): LineLayerSpecification['paint'] => ({
@@ -2601,7 +2794,7 @@ function WorldMap({
     'text-color': realLayer ? '#ffffff' : isMinimalSkin ? '#20201d' : isMatrixSkin ? '#aaffbf' : '#ffffff',
     'text-halo-color': realLayer ? '#101820' : isMinimalSkin ? '#f2eee5' : isMatrixSkin ? '#010803' : '#101820',
     'text-halo-width': realLayer ? 1.35 : 1,
-    'text-opacity': 1
+    'text-opacity': layerAlpha('labels')
   }
 
   const perspectiveAreaComparisonPanel = perspectiveDrag && (
@@ -2636,7 +2829,7 @@ function WorldMap({
 
   return (
     <div
-      className={`world-map-shell${perspectiveCorrectionEnabled ? ' perspective-correction-active' : ''}${perspectiveAdjusting ? ' is-adjusting-perspective' : ''}${drawingTool ? ' has-drawing-tool' : ''}${hoveredCountry && !drawingTool && !perspectiveCorrectionEnabled ? ' has-country-hover' : ''}`}
+      className={`world-map-shell${perspectiveCorrectionEnabled ? ' perspective-correction-active' : ''}${perspectiveAdjusting ? ' is-adjusting-perspective' : ''}${drawingTool ? ' has-drawing-tool' : ''}${opacityMaskPlacement ? ' is-placing-opacity-mask' : ''}${hoveredCountry && !drawingTool && !perspectiveCorrectionEnabled && !opacityMaskPlacement ? ' has-country-hover' : ''}`}
     >
       <Map
         ref={mapRef}
@@ -2735,7 +2928,7 @@ function WorldMap({
               type="raster"
               beforeId="countries-fill-110m"
               paint={{
-                'raster-opacity': realLayer === 'clouds' ? 0.88 : 1,
+                'raster-opacity': (realLayer === 'clouds' ? 0.88 : 1) * layerAlpha('texture'),
                 'raster-resampling': 'linear'
               }}
             />
@@ -2897,32 +3090,44 @@ function WorldMap({
           )}
         </Source>
 
-        <Source
-          id="low-zoom-country-markers"
-          type="geojson"
-          data={lowZoomMissingCountryMarkers}
-        >
-          <Layer
-            id="low-zoom-country-marker-circles"
-            type="circle"
-            minzoom={0}
-            maxzoom={3}
-            paint={{
-              'circle-radius': ['interpolate', ['linear'], ['zoom'], 0, 1.8, 2, 2.5, 3, 0],
-              'circle-color': [
-                'case',
-                ['any', ...selectedFeatureExpressions],
-                isMinimalSkin ? '#20201d' : isMatrixSkin ? '#00d957' : '#e5a63b',
-                ['any', ...hoveredFeatureExpressions],
-                isMinimalSkin ? '#e9e3d7' : isMatrixSkin ? '#0a2a14' : '#d6e5f1',
-                isMinimalSkin ? '#8b6b38' : isMatrixSkin ? '#00d957' : '#f1bf62'
-              ] as unknown as NonNullable<CircleLayerSpecification['paint']>['circle-color'],
-              'circle-stroke-color': isMinimalSkin ? '#f6f2e9' : isMatrixSkin ? '#010803' : '#101820',
-              'circle-stroke-width': ['interpolate', ['linear'], ['zoom'], 0, 0.7, 2, 1.1, 3, 0],
-              'circle-opacity': ['interpolate', ['linear'], ['zoom'], 0, 0.72, 2, 0.9, 3, 0]
+        {showLabels && density.labels > 0 && (
+          <Source
+            id="low-zoom-country-markers"
+            type="geojson"
+            data={lowZoomMissingCountryMarkers}
+          >
+            <Layer
+            id="low-zoom-country-marker-symbols"
+            type="symbol"
+              minzoom={0}
+              maxzoom={3}
+            layout={{
+              'text-field': '◆',
+              'text-font': ['Open Sans Regular'],
+              'text-size': ['interpolate', ['linear'], ['zoom'], 0, 9, 2, 12, 3, 0],
+              'text-anchor': 'center',
+              'text-allow-overlap': true,
+              'text-ignore-placement': true
             }}
-          />
-        </Source>
+              paint={{
+              'text-color': [
+                  'case',
+                  ['any', ...selectedFeatureExpressions],
+                isMinimalSkin ? '#20201d' : isMatrixSkin ? '#00d957' : '#ffd166',
+                  ['any', ...hoveredFeatureExpressions],
+                isMinimalSkin ? '#20201d' : isMatrixSkin ? '#afffc3' : '#e8f6ff',
+                isMinimalSkin ? '#486b8c' : isMatrixSkin ? '#00d9db' : '#54bbf4'
+              ] as NonNullable<SymbolLayerSpecification['paint']>['text-color'],
+              'text-halo-color': isMinimalSkin ? '#f6f2e9' : isMatrixSkin ? '#010803' : '#101820',
+              'text-halo-width': 1.2,
+              'text-opacity': scaleZoomOpacityExpression(
+                ['interpolate', ['linear'], ['zoom'], 0, 0.8, 2, 1, 3, 0],
+                layerAlpha('labels')
+              ) as NonNullable<SymbolLayerSpecification['paint']>['text-opacity']
+              }}
+            />
+          </Source>
+        )}
 
         {showRivers && density.rivers > 0 && (
           <Source
@@ -2939,7 +3144,7 @@ function WorldMap({
               paint={{
                 'line-color': riverColor,
                 'line-width': ['interpolate', ['linear'], ['zoom'], 0, 0.65, 5, 1.35, 10, 2.2],
-                'line-opacity': 0.9
+                'line-opacity': 0.9 * layerAlpha('rivers')
               }}
             />
             <Layer
@@ -2951,7 +3156,7 @@ function WorldMap({
               paint={{
                 'line-color': riverColor,
                 'line-width': ['interpolate', ['linear'], ['zoom'], 2.5, 0.55, 7, 1.35],
-                'line-opacity': 0.74
+                'line-opacity': 0.74 * layerAlpha('rivers')
               }}
             />
             <Layer
@@ -2963,7 +3168,7 @@ function WorldMap({
               paint={{
                 'line-color': riverColor,
                 'line-width': ['interpolate', ['linear'], ['zoom'], 4.5, 0.5, 8, 1.25],
-                'line-opacity': 0.6
+                'line-opacity': 0.6 * layerAlpha('rivers')
               }}
             />
           </Source>
@@ -2985,7 +3190,7 @@ function WorldMap({
                 'circle-color': mountainColor,
                 'circle-stroke-color': isMinimalSkin ? '#f2eee5' : isMatrixSkin ? '#010803' : '#101820',
                 'circle-stroke-width': 1,
-                'circle-opacity': 0.95
+                'circle-opacity': 0.95 * layerAlpha('summits')
               }}
             />
             <Layer
@@ -2998,7 +3203,7 @@ function WorldMap({
                 'circle-color': mountainColor,
                 'circle-stroke-color': isMinimalSkin ? '#f2eee5' : isMatrixSkin ? '#010803' : '#101820',
                 'circle-stroke-width': 1,
-                'circle-opacity': 0.9
+                'circle-opacity': 0.9 * layerAlpha('summits')
               }}
             />
             <Layer
@@ -3011,7 +3216,7 @@ function WorldMap({
                 'circle-color': mountainColor,
                 'circle-stroke-color': isMinimalSkin ? '#f2eee5' : isMatrixSkin ? '#010803' : '#101820',
                 'circle-stroke-width': 0.8,
-                'circle-opacity': 0.82
+                'circle-opacity': 0.82 * layerAlpha('summits')
               }}
             />
           </Source>
@@ -3035,6 +3240,9 @@ function WorldMap({
 
         {physicalMapMarkers.map((marker) => {
           const isSelected = selectedPhysicalFeature?.marker.id === marker.id
+          const markerLayerId = marker.kind === 'river'
+            ? 'rivers'
+            : marker.kind === 'range' ? 'mountains' : 'summits'
           const featureType = marker.kind === 'river'
             ? 'Fleuve'
             : marker.kind === 'range' ? 'Chaîne de montagnes' : 'Sommet'
@@ -3061,7 +3269,11 @@ function WorldMap({
               longitude={marker.longitude}
               latitude={marker.latitude}
               anchor="center"
-              style={{ pointerEvents: 'auto', zIndex: isSelected ? 8 : 3 }}
+              style={{
+                pointerEvents: layerAlpha(markerLayerId) > 0 ? 'auto' : 'none',
+                zIndex: isSelected ? 10000 : layerStackAlpha(markerLayerId),
+                opacity: layerAlpha(markerLayerId)
+              }}
             >
               <div className="map-physical-marker-anchor">
                 {marker.kind === 'river' ? (
@@ -3188,6 +3400,8 @@ function WorldMap({
             zoom={mapZoom}
             revision={resourceOverlayRevision}
             maxItems={density.resources}
+            opacity={layerAlpha('resources')}
+            overlayZIndex={layerStackAlpha('resources')}
           />
         )}
 
@@ -3228,6 +3442,20 @@ function WorldMap({
           </Marker>
         )}
 
+        {opacityMaskCollections.map(({ mask, data }) => (
+          <Source key={mask.id} id={`opacity-mask-source-${mask.id}`} type="geojson" data={data}>
+            <Layer
+              id={`opacity-mask-layer-${mask.id}`}
+              type="fill"
+              paint={{
+                'fill-color': mapBackgroundColor,
+                'fill-opacity': Math.max(0, Math.min(100, mask.opacity)) / 100,
+                'fill-antialias': false
+              }}
+            />
+          </Source>
+        ))}
+
       </Map>
 
       {showFlagTerritories && density.flags > 0 && mapInstance && (
@@ -3252,6 +3480,8 @@ function WorldMap({
           quizTargetFeatureId={quizTargetFeatureId}
           selectionBoundaryOpacity={selectionBoundaryOpacity}
           flagOpacity={realLayer ? 0.3 : 1}
+          overlayOpacity={layerAlpha('flags')}
+          overlayZIndex={layerStackAlpha('flags')}
           realLayerActive={Boolean(realLayer)}
           wrongAnswerTarget={activeWrongAnswerTarget}
         />
