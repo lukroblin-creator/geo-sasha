@@ -1,4 +1,4 @@
-import { quizRegions, type QuizRegion } from './countryContinents'
+import { quizRegions, type ContinentId, type QuizRegion } from './countryContinents'
 import type { QuizAnswers, QuizClues } from './countryQuiz'
 
 export type QuizPreset = {
@@ -8,10 +8,34 @@ export type QuizPreset = {
   questionCount: number
   clues: QuizClues
   answers: QuizAnswers
+  gameMode?: 'base' | 'estimation' | 'draw-borders'
+  estimationRegion?: QuizRegion
+  estimationAlpha2s?: string[]
+  drawContinents?: ContinentId[]
+  drawCountryAlpha2?: string | null
 }
 
 const STORAGE_KEY = 'world-atlas:quiz-presets:v1'
+const DEFAULT_PRESET_STORAGE_KEY = 'world-atlas:quiz-default-preset:v1'
 const contentIds = ['countryOnMap', 'flag', 'countryName', 'capital'] as const
+
+export function loadDefaultQuizPresetId(): string {
+  try {
+    return localStorage.getItem(DEFAULT_PRESET_STORAGE_KEY) ?? ''
+  } catch {
+    return ''
+  }
+}
+
+export function saveDefaultQuizPresetId(presetId: string): boolean {
+  try {
+    if (presetId) localStorage.setItem(DEFAULT_PRESET_STORAGE_KEY, presetId)
+    else localStorage.removeItem(DEFAULT_PRESET_STORAGE_KEY)
+    return true
+  } catch {
+    return false
+  }
+}
 
 function isBooleanRecord(value: unknown): value is QuizClues {
   if (!value || typeof value !== 'object') return false
@@ -31,7 +55,17 @@ function isQuizPreset(value: unknown): value is QuizPreset {
     Number.isInteger(preset.questionCount) &&
     preset.questionCount > 0 &&
     isBooleanRecord(preset.clues) &&
-    isBooleanRecord(preset.answers)
+    isBooleanRecord(preset.answers) &&
+    (preset.gameMode === undefined || ['base', 'estimation', 'draw-borders'].includes(String(preset.gameMode))) &&
+    (preset.estimationRegion === undefined || quizRegions.some((region) => region.id === preset.estimationRegion)) &&
+    (preset.estimationAlpha2s === undefined ||
+      (Array.isArray(preset.estimationAlpha2s) && preset.estimationAlpha2s.every((code) => typeof code === 'string' && /^[A-Z]{2}$/.test(code)))) &&
+    (preset.drawContinents === undefined ||
+      (Array.isArray(preset.drawContinents) && preset.drawContinents.every((continent) =>
+        quizRegions.some((region) => region.id === continent && region.id !== 'world')
+      ))) &&
+    (preset.drawCountryAlpha2 === undefined || preset.drawCountryAlpha2 === null ||
+      (typeof preset.drawCountryAlpha2 === 'string' && /^[A-Z]{2}$/.test(preset.drawCountryAlpha2)))
   )
 }
 

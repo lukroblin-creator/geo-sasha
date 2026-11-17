@@ -13,6 +13,7 @@ type LabelProperties = {
   entityId: string | null
   resolution: string
   priority: number
+  sourceFeatureId?: string | number | null
 }
 
 type WorkerMessage =

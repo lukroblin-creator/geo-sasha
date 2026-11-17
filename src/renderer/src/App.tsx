@@ -1,20 +1,24 @@
 
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import type { CSSProperties } from 'react'
 import WorldMap from './components/WorldMap'
 import { ExplorationView } from './components/ExplorationView'
 import {
   CountryQuizPanel,
-  QuizCluesSidebar,
+  QuizCluesInline,
   QuizFullscreenBar
 } from './components/QuizPanels'
 import { ExplorationPlaceDetails } from './components/ExplorationPlaceDetails'
 import { QuizCountryStudyView } from './components/QuizCountryStudyView'
 import { StatisticsView } from './components/StatisticsView'
 import { CountryQuizSelectionView } from './components/CountryQuizSelectionView'
-import { AppModeSwitcher } from './components/AppModeSwitcher'
+import { AppModeSwitcher, SkinSelector, type AppPrimaryMode } from './components/AppModeSwitcher'
 import { CountryKnowledgeQuizView } from './components/CountryKnowledgeQuizView'
-import { getQuizAttemptPoints, useQuizSession } from './data/quiz/useQuizSession'
+import { CountryComparatorView } from './components/CountryComparatorView'
+import { EstimationQuizView } from './components/EstimationQuizView'
+import { DrawBordersQuizView } from './components/DrawBordersQuizView'
+import { MapLayerControls } from './components/MapLayerControls'
+import { formatQuizScore, getQuizAttemptPoints, useQuizSession } from './data/quiz/useQuizSession'
 import {
   createCountryQuizQuestions,
   type QuizAnswers,
@@ -31,8 +35,10 @@ import {
   getQuizQuestionsForRegion,
   quizRegions,
   type QuizQuestionCount,
-  type QuizRegion
+  type QuizRegion,
+  type ContinentId
 } from './data/quiz/countryContinents'
+import { createEstimationQuestions, type EstimationQuestion } from './data/quiz/estimationQuiz'
 import {
   loadQuizProgress,
   saveCompletedQuiz,
@@ -46,21 +52,63 @@ import {
 } from './data/quiz/countryQuizStats'
 import { getMapProximityResult, type MapProximityResult } from './data/quiz/mapProximity'
 import { getExplorationDetails } from './data/geography/exploration'
+import countryCatalog from './data/quiz/countryCatalog.json'
 import { activateUndoScope, undoActiveScope } from './data/undo'
-import { loadQuizPresets, saveQuizPresets, type QuizPreset } from './data/quiz/presets'
+import {
+  loadDefaultQuizPresetId,
+  loadQuizPresets,
+  saveDefaultQuizPresetId,
+  saveQuizPresets,
+  type QuizPreset
+} from './data/quiz/presets'
 import { useLanguage } from './data/i18n'
+import { useSkin } from './data/skin'
+import { fullMapLayerDensities, mapLayerDensityMaximums, type DensityLayerId, type MapLayerDensities } from './data/geography/mapLayerDensity'
+import { mountainRanges } from './data/geography/physical/mountainRanges'
 
-type MapLayerId = 'borders' | 'rivers' | 'mountains' | 'labels' | 'flags'
+type MapLayerId = 'borders' | 'rivers' | 'mountains' | 'labels' | 'flags' | 'summits'
 type MapLayerVisibility = Record<MapLayerId, boolean>
+type QuizSetup = {
+  region: QuizRegion
+  questionCount: QuizQuestionCount
+  clues: QuizClues
+  answers: QuizAnswers
+}
+type QuizGameMode = 'base' | 'estimation' | 'draw-borders'
+
+function normalizeCountrySourceFeatureId(sourceFeatureId: string | number): string {
+  const value = String(sourceFeatureId)
+  return /^\d+$/.test(value) ? String(Number(value)) : value
+}
+
+function normalizeCountrySearchText(value: string): string {
+  return value
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLocaleLowerCase()
+    .trim()
+}
 
 const mapLayerOptions: {
   id: MapLayerId
   label: string
   available: boolean
   title?: string
+  subLayer?: { id: MapLayerId; label: string }
 }[] = [
-  { id: 'rivers', label: 'Fleuves · bientôt', available: false },
-  { id: 'mountains', label: 'Montagnes · bientôt', available: false },
+  {
+    id: 'rivers',
+    label: 'Fleuves',
+    available: true,
+    title: 'Afficher les principaux fleuves documentés'
+  },
+  {
+    id: 'mountains',
+    label: 'Chaînes de montagnes',
+    available: true,
+    title: 'Afficher les principales chaînes de montagnes documentées',
+    subLayer: { id: 'summits', label: 'Sommets' }
+  },
   { id: 'labels', label: 'Noms des pays', available: true },
   {
     id: 'flags',
@@ -84,6 +132,18 @@ const flagPresetClues: QuizClues = {
 }
 const flagPresetAnswers: QuizAnswers = {
   countryOnMap: true,
+  countryName: false,
+  capital: false,
+  flag: false
+}
+const idleQuizClues: QuizClues = {
+  countryOnMap: false,
+  flag: false,
+  countryName: false,
+  capital: false
+}
+const idleQuizAnswers: QuizAnswers = {
+  countryOnMap: false,
   countryName: false,
   capital: false,
   flag: false
@@ -177,33 +237,100 @@ function getContentLabels(
     .join(', ')
 }
 
+function createRandomQuizSetup(): QuizSetup {
+  const region = quizRegions[Math.floor(Math.random() * quizRegions.length)].id
+  const maximumQuestionCount = getAvailableQuizQuestionCount(region)
+  const questionCount = Math.floor(Math.random() * maximumQuestionCount) + 1
+  const contentRoles = quizContentOptions.map(({ id }) => ({
+    id,
+    role: Math.floor(Math.random() * 3) as 0 | 1 | 2
+  }))
+
+  if (!contentRoles.some(({ role }) => role === 0)) {
+    contentRoles[Math.floor(Math.random() * contentRoles.length)].role = 0
+  }
+  if (!contentRoles.some(({ role }) => role === 1)) {
+    const eligible = contentRoles.filter(({ role }) => role !== 0)
+    const chosen = eligible.length
+      ? eligible[Math.floor(Math.random() * eligible.length)]
+      : contentRoles[Math.floor(Math.random() * contentRoles.length)]
+    chosen.role = 1
+  }
+
+  const clues = Object.fromEntries(
+    contentRoles.map(({ id, role }) => [id, role === 0])
+  ) as QuizClues
+  const answers = Object.fromEntries(
+    contentRoles.map(({ id, role }) => [id, role === 1])
+  ) as QuizAnswers
+
+  return { region, questionCount, clues, answers }
+}
+
 function App(): React.JSX.Element {
   const { language, t } = useLanguage()
-  type AppView = 'quiz' | 'exploration' | 'statistics' | 'country-select' | 'country-quiz'
+  const { skin } = useSkin()
+  const drawCountryOptions = useMemo(() => {
+    const displayNames = new Intl.DisplayNames([language], { type: 'region' })
+    return countryCatalog
+      .map((country) => ({
+        alpha2: country.alpha2,
+        name: displayNames.of(country.alpha2) ?? country.countryName
+      }))
+      .sort((first, second) => first.name.localeCompare(second.name, language))
+  }, [language])
+  type AppView = 'quiz' | 'exploration' | 'statistics' | 'country-select' | 'country-quiz' | 'comparator'
   const [appView, setAppView] = useState<AppView>('quiz')
   const [statisticsReturnView, setStatisticsReturnView] = useState<Exclude<AppView, 'statistics'>>('quiz')
-  const [contentSettingsOpen, setContentSettingsOpen] = useState(false)
+  const [comparisonInitialAlpha2, setComparisonInitialAlpha2] = useState<string[]>([])
+  const [savedQuizPresets, setSavedQuizPresets] = useState<QuizPreset[]>(loadQuizPresets)
+  const [defaultQuizPresetId, setDefaultQuizPresetId] = useState(loadDefaultQuizPresetId)
+  const initialDefaultQuizPreset = savedQuizPresets.find(
+    (preset) => preset.id === defaultQuizPresetId
+  )
   const [isQuizFullscreen, setIsQuizFullscreen] = useState(false)
   const [isMapFullscreen, setIsMapFullscreen] = useState(false)
+  const [perspectiveComparisonPortal, setPerspectiveComparisonPortal] = useState<HTMLDivElement | null>(null)
   const [fullscreenAnswersOpen, setFullscreenAnswersOpen] = useState(false)
   const [mapLayers, setMapLayers] = useState<MapLayerVisibility>({
     borders: true,
     rivers: false,
     mountains: false,
+    summits: false,
     labels: false,
     flags: false
   })
+  const [mapLayerDensities, setMapLayerDensities] = useState<MapLayerDensities>(fullMapLayerDensities)
   const [globeMode, setGlobeMode] = useState(false)
-  const [quizRegion, setQuizRegion] = useState<QuizRegion>('world')
-  const [quizQuestionCount, setQuizQuestionCount] = useState<QuizQuestionCount>(10)
-  const [activeQuizRegion, setActiveQuizRegion] = useState<QuizRegion>('world')
-  const [activeQuizQuestionCount, setActiveQuizQuestionCount] = useState<QuizQuestionCount>(10)
+  const [quizRegion, setQuizRegion] = useState<QuizRegion>(initialDefaultQuizPreset?.region ?? 'world')
+  const [quizGameMode, setQuizGameMode] = useState<QuizGameMode>(initialDefaultQuizPreset?.gameMode ?? 'base')
+  const [estimationRegion, setEstimationRegion] = useState<QuizRegion>(initialDefaultQuizPreset?.estimationRegion ?? 'world')
+  const [estimationAlpha2s, setEstimationAlpha2s] = useState<string[]>(initialDefaultQuizPreset?.estimationAlpha2s ?? [])
+  const [drawContinents, setDrawContinents] = useState<ContinentId[]>(initialDefaultQuizPreset?.drawContinents ?? [])
+  const [drawCountryAlpha2, setDrawCountryAlpha2] = useState<string | null>(initialDefaultQuizPreset?.drawCountryAlpha2 ?? null)
+  const [drawCountrySearch, setDrawCountrySearch] = useState('')
+  const [drawCountrySearchOpen, setDrawCountrySearchOpen] = useState(false)
+  const [estimationQuestions, setEstimationQuestions] = useState<EstimationQuestion[]>([])
+  const [specialQuizGeneration, setSpecialQuizGeneration] = useState(0)
+  const [quizQuestionCount, setQuizQuestionCount] = useState<QuizQuestionCount>(
+    initialDefaultQuizPreset
+      ? Math.min(
+          initialDefaultQuizPreset.questionCount,
+          getAvailableQuizQuestionCount(initialDefaultQuizPreset.region)
+        )
+      : 10
+  )
+  const [activeQuizRegion, setActiveQuizRegion] = useState<QuizRegion>(initialDefaultQuizPreset?.region ?? 'world')
+  const [activeQuizQuestionCount, setActiveQuizQuestionCount] = useState<QuizQuestionCount>(
+    initialDefaultQuizPreset?.questionCount ?? 10
+  )
   const [isQuizRunning, setIsQuizRunning] = useState(false)
   const [isQuizSetupOpen, setIsQuizSetupOpen] = useState(false)
-  const [quizClues, setQuizClues] = useState<QuizClues>(flagPresetClues)
-  const [quizAnswers, setQuizAnswers] = useState<QuizAnswers>(flagPresetAnswers)
-  const [activeQuizClues, setActiveQuizClues] = useState<QuizClues>(flagPresetClues)
-  const [activeQuizAnswers, setActiveQuizAnswers] = useState<QuizAnswers>(flagPresetAnswers)
+  const [isPresetQuickMenuOpen, setIsPresetQuickMenuOpen] = useState(false)
+  const [quizClues, setQuizClues] = useState<QuizClues>(initialDefaultQuizPreset?.clues ?? flagPresetClues)
+  const [quizAnswers, setQuizAnswers] = useState<QuizAnswers>(initialDefaultQuizPreset?.answers ?? flagPresetAnswers)
+  const [activeQuizClues, setActiveQuizClues] = useState<QuizClues>(idleQuizClues)
+  const [activeQuizAnswers, setActiveQuizAnswers] = useState<QuizAnswers>(idleQuizAnswers)
   const [sessionMode, setSessionMode] = useState<QuizMode>('flags')
   const [sessionGeneration, setSessionGeneration] = useState(0)
   const [showQuizRevealCard, setShowQuizRevealCard] = useState(false)
@@ -222,11 +349,12 @@ function App(): React.JSX.Element {
   const [mapProximity, setMapProximity] = useState<MapProximityResult | null>(null)
   const [quizProgress, setQuizProgress] = useState(loadQuizProgress)
   const [countryQuizStats, setCountryQuizStats] = useState(loadCountryQuizStats)
-  const [savedQuizPresets, setSavedQuizPresets] = useState<QuizPreset[]>(loadQuizPresets)
-  const [selectedQuizPresetId, setSelectedQuizPresetId] = useState('')
+  const [selectedQuizPresetId, setSelectedQuizPresetId] = useState(initialDefaultQuizPreset?.id ?? '')
   const [isSavingPreset, setIsSavingPreset] = useState(false)
   const [presetName, setPresetName] = useState('')
   const [presetFeedback, setPresetFeedback] = useState('')
+  const presetQuickMenuRef = useRef<HTMLDivElement>(null)
+  const defaultQuizPreset = savedQuizPresets.find((preset) => preset.id === defaultQuizPresetId)
   const lastRecordedQuestionRef = useRef<string | null>(null)
   const countryKnowledgeRecordedQuestionRef = useRef<string | null>(null)
 
@@ -251,6 +379,22 @@ function App(): React.JSX.Element {
     setAppView('statistics')
   }
 
+  const openCountryComparator = (alpha2s: string[]): void => {
+    setComparisonInitialAlpha2([...new Set(alpha2s.map((alpha2) => alpha2.toUpperCase()))])
+    setIsMapFullscreen(false)
+    if (document.fullscreenElement) void document.exitFullscreen().catch(() => undefined)
+    setAppView('comparator')
+  }
+
+  const openPrimaryMode = (mode: AppPrimaryMode): void => {
+    if (mode === 'comparator') setComparisonInitialAlpha2([])
+    if (mode === 'quiz' && !isQuizRunning) {
+      applyDefaultQuizPreset()
+      setIsQuizSetupOpen(false)
+    }
+    setAppView(mode)
+  }
+
   useEffect(() => {
     if (!selectedQuizPresetId) return
 
@@ -264,20 +408,61 @@ function App(): React.JSX.Element {
       selectedPreset.questionCount,
       getAvailableQuizQuestionCount(selectedPreset.region)
     )
-    const stillMatchesPreset =
+    const presetMode = selectedPreset.gameMode ?? 'base'
+    const sameList = (first: string[], second: string[]): boolean =>
+      first.length === second.length && first.every((item, index) => item === second[index])
+    const baseSettingsMatch = quizGameMode !== 'base' || (
       quizRegion === selectedPreset.region &&
       quizQuestionCount === expectedQuestionCount &&
       matchesQuizConfiguration(quizClues, quizAnswers, selectedPreset.clues, selectedPreset.answers)
+    )
+    const modeSettingsMatch = quizGameMode === presetMode && (
+      quizGameMode === 'base' || (
+        quizGameMode === 'estimation' &&
+        estimationRegion === (selectedPreset.estimationRegion ?? 'world') &&
+        sameList(estimationAlpha2s, selectedPreset.estimationAlpha2s ?? [])
+      ) || (
+        quizGameMode === 'draw-borders' &&
+        sameList(drawContinents, selectedPreset.drawContinents ?? []) &&
+        drawCountryAlpha2 === (selectedPreset.drawCountryAlpha2 ?? null)
+      )
+    )
+    const stillMatchesPreset = baseSettingsMatch && modeSettingsMatch
 
     if (!stillMatchesPreset) setSelectedQuizPresetId('')
   }, [
     quizAnswers,
     quizClues,
+    quizGameMode,
     quizQuestionCount,
     quizRegion,
+    estimationRegion,
+    estimationAlpha2s,
+    drawContinents,
+    drawCountryAlpha2,
     savedQuizPresets,
     selectedQuizPresetId
   ])
+
+  useEffect(() => {
+    if (!isPresetQuickMenuOpen) return
+
+    const closeOnOutsidePointer = (event: PointerEvent): void => {
+      if (!presetQuickMenuRef.current?.contains(event.target as Node)) {
+        setIsPresetQuickMenuOpen(false)
+      }
+    }
+    const closeOnEscape = (event: KeyboardEvent): void => {
+      if (event.key === 'Escape') setIsPresetQuickMenuOpen(false)
+    }
+
+    document.addEventListener('pointerdown', closeOnOutsidePointer)
+    document.addEventListener('keydown', closeOnEscape)
+    return () => {
+      document.removeEventListener('pointerdown', closeOnOutsidePointer)
+      document.removeEventListener('keydown', closeOnEscape)
+    }
+  }, [isPresetQuickMenuOpen])
 
   useEffect(() => {
     const handlePointerDown = (event: PointerEvent): void => {
@@ -308,7 +493,7 @@ function App(): React.JSX.Element {
   }, [])
 
   const enterQuizFullscreen = (): void => {
-    setContentSettingsOpen(false)
+    if (!isQuizRunning) return
     setFullscreenAnswersOpen(false)
     setShowQuizRevealCard(false)
     setIsQuizFullscreen(true)
@@ -498,7 +683,7 @@ function App(): React.JSX.Element {
     100
 
   const getCurrentQuestionBank = (): CountryQuizQuestion[] => {
-    const allQuestions = createCountryQuizQuestions()
+    const allQuestions = createCountryQuizQuestions(language)
     if (selectedQuizCountry) {
       return allQuestions.filter((question) => question.alpha2 === selectedQuizCountry)
     }
@@ -512,7 +697,7 @@ function App(): React.JSX.Element {
   const quiz = useQuizSession<CountryQuizQuestion>({
     mode: sessionMode,
     questionBank: () =>
-      getCurrentQuestionBank(),
+      isQuizRunning ? getCurrentQuestionBank() : [],
     onCompleted: recordCompletedQuiz
   })
   const countryKnowledgeQuiz = useQuizSession<CountryKnowledgeQuestion>({
@@ -620,18 +805,28 @@ function App(): React.JSX.Element {
     setAppView(countryQuizReturnView)
   }
 
-  const startNewQuiz = (): void => {
-    if (!Object.values(quizClues).some(Boolean) || !Object.values(quizAnswers).some(Boolean)) {
+  const startQuizWithSetup = (setup: QuizSetup, clearSelectedPreset = false): void => {
+    if (!Object.values(setup.clues).some(Boolean) || !Object.values(setup.answers).some(Boolean)) {
       return
     }
 
-    setContentSettingsOpen(false)
-    const nextMode = getQuizModeForContent(quizClues, quizAnswers)
+    const questionCount = Math.min(
+      setup.questionCount,
+      getAvailableQuizQuestionCount(setup.region)
+    )
+    setQuizRegion(setup.region)
+    setQuizGameMode('base')
+    setQuizQuestionCount(questionCount)
+    setQuizClues(setup.clues)
+    setQuizAnswers(setup.answers)
+    if (clearSelectedPreset) setSelectedQuizPresetId('')
+
+    const nextMode = getQuizModeForContent(setup.clues, setup.answers)
     setSessionMode(nextMode)
-    setActiveQuizClues(quizClues)
-    setActiveQuizAnswers(quizAnswers)
-    setActiveQuizRegion(quizRegion)
-    setActiveQuizQuestionCount(quizQuestionCount)
+    setActiveQuizClues(setup.clues)
+    setActiveQuizAnswers(setup.answers)
+    setActiveQuizRegion(setup.region)
+    setActiveQuizQuestionCount(questionCount)
     setSessionGeneration((current) => current + 1)
     lastRecordedQuestionRef.current = null
     setSelectedMapCountry(null)
@@ -641,7 +836,127 @@ function App(): React.JSX.Element {
     setFullscreenAnswersOpen(false)
     setIsQuizRunning(true)
     setIsQuizSetupOpen(false)
-    quiz.restart(getCurrentQuestionBank(), getQuizAnswerWeights(quizAnswers))
+    setIsPresetQuickMenuOpen(false)
+    quiz.restart(
+      getQuizQuestionsForRegion(
+        createCountryQuizQuestions(language),
+        setup.region,
+        questionCount
+      ),
+      getQuizAnswerWeights(setup.answers)
+    )
+  }
+
+  const startNewQuiz = (): void => {
+    if (quizGameMode === 'estimation') {
+      const questions = createEstimationQuestions(estimationRegion, estimationAlpha2s, language)
+      setEstimationQuestions(questions)
+      setIsQuizRunning(true)
+      setIsQuizSetupOpen(false)
+      setIsPresetQuickMenuOpen(false)
+      setSpecialQuizGeneration((current) => current + 1)
+      return
+    }
+    if (quizGameMode === 'draw-borders') {
+      setIsQuizRunning(true)
+      setIsQuizSetupOpen(false)
+      setIsPresetQuickMenuOpen(false)
+      setSpecialQuizGeneration((current) => current + 1)
+      return
+    }
+    startQuizWithSetup({
+      region: quizRegion,
+      questionCount: quizQuestionCount,
+      clues: quizClues,
+      answers: quizAnswers
+    })
+  }
+
+  const startRandomQuiz = (): void => {
+    setQuizGameMode('base')
+    startQuizWithSetup(createRandomQuizSetup(), true)
+  }
+
+  const startQuizPreset = (presetId: string): void => {
+    const preset = savedQuizPresets.find((item) => item.id === presetId)
+    if (!preset) return
+
+    setSelectedQuizPresetId(preset.id)
+    setPresetFeedback('')
+    setIsPresetQuickMenuOpen(false)
+    const questionCount = Math.min(
+      preset.questionCount,
+      getAvailableQuizQuestionCount(preset.region)
+    )
+    const gameMode = preset.gameMode ?? 'base'
+
+    if (gameMode === 'base') {
+      startQuizWithSetup({
+        region: preset.region,
+        questionCount,
+        clues: preset.clues,
+        answers: preset.answers
+      })
+      return
+    }
+
+    setQuizRegion(preset.region)
+    setQuizQuestionCount(questionCount)
+    setQuizClues(preset.clues)
+    setQuizAnswers(preset.answers)
+    setQuizGameMode(gameMode)
+    setEstimationRegion(preset.estimationRegion ?? 'world')
+    setEstimationAlpha2s(preset.estimationAlpha2s ?? [])
+    setDrawContinents(preset.drawContinents ?? [])
+    setDrawCountryAlpha2(preset.drawCountryAlpha2 ?? null)
+    setDrawCountrySearch('')
+    setDrawCountrySearchOpen(false)
+    setActiveQuizClues(preset.clues)
+    setActiveQuizAnswers(preset.answers)
+    setActiveQuizRegion(preset.region)
+    setActiveQuizQuestionCount(questionCount)
+    setSelectedQuizCountry(null)
+    setSelectedMapCountry(null)
+    setMapProximity(null)
+    setShowQuizRevealCard(false)
+    setShowExpandedQuizCountry(false)
+    setFullscreenAnswersOpen(false)
+    setIsQuizRunning(true)
+    setIsQuizSetupOpen(false)
+    lastRecordedQuestionRef.current = null
+    quiz.restart([])
+
+    if (gameMode === 'estimation') {
+      const region = preset.estimationRegion ?? 'world'
+      const alpha2s = preset.estimationAlpha2s ?? []
+      setEstimationQuestions(createEstimationQuestions(region, alpha2s, language))
+    }
+    setSpecialQuizGeneration((current) => current + 1)
+  }
+
+  const toggleEstimationCountry = (sourceFeatureId: string | number): boolean => {
+    const normalizedSourceFeatureId = normalizeCountrySourceFeatureId(sourceFeatureId)
+    const country = (countryCatalog as { sourceFeatureId: number; alpha2: string }[])
+      .find((item) => normalizeCountrySourceFeatureId(item.sourceFeatureId) === normalizedSourceFeatureId)
+    if (!country) return false
+    setEstimationAlpha2s((current) => current.includes(country.alpha2)
+      ? current.filter((alpha2) => alpha2 !== country.alpha2)
+      : [...current, country.alpha2])
+    return true
+  }
+
+  const stopSpecialQuiz = (): void => {
+    setIsQuizRunning(false)
+    setIsQuizSetupOpen(true)
+    setFullscreenAnswersOpen(false)
+    setActiveQuizClues(idleQuizClues)
+    setActiveQuizAnswers(idleQuizAnswers)
+    setIsPresetQuickMenuOpen(false)
+    setAppView('quiz')
+  }
+
+  const recordSpecialQuiz = (mode: 'estimation' | 'draw-borders', score: number): void => {
+    setQuizProgress(saveCompletedQuiz(mode, score))
   }
 
   const applyQuizPreset = (presetId: string): void => {
@@ -656,7 +971,40 @@ function App(): React.JSX.Element {
     )
     setQuizClues(preset.clues)
     setQuizAnswers(preset.answers)
-    setContentSettingsOpen(false)
+    setQuizGameMode(preset.gameMode ?? 'base')
+    setEstimationRegion(preset.estimationRegion ?? 'world')
+    setEstimationAlpha2s(preset.estimationAlpha2s ?? [])
+    setDrawContinents(preset.drawContinents ?? [])
+    setDrawCountryAlpha2(preset.drawCountryAlpha2 ?? null)
+    setDrawCountrySearch('')
+    setDrawCountrySearchOpen(false)
+  }
+
+  const applyDefaultQuizPreset = (): void => {
+    const preset = savedQuizPresets.find((item) => item.id === defaultQuizPresetId)
+    if (preset) applyQuizPreset(preset.id)
+  }
+
+  const toggleSelectedPresetDefault = (): void => {
+    if (!selectedQuizPresetId) return
+    const nextDefaultPresetId = selectedQuizPresetId === defaultQuizPresetId
+      ? ''
+      : selectedQuizPresetId
+    if (!saveDefaultQuizPresetId(nextDefaultPresetId)) {
+      setPresetFeedback(t('Enregistrement impossible sur cet appareil.'))
+      return
+    }
+
+    setDefaultQuizPresetId(nextDefaultPresetId)
+    setPresetFeedback(t(nextDefaultPresetId ? 'Preset défini par défaut.' : 'Preset par défaut désactivé.'))
+  }
+
+  const returnFromStatistics = (): void => {
+    if (statisticsReturnView === 'quiz') {
+      applyDefaultQuizPreset()
+      setIsQuizSetupOpen(false)
+    }
+    setAppView(statisticsReturnView)
   }
 
   const saveCurrentQuizPreset = (): void => {
@@ -674,7 +1022,12 @@ function App(): React.JSX.Element {
       region: quizRegion,
       questionCount: Math.min(quizQuestionCount, getAvailableQuizQuestionCount(quizRegion)),
       clues: { ...quizClues },
-      answers: { ...quizAnswers }
+      answers: { ...quizAnswers },
+      gameMode: quizGameMode,
+      estimationRegion,
+      estimationAlpha2s: [...estimationAlpha2s],
+      drawContinents: [...drawContinents],
+      drawCountryAlpha2
     }
     const updated = existing
       ? savedQuizPresets.map((item) => (item.id === existing.id ? preset : item))
@@ -700,6 +1053,10 @@ function App(): React.JSX.Element {
     }
     setSavedQuizPresets(updated)
     setSelectedQuizPresetId('')
+    if (defaultQuizPresetId === selectedQuizPresetId) {
+      saveDefaultQuizPresetId('')
+      setDefaultQuizPresetId('')
+    }
     setPresetFeedback(t('Preset supprimé.'))
   }
 
@@ -732,6 +1089,7 @@ function App(): React.JSX.Element {
   ): boolean => {
     const question = quiz.session.questionOrder[quiz.session.questionIndex]
     if (
+      !isQuizRunning ||
       !activeQuizAnswers.countryOnMap ||
       !question ||
       quiz.session.answerResults.countryOnMap === true ||
@@ -757,6 +1115,7 @@ function App(): React.JSX.Element {
   const handleQuizMapClick = ([longitude, latitude]: [number, number]): MapProximityResult | null => {
     const question = quiz.session.questionOrder[quiz.session.questionIndex]
     if (
+      !isQuizRunning ||
       !activeQuizAnswers.countryOnMap ||
       !question ||
       quiz.session.answerResults.countryOnMap === true ||
@@ -771,6 +1130,7 @@ function App(): React.JSX.Element {
   }
 
   const revealQuizAnswer = (): void => {
+    if (!isQuizRunning) return
     const question = quiz.session.questionOrder[quiz.session.questionIndex]
     if (!question) return
 
@@ -788,11 +1148,13 @@ function App(): React.JSX.Element {
   }
 
   const submitCountryQuizAnswers = (outcomes: Record<string, boolean>): void => {
+    if (!isQuizRunning) return
     quiz.answerItems(outcomes, JSON.stringify(outcomes))
     if (Object.values(outcomes).every(Boolean)) setFullscreenAnswersOpen(false)
   }
 
   const nextQuizQuestion = (): void => {
+    if (!isQuizRunning) return
     recordCurrentQuestionResult()
     setSelectedMapCountry(null)
     setMapProximity(null)
@@ -831,12 +1193,7 @@ function App(): React.JSX.Element {
 
   const stopQuiz = (): void => {
     recordCurrentQuestionResult()
-    const nextQuestionBank = getQuizQuestionsForRegion(
-      createCountryQuizQuestions(),
-      quizRegion,
-      quizQuestionCount
-    )
-    quiz.restart(nextQuestionBank)
+    quiz.restart([])
     setSelectedQuizCountry(null)
     lastRecordedQuestionRef.current = null
     setSelectedMapCountry(null)
@@ -846,6 +1203,9 @@ function App(): React.JSX.Element {
     setFullscreenAnswersOpen(false)
     setIsQuizRunning(false)
     setIsQuizSetupOpen(false)
+    setIsPresetQuickMenuOpen(false)
+    setActiveQuizClues(idleQuizClues)
+    setActiveQuizAnswers(idleQuizAnswers)
     exitQuizFullscreen()
     setAppView('quiz')
   }
@@ -858,7 +1218,18 @@ if (appView === 'exploration') {
       isFullscreen={isMapFullscreen}
       onToggleFullscreen={toggleMapFullscreen}
       onOpenStatistics={openStatistics}
-      onModeChange={setAppView}
+      onCompareCountries={openCountryComparator}
+      onModeChange={openPrimaryMode}
+    />
+  )
+}
+
+if (appView === 'comparator') {
+  return (
+    <CountryComparatorView
+      onModeChange={openPrimaryMode}
+      onOpenStatistics={openStatistics}
+      initialAlpha2={comparisonInitialAlpha2}
     />
   )
 }
@@ -870,9 +1241,9 @@ if (appView === 'statistics') {
       quizProgress={quizProgress}
       globeMode={globeMode}
       onToggleGlobeMode={toggleGlobeMode}
-      onReturn={() => setAppView(statisticsReturnView)}
+      onReturn={returnFromStatistics}
       onOpenCountryQuiz={startCountryQuiz}
-      onModeChange={setAppView}
+      onModeChange={openPrimaryMode}
     />
   )
 }
@@ -900,7 +1271,7 @@ if (appView === 'country-select') {
   return (
     <CountryQuizSelectionView
       onStart={startCountryQuiz}
-      onModeChange={setAppView}
+      onModeChange={openPrimaryMode}
       globeMode={globeMode}
       onToggleGlobeMode={toggleGlobeMode}
       isFullscreen={isMapFullscreen}
@@ -925,10 +1296,124 @@ if (appView === 'quiz' && showExpandedQuizCountry && currentQuizQuestion && reve
   )
 }
 
+const mapLayerControls = (
+  <MapLayerControls
+    layers={mapLayerOptions.map((layer) => {
+      const densityId = layer.id === 'borders' || layer.id === 'mountains'
+        ? null
+        : layer.id as DensityLayerId
+      return {
+        id: layer.id,
+        label: layer.label,
+        enabled: mapLayers[layer.id],
+        density: densityId ? mapLayerDensities[densityId] : 0,
+        maximum: densityId ? mapLayerDensityMaximums[densityId] : 0,
+        fixedCount: layer.id === 'mountains' ? mountainRanges.length : undefined,
+        subLayer: layer.subLayer ? {
+          id: layer.subLayer.id,
+          label: layer.subLayer.label,
+          enabled: mapLayers[layer.subLayer.id],
+          density: mapLayerDensities.mountains,
+          maximum: mapLayerDensityMaximums.mountains
+        } : undefined,
+        title: layer.title,
+        border: layer.id === 'borders',
+        disabled: !layer.available
+      }
+    })}
+    onToggle={(id, enabled) => {
+      const layerId = id as MapLayerId
+      setMapLayers((current) => ({ ...current, [layerId]: enabled }))
+      if (enabled && layerId === 'summits' && mapLayerDensities.mountains === 0) {
+        setMapLayerDensities((current) => ({ ...current, mountains: 1 }))
+      } else if (enabled && layerId !== 'borders' && layerId !== 'mountains' && layerId !== 'summits') {
+        const densityId = layerId as DensityLayerId
+        if (mapLayerDensities[densityId] === 0) {
+          setMapLayerDensities((current) => ({ ...current, [densityId]: 1 }))
+        }
+      }
+    }}
+    onDensityChange={(id, value) => {
+      const densityId = (id === 'summits' ? 'mountains' : id) as DensityLayerId
+      setMapLayerDensities((current) => ({ ...current, [densityId]: value }))
+      const visibilityId: MapLayerId = densityId === 'mountains'
+        ? 'summits'
+        : densityId as MapLayerId
+      setMapLayers((current) => ({ ...current, [visibilityId]: value > 0 }))
+    }}
+  />
+)
+
+const canStartQuiz = quizGameMode !== 'base' ||
+  (Object.values(quizClues).some(Boolean) && Object.values(quizAnswers).some(Boolean))
+
+const runningQuizTotal = quiz.session.questionOrder.length
+const runningQuizAnswered = Math.min(
+  runningQuizTotal,
+  quiz.session.questionIndex +
+    (quiz.session.answerCorrect === true || quiz.session.answerRevealed ? 1 : 0)
+)
+const runningQuizProgress = runningQuizTotal ? (runningQuizAnswered / runningQuizTotal) * 100 : 0
+const runningQuestionNumber = Math.min(quiz.session.questionIndex + 1, runningQuizTotal)
+
+const toggleDrawContinent = (continent: ContinentId): void => {
+  setDrawCountryAlpha2(null)
+  setDrawCountrySearch('')
+  setDrawCountrySearchOpen(false)
+  setDrawContinents((current) => current.includes(continent)
+    ? current.filter((item) => item !== continent)
+    : [...current, continent])
+}
+
+const filteredDrawCountryOptions = drawCountrySearch.trim()
+  ? drawCountryOptions.filter((country) =>
+      normalizeCountrySearchText(country.name).startsWith(normalizeCountrySearchText(drawCountrySearch))
+    )
+  : []
+
+const estimationSelectionLabel = estimationAlpha2s.length
+  ? (() => {
+      const displayNames = new Intl.DisplayNames([language], { type: 'region' })
+      const catalog = countryCatalog as { alpha2: string; countryName: string }[]
+      const selectedNames = estimationAlpha2s.slice(0, 4).map((alpha2) =>
+        displayNames.of(alpha2) ?? catalog.find((country) => country.alpha2 === alpha2)?.countryName ?? alpha2
+      )
+      const remaining = estimationAlpha2s.length - selectedNames.length
+      return `${estimationAlpha2s.length} ${t(estimationAlpha2s.length === 1 ? 'pays sélectionné' : 'pays sélectionnés')} · ${selectedNames.join(', ')}${remaining > 0 ? ` +${remaining}` : ''}`
+    })()
+  : t(quizRegions.find((region) => region.id === estimationRegion)?.label ?? 'Tous les continents')
+
+if (appView === 'quiz' && isQuizRunning && quizGameMode === 'estimation') {
+  return (
+    <EstimationQuizView
+      key={specialQuizGeneration}
+      questions={estimationQuestions}
+      onStop={stopSpecialQuiz}
+      onRestart={startNewQuiz}
+      onCompleted={(score) => recordSpecialQuiz('estimation', score)}
+      globeMode={globeMode}
+      onToggleGlobeMode={toggleGlobeMode}
+    />
+  )
+}
+
+if (appView === 'quiz' && isQuizRunning && quizGameMode === 'draw-borders') {
+  return (
+    <DrawBordersQuizView
+      key={specialQuizGeneration}
+      continents={drawContinents}
+      countryAlpha2={drawCountryAlpha2}
+      onStop={stopSpecialQuiz}
+      onRestart={startNewQuiz}
+      onCompleted={(score) => recordSpecialQuiz('draw-borders', score)}
+      globeMode={globeMode}
+      onToggleGlobeMode={toggleGlobeMode}
+    />
+  )
+}
+
 return (
     <div className={`app-shell${isQuizFullscreen ? ' quiz-fullscreen' : ''}`}>
-      <QuizCluesSidebar session={quiz.session} clues={activeQuizClues} />
-
       <main className="main-content">
         <div className={`quiz-configuration-area${isQuizRunning ? ' is-running' : ''}`}>
         {isQuizRunning ? (
@@ -943,15 +1428,27 @@ return (
                 {t('Indices')} : {getContentLabels(activeQuizClues, t)} · {t('Réponses')} :{' '}
                 {getContentLabels(activeQuizAnswers, t)}
               </small>
+              <small className="quiz-live-progress-copy">
+                {quiz.session.completed
+                  ? t('Quiz terminé')
+                  : `${t('Question')} ${String(runningQuestionNumber).padStart(2, '0')}/${runningQuizTotal}`}{' '}
+                · {runningQuizAnswered} {t(runningQuizAnswered > 1 ? 'réponses' : 'réponse')}{' '}
+                {t('sur')} {runningQuizTotal} · {t('Score :')} {formatQuizScore(quiz.session.score, language)} /{' '}
+                {runningQuizTotal}
+              </small>
+              <div
+                className="quiz-live-progress-track"
+                role="progressbar"
+                aria-label={t('Progression du quiz')}
+                aria-valuemin={0}
+                aria-valuemax={runningQuizTotal}
+                aria-valuenow={runningQuizAnswered}
+              >
+                <span style={{ width: `${runningQuizProgress}%` }} />
+              </div>
             </div>
             <div className="quiz-live-actions">
-              <button
-                type="button"
-                onClick={() => setIsQuizSetupOpen((open) => !open)}
-                aria-expanded={isQuizSetupOpen}
-              >
-                {t(isQuizSetupOpen ? 'Masquer les réglages' : 'Modifier les réglages')}
-              </button>
+              <SkinSelector compact />
               <button type="button" onClick={enterQuizFullscreen}>
                 {t('Plein écran')}
               </button>
@@ -975,277 +1472,489 @@ return (
               >
                 {t('Statistiques')}
               </button>
-              <button
-                className="home-back-button quiz-fullscreen-toggle"
-                type="button"
-                onClick={enterQuizFullscreen}
-              >
-                {t('Plein écran')}
-              </button>
-
-              <span className="status-dot" />
-              <span className="status-text">{t('Application locale')}</span>
             </div>
           </header>
         )}
 
-        {!isQuizRunning && <AppModeSwitcher active="quiz" onChange={setAppView} />}
+        {!isQuizRunning && <AppModeSwitcher active="quiz" onChange={openPrimaryMode} />}
 
-        {(!isQuizRunning || isQuizSetupOpen) && (
-          <div
-            className={`quiz-configuration-menu${isQuizRunning ? ' is-open' : ''}`}
-            aria-label={t('Réglages de la partie')}
-          >
-          <section className="quiz-toolbar" aria-label={t('Réglages de la partie')}>
-          <label className="quiz-region-field">
-            <span>{t('RÉGION')}</span>
-            <select
-              value={quizRegion}
-              onChange={(event) => {
-                const region = quizRegions.find((item) => item.id === event.target.value)
-                if (region) handleQuizRegionChange(region.id)
-              }}
-            >
-              {quizRegions.map((region) => (
-                <option key={region.id} value={region.id}>{t(region.label)}</option>
-              ))}
-            </select>
-          </label>
-
-          <div className="quiz-count-control">
-            <div className="quiz-count-value">
-              <span>{t('À deviner')}</span>
-              <div className="quiz-count-number-row">
-                <input
-                  aria-label={t('Nombre exact de pays à deviner')}
-                  type="number"
-                  min={1}
-                  max={maxQuizQuestionCount}
-                  value={quizQuestionCount}
-                  onChange={(event) => {
-                    if (!event.target.value) return
-                    const nextCount = Number(event.target.value)
-                    if (Number.isFinite(nextCount)) {
-                      setQuizQuestionCount(
-                        Math.max(1, Math.min(maxQuizQuestionCount, Math.round(nextCount)))
-                      )
-                    }
-                  }}
-                />
-                <span>{t('pays')}</span>
+        {!isQuizRunning && (
+          <section className="quiz-setup-area" aria-label={t('Réglages de la partie')}>
+            <div className="quiz-setup-launcher">
+              <button
+                className="quiz-setup-trigger"
+                type="button"
+                aria-expanded={isQuizSetupOpen}
+                aria-controls="quiz-settings-panel"
+                onClick={() => setIsQuizSetupOpen((open) => !open)}
+              >
+                <span>{t(isQuizSetupOpen ? 'Masquer les réglages' : 'Paramétrer une partie')}</span>
+                <small>
+                  {selectedQuizPresetId
+                    ? savedQuizPresets.find((preset) => preset.id === selectedQuizPresetId)?.name
+                    : t('Configuration personnalisée')}
+                  {defaultQuizPresetId && selectedQuizPresetId === defaultQuizPresetId
+                    ? ` · ${t('Preset par défaut')}`
+                    : ''}
+                </small>
+              </button>
+              <div className="quiz-preset-quick-launcher" ref={presetQuickMenuRef}>
                 <button
-                  className="quiz-count-max-button"
+                  className="quiz-random-button quiz-preset-quick-button"
                   type="button"
-                  aria-label={t('Choisir le nombre maximum de pays')}
-                  title={`${t('Jouer avec les')} ${maxQuizQuestionCount} ${t('pays disponibles')}`}
-                  onClick={() => setQuizQuestionCount(maxQuizQuestionCount)}
+                  disabled={!defaultQuizPreset}
+                  title={t(defaultQuizPreset ? 'Lancer le preset par défaut' : 'Aucun preset par défaut')}
+                  onClick={() => defaultQuizPreset && startQuizPreset(defaultQuizPreset.id)}
                 >
-                  Max
+                  {t('Preset')}
                 </button>
+                <button
+                  className="quiz-random-button quiz-preset-menu-toggle"
+                  type="button"
+                  aria-label={t('Choisir et lancer un preset')}
+                  aria-haspopup="menu"
+                  aria-expanded={isPresetQuickMenuOpen}
+                  aria-controls="quiz-preset-quick-menu"
+                  onClick={() => setIsPresetQuickMenuOpen((open) => !open)}
+                >
+                  <span aria-hidden="true">⌄</span>
+                </button>
+                {isPresetQuickMenuOpen && (
+                  <div className="quiz-preset-quick-menu" id="quiz-preset-quick-menu" role="menu">
+                    {savedQuizPresets.length ? (
+                      savedQuizPresets.map((preset) => (
+                        <button
+                          key={preset.id}
+                          type="button"
+                          role="menuitem"
+                          className="quiz-preset-quick-menu-item"
+                          onClick={() => startQuizPreset(preset.id)}
+                        >
+                          <span>{preset.name}</span>
+                          {preset.id === defaultQuizPresetId && <small>{t('Par défaut')}</small>}
+                        </button>
+                      ))
+                    ) : (
+                      <div className="quiz-preset-quick-menu-empty">
+                        <strong>{t('Aucun preset enregistré')}</strong>
+                        <span>{t('Enregistre un preset dans les réglages pour le lancer ici.')}</span>
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
+              <button className="quiz-random-button" type="button" onClick={startRandomQuiz}>
+                {t('Partie aléatoire')}
+              </button>
             </div>
-            <div className="quiz-count-slider">
-              <input
-                type="range"
-                aria-label={t('Nombre de pays à deviner')}
-                min={1}
-                max={maxQuizQuestionCount}
-                step={1}
-                value={Math.min(quizQuestionCount, maxQuizQuestionCount)}
-                style={{ '--quiz-count-progress': `${quizCountProgress}%` } as CSSProperties}
-                onChange={(event) =>
-                  setQuizQuestionCount(
-                    snapQuestionCountToMark(Number(event.target.value))
-                  )
-                }
-                onPointerUp={(event) =>
-                  setQuizQuestionCount(
-                    snapQuestionCountToMark(Number(event.currentTarget.value))
-                  )
-                }
-                onKeyUp={(event) => {
-                  if (event.key.startsWith('Arrow')) {
-                    setQuizQuestionCount((current) => snapQuestionCountToMark(current))
-                  }
-                }}
-              />
-              <div className="quiz-count-marks" aria-hidden="true">
-                {[10, 25, 50, maxQuizQuestionCount]
-                  .filter((mark, index, allMarks) =>
-                    mark <= maxQuizQuestionCount && allMarks.indexOf(mark) === index
-                  )
-                  .map((mark) => (
-                    <span
-                      key={mark}
-                      className={`quiz-count-mark${Math.abs(quizQuestionCount - mark) <= 1 ? ' active' : ''}`}
-                      style={{ left: `${((mark - 1) / (maxQuizQuestionCount - 1)) * 100}%` }}
+
+            {isQuizSetupOpen && (
+              <div className="quiz-settings-panel" id="quiz-settings-panel">
+                <header className="quiz-settings-heading">
+                  <div>
+                    <span>{t('PARAMÈTRES DE LA PARTIE')}</span>
+                    <h2>{t('Choisis comment jouer')}</h2>
+                    <p>{t(quizGameMode === 'base'
+                      ? 'Choisis une zone géographique, le nombre de pays et les indices ou réponses de la partie.'
+                      : quizGameMode === 'estimation'
+                        ? 'Choisis une région ou des pays, puis estime les données demandées.'
+                        : 'Choisis un ou plusieurs continents pour dessiner leurs frontières.')}</p>
+                  </div>
+                  <div className="quiz-settings-heading-actions">
+                    <button
+                      className="quiz-start-button"
+                      type="button"
+                      onClick={startNewQuiz}
+                      disabled={!canStartQuiz}
                     >
-                      <i />
-                      <small>{mark === maxQuizQuestionCount ? 'Max' : mark}</small>
-                    </span>
-                  ))}
-              </div>
-            </div>
-          </div>
+                      {t('Lancer la partie')}
+                    </button>
+                    <button
+                      type="button"
+                      className="quiz-settings-close"
+                      aria-label={t('Fermer les réglages')}
+                      onClick={() => setIsQuizSetupOpen(false)}
+                    >
+                      ×
+                    </button>
+                  </div>
+                </header>
 
-          <div className="quiz-content-picker">
-            <button
-              className="quiz-content-picker-button"
-              type="button"
-              aria-haspopup="dialog"
-              aria-expanded={contentSettingsOpen}
-              onClick={() => setContentSettingsOpen((open) => !open)}
-            >
-              <span className="quiz-content-picker-caption">{t('CONTENU DU QUIZ')}</span>
-              <span className="quiz-content-picker-value">
-                {t('Choisir indices et réponses')} <span aria-hidden="true">⌄</span>
-              </span>
-            </button>
-            {contentSettingsOpen && (
-              <div className="quiz-content-settings" role="dialog" aria-label={t('Choisir les indices et les réponses')}>
-                <div className="quiz-content-settings-columns">
-                  <fieldset>
-                    <legend>{t('Indices donnés par le jeu')}</legend>
-                    {quizContentOptions.map((option) => {
-                      return (
-                        <label key={option.id} className="quiz-content-setting">
-                          <input
-                            type="checkbox"
-                            checked={quizClues[option.id]}
-                            onChange={(event) =>
-                              selectQuizContent(option.id, 'clue', event.target.checked)
-                            }
-                          />
-                          <span>{t(option.label)}</span>
-                        </label>
-                      )
-                    })}
-                  </fieldset>
-                  <fieldset>
-                    <legend>{t('Réponses à donner')}</legend>
-                    {quizContentOptions.map((option) => {
-                      return (
-                        <label key={option.id} className="quiz-content-setting">
-                          <input
-                            type="checkbox"
-                            checked={quizAnswers[option.id]}
-                            onChange={(event) =>
-                              selectQuizContent(option.id, 'answer', event.target.checked)
-                            }
-                          />
-                          <span>{t(option.label)}</span>
-                        </label>
-                      )
-                    })}
-                  </fieldset>
+                <div className={`quiz-settings-selectors${quizGameMode === 'draw-borders' ? ' is-single' : ''}`}>
+                  <label className="quiz-game-mode-field">
+                    <span>{t('MODE DE JEU')}</span>
+                    <select
+                      value={quizGameMode}
+                      onChange={(event) => setQuizGameMode(event.target.value as QuizGameMode)}
+                    >
+                      <option value="base">{t('Base')}</option>
+                      <option value="estimation">{t('Estimation')}</option>
+                      <option value="draw-borders">{t('Dessine les frontières')}</option>
+                    </select>
+                  </label>
+
+                  {quizGameMode !== 'draw-borders' && (
+                  <label className="quiz-settings-region-field">
+                    <span>{t('ZONE GÉOGRAPHIQUE')}</span>
+                    <select
+                      value={quizGameMode === 'estimation' ? estimationRegion : quizRegion}
+                      onChange={(event) => {
+                        const region = quizRegions.find((item) => item.id === event.target.value)
+                        if (!region) return
+                        if (quizGameMode === 'estimation') {
+                          setEstimationRegion(region.id)
+                          setEstimationAlpha2s([])
+                        } else {
+                          handleQuizRegionChange(region.id)
+                        }
+                      }}
+                    >
+                      {quizRegions.map((region) => (
+                        <option key={region.id} value={region.id}>{t(region.label)}</option>
+                      ))}
+                    </select>
+                  </label>
+                  )}
                 </div>
-                <p className="quiz-content-settings-help">
-                  {t('Cocher un élément dans une colonne le retire automatiquement de l’autre. Choisis au moins un indice et une réponse, puis démarre une nouvelle partie.')}
-                </p>
+
+                {quizGameMode === 'base' ? (
+                  <section className="quiz-toolbar quiz-base-settings" aria-label={t('Réglages de la partie')}>
+                    <div className="quiz-content-picker">
+                      <span className="quiz-content-picker-caption">{t('CONTENU DU QUIZ')}</span>
+                      <span className="quiz-content-picker-value">{t('Choisir indices et réponses')}</span>
+                      <div className="quiz-content-settings" role="group" aria-label={t('Choisir les indices et les réponses')}>
+                        <div className="quiz-content-settings-columns">
+                          <fieldset>
+                            <legend>{t('Indices donnés par le jeu')}</legend>
+                            {quizContentOptions.map((option) => (
+                              <label key={option.id} className="quiz-content-setting">
+                                <input
+                                  type="checkbox"
+                                  checked={quizClues[option.id]}
+                                  onChange={(event) => selectQuizContent(option.id, 'clue', event.target.checked)}
+                                />
+                                <span>{t(option.label)}</span>
+                              </label>
+                            ))}
+                          </fieldset>
+                          <fieldset>
+                            <legend>{t('Réponses à donner')}</legend>
+                            {quizContentOptions.map((option) => (
+                              <label key={option.id} className="quiz-content-setting">
+                                <input
+                                  type="checkbox"
+                                  checked={quizAnswers[option.id]}
+                                  onChange={(event) => selectQuizContent(option.id, 'answer', event.target.checked)}
+                                />
+                                <span>{t(option.label)}</span>
+                              </label>
+                            ))}
+                          </fieldset>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="quiz-count-control">
+                      <div className="quiz-count-value">
+                        <span>{t('À deviner')}</span>
+                        <div className="quiz-count-number-row">
+                          <input
+                            aria-label={t('Nombre exact de pays à deviner')}
+                            type="number"
+                            min={1}
+                            max={maxQuizQuestionCount}
+                            value={quizQuestionCount}
+                            inputMode="numeric"
+                            onChange={(event) => {
+                              if (!event.target.value) return
+                              const nextCount = Number(event.target.value)
+                              if (Number.isFinite(nextCount)) {
+                                setQuizQuestionCount(
+                                  Math.max(1, Math.min(maxQuizQuestionCount, Math.round(nextCount)))
+                                )
+                              }
+                            }}
+                          />
+                          <span className="quiz-count-stepper" role="group" aria-label={t('Ajuster le nombre de pays')}>
+                            <button
+                              className="quiz-count-step-button"
+                              type="button"
+                              aria-label={t('Augmenter d’un pays')}
+                              title={t('Augmenter d’un pays')}
+                              disabled={quizQuestionCount >= maxQuizQuestionCount}
+                              onClick={() =>
+                                setQuizQuestionCount((current) => Math.min(maxQuizQuestionCount, current + 1))
+                              }
+                            >
+                              +
+                            </button>
+                            <button
+                              className="quiz-count-step-button"
+                              type="button"
+                              aria-label={t('Diminuer d’un pays')}
+                              title={t('Diminuer d’un pays')}
+                              disabled={quizQuestionCount <= 1}
+                              onClick={() => setQuizQuestionCount((current) => Math.max(1, current - 1))}
+                            >
+                              −
+                            </button>
+                          </span>
+                          <span>{t('pays')}</span>
+                          <button
+                            className="quiz-count-max-button"
+                            type="button"
+                            aria-label={t('Choisir le nombre maximum de pays')}
+                            title={`${t('Jouer avec les')} ${maxQuizQuestionCount} ${t('pays disponibles')}`}
+                            onClick={() => setQuizQuestionCount(maxQuizQuestionCount)}
+                          >
+                            Max
+                          </button>
+                        </div>
+                      </div>
+                      <div className="quiz-count-slider is-vertical">
+                        <input
+                          type="range"
+                          aria-label={t('Nombre de pays à deviner')}
+                          min={1}
+                          max={maxQuizQuestionCount}
+                          step={1}
+                          value={Math.min(quizQuestionCount, maxQuizQuestionCount)}
+                          style={{ '--quiz-count-progress': `${quizCountProgress}%` } as CSSProperties}
+                          onChange={(event) =>
+                            setQuizQuestionCount(snapQuestionCountToMark(Number(event.target.value)))
+                          }
+                          onPointerUp={(event) =>
+                            setQuizQuestionCount(snapQuestionCountToMark(Number(event.currentTarget.value)))
+                          }
+                          onKeyUp={(event) => {
+                            if (event.key.startsWith('Arrow')) {
+                              setQuizQuestionCount((current) => snapQuestionCountToMark(current))
+                            }
+                          }}
+                        />
+                        <div className="quiz-count-marks" aria-hidden="true">
+                          {[10, 25, 50, maxQuizQuestionCount]
+                            .filter((mark, index, allMarks) =>
+                              mark <= maxQuizQuestionCount && allMarks.indexOf(mark) === index
+                            )
+                            .map((mark) => {
+                              const position = (mark - 1) / (maxQuizQuestionCount - 1)
+                              return (
+                                <span
+                                  key={mark}
+                                  className={`quiz-count-mark${Math.abs(quizQuestionCount - mark) <= 1 ? ' active' : ''}`}
+                                  style={{ top: `${4 + (1 - position) * 92}%` }}
+                                >
+                                  <i />
+                                  <small>{mark === maxQuizQuestionCount ? 'Max' : mark}</small>
+                                </span>
+                              )
+                            })}
+                        </div>
+                      </div>
+                    </div>
+                  </section>
+                ) : quizGameMode === 'estimation' ? (
+                  <section className="special-mode-setup estimation-mode-setup">
+                    <div className="special-mode-setup-copy">
+                      <div>
+                        <span>{t('ESTIMATION')}</span>
+                        <h3>{t('Choisis les territoires à estimer')}</h3>
+                        <p>{t('Choisis un monde ou un continent, ou sélectionne des pays sur la carte. Une sélection de pays remplace le filtre de région.')}</p>
+                      </div>
+                    </div>
+                    <div className="estimation-selection-summary">
+                      <span>{estimationSelectionLabel}</span>
+                      {estimationAlpha2s.length > 0 && (
+                        <button type="button" onClick={() => setEstimationAlpha2s([])}>{t('Effacer la sélection')}</button>
+                      )}
+                    </div>
+                    <div className="quiz-territory-picker-map">
+                      <WorldMap
+                        showBorders
+                        showLabels
+                        showFlagTerritories={false}
+                        showResources={false}
+                        showRivers={false}
+                        showMountains={false}
+                        globeMode={globeMode}
+                        onToggleGlobeMode={toggleGlobeMode}
+                        selectedAlpha2s={estimationAlpha2s}
+                        territorySelectionMode
+                        onCountrySelected={(sourceFeatureId) => toggleEstimationCountry(sourceFeatureId)}
+                      />
+                    </div>
+                  </section>
+                ) : (
+                  <section className="special-mode-setup draw-mode-setup">
+                    <div className="special-mode-setup-copy">
+                      <div>
+                        <span>{t('DESSIN')}</span>
+                        <h3>{t('Choisis la zone à dessiner')}</h3>
+                        <p>{t('Sélectionne un pays précis ou un ou plusieurs continents. Sans filtre, le jeu utilise le monde entier.')}</p>
+                      </div>
+                      <button type="button" onClick={() => {
+                        setDrawContinents([])
+                        setDrawCountryAlpha2(null)
+                        setDrawCountrySearch('')
+                        setDrawCountrySearchOpen(false)
+                      }}>{t('Monde entier')}</button>
+                    </div>
+                    <div className="draw-country-picker">
+                      <label htmlFor="draw-country-search">{t('OU CHOISIS UN PAYS')}</label>
+                      <input
+                        id="draw-country-search"
+                        type="search"
+                        autoComplete="off"
+                        aria-autocomplete="list"
+                        placeholder={t('Commence à taper le nom d’un pays…')}
+                        value={drawCountrySearch}
+                        aria-expanded={drawCountrySearchOpen && !!drawCountrySearch.trim()}
+                        aria-controls="draw-country-search-results"
+                        onFocus={() => setDrawCountrySearchOpen(true)}
+                        onChange={(event) => {
+                          setDrawCountrySearch(event.target.value)
+                          setDrawCountrySearchOpen(true)
+                        }}
+                        onKeyDown={(event) => {
+                          if (event.key === 'Escape') setDrawCountrySearchOpen(false)
+                        }}
+                      />
+                      {drawCountrySearchOpen && drawCountrySearch.trim() && (
+                        <ul id="draw-country-search-results" className="draw-country-suggestions" role="listbox">
+                          {filteredDrawCountryOptions.length ? filteredDrawCountryOptions.map((country) => (
+                            <li key={country.alpha2}>
+                              <button
+                                type="button"
+                                role="option"
+                                aria-selected={drawCountryAlpha2 === country.alpha2}
+                                onClick={() => {
+                                  setDrawCountryAlpha2(country.alpha2)
+                                  setDrawContinents([])
+                                  setDrawCountrySearch('')
+                                  setDrawCountrySearchOpen(false)
+                                }}
+                              >{country.name}</button>
+                            </li>
+                          )) : (
+                            <li className="draw-country-no-results">{t('Aucun pays trouvé.')}</li>
+                          )}
+                        </ul>
+                      )}
+                      {drawCountryAlpha2 && (
+                        <div className="draw-country-selection">
+                          <span>{drawCountryOptions.find((country) => country.alpha2 === drawCountryAlpha2)?.name ?? drawCountryAlpha2}</span>
+                          <button type="button" aria-label={t('Retirer')} onClick={() => setDrawCountryAlpha2(null)}>×</button>
+                        </div>
+                      )}
+                    </div>
+                    <div className="draw-continent-options">
+                      {quizRegions.filter((region) => region.id !== 'world').map((region) => (
+                        <label key={region.id}>
+                          <input
+                            type="checkbox"
+                            checked={drawContinents.includes(region.id as ContinentId)}
+                            onChange={() => toggleDrawContinent(region.id as ContinentId)}
+                          />
+                          <span>{t(region.label)}</span>
+                        </label>
+                      ))}
+                    </div>
+                    <p className="draw-continent-summary">{drawCountryAlpha2
+                      ? `${t('Pays sélectionné')} · ${drawCountryOptions.find((country) => country.alpha2 === drawCountryAlpha2)?.name ?? drawCountryAlpha2}`
+                      : drawContinents.length
+                      ? `${drawContinents.length} ${t(drawContinents.length === 1 ? 'continent sélectionné' : 'continents sélectionnés')}`
+                      : t('Monde entier')}</p>
+                  </section>
+                )}
+
+                <section className="quiz-preset-toolbar" aria-label={t('Presets de partie')}>
+                  <label className="quiz-preset-select">
+                    <span>{t('MES PRESETS')}</span>
+                    <select value={selectedQuizPresetId} onChange={(event) => applyQuizPreset(event.target.value)}>
+                      <option value="">{t('Charger un preset…')}</option>
+                      {savedQuizPresets.map((preset) => (
+                        <option key={preset.id} value={preset.id}>
+                          {preset.name}{preset.id === defaultQuizPresetId ? ` · ${t('Preset par défaut')}` : ''}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <button
+                    type="button"
+                    className="quiz-preset-default-button"
+                    disabled={!selectedQuizPresetId}
+                    onClick={toggleSelectedPresetDefault}
+                  >
+                    {t(selectedQuizPresetId === defaultQuizPresetId
+                      ? 'Ne plus utiliser par défaut'
+                      : 'Définir par défaut')}
+                  </button>
+                  {selectedQuizPresetId && (
+                    <button
+                      type="button"
+                      className="quiz-preset-delete"
+                      onClick={deleteSelectedQuizPreset}
+                      aria-label={t('Supprimer le preset sélectionné')}
+                      title={t('Supprimer ce preset')}
+                    >
+                      {t('Supprimer')}
+                    </button>
+                  )}
+                  {isSavingPreset ? (
+                    <form
+                      className="quiz-preset-save-form"
+                      onSubmit={(event) => {
+                        event.preventDefault()
+                        saveCurrentQuizPreset()
+                      }}
+                    >
+                      <input
+                        autoFocus
+                        required
+                        maxLength={48}
+                        value={presetName}
+                        onChange={(event) => setPresetName(event.target.value)}
+                        placeholder={t('Nom du preset')}
+                        aria-label={t('Nom du preset')}
+                      />
+                      <button type="submit">{t('Enregistrer')}</button>
+                      <button
+                        type="button"
+                        className="secondary"
+                        onClick={() => {
+                          setIsSavingPreset(false)
+                          setPresetName('')
+                          setPresetFeedback('')
+                        }}
+                      >
+                        {t('Annuler')}
+                      </button>
+                    </form>
+                  ) : (
+                    <button
+                      type="button"
+                      className="quiz-preset-save-button"
+                    disabled={!canStartQuiz}
+                      onClick={() => {
+                        const selectedPreset = savedQuizPresets.find((preset) => preset.id === selectedQuizPresetId)
+                        setPresetName(selectedPreset?.name ?? '')
+                        setPresetFeedback('')
+                        setIsSavingPreset(true)
+                      }}
+                    >
+                      {t('Enregistrer comme preset')}
+                    </button>
+                  )}
+                  {presetFeedback && <span className="quiz-preset-feedback" role="status">{presetFeedback}</span>}
+                </section>
+
               </div>
             )}
-          </div>
-
-          <button
-            className="quiz-start-button"
-            type="button"
-            onClick={startNewQuiz}
-            disabled={
-              !Object.values(quizClues).some(Boolean) ||
-              !Object.values(quizAnswers).some(Boolean)
-            }
-          >
-            {t('Nouvelle partie')}
-          </button>
           </section>
-
-          <section className="quiz-preset-toolbar" aria-label={t('Presets de partie')}>
-            <label className="quiz-preset-select">
-              <span>{t('MES PRESETS')}</span>
-              <select
-                value={selectedQuizPresetId}
-                onChange={(event) => applyQuizPreset(event.target.value)}
-              >
-                <option value="">{t('Charger un preset…')}</option>
-                {savedQuizPresets.map((preset) => (
-                  <option key={preset.id} value={preset.id}>
-                    {preset.name}
-                  </option>
-                ))}
-              </select>
-            </label>
-            {selectedQuizPresetId && (
-              <button
-                type="button"
-                className="quiz-preset-delete"
-                onClick={deleteSelectedQuizPreset}
-                aria-label={t('Supprimer le preset sélectionné')}
-                title={t('Supprimer ce preset')}
-              >
-                {t('Supprimer')}
-              </button>
-            )}
-            {isSavingPreset ? (
-              <form
-                className="quiz-preset-save-form"
-                onSubmit={(event) => {
-                  event.preventDefault()
-                  saveCurrentQuizPreset()
-                }}
-              >
-                <input
-                  autoFocus
-                  required
-                  maxLength={48}
-                  value={presetName}
-                  onChange={(event) => setPresetName(event.target.value)}
-                  placeholder={t('Nom du preset')}
-                  aria-label={t('Nom du preset')}
-                />
-                <button type="submit">{t('Enregistrer')}</button>
-                <button
-                  type="button"
-                  className="secondary"
-                  onClick={() => {
-                    setIsSavingPreset(false)
-                    setPresetName('')
-                    setPresetFeedback('')
-                  }}
-                >
-                  {t('Annuler')}
-                </button>
-              </form>
-            ) : (
-              <button
-                type="button"
-                className="quiz-preset-save-button"
-                disabled={
-                  !Object.values(quizClues).some(Boolean) ||
-                  !Object.values(quizAnswers).some(Boolean)
-                }
-                onClick={() => {
-                  const selectedPreset = savedQuizPresets.find(
-                    (preset) => preset.id === selectedQuizPresetId
-                  )
-                  setPresetName(selectedPreset?.name ?? '')
-                  setPresetFeedback('')
-                  setIsSavingPreset(true)
-                }}
-              >
-                {t('Enregistrer comme preset')}
-              </button>
-            )}
-            {presetFeedback && (
-              <span className="quiz-preset-feedback" role="status">
-                {presetFeedback}
-              </span>
-            )}
-          </section>
-          </div>
         )}
-        </div>
 
-        {isQuizFullscreen && (
+        {isQuizFullscreen && isQuizRunning && (
           <QuizFullscreenBar
             session={quiz.session}
             clues={activeQuizClues}
@@ -1257,20 +1966,30 @@ return (
             onRevealAnswer={revealQuizAnswer}
             onNext={nextQuizQuestion}
             onRestart={startNewQuiz}
-            onToggleSettings={() => setIsQuizSetupOpen((open) => !open)}
-            settingsOpen={isQuizSetupOpen}
           />
         )}
 
-        <div className="workspace">
+        </div>
+
+        <div className={`workspace${isQuizSetupOpen ? ' is-quiz-configuring' : ''}`}>
           <section className="map-section">
-            <div className="map-toolbar">
-              <div>
-                <div className="map-title">{t('Carte mondiale')}</div>
-                <div className="map-subtitle">
-                  {t('Explorez le monde et apprenez à le reconnaître')}
-                </div>
-              </div>
+            <div className={`map-toolbar${isQuizRunning ? ' quiz-map-toolbar-running' : ''}`}>
+              {isQuizRunning ? (
+                <QuizCluesInline session={quiz.session} clues={activeQuizClues} />
+              ) : (
+                <>
+                  <div>
+                    <div className="map-title">{t('Carte mondiale')}</div>
+                    <div className="map-subtitle">
+                      {t('Explorez le monde et apprenez à le reconnaître')}
+                    </div>
+                  </div>
+                  <div
+                    className="perspective-comparison-toolbar-slot"
+                    ref={setPerspectiveComparisonPortal}
+                  />
+                </>
+              )}
             </div>
 
             <div className="map-canvas">
@@ -1280,22 +1999,31 @@ return (
                 globeMode={globeMode}
                 onToggleGlobeMode={toggleGlobeMode}
                 showFlagTerritories={mapLayers.flags}
-                showSelectionFeedback={activeQuizAnswers.countryOnMap}
+                showRivers={mapLayers.rivers}
+                showMountains={mapLayers.mountains}
+                showSummits={mapLayers.summits}
+                layerDensities={mapLayerDensities}
+                perspectiveComparisonPortal={
+                  isQuizRunning || isQuizFullscreen ? null : perspectiveComparisonPortal
+                }
+                showSelectionFeedback={isQuizRunning && activeQuizAnswers.countryOnMap}
                 showWrongAnswerFeedback={
-                  activeQuizAnswers.countryOnMap &&
+                  isQuizRunning && activeQuizAnswers.countryOnMap &&
                   quiz.session.answerResults.countryOnMap === false &&
                   !quiz.session.answerRevealed &&
                   Number(selectedMapCountry?.sourceFeatureId) !==
                     quiz.session.questionOrder[quiz.session.questionIndex]?.sourceFeatureId
                 }
-                quizTargetFeatureId={activeQuizClues.countryOnMap || quiz.session.answerRevealed
+                quizTargetFeatureId={isQuizRunning && (activeQuizClues.countryOnMap || quiz.session.answerRevealed)
                   ? quiz.session.questionOrder[quiz.session.questionIndex]?.sourceFeatureId ?? null
                   : null}
                 quizBaseRegion={
                   isQuizRunning && !quiz.session.answerRevealed ? activeQuizRegion : null
                 }
                 quizTargetMaxZoom={
-                  activeQuizClues.countryOnMap && !quiz.session.answerRevealed ? 3.5 : undefined
+                  isQuizRunning && activeQuizClues.countryOnMap && !quiz.session.answerRevealed
+                    ? 3.5
+                    : undefined
                 }
                 quizTargetViewKey={`${sessionMode}:${sessionGeneration}:${quiz.session.questionIndex}:${quiz.session.questionOrder[quiz.session.questionIndex]?.sourceFeatureId ?? ''}`}
                 interactionResetKey={`${sessionMode}:${sessionGeneration}:${quiz.session.questionIndex}:${quiz.session.questionOrder[quiz.session.questionIndex]?.sourceFeatureId ?? ''}:${quiz.session.answerRevealed}`}
@@ -1325,7 +2053,7 @@ return (
                   </div>
                 ) : null}
                 onCountrySelected={handleCountrySelected}
-                onMapClick={handleQuizMapClick}
+                onMapClick={isQuizRunning ? handleQuizMapClick : undefined}
                 onCountryDeselected={() => setSelectedMapCountry(null)}
               />
 
@@ -1335,33 +2063,22 @@ return (
               </div>
             </div>
 
-            <div className="map-settings">
-              <div className="settings-heading">{t('AFFICHAGE CARTOGRAPHIQUE')}</div>
-
-              {mapLayerOptions.map((layer) => (
-                <label
-                  key={layer.id}
-                  className={`setting-item${layer.available ? '' : ' setting-item-disabled'}`}
-                  title={layer.title ? t(layer.title) : layer.available ? undefined : t('Cette couche sera ajoutée plus tard')}
-                >
-                  <input
-                    type="checkbox"
-                    checked={mapLayers[layer.id]}
-                    disabled={!layer.available}
-                    onChange={(event) =>
-                      setMapLayers((current) => ({
-                        ...current,
-                        [layer.id]: event.target.checked
-                      }))
-                    }
-                  />
-                  <span>{t(layer.label)}</span>
-                </label>
-              ))}
+            <div className={`map-settings${skin === 'minimal' ? ' uses-minimal-skin' : ''}`}>
+              {skin === 'minimal' ? (
+                <details className="minimal-layer-disclosure">
+                  <summary>{t('AFFICHAGE CARTOGRAPHIQUE')}</summary>
+                  <div className="map-settings-items">{mapLayerControls}</div>
+                </details>
+              ) : (
+                <>
+                  <div className="settings-heading">{t('AFFICHAGE CARTOGRAPHIQUE')}</div>
+                  {mapLayerControls}
+                </>
+              )}
             </div>
           </section>
 
-          {!isQuizFullscreen && (
+          {isQuizRunning && !isQuizFullscreen && (
             <CountryQuizPanel
               session={quiz.session}
               clues={activeQuizClues}
@@ -1376,7 +2093,7 @@ return (
           )}
         </div>
 
-        {isQuizFullscreen && fullscreenAnswersOpen && (
+        {isQuizRunning && isQuizFullscreen && fullscreenAnswersOpen && (
           <div className="quiz-fullscreen-answer-popover">
             <div className="quiz-fullscreen-answer-popover-heading">
               <strong>{t('TES RÉPONSES')}</strong>

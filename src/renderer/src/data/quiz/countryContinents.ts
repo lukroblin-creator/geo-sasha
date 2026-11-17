@@ -33,7 +33,7 @@ export function getQuizRegionFocusBounds(region: QuizRegion): QuizRegionBounds |
 }
 
 export const quizRegions: { id: QuizRegion; label: string }[] = [
-  { id: 'world', label: 'Tous les continents' },
+  { id: 'world', label: 'Monde entier' },
   { id: 'africa', label: 'Afrique' },
   { id: 'north-america', label: 'Amérique du Nord' },
   { id: 'south-america', label: 'Amérique du Sud' },

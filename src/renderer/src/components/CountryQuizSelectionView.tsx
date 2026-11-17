@@ -94,7 +94,7 @@ export function CountryQuizSelectionView({
               />
               <h2>{selectedCountry.name}</h2>
               <p>
-                {t('Réponds à des questions mélangées sur sa capitale, ses grandes villes, ses montagnes et son continent. Les questions de relief apparaissent lorsque les données locales en proposent.')}
+                {t('Réponds à des questions mélangées sur sa capitale, ses villes, ses reliefs, sa devise, ses langues officielles, son alphabet et son domaine internet. Les questions apparaissent lorsque les données locales sont disponibles.')}
               </p>
               <button
                 className="quiz-start-button"

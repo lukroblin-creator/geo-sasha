@@ -1,7 +1,26 @@
 import type { GeographicEntity } from './types'
+import countryCatalog from '../quiz/countryCatalog.json'
+import explorationData from '../quiz/countryExplorationData.json'
+
+type CountryCatalogEntry = { alpha2: string; countryName: string }
+type ExplorationTerritoryRecord = {
+  id: string
+  name: string
+  alpha2: string | null
+  flagAlpha2: string | null
+  sovereignAlpha2: string
+}
+
+const frenchRegionNames = new Intl.DisplayNames(['fr'], { type: 'region' })
+
+export function getCountryEntityId(alpha2: string): string {
+  return alpha2.toUpperCase() === 'FR'
+    ? 'country:france'
+    : `country:${alpha2.toLowerCase()}`
+}
 
 // Registre central des entités géographiques de World Atlas.
-export const geographicEntities: GeographicEntity[] = [
+const curatedGeographicEntities: GeographicEntity[] = [
   {
     id: 'country:france',
     name: 'France',
@@ -13,6 +32,7 @@ export const geographicEntities: GeographicEntity[] = [
     name: 'Guyane',
     kind: 'territory',
     alpha2: 'GF',
+    flagAlpha2: 'GF',
     sovereignEntityId: 'country:france'
   },
   {
@@ -20,6 +40,7 @@ export const geographicEntities: GeographicEntity[] = [
     name: 'Guadeloupe',
     kind: 'territory',
     alpha2: 'GP',
+    flagAlpha2: 'GP',
     sovereignEntityId: 'country:france'
   },
   {
@@ -35,6 +56,7 @@ export const geographicEntities: GeographicEntity[] = [
     name: 'La Réunion',
     kind: 'territory',
     alpha2: 'RE',
+    flagAlpha2: 'RE',
     sovereignEntityId: 'country:france'
   },
   {
@@ -42,6 +64,7 @@ export const geographicEntities: GeographicEntity[] = [
     name: 'Mayotte',
     kind: 'territory',
     alpha2: 'YT',
+    flagAlpha2: 'YT',
     sovereignEntityId: 'country:france'
   },
   {
@@ -49,6 +72,7 @@ export const geographicEntities: GeographicEntity[] = [
     name: 'Saint-Pierre-et-Miquelon',
     kind: 'territory',
     alpha2: 'PM',
+    flagAlpha2: 'PM',
     sovereignEntityId: 'country:france'
   },
   {
@@ -64,6 +88,7 @@ export const geographicEntities: GeographicEntity[] = [
     name: 'Saint-Martin',
     kind: 'territory',
     alpha2: 'MF',
+    flagAlpha2: 'MF',
     sovereignEntityId: 'country:france'
   },
   {
@@ -104,4 +129,30 @@ export const geographicEntities: GeographicEntity[] = [
     kind: 'territory',
     sovereignEntityId: 'country:france'
   }
+]
+
+const countryEntities = (countryCatalog as CountryCatalogEntry[]).map((country) => ({
+  id: getCountryEntityId(country.alpha2),
+  name: frenchRegionNames.of(country.alpha2) ?? country.countryName,
+  kind: 'country' as const,
+  alpha2: country.alpha2
+}))
+
+const generatedTerritoryEntities = (
+  explorationData.territories as ExplorationTerritoryRecord[]
+).map((territory) => ({
+  id: territory.id,
+  name: territory.name,
+  kind: 'territory' as const,
+  ...(territory.alpha2 ? { alpha2: territory.alpha2 } : {}),
+  ...(territory.flagAlpha2 ? { flagAlpha2: territory.flagAlpha2 } : {}),
+  sovereignEntityId: getCountryEntityId(territory.sovereignAlpha2)
+}))
+
+const curatedIds = new Set(curatedGeographicEntities.map((entity) => entity.id))
+
+export const geographicEntities: GeographicEntity[] = [
+  ...curatedGeographicEntities,
+  ...countryEntities.filter((entity) => !curatedIds.has(entity.id)),
+  ...generatedTerritoryEntities.filter((entity) => !curatedIds.has(entity.id))
 ]

@@ -1,8 +1,13 @@
+import { useRef, useState } from 'react'
 import WorldMap from './WorldMap'
 import { ExplorationPlaceDetails } from './ExplorationPlaceDetails'
-import type { ExplorationDetails } from '../data/geography/exploration'
+import {
+  getExplorationDetailsForTerritory,
+  type ExplorationDetails
+} from '../data/geography/exploration'
 import { useLanguage } from '../data/i18n'
 import { MapFullscreenBar } from './MapFullscreenBar'
+import { SkinSelector } from './AppModeSwitcher'
 
 type QuizCountryStudyViewProps = {
   place: ExplorationDetails
@@ -26,13 +31,30 @@ export function QuizCountryStudyView({
   onReturnToQuiz
 }: QuizCountryStudyViewProps): React.JSX.Element {
   const { t } = useLanguage()
+  const [selectedPlace, setSelectedPlace] = useState(place)
+  const [focusEntityRequest, setFocusEntityRequest] = useState<{
+    entityId: string
+    sequence: number
+  } | null>(null)
+  const focusSequenceRef = useRef(0)
+
+  const handleTerritorySelected = (entityId: string): void => {
+    const territoryDetails = getExplorationDetailsForTerritory(entityId)
+    if (!territoryDetails) return
+
+    setSelectedPlace(territoryDetails)
+    focusSequenceRef.current += 1
+    setFocusEntityRequest({ entityId, sequence: focusSequenceRef.current })
+  }
+
   return (
     <div className={`exploration-screen quiz-country-study-screen${isFullscreen ? ' map-fullscreen-screen quiz-study-map-fullscreen' : ''}`}>
       {isFullscreen && (
         <MapFullscreenBar
-          title={place.name}
+          title={selectedPlace.name}
           onOpenStatistics={onOpenStatistics}
           onExit={onToggleFullscreen}
+          showSettings={false}
         />
       )}
       <header className="exploration-header">
@@ -46,10 +68,11 @@ export function QuizCountryStudyView({
 
         <div className="exploration-heading">
           <div className="breadcrumb">{t('APPRENTISSAGE / QUIZ')}</div>
-          <h1>{t('Découvrir')} {place.name}</h1>
+          <h1>{t('Découvrir')} {selectedPlace.name}</h1>
         </div>
 
         <div className="exploration-header-actions">
+          <SkinSelector compact />
           <button className="home-back-button" type="button" onClick={onOpenStatistics}>
             {t('Statistiques')}
           </button>
@@ -67,7 +90,7 @@ export function QuizCountryStudyView({
       </header>
 
       <main className="exploration-workspace">
-        <section className="exploration-map-panel" aria-label={`${t('Carte')} ${place.name}`}>
+        <section className="exploration-map-panel" aria-label={`${t('Carte')} ${selectedPlace.name}`}>
           <div className="exploration-map-toolbar">
             <div>
               <div className="map-title">{t('Carte mondiale')}</div>
@@ -82,13 +105,18 @@ export function QuizCountryStudyView({
               globeMode={globeMode}
               onToggleGlobeMode={onToggleGlobeMode}
               quizTargetFeatureId={sourceFeatureId}
+              focusEntityRequest={focusEntityRequest}
               interactionResetKey={`quiz-study:${sourceFeatureId}`}
             />
           </div>
         </section>
 
         <aside className="exploration-details-panel" aria-live="polite">
-          <ExplorationPlaceDetails place={place} />
+          <ExplorationPlaceDetails
+            place={selectedPlace}
+            showExtended
+            onSelectTerritory={handleTerritorySelected}
+          />
         </aside>
       </main>
     </div>

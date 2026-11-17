@@ -1,7 +1,17 @@
 import type { GeographicGeometryLink } from './types'
+import explorationData from '../quiz/countryExplorationData.json' with { type: 'json' }
+
+type GeneratedTerritoryRecord = {
+  id: string
+  geometryLinks: {
+    sourceId: string
+    sourceFeatureId: number
+    sourcePolygonIndex?: number
+  }[]
+}
 
 // Registre des liens entre les géométries et les entités géographiques.
-export const geographicGeometryLinks: GeographicGeometryLink[] = [
+const curatedGeometryLinks: GeographicGeometryLink[] = [
   {
     id: 'geometry:natural-earth-110m:france',
     entityId: 'country:france',
@@ -86,4 +96,33 @@ export const geographicGeometryLinks: GeographicGeometryLink[] = [
     sourceId: `natural-earth-${scale}`,
     sourceFeatureId
   }))
+]
+
+const curatedKeys = new Set(
+  curatedGeometryLinks.map((link) =>
+    [link.entityId, link.sourceId, link.sourceFeatureId, link.sourcePolygonIndex ?? 'all'].join('|')
+  )
+)
+
+const generatedTerritoryLinks = (
+  explorationData.territories as GeneratedTerritoryRecord[]
+).flatMap((territory) =>
+  territory.geometryLinks.map((link) => ({
+    id: `geometry:${link.sourceId}:${territory.id}:${link.sourceFeatureId}:${link.sourcePolygonIndex ?? 'all'}`,
+    entityId: territory.id,
+    sourceId: link.sourceId,
+    sourceFeatureId: link.sourceFeatureId,
+    ...(link.sourcePolygonIndex !== undefined
+      ? { sourcePolygonIndex: link.sourcePolygonIndex }
+      : {})
+  }))
+)
+
+export const geographicGeometryLinks: GeographicGeometryLink[] = [
+  ...curatedGeometryLinks,
+  ...generatedTerritoryLinks.filter((link) =>
+    !curatedKeys.has(
+      [link.entityId, link.sourceId, link.sourceFeatureId, link.sourcePolygonIndex ?? 'all'].join('|')
+    )
+  )
 ]

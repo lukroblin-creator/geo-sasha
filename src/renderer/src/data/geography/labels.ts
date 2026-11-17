@@ -20,6 +20,7 @@ type LabelProperties = {
   entityId: string | null
   resolution: string
   priority: number
+  sourceFeatureId?: string | number | null
   sourcePolygonIndex?: number
 }
 
@@ -28,6 +29,7 @@ type CountryProperties = {
   sourceName?: string
   entityId?: string | null
   resolution?: string
+  sourceId?: string | number | null
   polygonEntityIds?: Record<string, string>
 }
 
@@ -244,6 +246,7 @@ export function createVisibleCountryLabels(
           sourceName: String(properties?.sourceName ?? ''),
           entityId,
           resolution: String(properties?.resolution ?? ''),
+          sourceFeatureId: properties?.sourceId ?? null,
           // Les grandes zones gardent leurs noms lorsque l'espace manque.
           priority: -Math.log10(anchor.distance + 0.001),
           ...(sourcePolygonIndex === undefined ? {} : { sourcePolygonIndex })

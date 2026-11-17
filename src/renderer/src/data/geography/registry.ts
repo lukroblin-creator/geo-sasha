@@ -7,6 +7,7 @@ import { geographicEntities } from './entities'
 import { geographicDataSources } from './sources'
 import { geographicGeometryLinks } from './geometries'
 import { formatGeographicEntityDisplayName } from './entityDisplayName'
+import { normalizeSourceFeatureId } from './sourceFeatureIds'
 
 // Recherche une entité à partir de son identifiant.
 export function getEntityById(id: string): GeographicEntity | undefined {
@@ -64,10 +65,11 @@ export function getGeometryLinkBySourceFeature(
     return undefined
   }
 
+  const normalizedSourceFeatureId = normalizeSourceFeatureId(sourceFeatureId)
   return geographicGeometryLinks.find(
     (link) =>
       link.sourceId === sourceId &&
-      String(link.sourceFeatureId) === String(sourceFeatureId) &&
+      normalizeSourceFeatureId(link.sourceFeatureId) === normalizedSourceFeatureId &&
       link.sourcePolygonIndex === undefined
   )
 }
@@ -79,10 +81,11 @@ export function getGeometryLinksBySourceFeature(
 ): GeographicGeometryLink[] {
   if (sourceFeatureId === undefined || sourceFeatureId === null) return []
 
+  const normalizedSourceFeatureId = normalizeSourceFeatureId(sourceFeatureId)
   return geographicGeometryLinks.filter(
     (link) =>
       link.sourceId === sourceId &&
-      String(link.sourceFeatureId) === String(sourceFeatureId)
+      normalizeSourceFeatureId(link.sourceFeatureId) === normalizedSourceFeatureId
   )
 }
 

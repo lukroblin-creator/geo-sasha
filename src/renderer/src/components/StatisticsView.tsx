@@ -37,9 +37,12 @@ const modeLabels: Record<QuizMode, string> = {
   flags: 'Drapeaux',
   capitals: 'Capitales',
   custom: 'Quiz personnalisé',
-  knowledge: 'Quiz pays'
+  knowledge: 'Quiz pays',
+  estimation: 'Mode estimation',
+  'draw-borders': 'Dessine les frontières'
 }
-const quizModes: QuizMode[] = ['flags', 'capitals', 'custom', 'knowledge']
+const quizModes: QuizMode[] = ['flags', 'capitals', 'custom', 'knowledge', 'estimation', 'draw-borders']
+const countryQuizModes: QuizMode[] = ['flags', 'capitals', 'custom', 'knowledge']
 
 function percent(rate: number | null): string {
   return rate === null ? '—' : `${Math.round(rate * 100)} %`
@@ -185,10 +188,12 @@ export function StatisticsView({
             return (
               <article className="statistics-mode-card" key={mode}>
                 <span>{t(modeLabels[mode])}</span>
-                <strong>{percent(modeStats.pointsPossible ? modeStats.pointsEarned / modeStats.pointsPossible : null)}</strong>
-                <small>
-                  {modeStats.correct} {t('questions entièrement réussies sur')} {modeStats.answered} · {quizProgress[mode].completedSessions} {t('parties')}
-                </small>
+                <strong>{mode === 'estimation' || mode === 'draw-borders'
+                  ? percent(quizProgress[mode].completedSessions ? quizProgress[mode].bestScore / 100 : null)
+                  : percent(modeStats.pointsPossible ? modeStats.pointsEarned / modeStats.pointsPossible : null)}</strong>
+                <small>{mode === 'estimation' || mode === 'draw-borders'
+                  ? `${t('Meilleur score')} · ${quizProgress[mode].completedSessions} ${t('parties')}`
+                  : `${modeStats.correct} ${t('questions entièrement réussies sur')} ${modeStats.answered} · ${quizProgress[mode].completedSessions} ${t('parties')}`}</small>
               </article>
             )
           })}
@@ -238,7 +243,7 @@ export function StatisticsView({
                   <small>{formatPoints(selectedCountry.pointsEarned, language)} / {formatPoints(selectedCountry.pointsPossible, language)} {t('points')}</small>
                 </div>
                 <div className="statistics-country-modes">
-                  {quizModes.map((mode) => {
+                  {countryQuizModes.map((mode) => {
                     const modeStats = selectedStats?.byMode[mode]
                     const rate = modeStats?.pointsPossible
                       ? modeStats.pointsEarned / modeStats.pointsPossible
@@ -366,7 +371,11 @@ function getAnswerDimensionLabel(id: string): string {
     'knowledge:continent': 'Quiz pays · Référence géographique',
     'knowledge:city': 'Quiz pays · Ville',
     'knowledge:largest-city': 'Quiz pays · Grande ville',
-    'knowledge:mountain': 'Quiz pays · Montagne'
+    'knowledge:mountain': 'Quiz pays · Montagne',
+    'knowledge:currency': 'Quiz pays · Devise',
+    'knowledge:language': 'Quiz pays · Langue officielle',
+    'knowledge:alphabet': 'Quiz pays · Alphabet et écriture',
+    'knowledge:web-domain': 'Quiz pays · Domaine web'
   }
   return labels[id] ?? id
 }

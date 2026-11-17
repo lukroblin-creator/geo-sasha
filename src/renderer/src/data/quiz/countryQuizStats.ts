@@ -37,7 +37,9 @@ function emptyModeStats(): Record<QuizMode, CountryModeStats> {
     flags: emptyMetric(),
     capitals: emptyMetric(),
     custom: emptyMetric(),
-    knowledge: emptyMetric()
+    knowledge: emptyMetric(),
+    estimation: emptyMetric(),
+    'draw-borders': emptyMetric()
   }
 }
 

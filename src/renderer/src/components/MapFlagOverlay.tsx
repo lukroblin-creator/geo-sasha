@@ -8,11 +8,13 @@ import {
   GLOBE_TRANSITION_START_ZOOM,
   isGlobeLabelVisible
 } from './mapProjectionUtils'
+import { useSkin } from '../data/skin'
 
 type LabelProperties = {
   name: string
   sourceName: string
   entityId: string | null
+  sourceFeatureId?: string | number | null
   resolution: string
   priority: number
 }
@@ -73,10 +75,15 @@ type MapFlagOverlayProps = {
   world50m: FeatureCollection<Geometry>
   world10m: FeatureCollection<Geometry>
   labels: FeatureCollection<Point, LabelProperties>
+  maxFlags?: number
+  maxLabels?: number
   showBorders: boolean
   showLabels: boolean
+  flagOpacity?: number
+  realLayerActive?: boolean
   selectedEntityIds: string[]
   selectedSourceFeatureId: string | number | null
+  selectedSourceFeatureIds: Array<string | number>
   hoveredCountry: HoveredCountry
   quizTargetFeatureId: string | number | null
   selectionBoundaryOpacity: number
@@ -563,15 +570,21 @@ export const MapFlagOverlay = memo(function MapFlagOverlay({
   world50m,
   world10m,
   labels,
+  maxFlags = Number.POSITIVE_INFINITY,
+  maxLabels = Number.POSITIVE_INFINITY,
   showBorders,
   showLabels,
+  flagOpacity = 1,
+  realLayerActive = false,
   selectedEntityIds,
   selectedSourceFeatureId,
+  selectedSourceFeatureIds,
   hoveredCountry,
   quizTargetFeatureId,
   selectionBoundaryOpacity,
   wrongAnswerTarget
 }: MapFlagOverlayProps): React.JSX.Element {
+  const { skin } = useSkin()
   const overlayViewportRef = useRef<HTMLDivElement>(null)
   const overlaySvgRef = useRef<SVGSVGElement>(null)
   const baselineSvgRef = useRef<SVGSVGElement>(null)
@@ -581,6 +594,7 @@ export const MapFlagOverlay = memo(function MapFlagOverlay({
   const [cameraRevision, setCameraRevision] = useState(0)
   const width = map.getCanvas().clientWidth
   const height = map.getCanvas().clientHeight
+  const limitFlagCount = maxFlags < labels.features.length
   const globeClipContext = useMemo(
     () =>
       globeMode
@@ -602,6 +616,16 @@ export const MapFlagOverlay = memo(function MapFlagOverlay({
   // Le rendu mondial 110m sert de fond temporaire pendant le déplacement.
   // Le calque détaillé le recouvre après le recalcul limité à la zone visible.
   const baseline = useMemo<FlagOverlayBaseline>(() => {
+    const rankedLabels = [...labels.features]
+      .sort((first, second) => first.properties.priority - second.properties.priority)
+      .slice(0, Math.max(0, Math.floor(maxFlags)))
+    const allowedEntities = new Set(rankedLabels.flatMap((label) =>
+      label.properties.entityId ? [label.properties.entityId] : []
+    ))
+    const allowedSources = new Set(rankedLabels.flatMap((label) => {
+      const id = label.properties.sourceFeatureId
+      return id === null || id === undefined ? [] : [normalizeId(id)]
+    }))
     const features = world110m.features.flatMap((feature, index) => {
       const geometry = feature.geometry
       if (!geometry || (geometry.type !== 'Polygon' && geometry.type !== 'MultiPolygon')) {
@@ -617,6 +641,10 @@ export const MapFlagOverlay = memo(function MapFlagOverlay({
           ? properties.sourceId
           : null
       const entityId = typeof properties.entityId === 'string' ? properties.entityId : null
+      if (limitFlagCount && (
+        (entityId && !allowedEntities.has(entityId)) ||
+        (!entityId && (sourceFeatureId === null || !allowedSources.has(normalizeId(sourceFeatureId))))
+      )) return []
       const rawKey = String(feature.id ?? `${sourceFeatureId ?? 'feature'}-${index}`)
 
       const polygons = geometry.type === 'Polygon' ? [geometry.coordinates] : geometry.coordinates
@@ -641,7 +669,7 @@ export const MapFlagOverlay = memo(function MapFlagOverlay({
     })
 
     return { camera: getCameraSnapshot(map), features }
-  }, [globeMode, height, map, projectionRevision, width, world110m])
+  }, [globeMode, height, labels, map, maxFlags, projectionRevision, width, world110m])
 
   useLayoutEffect(() => {
     baselineCameraRef.current = baseline.camera
@@ -741,6 +769,16 @@ export const MapFlagOverlay = memo(function MapFlagOverlay({
   }, [globeMode, map, zoom])
 
   const overlayFeatures = useMemo<FlagOverlayFeature[]>(() => {
+    const rankedLabels = [...labels.features]
+      .sort((first, second) => first.properties.priority - second.properties.priority)
+      .slice(0, Math.max(0, Math.floor(maxFlags)))
+    const allowedEntities = new Set(rankedLabels.flatMap((label) =>
+      label.properties.entityId ? [label.properties.entityId] : []
+    ))
+    const allowedSources = new Set(rankedLabels.flatMap((label) => {
+      const id = label.properties.sourceFeatureId
+      return id === null || id === undefined ? [] : [normalizeId(id)]
+    }))
     // Le calque reste limité à la zone visible pour éviter de reprojeter des milliers
     // de sommets inutiles après chaque déplacement de la carte.
     const resolutions = [
@@ -780,6 +818,10 @@ export const MapFlagOverlay = memo(function MapFlagOverlay({
             : null
         const entityId = typeof properties.entityId === 'string' ? properties.entityId : null
         const alpha2 = typeof properties.flagAlpha2 === 'string' ? properties.flagAlpha2 : null
+        if (limitFlagCount && (
+          (entityId && !allowedEntities.has(entityId)) ||
+          (!entityId && (sourceFeatureId === null || !allowedSources.has(normalizeId(sourceFeatureId))))
+        )) return
         const rawKey = String(feature.id ?? `${sourceFeatureId ?? 'feature'}-${index}`)
         const groupId = entityId
           ? `entity:${entityId}`
@@ -834,7 +876,7 @@ export const MapFlagOverlay = memo(function MapFlagOverlay({
     }
 
     return Array.from(groupedFeatures.values())
-  }, [cameraRevision, globeMode, map, revision, world10m, world110m, world50m, zoom])
+  }, [cameraRevision, globeMode, labels, map, maxFlags, revision, world10m, world110m, world50m, zoom])
 
   const allFlagFeatures = useMemo(
     () => [...baseline.features, ...overlayFeatures],
@@ -939,6 +981,7 @@ export const MapFlagOverlay = memo(function MapFlagOverlay({
     // La couche MapLibre évite normalement les chevauchements. Comme les
     // drapeaux sont dessinés au-dessus de sa carte, on reprend cette règle ici.
     candidates.sort((first, second) => first.priority - second.priority)
+    candidates.splice(Math.max(0, Math.floor(maxLabels)))
     const placed: FlagOverlayLabel[] = []
     const occupied: Bounds[] = []
 
@@ -972,7 +1015,7 @@ export const MapFlagOverlay = memo(function MapFlagOverlay({
     }
 
     return placed
-  }, [cameraRevision, labels, map, revision, showLabels, zoom])
+  }, [cameraRevision, labels, map, maxLabels, revision, showLabels, zoom])
 
   if (width <= 0 || height <= 0) return <></>
 
@@ -981,13 +1024,14 @@ export const MapFlagOverlay = memo(function MapFlagOverlay({
 
   const isSelected = (feature: FlagOverlayFeature): boolean => {
     const selectedFromMap =
-      selectedEntityIds.length > 0
-        ? feature.entityId !== null && selectedEntityIds.includes(feature.entityId)
-        : feature.sourceFeatureIds.some(
-            (sourceFeatureId) =>
-              selectedSourceFeatureId !== null &&
-              normalizeId(sourceFeatureId) === normalizeId(selectedSourceFeatureId)
-          )
+      (feature.entityId !== null && selectedEntityIds.includes(feature.entityId)) ||
+      feature.sourceFeatureIds.some((sourceFeatureId) =>
+        (selectedSourceFeatureId !== null &&
+          normalizeId(sourceFeatureId) === normalizeId(selectedSourceFeatureId)) ||
+        selectedSourceFeatureIds.some(
+          (selectedId) => normalizeId(sourceFeatureId) === normalizeId(selectedId)
+        )
+      )
     const selectedForQuiz = feature.sourceFeatureIds.some(
       (sourceFeatureId) =>
         quizTargetFeatureId !== null && Number(sourceFeatureId) === Number(quizTargetFeatureId)
@@ -1014,6 +1058,14 @@ export const MapFlagOverlay = memo(function MapFlagOverlay({
             normalizeId(sourceFeatureId) === normalizeId(wrongAnswerTarget.sourceFeatureId)
         )
   }
+  const hasSelection =
+    selectedEntityIds.length > 0 ||
+    selectedSourceFeatureId !== null ||
+    selectedSourceFeatureIds.length > 0 ||
+    quizTargetFeatureId !== null
+  const visibleSelectionBoundaryOpacity = selectionBoundaryOpacity > 0
+    ? selectionBoundaryOpacity
+    : hasSelection ? 1 : 0
 
   return (
     <div ref={overlayViewportRef} className="map-flag-overlay-viewport">
@@ -1123,7 +1175,7 @@ export const MapFlagOverlay = memo(function MapFlagOverlay({
                     <g
                       key={clipId}
                       clipPath={`url(#map-flag-clip-detail-${clipId})`}
-                      opacity={opacity}
+                      opacity={opacity * flagOpacity}
                     >
                       {layers.map((layer) => (
                         <image
@@ -1142,9 +1194,25 @@ export const MapFlagOverlay = memo(function MapFlagOverlay({
               )}
               {feature.polygons.map(({ path }, index) => (
                 <g key={`${feature.key}-shape-${index}`}>
-                  {isSelected(feature) && <path d={path} fill="#e5a63b" />}
+                  {isSelected(feature) && (
+                    <path
+                      d={path}
+                      fill={
+                        skin === 'minimal'
+                          ? realLayerActive ? '#a17435' : '#20201d'
+                          : skin === 'matrix'
+                            ? '#00d957'
+                            : '#e5a63b'
+                      }
+                      fillOpacity={realLayerActive ? 0.58 : 1}
+                    />
+                  )}
                   {!isSelected(feature) && isHovered(feature) && (
-                    <path d={path} fill="#ffffff" fillOpacity={0.24} />
+                    <path
+                      d={path}
+                      fill={skin === 'matrix' ? '#36ff72' : '#ffffff'}
+                      fillOpacity={skin === 'minimal' ? 0.2 : 0.24}
+                    />
                   )}
                   {isWrongAnswer(feature) && (
                     <path
@@ -1163,15 +1231,23 @@ export const MapFlagOverlay = memo(function MapFlagOverlay({
                       strokeLinecap="round"
                     />
                   )}
-                  {selectionBoundaryOpacity > 0 && isSelected(feature) && (
+                  {visibleSelectionBoundaryOpacity > 0 && isSelected(feature) && (
                     <path
                       d={path}
                       fill="none"
-                      stroke="#f4c45e"
-                      strokeWidth={selectionLineWidth}
+                      stroke={
+                        realLayerActive
+                          ? skin === 'matrix' ? '#d8ffdf' : '#fff1c3'
+                          : skin === 'minimal'
+                            ? '#77736b'
+                            : skin === 'matrix'
+                              ? '#55ff82'
+                              : '#f4c45e'
+                      }
+                      strokeWidth={selectionLineWidth + (realLayerActive ? 1 : 0)}
                       strokeLinejoin="round"
                       strokeLinecap="round"
-                      opacity={selectionBoundaryOpacity}
+                      opacity={visibleSelectionBoundaryOpacity}
                     />
                   )}
                 </g>

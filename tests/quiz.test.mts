@@ -19,6 +19,7 @@ import {
   updateCountryQuizStats
 } from '../src/renderer/src/data/quiz/countryQuizStats.ts'
 import { getLabelPrecision } from '../src/renderer/src/data/geography/labelPrecision.ts'
+import { normalizeSourceFeatureId } from '../src/renderer/src/data/geography/sourceFeatureIds.ts'
 import { geographicGeometryLinks } from '../src/renderer/src/data/geography/geometries.ts'
 
 const catalog = JSON.parse(
@@ -34,6 +35,13 @@ const capitals = JSON.parse(
     'utf8'
   )
 ) as CapitalRecord[]
+
+const explorationCountries = JSON.parse(
+  await readFile(
+    new URL('../src/renderer/src/data/quiz/countryExplorationData.json', import.meta.url),
+    'utf8'
+  )
+).countries as { sourceFeatureId: string | number; alpha2: string; capital: string | null; population: number | null }[]
 
 function setLocalStorage(initialValues: Record<string, string> = {}): void {
   const values = new Map(Object.entries(initialValues))
@@ -207,7 +215,9 @@ test('les statistiques par pays suivent les bonnes réponses et le mode de quiz'
       flags: { answered: 1, correct: 0, pointsEarned: 0, pointsPossible: 1 },
       capitals: { answered: 1, correct: 1, pointsEarned: 1, pointsPossible: 1 },
       custom: { answered: 0, correct: 0, pointsEarned: 0, pointsPossible: 0 },
-      knowledge: { answered: 0, correct: 0, pointsEarned: 0, pointsPossible: 0 }
+      knowledge: { answered: 0, correct: 0, pointsEarned: 0, pointsPossible: 0 },
+      estimation: { answered: 0, correct: 0, pointsEarned: 0, pointsPossible: 0 },
+      'draw-borders': { answered: 0, correct: 0, pointsEarned: 0, pointsPossible: 0 }
     },
     byAnswer: {}
   })
@@ -283,7 +293,9 @@ test('la progression v2 des drapeaux est reprise sans inventer un score capitale
     flags: { completedSessions: 3, bestScore: 17, lastScore: 11 },
     capitals: { completedSessions: 0, bestScore: 0, lastScore: 0 },
     custom: { completedSessions: 0, bestScore: 0, lastScore: 0 },
-    knowledge: { completedSessions: 0, bestScore: 0, lastScore: 0 }
+    knowledge: { completedSessions: 0, bestScore: 0, lastScore: 0 },
+    estimation: { completedSessions: 0, bestScore: 0, lastScore: 0 },
+    'draw-borders': { completedSessions: 0, bestScore: 0, lastScore: 0 }
   })
 })
 
@@ -300,7 +312,9 @@ test('la progression v1 des drapeaux reste lisible', (): void => {
     flags: { completedSessions: 2, bestScore: 15, lastScore: 9 },
     capitals: { completedSessions: 0, bestScore: 0, lastScore: 0 },
     custom: { completedSessions: 0, bestScore: 0, lastScore: 0 },
-    knowledge: { completedSessions: 0, bestScore: 0, lastScore: 0 }
+    knowledge: { completedSessions: 0, bestScore: 0, lastScore: 0 },
+    estimation: { completedSessions: 0, bestScore: 0, lastScore: 0 },
+    'draw-borders': { completedSessions: 0, bestScore: 0, lastScore: 0 }
   })
 })
 
@@ -309,6 +323,24 @@ test('la précision des étiquettes augmente avec le zoom', (): void => {
   assert.ok(getLabelPrecision(8) < getLabelPrecision(5))
   assert.equal(getLabelPrecision(12), 0.00034332275390625)
   assert.equal(getLabelPrecision(Number.NaN), 0.05)
+})
+
+test('les fiches reconnaissent les identifiants géographiques complétés par des zéros', (): void => {
+  const countriesBySourceId = new Map(
+    explorationCountries.map((country) => [
+      normalizeSourceFeatureId(country.sourceFeatureId),
+      country
+    ])
+  )
+
+  for (const [paddedId, alpha2] of [['012', 'DZ'], ['076', 'BR']]) {
+    const country = countriesBySourceId.get(normalizeSourceFeatureId(paddedId))
+    assert.equal(country?.alpha2, alpha2)
+    assert.ok(country?.capital)
+    assert.ok(country?.population)
+
+    assert.equal(normalizeSourceFeatureId(country?.sourceFeatureId), normalizeSourceFeatureId(paddedId))
+  }
 })
 
 test('les polygones ultramarins de France gardent leur entité par résolution', (): void => {

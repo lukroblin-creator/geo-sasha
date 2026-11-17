@@ -28,6 +28,26 @@ export type FlagRatioRange = {
   maximum: number
 }
 
+export const flagNamedColorOptions = [
+  { id: 'red', label: 'Rouge', swatch: '#e53935', hueRanges: [[345, 360], [0, 15]] },
+  { id: 'orange', label: 'Orange', swatch: '#f28c28', hueRanges: [[15, 45]] },
+  { id: 'yellow', label: 'Jaune', swatch: '#e6c229', hueRanges: [[42, 70]] },
+  { id: 'green', label: 'Vert', swatch: '#45a85a', hueRanges: [[55, 165]] },
+  { id: 'blue', label: 'Bleu', swatch: '#3478c8', hueRanges: [[170, 255]] },
+  { id: 'purple', label: 'Violet', swatch: '#8c58b8', hueRanges: [[250, 300]] },
+  { id: 'pink', label: 'Rose', swatch: '#dc72aa', hueRanges: [[300, 345]] },
+  { id: 'brown', label: 'Marron', swatch: '#805735', hueRanges: [[15, 50]], maximumLightness: 0.55 },
+  { id: 'white', label: 'Blanc', swatch: '#ffffff', lightnessRange: [0.78, 1] },
+  { id: 'gray', label: 'Gris', swatch: '#858b91', lightnessRange: [0.22, 0.78] },
+  { id: 'black', label: 'Noir', swatch: '#202327', lightnessRange: [0, 0.22] }
+] as const
+
+export type FlagNamedColorFilterId = (typeof flagNamedColorOptions)[number]['id']
+
+export type FlagColorFilter =
+  | { kind: 'wheel'; color: string }
+  | { kind: 'named'; id: FlagNamedColorFilterId }
+
 type FlagMetadata = {
   alpha2: string
   ratio: number
@@ -48,6 +68,9 @@ export type FlagBandCounts = {
 
 const metadataByCode = new Map<string, FlagMetadata>(
   (flagMetadata as FlagMetadata[]).map((metadata) => [metadata.alpha2, metadata])
+)
+const flagNamedColorById = new Map(
+  flagNamedColorOptions.map((option) => [option.id, option] as const)
 )
 const flagSvgUrlByCode = new Map<string, string>(
   [...Object.entries(flagSvgUrls), ...Object.entries(flagOverrideSvgUrls)].flatMap(
@@ -168,28 +191,65 @@ export function hasFlagImageAsset(alpha2: string): boolean {
   return flagSvgUrlByCode.has(alpha2.toUpperCase())
 }
 
-export function flagHasColorNear(alpha2: string, selectedColor: string): boolean {
+/* Every active color filter is required; additional flag colors remain allowed. */
+export function flagHasAllColorFilters(alpha2: string, filters: FlagColorFilter[]): boolean {
+  if (filters.length === 0) return true
+
   const metadata = metadataByCode.get(alpha2.toUpperCase())
   if (!metadata) return false
 
+  return filters.every((filter) =>
+    metadata.colors.some((flagColor) => flagColorMatchesFilter(flagColor, filter))
+  )
+}
+
+function flagColorMatchesFilter(flagColor: string, filter: FlagColorFilter): boolean {
+  if (filter.kind === 'wheel') return flagColorsMatchNear(flagColor, filter.color)
+
+  const option = flagNamedColorById.get(filter.id)
+  if (!option) return false
+
+  return flagMatchesNamedColorOption(flagColor, option)
+}
+
+function flagMatchesNamedColorOption(
+  flagColor: string,
+  option: (typeof flagNamedColorOptions)[number]
+): boolean {
+  const [hue, saturation, lightness] = hsl(flagColor)
+  if ('lightnessRange' in option) {
+    const [minimum, maximum] = option.lightnessRange
+    return saturation <= 0.14 && lightness >= minimum && lightness <= maximum
+  }
+
+  if (saturation < 0.12 || !('hueRanges' in option)) return false
+  if ('maximumLightness' in option && lightness > option.maximumLightness) return false
+  const hueRanges = option.hueRanges as readonly (readonly [number, number])[]
+  return hueRanges.some(([minimum, maximum]) => hue >= minimum && hue <= maximum)
+}
+
+function flagColorsMatchNear(flagColor: string, selectedColor: string): boolean {
   const selected = hsl(selectedColor)
-  return metadata.colors.some((color) => {
-    const candidate = hsl(color)
-    const selectedIsNeutral = selected[1] < 0.12
-    const candidateIsNeutral = candidate[1] < 0.12
+  const candidate = hsl(flagColor)
+  const selectedIsNeutral = selected[1] < 0.12
+  const candidateIsNeutral = candidate[1] < 0.12
 
-    if (selectedIsNeutral || candidateIsNeutral) {
-      return (
-        selectedIsNeutral &&
-        candidateIsNeutral &&
-        Math.abs(selected[1] - candidate[1]) <= 0.1 &&
-        Math.abs(selected[2] - candidate[2]) <= 0.2
-      )
-    }
+  if (selectedIsNeutral || candidateIsNeutral) {
+    return (
+      selectedIsNeutral &&
+      candidateIsNeutral &&
+      Math.abs(selected[1] - candidate[1]) <= 0.1 &&
+      Math.abs(selected[2] - candidate[2]) <= 0.2
+    )
+  }
 
-    const hueDistance = Math.abs(selected[0] - candidate[0])
-    return Math.min(hueDistance, 360 - hueDistance) <= 18
-  })
+  const hueDistance = Math.abs(selected[0] - candidate[0])
+  const sameColorFamily = flagNamedColorOptions.some((option) =>
+    'hueRanges' in option &&
+    flagMatchesNamedColorOption(flagColor, option) &&
+    flagMatchesNamedColorOption(selectedColor, option)
+  )
+  return sameColorFamily || Math.min(hueDistance, 360 - hueDistance) <= 18
 }
 
 function hsl(color: string): [number, number, number] {

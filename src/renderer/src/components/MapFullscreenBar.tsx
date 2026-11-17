@@ -1,15 +1,19 @@
 import { useLanguage } from '../data/i18n'
+import { SkinSelector } from './AppModeSwitcher'
+import { SettingsMenu } from './SettingsMenu'
 
 type MapFullscreenBarProps = {
   title: string
   onOpenStatistics: () => void
   onExit: () => void
+  showSettings?: boolean
 }
 
 export function MapFullscreenBar({
   title,
   onOpenStatistics,
-  onExit
+  onExit,
+  showSettings = true
 }: MapFullscreenBarProps): React.JSX.Element {
   const { t } = useLanguage()
 
@@ -17,6 +21,8 @@ export function MapFullscreenBar({
     <header className="map-fullscreen-bar">
       <strong>{title}</strong>
       <div className="map-fullscreen-bar-actions">
+        <SkinSelector compact />
+        {showSettings && <SettingsMenu />}
         <button className="map-fullscreen-action" type="button" onClick={onOpenStatistics}>
           {t('Statistiques')}
         </button>

@@ -8,6 +8,7 @@ import { formatQuizScore, type QuizSession } from '../data/quiz/useQuizSession'
 import { useLanguage } from '../data/i18n'
 import { CorrectAnswerBanner } from './QuizPanels'
 import { MapFullscreenBar } from './MapFullscreenBar'
+import { SkinSelector } from './AppModeSwitcher'
 
 type CountryKnowledgeQuizViewProps = {
   alpha2: string
@@ -55,15 +56,17 @@ export function CountryKnowledgeQuizView({
           title={`${t('Quiz pays')} · ${countryName}`}
           onOpenStatistics={onOpenStatistics}
           onExit={onToggleFullscreen}
+          showSettings={false}
         />
       )}
       <header className="statistics-header">
         <div>
           <div className="breadcrumb">{t('APPRENTISSAGE / QUIZ PAYS')}</div>
           <h1>{t('À la découverte de')} {countryName}</h1>
-          <p>{t('Réponds à des questions sur ses villes, ses reliefs, sa capitale et sa géographie.')}</p>
+          <p>{t('Réponds à des questions sur sa capitale, ses villes, ses reliefs, sa devise, ses langues officielles, son alphabet et son domaine internet.')}</p>
         </div>
         <div className="statistics-actions">
+          <SkinSelector compact />
           <button className="home-back-button" type="button" onClick={onOpenStatistics}>
             {t('Statistiques')}
           </button>

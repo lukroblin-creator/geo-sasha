@@ -7,20 +7,25 @@ import { flagEmojiFromAlpha2 } from '../data/quiz/flagEmoji'
 import type { CountryCapitalQuestion } from '../data/quiz/countryCapitals'
 import { formatQuizScore, type QuizSession } from '../data/quiz/useQuizSession'
 import {
-  flagHasColorNear,
+  flagHasAllColorFilters,
+  flagNamedColorOptions,
   flagOutlineMatches,
   getFlagAspectRatio,
   getFlagBandCounts,
   getFlagImageSource,
   getFlagOutline,
+  type FlagColorFilter,
+  type FlagNamedColorFilterId,
   type FlagPolygonDrawing,
   type FlagRatioRange
 } from '../data/quiz/flagAssets'
 import { FlagRatioFilter } from './FlagRatioFilter'
+import { SkinSelector } from './AppModeSwitcher'
 import {
   type CountryQuizQuestion,
   type QuizAnswers,
   type QuizClues,
+  getCapitalAnswerCorrection,
   normalizeQuizAnswer
 } from '../data/quiz/countryQuiz'
 import type { MapProximityResult } from '../data/quiz/mapProximity'
@@ -325,103 +330,64 @@ type CountryQuizPanelProps = {
   onRestart: () => void
 }
 
-export function QuizCluesSidebar({
+export function QuizCluesInline({
   session,
   clues
 }: {
   session: QuizSession<CountryQuizQuestion>
   clues: QuizClues
 }): React.JSX.Element {
-  const { language, t } = useLanguage()
+  const { t } = useLanguage()
   const total = session.questionOrder.length
-  const questionIndex = Math.min(session.questionIndex, total - 1)
-  const question = session.questionOrder[questionIndex]
-  const questionSettled = session.answerCorrect === true || session.answerRevealed
-  const answeredCount = Math.min(total, session.questionIndex + (questionSettled ? 1 : 0))
-  const progress = total > 0 ? (answeredCount / total) * 100 : 0
+  const question = total
+    ? session.questionOrder[Math.min(session.questionIndex, total - 1)]
+    : undefined
 
   if (!question) {
-    return (
-      <aside className="sidebar quiz-clue-sidebar" aria-label={t('Indices du quiz')}>
-        <div className="quiz-clue-sidebar-header">
-          <div className="section-label">{t('INDICES')}</div>
-          <h2>{t('Indices de la question')}</h2>
-        </div>
-        <div className="quiz-empty-state">{t('Aucune question à afficher.')}</div>
-      </aside>
-    )
+    return <div className="quiz-clues-inline quiz-empty-state">{t('Aucune question à afficher.')}</div>
   }
 
   return (
-    <aside className="sidebar quiz-clue-sidebar" aria-label={t('Indices du quiz')}>
-      <div className="quiz-clue-sidebar-header">
-        <div className="section-label">{t('INDICES')}</div>
-        <h2>{session.completed ? t('Quiz terminé') : `${t('Question')} ${String(session.questionIndex + 1).padStart(2, '0')}`}</h2>
-        <div className="quiz-clue-sidebar-count">
-          {answeredCount} {t(answeredCount > 1 ? 'réponses' : 'réponse')} {t('sur')} {total}
+    <div className="quiz-clues-inline" aria-label={t('Indices de la question')}>
+      {clues.countryOnMap && (
+        <div className="quiz-clue-card quiz-map-clue">
+          <span className="quiz-clue-icon" aria-hidden="true">⌖</span>
+          <div>
+            <span>{t('Sur la carte')}</span>
+            <strong>{t('Le pays à reconnaître est mis en évidence.')}</strong>
+          </div>
         </div>
-        <div
-          className="quiz-progress-track"
-          role="progressbar"
-          aria-label={t('Progression du quiz')}
-          aria-valuemin={0}
-          aria-valuemax={total}
-          aria-valuenow={answeredCount}
-        >
-          <span style={{ width: `${progress}%` }} />
+      )}
+      {clues.flag && (
+        <div className="quiz-clue-card quiz-flag-clue">
+          <span className="quiz-clue-title">{t('Drapeau')}</span>
+          <div className="flag-container">
+            <img
+              className="flag flag-svg"
+              src={getFlagImageSource(question.alpha2)}
+              alt={`${t('Drapeau de')} ${question.frenchCountryName}`}
+            />
+          </div>
         </div>
-      </div>
-
-      <div className="quiz-clue-sidebar-content">
-        <div className="quiz-clues-list">
-          {clues.countryOnMap && (
-            <div className="quiz-clue-card quiz-map-clue">
-              <span className="quiz-clue-icon" aria-hidden="true">⌖</span>
-              <div>
-              <span>{t('Sur la carte')}</span>
-              <strong>{t('Le pays à reconnaître est mis en évidence.')}</strong>
-              </div>
-            </div>
-          )}
-          {clues.flag && (
-            <div className="quiz-clue-card quiz-flag-clue">
-              <span className="quiz-clue-title">{t('Drapeau')}</span>
-              <div className="flag-container">
-                <img
-                  className="flag flag-svg"
-                  src={getFlagImageSource(question.alpha2)}
-                  alt={`Drapeau de ${question.frenchCountryName}`}
-                />
-              </div>
-            </div>
-          )}
-          {clues.countryName && (
-            <div className="quiz-clue-card">
-              <span>{t('Nom du pays')}</span>
-              <strong>{question.frenchCountryName}</strong>
-            </div>
-          )}
-          {clues.capital && (
-            <div className="quiz-clue-card">
-              <span>{t('Capitale')}</span>
-              <strong>{question.capitalName}</strong>
-            </div>
-          )}
-          {!Object.values(clues).some(Boolean) && (
-            <div className="quiz-empty-state">
-              {t('Aucun indice n’est configuré. Reviens au contenu du quiz pour en choisir un.')}
-            </div>
-          )}
+      )}
+      {clues.countryName && (
+        <div className="quiz-clue-card">
+          <span>{t('Nom du pays')}</span>
+          <strong>{question.frenchCountryName}</strong>
         </div>
-      </div>
-
-      <div className="quiz-clue-sidebar-footer">
-        <div className="score-label">{t('SCORE DE LA SESSION')}</div>
-        <div className="score-value">
-            {formatQuizScore(session.score, language)} <span>/ {total}</span>
+      )}
+      {clues.capital && (
+        <div className="quiz-clue-card">
+          <span>{t('Capitale')}</span>
+          <strong>{question.capitalName}</strong>
         </div>
-      </div>
-    </aside>
+      )}
+      {!Object.values(clues).some(Boolean) && (
+        <div className="quiz-empty-state">
+          {t('Aucun indice n’est configuré. Reviens au contenu du quiz pour en choisir un.')}
+        </div>
+      )}
+    </div>
   )
 }
 
@@ -449,6 +415,7 @@ function CountryQuizAnswerForm({
   const [flagAlpha2, setFlagAlpha2] = useState<string | null>(null)
   const [flagColorDraft, setFlagColorDraft] = useState('#e53935')
   const [flagColorFilters, setFlagColorFilters] = useState<string[]>([])
+  const [flagNamedColorFilters, setFlagNamedColorFilters] = useState<FlagNamedColorFilterId[]>([])
   const [flagBandCount, setFlagBandCount] = useState(0)
   const [flagHorizontalBandsOnly, setFlagHorizontalBandsOnly] = useState(false)
   const [flagVerticalBandsOnly, setFlagVerticalBandsOnly] = useState(false)
@@ -496,9 +463,14 @@ function CountryQuizAnswerForm({
     })
   )
 
+  const activeFlagColorFilters: FlagColorFilter[] = [
+    ...flagColorFilters.map((color) => ({ kind: 'wheel' as const, color })),
+    ...flagNamedColorFilters.map((id) => ({ kind: 'named' as const, id }))
+  ]
+
   const filteredFlagChoices = question.flagChoices
     .filter((choice) => {
-      const matchesColors = flagColorFilters.every((color) => flagHasColorNear(choice.alpha2, color))
+      const matchesColors = flagHasAllColorFilters(choice.alpha2, activeFlagColorFilters)
       const bands = getFlagBandCounts(choice.alpha2)
       const selectedBandDirections = [
         ...(flagHorizontalBandsOnly ? ['horizontal' as const] : []),
@@ -547,8 +519,16 @@ function CountryQuizAnswerForm({
     ].some(
       (name) => normalizeQuizAnswer(countryName) === normalizeQuizAnswer(name)
     )
+  const capitalCorrectionSuggestion = getCapitalAnswerCorrection(
+    capital,
+    question.acceptedCapitalNames,
+    question.capitalName
+  )
   const capitalMatches =
-    !answers.capital || normalizeQuizAnswer(capital) === normalizeQuizAnswer(question.capitalName)
+    !answers.capital ||
+    question.acceptedCapitalNames.some(
+      (name) => normalizeQuizAnswer(capital) === normalizeQuizAnswer(name)
+    ) || capitalCorrectionSuggestion !== null
   const countryNameIsCorrect = session.answerResults.countryName === true
   const capitalIsCorrect = session.answerResults.capital === true
   const flagIsCorrect = session.answerResults.flag === true
@@ -557,35 +537,52 @@ function CountryQuizAnswerForm({
     (answers.countryName && countryName.trim().length > 0 && !countryNameIsCorrect) ||
     (answers.capital && capital.trim().length > 0 && !capitalIsCorrect) ||
     (answers.flag && flagAlpha2 !== null && !flagIsCorrect)
-  const autoAnswerSentRef = useRef(new Set<string>())
+  const autoAnswerSentRef = useRef<{
+    questionOrder: QuizSession<CountryQuizQuestion>['questionOrder']
+    questionIndex: number
+    answers: Set<string>
+  } | null>(null)
+
+  if (
+    autoAnswerSentRef.current?.questionOrder !== session.questionOrder ||
+    autoAnswerSentRef.current?.questionIndex !== session.questionIndex
+  ) {
+    autoAnswerSentRef.current = {
+      questionOrder: session.questionOrder,
+      questionIndex: session.questionIndex,
+      answers: new Set()
+    }
+  }
 
   useEffect(() => {
     if (questionDisabled || mapOnly) return
+    const autoAnswerState = autoAnswerSentRef.current
+    if (!autoAnswerState) return
     const outcomes: Record<string, boolean> = {}
 
     if (
       answers.countryName && countryName.trim() && countryNameMatches &&
       session.answerResults.countryName !== true &&
-      !autoAnswerSentRef.current.has('countryName')
+      !autoAnswerState.answers.has('countryName')
     ) {
       outcomes.countryName = true
-      autoAnswerSentRef.current.add('countryName')
+      autoAnswerState.answers.add('countryName')
     }
     if (
       answers.capital && capital.trim() && capitalMatches &&
       session.answerResults.capital !== true &&
-      !autoAnswerSentRef.current.has('capital')
+      !autoAnswerState.answers.has('capital')
     ) {
       outcomes.capital = true
-      autoAnswerSentRef.current.add('capital')
+      autoAnswerState.answers.add('capital')
     }
     if (
       answers.flag && flagAlpha2 === question.alpha2 &&
       session.answerResults.flag !== true &&
-      !autoAnswerSentRef.current.has('flag')
+      !autoAnswerState.answers.has('flag')
     ) {
       outcomes.flag = true
-      autoAnswerSentRef.current.add('flag')
+      autoAnswerState.answers.add('flag')
     }
 
     if (Object.keys(outcomes).length > 0) onAnswer(outcomes)
@@ -599,6 +596,8 @@ function CountryQuizAnswerForm({
     countryNameMatches,
     flagAlpha2,
     question.alpha2,
+    session.questionIndex,
+    session.questionOrder,
     questionDisabled,
     mapOnly,
     onAnswer,
@@ -714,9 +713,20 @@ function CountryQuizAnswerForm({
             placeholder={t('Écris le nom de la capitale')}
           />
           {capitalIsCorrect ? (
-            <span className="country-answer-field-status">✓ {t('Bonne réponse !')}</span>
+            <>
+              <span className="country-answer-field-status">✓ {t('Bonne réponse !')}</span>
+              {capitalCorrectionSuggestion && (
+                <span className="country-answer-field-correction">
+                  {t('Orthographe corrigée :')} {capitalCorrectionSuggestion}
+                </span>
+              )}
+            </>
           ) : session.answerResults.capital === false ? (
             <span className="country-answer-field-error">{t('Essaie encore.')}</span>
+          ) : capitalCorrectionSuggestion ? (
+            <span className="country-answer-field-correction" role="status">
+              {t('Orthographe suggérée :')} {capitalCorrectionSuggestion}
+            </span>
           ) : null}
         </div>
       )}
@@ -766,6 +776,38 @@ function CountryQuizAnswerForm({
                     disabled={questionDisabled || flagIsCorrect}
                   />
                 ))}
+              </div>
+              <div className="country-flag-named-color-filter">
+                <div className="country-flag-named-color-heading">
+                  <span>{t('Couleurs par nom')}</span>
+                  <small>{t('Toutes les couleurs sélectionnées sont requises.')}</small>
+                </div>
+                <div className="country-flag-named-color-options">
+                  {flagNamedColorOptions.map((option) => {
+                    const isSelected = flagNamedColorFilters.includes(option.id)
+                    return (
+                      <button
+                        key={option.id}
+                        type="button"
+                        className={`country-flag-named-color-button${isSelected ? ' is-active' : ''}`}
+                        aria-pressed={isSelected}
+                        onClick={() => setFlagNamedColorFilters((current) =>
+                          isSelected
+                            ? current.filter((id) => id !== option.id)
+                            : [...current, option.id]
+                        )}
+                        disabled={questionDisabled || flagIsCorrect}
+                      >
+                        <span
+                          className="country-flag-named-color-swatch"
+                          style={{ backgroundColor: option.swatch }}
+                          aria-hidden="true"
+                        />
+                        {t(option.label)}
+                      </button>
+                    )
+                  })}
+                </div>
               </div>
             </div>
             <div className="country-flag-band-filter">
@@ -876,28 +918,22 @@ function CountryQuizAnswerForm({
 
       {session.answerCorrect === true && (
         <CorrectAnswerBanner>
-          {answers.countryOnMap && (
-            <span>
-              {t('Territoire sur la carte')} :{' '}
-              {localizedCountryNames.of(question.alpha2) ?? question.countryName}
-            </span>
-          )}
-          {answers.countryName && (
-            <span>
-              {t('Nom du pays')} :{' '}
-              {localizedCountryNames.of(question.alpha2) ?? question.countryName}
-            </span>
-          )}
-          {answers.capital && <span>{t('Capitale')} : {question.capitalName}</span>}
-          {answers.flag && (
-            <span className="quiz-correct-answer-flag-row">
-              {t('Drapeau')} :{' '}
-              <img
-                src={getFlagImageSource(question.alpha2)}
-                alt={`${t('Drapeau de')} ${localizedCountryNames.of(question.alpha2) ?? question.countryName}`}
-              />
-            </span>
-          )}
+          <span>
+            {t('Territoire sur la carte')} :{' '}
+            {localizedCountryNames.of(question.alpha2) ?? question.countryName}
+          </span>
+          <span>
+            {t('Nom du pays')} :{' '}
+            {localizedCountryNames.of(question.alpha2) ?? question.countryName}
+          </span>
+          <span>{t('Capitale')} : {question.capitalName}</span>
+          <span className="quiz-correct-answer-flag-row">
+            {t('Drapeau')} :{' '}
+            <img
+              src={getFlagImageSource(question.alpha2)}
+              alt={`${t('Drapeau de')} ${localizedCountryNames.of(question.alpha2) ?? question.countryName}`}
+            />
+          </span>
         </CorrectAnswerBanner>
       )}
       {session.answerCorrect === false && !session.answerRevealed && (
@@ -974,8 +1010,6 @@ type QuizFullscreenBarProps = {
   onRevealAnswer: () => void
   onNext: () => void
   onRestart: () => void
-  onToggleSettings: () => void
-  settingsOpen: boolean
 }
 
 export function QuizFullscreenBar({
@@ -988,9 +1022,7 @@ export function QuizFullscreenBar({
   onOpenAnswers,
   onRevealAnswer,
   onNext,
-  onRestart,
-  onToggleSettings,
-  settingsOpen
+  onRestart
 }: QuizFullscreenBarProps): React.JSX.Element {
   const { language, t } = useLanguage()
   const total = session.questionOrder.length
@@ -1071,34 +1103,19 @@ export function QuizFullscreenBar({
               aria-live="polite"
             >
               <strong>{t(session.answerCorrect === true ? 'Bonne réponse !' : 'Réponse')}</strong>
-              {answers.countryOnMap && (
-                <span>{t('Territoire sur la carte')} : {question.frenchCountryName}</span>
-              )}
-              {answers.countryName && (
-                <span>{t('Nom du pays')} : {question.frenchCountryName}</span>
-              )}
-              {answers.capital && (
-                <span>{t('Capitale')} : {question.capitalName}</span>
-              )}
-              {answers.flag && (
-                <span className="quiz-fullscreen-answer-flag">
-                  {t('Drapeau')} : <img src={getFlagImageSource(question.alpha2)} alt="" />
-                </span>
-              )}
+              <span>{t('Territoire sur la carte')} : {question.frenchCountryName}</span>
+              <span>{t('Nom du pays')} : {question.frenchCountryName}</span>
+              <span>{t('Capitale')} : {question.capitalName}</span>
+              <span className="quiz-fullscreen-answer-flag">
+                {t('Drapeau')} : <img src={getFlagImageSource(question.alpha2)} alt="" />
+              </span>
             </div>
           )}
         </div>
       )}
 
       <div className="quiz-fullscreen-actions">
-        <button
-          className="quiz-fullscreen-settings"
-          type="button"
-          onClick={onToggleSettings}
-          aria-expanded={settingsOpen}
-        >
-          {t(settingsOpen ? 'Masquer les réglages' : 'Modifier les réglages')}
-        </button>
+        <SkinSelector compact />
         {session.completed ? (
           <button className="quiz-fullscreen-primary" type="button" onClick={onRestart}>
             {t('Rejouer')}

@@ -1,12 +1,21 @@
 import countryCatalog from './countryCatalog.json'
 import countryCapitals from './countryCapitals.json'
 import countryKnowledgeData from './countryKnowledgeData.json'
+import countryCultureData from '../geography/countryCultureData.json'
 import { quizRegions, getContinentLabelForCountry } from './countryContinents'
 import { normalizeQuizAnswer } from './countryQuiz'
 import { shuffleItems } from './useQuizSession'
 
 export type CountryKnowledgeQuestionKind =
-  'capital' | 'continent' | 'city' | 'largest-city' | 'mountain'
+  | 'capital'
+  | 'continent'
+  | 'city'
+  | 'largest-city'
+  | 'mountain'
+  | 'currency'
+  | 'language'
+  | 'alphabet'
+  | 'web-domain'
 
 export type CountryKnowledgeQuestion = {
   id: string
@@ -24,6 +33,18 @@ type CountryKnowledgeRecord = {
   alpha2: string
   cities: { name: string; population: number }[]
   mountains: { name: string; elevationMeters: number | null }[]
+}
+
+type CountryCultureRecord = {
+  officialLanguages: { canonicalCode: string; name: string }[]
+  currencies: { code: string; name: string; symbol: string | null }[]
+  webDomains: string[]
+  writingSystems: {
+    scriptCode: string
+    characters: string
+    example: string
+    exampleLanguageCode: string | null
+  }[]
 }
 
 type CountryCatalogEntry = {
@@ -46,16 +67,28 @@ type CountryKnowledgeCopy = {
   city: string
   largestCity: string
   mountain: string
+  currency: string
+  officialLanguage: string
+  alphabet: string
+  webDomain: string
   capitalPrompt: (country: string) => string
   continentPrompt: (country: string) => string
   cityPrompt: (country: string) => string
   largestCityPrompt: (country: string) => string
   mountainPrompt: (country: string) => string
+  currencyPrompt: (country: string) => string
+  languagePrompt: (country: string) => string
+  alphabetPrompt: (country: string) => string
+  webDomainPrompt: (country: string) => string
   capitalExplanation: (capital: string, country: string) => string
   continentExplanation: (country: string, continent: string) => string
   cityExplanation: (city: string, country: string) => string
   largestCityExplanation: (city: string) => string
   mountainExplanation: (mountain: string, country: string, height: string) => string
+  currencyExplanation: (currency: string, country: string) => string
+  languageExplanation: (language: string, country: string) => string
+  alphabetExplanation: (script: string, country: string, characters: string, example: string) => string
+  webDomainExplanation: (domain: string, country: string) => string
   height: (meters: number) => string
   continents: Record<string, string>
 }
@@ -67,16 +100,29 @@ const knowledgeCopy: Record<CountryQuizLanguage, CountryKnowledgeCopy> = {
     city: 'Ville',
     largestCity: 'Grande ville',
     mountain: 'Montagne',
+    currency: 'Devise',
+    officialLanguage: 'Langue officielle',
+    alphabet: 'Alphabet et écriture',
+    webDomain: 'Domaine web',
     capitalPrompt: (country) => `Quelle est la capitale de ${country} ?`,
     continentPrompt: (country) => `Sur quel continent se trouve ${country} ?`,
     cityPrompt: (country) => `Laquelle de ces villes se trouve en ${country} ?`,
     largestCityPrompt: (country) => `Parmi ces grandes villes, laquelle est la plus peuplée de ${country} ?`,
     mountainPrompt: (country) => `Quel relief se trouve en ${country} ?`,
+    currencyPrompt: (country) => `Quelle devise est utilisée en ${country} ?`,
+    languagePrompt: (country) => `Quelle langue a un statut officiel en ${country} ?`,
+    alphabetPrompt: (country) => `Quel système d’écriture est utilisé en ${country} ?`,
+    webDomainPrompt: (country) => `Quelle extension internet est associée à ${country} ?`,
     capitalExplanation: (capital, country) => `${capital} est la capitale enregistrée pour ${country}.`,
     continentExplanation: (country, continent) => `${country} se trouve en ${continent}.`,
     cityExplanation: (city, country) => `${city} est répertoriée parmi les principales villes de ${country}.`,
     largestCityExplanation: (city) => `Selon les estimations de population des villes répertoriées par Natural Earth, ${city} arrive en tête des propositions.`,
     mountainExplanation: (mountain, country, height) => `${mountain} est répertorié en ${country}${height}.`,
+    currencyExplanation: (currency, country) => `${currency} est une devise officielle de ${country}.`,
+    languageExplanation: (language, country) => `${language} est une langue officielle de ${country}.`,
+    alphabetExplanation: (script, country, characters, example) =>
+      `Le système ${script} est utilisé en ${country}. Caractères : ${characters || 'ND'}. Exemple : ${example || 'ND'}.`,
+    webDomainExplanation: (domain, country) => `${domain} est une extension de domaine associée à ${country}.`,
     height: (meters) => `, à ${meters.toLocaleString('fr-FR')} m d’altitude`,
     continents: {
       Afrique: 'Afrique',
@@ -93,16 +139,29 @@ const knowledgeCopy: Record<CountryQuizLanguage, CountryKnowledgeCopy> = {
     city: 'City',
     largestCity: 'Major city',
     mountain: 'Mountain',
+    currency: 'Currency',
+    officialLanguage: 'Official language',
+    alphabet: 'Alphabet and writing system',
+    webDomain: 'Web domain',
     capitalPrompt: (country) => `What is the capital of ${country}?`,
     continentPrompt: (country) => `Which continent is ${country} in?`,
     cityPrompt: (country) => `Which of these cities is in ${country}?`,
     largestCityPrompt: (country) => `Which of these major cities is the most populous in ${country}?`,
     mountainPrompt: (country) => `Which landform is in ${country}?`,
+    currencyPrompt: (country) => `Which currency is used in ${country}?`,
+    languagePrompt: (country) => `Which language has official status in ${country}?`,
+    alphabetPrompt: (country) => `Which writing system is used in ${country}?`,
+    webDomainPrompt: (country) => `Which internet domain extension is associated with ${country}?`,
     capitalExplanation: (capital, country) => `${capital} is listed as the capital of ${country}.`,
     continentExplanation: (country, continent) => `${country} is in ${continent}.`,
     cityExplanation: (city, country) => `${city} is listed among the major cities of ${country}.`,
     largestCityExplanation: (city) => `According to Natural Earth's population estimates for listed cities, ${city} has the highest population among these options.`,
     mountainExplanation: (mountain, country, height) => `${mountain} is listed in ${country}${height}.`,
+    currencyExplanation: (currency, country) => `${currency} is an official currency of ${country}.`,
+    languageExplanation: (language, country) => `${language} is an official language of ${country}.`,
+    alphabetExplanation: (script, country, characters, example) =>
+      `The ${script} writing system is used in ${country}. Characters: ${characters || 'ND'}. Example: ${example || 'ND'}.`,
+    webDomainExplanation: (domain, country) => `${domain} is a domain extension associated with ${country}.`,
     height: (meters) => `, at ${meters.toLocaleString('en')} m elevation`,
     continents: {
       Afrique: 'Africa',
@@ -119,16 +178,29 @@ const knowledgeCopy: Record<CountryQuizLanguage, CountryKnowledgeCopy> = {
     city: 'Ciudad',
     largestCity: 'Ciudad principal',
     mountain: 'Montaña',
+    currency: 'Moneda',
+    officialLanguage: 'Idioma oficial',
+    alphabet: 'Alfabeto y escritura',
+    webDomain: 'Dominio web',
     capitalPrompt: (country) => `¿Cuál es la capital de ${country}?`,
     continentPrompt: (country) => `¿En qué continente se encuentra ${country}?`,
     cityPrompt: (country) => `¿Cuál de estas ciudades está en ${country}?`,
     largestCityPrompt: (country) => `¿Cuál de estas ciudades principales tiene más población en ${country}?`,
     mountainPrompt: (country) => `¿Qué relieve se encuentra en ${country}?`,
+    currencyPrompt: (country) => `¿Qué moneda se utiliza en ${country}?`,
+    languagePrompt: (country) => `¿Qué idioma tiene carácter oficial en ${country}?`,
+    alphabetPrompt: (country) => `¿Qué sistema de escritura se utiliza en ${country}?`,
+    webDomainPrompt: (country) => `¿Qué extensión de internet se asocia con ${country}?`,
     capitalExplanation: (capital, country) => `${capital} figura como la capital de ${country}.`,
     continentExplanation: (country, continent) => `${country} está en ${continent}.`,
     cityExplanation: (city, country) => `${city} figura entre las principales ciudades de ${country}.`,
     largestCityExplanation: (city) => `Según las estimaciones de población de las ciudades registradas por Natural Earth, ${city} tiene la población más alta entre estas opciones.`,
     mountainExplanation: (mountain, country, height) => `${mountain} figura en ${country}${height}.`,
+    currencyExplanation: (currency, country) => `${currency} es una moneda oficial de ${country}.`,
+    languageExplanation: (language, country) => `${language} es un idioma oficial de ${country}.`,
+    alphabetExplanation: (script, country, characters, example) =>
+      `El sistema de escritura ${script} se utiliza en ${country}. Caracteres: ${characters || 'ND'}. Ejemplo: ${example || 'ND'}.`,
+    webDomainExplanation: (domain, country) => `${domain} es una extensión de dominio asociada con ${country}.`,
     height: (meters) => `, a ${meters.toLocaleString('es')} m de altitud`,
     continents: {
       Afrique: 'África',
@@ -150,6 +222,10 @@ const capitalBySourceId = new Map<number, CapitalRecord>(
 const knowledgeByAlpha2 = new Map<string, CountryKnowledgeRecord>(
   (countryKnowledgeData as CountryKnowledgeRecord[]).map((record) => [record.alpha2, record])
 )
+const cultureByAlpha2 = (countryCultureData as {
+  byAlpha2: Record<string, CountryCultureRecord>
+}).byAlpha2
+const allCultureRecords = Object.values(cultureByAlpha2)
 function uniqueByAnswer(values: readonly string[]): string[] {
   const seen = new Set<string>()
   return values.filter((value) => {
@@ -158,6 +234,11 @@ function uniqueByAnswer(values: readonly string[]): string[] {
     seen.add(normalized)
     return true
   })
+}
+
+function excludeCorrectAnswers(candidates: readonly string[], correctAnswers: readonly string[]): string[] {
+  const correct = new Set(correctAnswers.map(normalizeQuizAnswer))
+  return candidates.filter((candidate) => !correct.has(normalizeQuizAnswer(candidate)))
 }
 
 function createChoices(answer: string, candidates: readonly string[]): string[] | null {
@@ -173,6 +254,32 @@ function countryNameFor(alpha2: string, fallback: string, language: CountryQuizL
   return new Intl.DisplayNames([language], { type: 'region' }).of(alpha2) ?? fallback
 }
 
+function localizedLanguageName(
+  code: string,
+  fallback: string,
+  language: CountryQuizLanguage
+): string {
+  if (code === 'tzm') return fallback
+  return new Intl.DisplayNames([language], { type: 'language' }).of(code) ?? fallback
+}
+
+function localizedCurrencyName(
+  code: string,
+  fallback: string,
+  language: CountryQuizLanguage
+): string {
+  const localized = new Intl.DisplayNames([language], { type: 'currency' }).of(code)
+  return localized && localized.toUpperCase() !== code ? localized : fallback
+}
+
+function localizedScriptName(code: string, language: CountryQuizLanguage): string {
+  return new Intl.DisplayNames([language], { type: 'script' }).of(code) ?? code
+}
+
+function primaryWebDomain(record: CountryCultureRecord): string | null {
+  return record.webDomains.find((domain) => /^\.[a-z0-9-]+$/i.test(domain)) ?? record.webDomains[0] ?? null
+}
+
 export function createCountryKnowledgeQuestions(
   alpha2: string,
   language: CountryQuizLanguage = 'fr'
@@ -183,6 +290,7 @@ export function createCountryKnowledgeQuestions(
 
   const displayName = countryNameFor(code, country.countryName, language)
   const copy = knowledgeCopy[language]
+  const culture = cultureByAlpha2[code]
   const continentChoices = quizRegions
     .filter((region) => region.id !== 'world')
     .map((region) => copy.continents[region.label] ?? region.label)
@@ -313,6 +421,94 @@ export function createCountryKnowledgeQuestions(
         copy.mountainExplanation(mountain.name, displayName, height)
       )
     }
+  }
+
+  if (culture?.currencies.length) {
+    const formatCurrency = (currency: CountryCultureRecord['currencies'][number]): string =>
+      `${localizedCurrencyName(currency.code, currency.name, language)} (${currency.code})`
+    const currency = shuffleItems(culture.currencies)[0]
+    if (currency) {
+      const currencyAnswer = formatCurrency(currency)
+      const allCountryCurrencyAnswers = culture.currencies.map(formatCurrency)
+      const currencyChoices = excludeCorrectAnswers(
+        allCultureRecords.flatMap((item) => item.currencies.map(formatCurrency)),
+        allCountryCurrencyAnswers
+      )
+      createQuestion(
+        'currency',
+        copy.currency,
+        copy.currencyPrompt(displayName),
+        currencyAnswer,
+        currencyChoices,
+        copy.currencyExplanation(currencyAnswer, displayName)
+      )
+    }
+  }
+
+  if (culture?.officialLanguages.length) {
+    const formatLanguage = (item: CountryCultureRecord['officialLanguages'][number]): string =>
+      localizedLanguageName(item.canonicalCode, item.name, language)
+    const officialLanguage = shuffleItems(culture.officialLanguages)[0]
+    if (officialLanguage) {
+      const languageAnswer = formatLanguage(officialLanguage)
+      const allCountryLanguageAnswers = culture.officialLanguages.map(formatLanguage)
+      const languageChoices = excludeCorrectAnswers(
+        allCultureRecords.flatMap((item) => item.officialLanguages.map(formatLanguage)),
+        allCountryLanguageAnswers
+      )
+      createQuestion(
+        'language',
+        copy.officialLanguage,
+        copy.languagePrompt(displayName),
+        languageAnswer,
+        languageChoices,
+        copy.languageExplanation(languageAnswer, displayName)
+      )
+    }
+  }
+
+  if (culture?.writingSystems.length) {
+    const writingSystem = shuffleItems(culture.writingSystems)[0]
+    if (writingSystem) {
+      const scriptAnswer = localizedScriptName(writingSystem.scriptCode, language)
+      const allCountryScriptAnswers = culture.writingSystems.map((system) =>
+        localizedScriptName(system.scriptCode, language)
+      )
+      const scriptChoices = excludeCorrectAnswers(
+        allCultureRecords.flatMap((item) =>
+          item.writingSystems.map((system) => localizedScriptName(system.scriptCode, language))
+        ),
+        allCountryScriptAnswers
+      )
+      createQuestion(
+        'alphabet',
+        copy.alphabet,
+        copy.alphabetPrompt(displayName),
+        scriptAnswer,
+        scriptChoices,
+        copy.alphabetExplanation(
+          scriptAnswer,
+          displayName,
+          writingSystem.characters.replace(/\s+/g, ' ').trim(),
+          writingSystem.example
+        )
+      )
+    }
+  }
+
+  const domain = culture ? primaryWebDomain(culture) : null
+  if (domain) {
+    const domainChoices = allCultureRecords
+      .map(primaryWebDomain)
+      .filter((item): item is string => item !== null)
+    createQuestion(
+      'web-domain',
+      copy.webDomain,
+      copy.webDomainPrompt(displayName),
+      domain,
+      domainChoices,
+      copy.webDomainExplanation(domain, displayName)
+    )
   }
 
   return shuffleItems(questions)
