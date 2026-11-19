@@ -66,14 +66,10 @@ export function AppModeSwitcher({ active, onChange }: AppModeSwitcherProps): Rea
       {skin === 'minimal' ? (
         <details className="app-mode-menu">
           <summary>{t(activeModeLabel)}</summary>
-          <div className="app-mode-menu-content">
-            {modeButtons}
-          </div>
+          <div className="app-mode-menu-content">{modeButtons}</div>
         </details>
       ) : (
-        <>
-          {modeButtons}
-        </>
+        <>{modeButtons}</>
       )}
 
       <div className="app-mode-system-controls">

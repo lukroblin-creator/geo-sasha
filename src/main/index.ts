@@ -1,7 +1,33 @@
 import { app, shell, BrowserWindow, ipcMain } from 'electron'
-import { join } from 'path'
+import { readdir, readFile } from 'node:fs/promises'
+import { join, resolve } from 'path'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import icon from '../../resources/icon.png?asset'
+
+const mapTexturePrefixes = {
+  'earth-day-mercator': 'earth-day-mercator',
+  'earth-night-mercator': 'earth-night-mercator',
+  'earth-clouds-mercator': 'earth-clouds-mercator',
+  'earth-topography-mercator': 'earth-topography-mercator'
+} as const
+
+type MapTextureAssetKey = keyof typeof mapTexturePrefixes
+
+ipcMain.handle('read-map-texture', async (_event, assetKey: unknown): Promise<Uint8Array> => {
+  if (typeof assetKey !== 'string' || !Object.hasOwn(mapTexturePrefixes, assetKey)) {
+    throw new Error('Texture cartographique inconnue')
+  }
+
+  const assetsDirectory = resolve(__dirname, '../renderer/assets')
+  const prefix = mapTexturePrefixes[assetKey as MapTextureAssetKey]
+  const fileName = (await readdir(assetsDirectory)).find(
+    (name) => name === `${prefix}.jpg` || (name.startsWith(`${prefix}-`) && name.endsWith('.jpg'))
+  )
+  if (!fileName) throw new Error(`Texture cartographique introuvable : ${assetKey}`)
+
+  const bytes = await readFile(join(assetsDirectory, fileName))
+  return Uint8Array.from(bytes)
+})
 
 function createWindow(): void {
   // Create the browser window.
@@ -13,7 +39,9 @@ function createWindow(): void {
     ...(process.platform === 'linux' ? { icon } : {}),
     webPreferences: {
       preload: join(__dirname, '../preload/index.js'),
-      sandbox: false
+      contextIsolation: true,
+      nodeIntegration: false,
+      sandbox: true
     }
   })
 
@@ -22,7 +50,12 @@ function createWindow(): void {
   })
 
   mainWindow.webContents.setWindowOpenHandler((details) => {
-    shell.openExternal(details.url)
+    try {
+      const url = new URL(details.url)
+      if (url.protocol === 'https:') void shell.openExternal(url.toString())
+    } catch {
+      // Ignore malformed or unsupported external links.
+    }
     return { action: 'deny' }
   })
 

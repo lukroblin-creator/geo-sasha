@@ -13,20 +13,17 @@ function normalizeSourceFeatureId(sourceFeatureId: unknown): string | null {
 
 const entityById = new Map(geographicEntities.map((entity) => [entity.id, entity]))
 const alpha2BySourceFeatureId = new Map<string, string>([
-  ...countryCatalog.map((country) => [
-    normalizeSourceFeatureId(country.sourceFeatureId)!,
-    country.alpha2
-  ] as const),
-  ...additionalMapFlagRegions.map((region) => [
-    normalizeSourceFeatureId(region.sourceFeatureId)!,
-    region.alpha2
-  ] as const)
+  ...countryCatalog.map(
+    (country) => [normalizeSourceFeatureId(country.sourceFeatureId)!, country.alpha2] as const
+  ),
+  ...additionalMapFlagRegions.map(
+    (region) => [normalizeSourceFeatureId(region.sourceFeatureId)!, region.alpha2] as const
+  )
 ])
 
 function getFlagCodeForFeature(properties: Record<string, unknown>): string | null {
-  const entity = typeof properties.entityId === 'string'
-    ? entityById.get(properties.entityId)
-    : undefined
+  const entity =
+    typeof properties.entityId === 'string' ? entityById.get(properties.entityId) : undefined
 
   if (entity) {
     if (entity.kind !== 'territory') return entity.flagAlpha2 ?? entity.alpha2 ?? null
@@ -39,7 +36,7 @@ function getFlagCodeForFeature(properties: Record<string, unknown>): string | nu
 
   const normalizedSourceFeatureId = normalizeSourceFeatureId(properties.sourceId)
   return normalizedSourceFeatureId
-    ? alpha2BySourceFeatureId.get(normalizedSourceFeatureId) ?? null
+    ? (alpha2BySourceFeatureId.get(normalizedSourceFeatureId) ?? null)
     : null
 }
 
@@ -51,9 +48,8 @@ export function addFlagTerritoryProperties(
     features: dataset.features.map((feature) => {
       const properties = (feature.properties ?? {}) as Record<string, unknown>
       const flagAlpha2 = getFlagCodeForFeature(properties)
-      const usableFlagCode = flagAlpha2 && hasFlagImageAsset(flagAlpha2)
-        ? flagAlpha2.toUpperCase()
-        : null
+      const usableFlagCode =
+        flagAlpha2 && hasFlagImageAsset(flagAlpha2) ? flagAlpha2.toUpperCase() : null
 
       return {
         ...feature,

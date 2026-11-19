@@ -9,10 +9,7 @@ export type QuizStats = {
 export type QuizProgress = Record<QuizMode, QuizStats>
 
 const STORAGE_KEY = 'world-atlas:quiz-progress:v3'
-const PREVIOUS_STORAGE_KEYS = [
-  'world-atlas:quiz-progress:v2',
-  'world-atlas:quiz-progress:v1'
-]
+const PREVIOUS_STORAGE_KEYS = ['world-atlas:quiz-progress:v2', 'world-atlas:quiz-progress:v1']
 
 function emptyStats(): QuizStats {
   return { completedSessions: 0, bestScore: 0, lastScore: 0 }
@@ -60,15 +57,12 @@ function migratePreviousProgress(value: unknown): QuizProgress | null {
 
   const previous = value as Record<string, unknown>
   const flags = toStats({
-    completedSessions:
-      previous.completedCountryFlagSessions ?? previous.completedFlagSessions,
+    completedSessions: previous.completedCountryFlagSessions ?? previous.completedFlagSessions,
     bestScore: previous.bestCountryFlagScore ?? previous.bestFlagScore,
     lastScore: previous.lastCountryFlagScore ?? previous.lastFlagScore
   })
 
-  return flags
-    ? { ...emptyProgress(), flags }
-    : null
+  return flags ? { ...emptyProgress(), flags } : null
 }
 
 export function loadQuizProgress(): QuizProgress {
@@ -84,7 +78,8 @@ export function loadQuizProgress(): QuizProgress {
         const knowledge = toStats(progress.knowledge) ?? emptyStats()
         const estimation = toStats(progress.estimation) ?? emptyStats()
         const drawBorders = toStats(progress['draw-borders']) ?? emptyStats()
-        if (flags && capitals) return { flags, capitals, custom, knowledge, estimation, 'draw-borders': drawBorders }
+        if (flags && capitals)
+          return { flags, capitals, custom, knowledge, estimation, 'draw-borders': drawBorders }
       }
     }
 
@@ -102,10 +97,7 @@ export function loadQuizProgress(): QuizProgress {
   return emptyProgress()
 }
 
-export function saveCompletedQuiz(
-  mode: QuizMode,
-  score: number
-): QuizProgress {
+export function saveCompletedQuiz(mode: QuizMode, score: number): QuizProgress {
   const previous = loadQuizProgress()
   const updated: QuizProgress = {
     ...previous,

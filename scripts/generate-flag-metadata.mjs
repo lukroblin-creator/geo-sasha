@@ -16,15 +16,13 @@ const flagFilesByCode = new Map(
 
 for (const filename of await readdir(flagOverridesDirectory)) {
   if (/^[a-z]{2}\.svg$/i.test(filename)) {
-    flagFilesByCode.set(
-      filename.slice(0, 2).toUpperCase(),
-      join(flagOverridesDirectory, filename)
-    )
+    flagFilesByCode.set(filename.slice(0, 2).toUpperCase(), join(flagOverridesDirectory, filename))
   }
 }
 
-const flagFiles = [...flagFilesByCode.entries()]
-  .sort(([firstCode], [secondCode]) => firstCode.localeCompare(secondCode))
+const flagFiles = [...flagFilesByCode.entries()].sort(([firstCode], [secondCode]) =>
+  firstCode.localeCompare(secondCode)
+)
 const nonRectangularOutlines = {
   NP: [
     [0, 0],
@@ -77,7 +75,9 @@ function ratioLabel(width, height) {
 }
 
 function parseColors(svg) {
-  const colors = [...svg.matchAll(/(?:fill|stroke|stop-color)\s*(?:=|:)\s*["']?([^;"'}\s]+)["']?/gi)]
+  const colors = [
+    ...svg.matchAll(/(?:fill|stroke|stop-color)\s*(?:=|:)\s*["']?([^;"'}\s]+)["']?/gi)
+  ]
     .map((match) => match[1].trim().toLowerCase())
     .filter((color) => color !== 'none' && color !== 'transparent' && !color.startsWith('url('))
     .map((color) => namedColors[color] ?? color)
@@ -153,7 +153,10 @@ function parseTransform(transform, parentTransform) {
   if (transformParts.length === 0) return null
 
   for (const [, operation, argumentText] of transformParts) {
-    const values = argumentText.split(/[\s,]+/).filter(Boolean).map(Number)
+    const values = argumentText
+      .split(/[\s,]+/)
+      .filter(Boolean)
+      .map(Number)
     let nextTransform
     if (operation === 'translate') {
       nextTransform = [1, 0, 0, 1, values[0] ?? 0, values[1] ?? 0]
@@ -238,9 +241,7 @@ function parseAxisAlignedPath(data) {
       }
       const x = readNumber()
       const y = readNumber()
-      currentPoint = relative
-        ? [currentPoint[0] + x, currentPoint[1] + y]
-        : [x, y]
+      currentPoint = relative ? [currentPoint[0] + x, currentPoint[1] + y] : [x, y]
       if (command === 'M' || command === 'm') {
         if (currentSubpath.length > 0) finishSubpath(false)
         startPoint = currentPoint
@@ -319,12 +320,15 @@ function getBandGeometry(svg, width, height) {
     if (!transform) continue
 
     if (tag === 'rect' && fill) {
-      const rect = transformRectangle({
-        x: Number.parseFloat(attributes.x ?? '0'),
-        y: Number.parseFloat(attributes.y ?? '0'),
-        width: Number.parseFloat(attributes.width ?? '0'),
-        height: Number.parseFloat(attributes.height ?? '0')
-      }, transform)
+      const rect = transformRectangle(
+        {
+          x: Number.parseFloat(attributes.x ?? '0'),
+          y: Number.parseFloat(attributes.y ?? '0'),
+          width: Number.parseFloat(attributes.width ?? '0'),
+          height: Number.parseFloat(attributes.height ?? '0')
+        },
+        transform
+      )
       if (rect && rect.width > 0 && rect.height > 0) shapes.push({ ...rect, color: fill })
     }
 
@@ -338,7 +342,9 @@ function getBandGeometry(svg, width, height) {
           if (rect && rect.width > 0 && rect.height > 0) shapes.push({ ...rect, color: fill })
         }
       }
-      const strokeWidth = Number.parseFloat(attributes['stroke-width'] ?? parent?.strokeWidth ?? '1')
+      const strokeWidth = Number.parseFloat(
+        attributes['stroke-width'] ?? parent?.strokeWidth ?? '1'
+      )
       const strokeColor = stroke ?? parent?.stroke
       if (strokeColor && strokeWidth > 0) {
         const [scaleX, , , scaleY, translateX, translateY] = transform
@@ -359,10 +365,7 @@ function getBandGeometry(svg, width, height) {
                 height: transformedStrokeWidth,
                 color: strokeColor
               })
-            } else if (
-              first[0] === second[0] &&
-              Math.abs(second[1] - first[1]) >= height * 0.55
-            ) {
+            } else if (first[0] === second[0] && Math.abs(second[1] - first[1]) >= height * 0.55) {
               const transformedStrokeWidth = strokeWidth * Math.abs(scaleX)
               shapes.push({
                 x: first[0] - transformedStrokeWidth / 2,
@@ -430,9 +433,33 @@ function getBandCounts(svg, width, height, alpha2) {
   const shapes = getBandGeometry(svg, width, height)
   // Curated diagonal layouts: use the number of broad color regions crossed across the diagonal.
   const obliqueBandProfiles = {
-    AS: 3, AU: 3, BA: 3, BI: 3, BS: 3, BT: 2, CD: 3, CG: 3, CZ: 3,
-    DJ: 3, EH: 4, GB: 3, GY: 5, HM: 3, JE: 2, JO: 4, KM: 5, KN: 5,
-    MQ: 3, NZ: 3, PG: 2, PS: 4, SH: 3, TZ: 5, VU: 5, ZA: 6, ZW: 4
+    AS: 3,
+    AU: 3,
+    BA: 3,
+    BI: 3,
+    BS: 3,
+    BT: 2,
+    CD: 3,
+    CG: 3,
+    CZ: 3,
+    DJ: 3,
+    EH: 4,
+    GB: 3,
+    GY: 5,
+    HM: 3,
+    JE: 2,
+    JO: 4,
+    KM: 5,
+    KN: 5,
+    MQ: 3,
+    NZ: 3,
+    PG: 2,
+    PS: 4,
+    SH: 3,
+    TZ: 5,
+    VU: 5,
+    ZA: 6,
+    ZW: 4
   }
   return {
     horizontalBands: countColorBands(shapes, width, height, 'horizontal'),
@@ -444,7 +471,9 @@ function getBandCounts(svg, width, height, alpha2) {
 const flags = []
 for (const [alpha2, svgPath] of flagFiles) {
   const svg = await readFile(svgPath, 'utf8')
-  const viewBox = svg.match(/\bviewBox=["']\s*([-+\d.e]+)[ ,]+([-+\d.e]+)[ ,]+([-+\d.e]+)[ ,]+([-+\d.e]+)\s*["']/i)
+  const viewBox = svg.match(
+    /\bviewBox=["']\s*([-+\d.e]+)[ ,]+([-+\d.e]+)[ ,]+([-+\d.e]+)[ ,]+([-+\d.e]+)\s*["']/i
+  )
 
   if (!viewBox) {
     throw new Error(`Impossible de lire les proportions du drapeau ${alpha2}`)

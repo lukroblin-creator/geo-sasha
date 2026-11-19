@@ -27,24 +27,18 @@ function getInteriorPoint(geometry: Geometry): [number, number] | null {
   return point
 }
 
-function getDistanceKm(
-  first: [number, number],
-  second: [number, number]
-): number {
+function getDistanceKm(first: [number, number], second: [number, number]): number {
   const firstLatitude = (first[1] * Math.PI) / 180
   const secondLatitude = (second[1] * Math.PI) / 180
   const latitudeDifference = secondLatitude - firstLatitude
   const longitudeDifference = (normalizeLongitude(second[0] - first[0]) * Math.PI) / 180
   const haversine =
     Math.sin(latitudeDifference / 2) ** 2 +
-    Math.cos(firstLatitude) *
-      Math.cos(secondLatitude) *
-      Math.sin(longitudeDifference / 2) ** 2
+    Math.cos(firstLatitude) * Math.cos(secondLatitude) * Math.sin(longitudeDifference / 2) ** 2
   const boundedHaversine = Math.max(0, Math.min(1, haversine))
 
-  return 2 * EARTH_RADIUS_KM * Math.atan2(
-    Math.sqrt(boundedHaversine),
-    Math.sqrt(1 - boundedHaversine)
+  return (
+    2 * EARTH_RADIUS_KM * Math.atan2(Math.sqrt(boundedHaversine), Math.sqrt(1 - boundedHaversine))
   )
 }
 

@@ -22,9 +22,7 @@ export function buildCapitalQuestions(
   catalog: readonly CapitalCatalogEntry[],
   records: readonly CapitalRecord[]
 ): CountryCapitalQuestion[] {
-  const capitalByCountryId = new Map(
-    records.map((capital) => [capital.sourceFeatureId, capital])
-  )
+  const capitalByCountryId = new Map(records.map((capital) => [capital.sourceFeatureId, capital]))
   const capitalChoices = [...new Set(records.map((capital) => capital.capitalName))]
 
   return catalog.map((country) => {

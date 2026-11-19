@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import WorldMap from './WorldMap'
+import WorldMap from './WorldMapLoader'
 import countryCatalog from '../data/quiz/countryCatalog.json'
 import { getFlagImageSource } from '../data/quiz/flagAssets'
 import { useLanguage } from '../data/i18n'
@@ -40,7 +40,9 @@ export function CountryQuizSelectionView({
   const selectedCountry = countries.find((country) => country.alpha2 === selectedAlpha2)
 
   return (
-    <main className={`country-quiz-selection-screen${isFullscreen ? ' map-fullscreen-screen country-select-map-fullscreen' : ''}`}>
+    <main
+      className={`country-quiz-selection-screen${isFullscreen ? ' map-fullscreen-screen country-select-map-fullscreen' : ''}`}
+    >
       {isFullscreen && (
         <MapFullscreenBar
           title={t('Quiz pays')}
@@ -94,7 +96,9 @@ export function CountryQuizSelectionView({
               />
               <h2>{selectedCountry.name}</h2>
               <p>
-                {t('Réponds à des questions mélangées sur sa capitale, ses villes, ses reliefs, sa devise, ses langues officielles, son alphabet et son domaine internet. Les questions apparaissent lorsque les données locales sont disponibles.')}
+                {t(
+                  'Réponds à des questions mélangées sur sa capitale, ses villes, ses reliefs, sa devise, ses langues officielles, son alphabet et son domaine internet. Les questions apparaissent lorsque les données locales sont disponibles.'
+                )}
               </p>
               <button
                 className="quiz-start-button"

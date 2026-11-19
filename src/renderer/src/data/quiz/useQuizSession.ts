@@ -13,6 +13,15 @@ export type QuizSession<Question> = {
   answerCorrect: boolean | null
   answerRevealed: boolean
   selectedAnswer: string | null
+  questionHistory: Array<{
+    question: Question
+    correct: boolean
+    revealed: boolean
+    selectedAnswer: string | null
+    answerResults: Record<string, boolean | null>
+    answerAttempts: Record<string, number>
+    answerPoints: Record<string, number>
+  }>
   completed: boolean
 }
 
@@ -21,10 +30,7 @@ export function shuffleItems<T>(items: readonly T[]): T[] {
 
   for (let index = shuffled.length - 1; index > 0; index--) {
     const randomIndex = Math.floor(Math.random() * (index + 1))
-    ;[shuffled[index], shuffled[randomIndex]] = [
-      shuffled[randomIndex],
-      shuffled[index]
-    ]
+    ;[shuffled[index], shuffled[randomIndex]] = [shuffled[randomIndex], shuffled[index]]
   }
 
   return shuffled
@@ -38,9 +44,10 @@ export function createQuizSession<Question>(
     ([, weight]) => Number.isFinite(weight) && weight > 0
   )
   const weightTotal = validWeights.reduce((sum, [, weight]) => sum + weight, 0)
-  const normalizedWeights = weightTotal > 0
-    ? Object.fromEntries(validWeights.map(([key, weight]) => [key, weight / weightTotal]))
-    : { answer: 1 }
+  const normalizedWeights =
+    weightTotal > 0
+      ? Object.fromEntries(validWeights.map(([key, weight]) => [key, weight / weightTotal]))
+      : { answer: 1 }
 
   return {
     questionOrder: shuffleItems(questionBank),
@@ -54,6 +61,7 @@ export function createQuizSession<Question>(
     answerCorrect: null,
     answerRevealed: false,
     selectedAnswer: null,
+    questionHistory: [],
     completed: false
   }
 }
@@ -63,11 +71,7 @@ export function submitQuizAnswer<Question>(
   isCorrect: boolean,
   selectedAnswer: string | null = null
 ): QuizSession<Question> {
-  return submitQuizAnswerItems(
-    session,
-    { answer: isCorrect },
-    selectedAnswer
-  )
+  return submitQuizAnswerItems(session, { answer: isCorrect }, selectedAnswer)
 }
 
 export function submitQuizAnswerItems<Question>(
@@ -75,11 +79,7 @@ export function submitQuizAnswerItems<Question>(
   outcomes: Record<string, boolean>,
   selectedAnswer: string | null = null
 ): QuizSession<Question> {
-  if (
-    session.completed ||
-    session.answerCorrect === true ||
-    session.answerRevealed
-  ) return session
+  if (session.completed || session.answerCorrect === true || session.answerRevealed) return session
 
   const answerAttempts = { ...session.answerAttempts }
   const answerResults = { ...session.answerResults }
@@ -120,6 +120,57 @@ export function submitQuizAnswerItems<Question>(
   }
 }
 
+export function submitQuizPartialAnswer<Question>(
+  session: QuizSession<Question>,
+  key: string,
+  pointsEarned: number,
+  outcome: 'progress' | 'correct' | 'incorrect',
+  selectedAnswer: string | null = null
+): QuizSession<Question> {
+  if (
+    session.completed ||
+    session.answerCorrect === true ||
+    session.answerRevealed ||
+    !(key in session.answerWeights)
+  ) {
+    return session
+  }
+
+  const isFailedOrCompletedSubmission = outcome !== 'progress'
+  const answerAttempts = {
+    ...session.answerAttempts,
+    [key]: (session.answerAttempts[key] ?? 0) + (isFailedOrCompletedSubmission ? 1 : 0)
+  }
+  const answerResults = { ...session.answerResults }
+  const answerPoints = { ...session.answerPoints }
+  const previousPoints = answerPoints[key] ?? 0
+  const nextPoints =
+    outcome === 'incorrect' ? 0 : Math.min(1, previousPoints + Math.max(0, pointsEarned))
+  answerPoints[key] = nextPoints
+  if (outcome === 'progress') answerResults[key] = null
+  if (outcome === 'correct') answerResults[key] = true
+  if (outcome === 'incorrect') answerResults[key] = false
+
+  const answerKeys = Object.keys(session.answerWeights)
+  const answerCorrect = answerKeys.every((answerKey) => answerResults[answerKey] === true)
+    ? true
+    : answerKeys.some((answerKey) => answerResults[answerKey] === false)
+      ? false
+      : null
+  const scoreDelta = (nextPoints - previousPoints) * (session.answerWeights[key] ?? 0)
+
+  return {
+    ...session,
+    score: Math.max(0, session.score + scoreDelta),
+    attemptCount: session.attemptCount + (isFailedOrCompletedSubmission ? 1 : 0),
+    answerAttempts,
+    answerResults,
+    answerPoints,
+    answerCorrect,
+    selectedAnswer
+  }
+}
+
 export function getQuizAttemptPoints(attemptCount: number): number {
   if (attemptCount <= 1) return 1
   if (attemptCount === 2) return 0.5
@@ -131,9 +182,7 @@ export function formatQuizScore(score: number, language: string): string {
   return new Intl.NumberFormat(language, { maximumFractionDigits: 2 }).format(score)
 }
 
-export function revealQuizAnswer<Question>(
-  session: QuizSession<Question>
-): QuizSession<Question> {
+export function revealQuizAnswer<Question>(session: QuizSession<Question>): QuizSession<Question> {
   if (session.completed || session.answerCorrect === true || session.answerRevealed) {
     return session
   }
@@ -144,17 +193,33 @@ export function revealQuizAnswer<Question>(
 export function advanceQuizSession<Question>(
   session: QuizSession<Question>
 ): QuizSession<Question> {
-  if (
-    session.completed ||
-    (session.answerCorrect !== true && !session.answerRevealed)
-  ) return session
+  if (session.completed || (session.answerCorrect !== true && !session.answerRevealed))
+    return session
+
+  const question = session.questionOrder[session.questionIndex]
+  const questionHistory =
+    question === undefined
+      ? session.questionHistory
+      : [
+          ...session.questionHistory,
+          {
+            question,
+            correct: session.answerCorrect === true,
+            revealed: session.answerRevealed,
+            selectedAnswer: session.selectedAnswer,
+            answerResults: { ...session.answerResults },
+            answerAttempts: { ...session.answerAttempts },
+            answerPoints: { ...session.answerPoints }
+          }
+        ]
 
   if (session.questionIndex === session.questionOrder.length - 1) {
-    return { ...session, completed: true }
+    return { ...session, questionHistory, completed: true }
   }
 
   return {
     ...session,
+    questionHistory,
     questionIndex: session.questionIndex + 1,
     attemptCount: 0,
     answerAttempts: Object.fromEntries(Object.keys(session.answerWeights).map((key) => [key, 0])),
@@ -169,13 +234,24 @@ export function advanceQuizSession<Question>(
 type UseQuizSessionOptions<Question> = {
   mode: QuizMode
   questionBank: () => readonly Question[]
-  onCompleted: (mode: QuizMode, score: number, total: number) => void
+  onCompleted: (
+    mode: QuizMode,
+    score: number,
+    total: number,
+    questionHistory: QuizSession<Question>['questionHistory']
+  ) => void
 }
 
 type UseQuizSessionResult<Question> = {
   session: QuizSession<Question>
   answer: (isCorrect: boolean, selectedAnswer?: string | null) => void
   answerItems: (outcomes: Record<string, boolean>, selectedAnswer?: string | null) => void
+  answerPartial: (
+    key: string,
+    pointsEarned: number,
+    outcome: 'progress' | 'correct' | 'incorrect',
+    selectedAnswer?: string | null
+  ) => void
   revealAnswer: () => void
   next: () => void
   restart: (questions?: readonly Question[], answerWeights?: Record<string, number>) => void
@@ -186,25 +262,27 @@ export function useQuizSession<Question>({
   questionBank,
   onCompleted
 }: UseQuizSessionOptions<Question>): UseQuizSessionResult<Question> {
-  const [session, setSession] = useState(() =>
-    createQuizSession(questionBank())
-  )
+  const [session, setSession] = useState(() => createQuizSession(questionBank()))
 
-  const answer = (
-    isCorrect: boolean,
-    selectedAnswer: string | null = null
-  ): void => {
-    setSession((current) =>
-      submitQuizAnswer(current, isCorrect, selectedAnswer)
-    )
+  const answer = (isCorrect: boolean, selectedAnswer: string | null = null): void => {
+    setSession((current) => submitQuizAnswer(current, isCorrect, selectedAnswer))
   }
 
   const answerItems = (
     outcomes: Record<string, boolean>,
     selectedAnswer: string | null = null
   ): void => {
+    setSession((current) => submitQuizAnswerItems(current, outcomes, selectedAnswer))
+  }
+
+  const answerPartial = (
+    key: string,
+    pointsEarned: number,
+    outcome: 'progress' | 'correct' | 'incorrect',
+    selectedAnswer: string | null = null
+  ): void => {
     setSession((current) =>
-      submitQuizAnswerItems(current, outcomes, selectedAnswer)
+      submitQuizPartialAnswer(current, key, pointsEarned, outcome, selectedAnswer)
     )
   }
 
@@ -213,7 +291,7 @@ export function useQuizSession<Question>({
     if (updated === session) return
 
     if (updated.completed) {
-      onCompleted(mode, session.score, session.questionOrder.length)
+      onCompleted(mode, session.score, session.questionOrder.length, updated.questionHistory)
     }
 
     setSession(updated)
@@ -230,5 +308,5 @@ export function useQuizSession<Question>({
     setSession(createQuizSession(questions ?? questionBank(), answerWeights))
   }
 
-  return { session, answer, answerItems, revealAnswer, next, restart }
+  return { session, answer, answerItems, answerPartial, revealAnswer, next, restart }
 }

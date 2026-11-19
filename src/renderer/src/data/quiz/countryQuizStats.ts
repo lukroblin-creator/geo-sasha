@@ -44,7 +44,7 @@ function emptyModeStats(): Record<QuizMode, CountryModeStats> {
 }
 
 function readCounter(value: unknown): number | null {
-  return Number.isInteger(value) && (value as number) >= 0 ? value as number : null
+  return Number.isInteger(value) && (value as number) >= 0 ? (value as number) : null
 }
 
 function readPoints(value: unknown, fallback: number): number | null {
@@ -86,9 +86,8 @@ function parseCountryStats(value: unknown): CountryQuizStats | null {
   const total = parseMetric(raw, legacyRoot)
   if (!total) return null
 
-  const rawModes = raw.byMode && typeof raw.byMode === 'object'
-    ? raw.byMode as Record<string, unknown>
-    : {}
+  const rawModes =
+    raw.byMode && typeof raw.byMode === 'object' ? (raw.byMode as Record<string, unknown>) : {}
   const byMode = emptyModeStats()
 
   for (const mode of quizModes) {
@@ -108,9 +107,10 @@ function parseCountryStats(value: unknown): CountryQuizStats | null {
   }
 
   const byAnswer: Record<string, CountryModeStats> = {}
-  const rawAnswers = raw.byAnswer && typeof raw.byAnswer === 'object'
-    ? raw.byAnswer as Record<string, unknown>
-    : {}
+  const rawAnswers =
+    raw.byAnswer && typeof raw.byAnswer === 'object'
+      ? (raw.byAnswer as Record<string, unknown>)
+      : {}
   for (const [id, answerStats] of Object.entries(rawAnswers)) {
     const parsed = parseMetric(answerStats)
     if (/^[a-z][a-zA-Z0-9:-]*$/.test(id) && parsed) byAnswer[id] = parsed
@@ -127,16 +127,13 @@ export function loadCountryQuizStats(): CountryQuizStatsByAlpha2 {
     const parsed: unknown = JSON.parse(stored)
     if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) return {}
 
-    return Object.entries(parsed).reduce<CountryQuizStatsByAlpha2>(
-      (stats, [alpha2, value]) => {
-        const countryStats = parseCountryStats(value)
-        if (/^[A-Z]{2}$/.test(alpha2.toUpperCase()) && countryStats) {
-          stats[alpha2.toUpperCase()] = countryStats
-        }
-        return stats
-      },
-      {}
-    )
+    return Object.entries(parsed).reduce<CountryQuizStatsByAlpha2>((stats, [alpha2, value]) => {
+      const countryStats = parseCountryStats(value)
+      if (/^[A-Z]{2}$/.test(alpha2.toUpperCase()) && countryStats) {
+        stats[alpha2.toUpperCase()] = countryStats
+      }
+      return stats
+    }, {})
   } catch {
     return {}
   }

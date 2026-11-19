@@ -4,7 +4,10 @@ import type { CSSProperties } from 'react'
 import type { FeatureCollection, Point } from 'geojson'
 import type { Map as MapLibreMap } from 'maplibre-gl'
 import { Marker } from 'react-map-gl/maplibre'
-import { getResourceIndustryFactsForMapFeature, type ResourceIndustryFact } from '../data/geography/resources'
+import {
+  getResourceIndustryFactsForMapFeature,
+  type ResourceIndustryFact
+} from '../data/geography/resources'
 import { useLanguage } from '../data/i18n'
 import { ResourceIndustryDescription } from './ResourceIndustryDescription'
 
@@ -50,11 +53,7 @@ type ResourceCandidate = {
   resolution: string
 }
 
-const fillLayerIds = [
-  'countries-fill-110m',
-  'countries-fill-50m',
-  'countries-fill-10m'
-]
+const fillLayerIds = ['countries-fill-110m', 'countries-fill-50m', 'countries-fill-10m']
 
 function stopMapEvent(event: SyntheticEvent): void {
   event.stopPropagation()
@@ -105,7 +104,11 @@ function ResourceIndustryIcon({
         <span aria-hidden="true">{industry.icon}</span>
       </button>
       {selected && (
-        <section className={`map-resource-detail-popup open-${popupSide} align-${popupVertical}`} role="dialog" aria-label={`${territoryName} — ${t(industry.label)}`}>
+        <section
+          className={`map-resource-detail-popup open-${popupSide} align-${popupVertical}`}
+          role="dialog"
+          aria-label={`${territoryName} — ${t(industry.label)}`}
+        >
           <button
             type="button"
             className="map-resource-popup-close"
@@ -185,9 +188,7 @@ function isIconWithinCandidateTerritory(
     [x - radius, y + radius],
     [x + radius, y + radius]
   ]
-  return samplePoints.every((point) =>
-    isCandidateTerritoryAtPoint(map, layers, point, candidate)
-  )
+  return samplePoints.every((point) => isCandidateTerritoryAtPoint(map, layers, point, candidate))
 }
 
 export const MapResourceOverlay = memo(function MapResourceOverlay({
@@ -211,7 +212,8 @@ export const MapResourceOverlay = memo(function MapResourceOverlay({
     const seenEntities = new Set<string>()
 
     for (const label of labels.features) {
-      const entityId = label.properties.entityId ??
+      const entityId =
+        label.properties.entityId ??
         (label.properties.sourceFeatureId === null || label.properties.sourceFeatureId === undefined
           ? null
           : `feature:${label.properties.sourceFeatureId}`)
@@ -253,12 +255,18 @@ export const MapResourceOverlay = memo(function MapResourceOverlay({
     // rendered fill so markers cannot drift over neighboring countries.
     candidates.sort((first, second) => first.priority - second.priority)
     const allowedIndustries = new Set(
-      candidates.flatMap((candidate) => candidate.industries.map((industry, industryIndex) => ({
-        key: `${candidate.entityId}:${industry.id}`,
-        priority: candidate.priority,
-        industryIndex
-      })))
-        .sort((first, second) => first.priority - second.priority || first.industryIndex - second.industryIndex)
+      candidates
+        .flatMap((candidate) =>
+          candidate.industries.map((industry, industryIndex) => ({
+            key: `${candidate.entityId}:${industry.id}`,
+            priority: candidate.priority,
+            industryIndex
+          }))
+        )
+        .sort(
+          (first, second) =>
+            first.priority - second.priority || first.industryIndex - second.industryIndex
+        )
         .slice(0, Math.max(0, Math.floor(maxItems)))
         .map((industry) => industry.key)
     )
@@ -292,15 +300,18 @@ export const MapResourceOverlay = memo(function MapResourceOverlay({
           }
 
           const overlaps = placed.some(
-            (other) => Math.abs(x - other.x) < (size + other.size) / 2 + 3 &&
+            (other) =>
+              Math.abs(x - other.x) < (size + other.size) / 2 + 3 &&
               Math.abs(y - other.y) < (size + other.size) / 2 + 3
           )
           const trustVisibleLabelAnchor =
             rank === 0 && offset[0] === 0 && offset[1] === 0 && candidate.resolution !== 'gazetteer'
           if (
             overlaps ||
-            (!trustVisibleLabelAnchor && !isIconWithinCandidateTerritory(map, layers, x, y, size, candidate))
-          ) continue
+            (!trustVisibleLabelAnchor &&
+              !isIconWithinCandidateTerritory(map, layers, x, y, size, candidate))
+          )
+            continue
 
           position = [x, y]
           placed.push({ x, y, size })
@@ -322,17 +333,20 @@ export const MapResourceOverlay = memo(function MapResourceOverlay({
           longitude: coordinate.lng,
           latitude: coordinate.lat,
           popupSide: position[0] > canvas.clientWidth - 300 ? 'left' : 'right',
-          popupVertical: position[1] < 125
-            ? 'top'
-            : position[1] > canvas.clientHeight - 125
-              ? 'bottom'
-              : 'center',
+          popupVertical:
+            position[1] < 125
+              ? 'top'
+              : position[1] > canvas.clientHeight - 125
+                ? 'bottom'
+                : 'center',
           showTerritoryName: rank === 0
         })
       }
     }
 
     return markers
+    // MapLibre mutates the camera in place; revision refreshes projected marker positions.
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- revision is an external camera invalidation signal.
   }, [labels, layoutZoom, map, maxItems, revision])
 
   return (
@@ -353,12 +367,14 @@ export const MapResourceOverlay = memo(function MapResourceOverlay({
           >
             <div
               className="map-resource-marker"
-              style={{
-                '--resource-marker-size': `${iconSize}px`,
-                '--resource-icon-font-size': `${Math.max(8, iconSize * 0.48)}px`,
-                '--resource-label-font-size': `${Math.max(7, Math.min(9, iconSize * 0.29))}px`,
-                '--resource-marker-radius': `${Math.max(4, iconSize * 0.32)}px`
-              } as CSSProperties}
+              style={
+                {
+                  '--resource-marker-size': `${iconSize}px`,
+                  '--resource-icon-font-size': `${Math.max(8, iconSize * 0.48)}px`,
+                  '--resource-label-font-size': `${Math.max(7, Math.min(9, iconSize * 0.29))}px`,
+                  '--resource-marker-radius': `${Math.max(4, iconSize * 0.32)}px`
+                } as CSSProperties
+              }
             >
               <ResourceIndustryIcon
                 industry={marker.industry}
@@ -367,7 +383,9 @@ export const MapResourceOverlay = memo(function MapResourceOverlay({
                 selected={selectedIndustryKey === markerKey}
                 popupSide={marker.popupSide}
                 popupVertical={marker.popupVertical}
-                onToggle={() => setSelectedIndustryKey((current) => current === markerKey ? null : markerKey)}
+                onToggle={() =>
+                  setSelectedIndustryKey((current) => (current === markerKey ? null : markerKey))
+                }
               />
             </div>
           </Marker>

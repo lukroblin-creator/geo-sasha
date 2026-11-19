@@ -4,19 +4,11 @@ import { dirname, resolve } from 'node:path'
 
 const scriptDirectory = dirname(fileURLToPath(import.meta.url))
 const projectDirectory = resolve(scriptDirectory, '..')
-const catalogPath = resolve(
-  projectDirectory,
-  'src/renderer/src/data/quiz/countryCatalog.json'
-)
-const outputPath = resolve(
-  projectDirectory,
-  'src/renderer/src/data/quiz/countryCapitals.json'
-)
+const catalogPath = resolve(projectDirectory, 'src/renderer/src/data/quiz/countryCatalog.json')
+const outputPath = resolve(projectDirectory, 'src/renderer/src/data/quiz/countryCapitals.json')
 
-const citiesEndpoint =
-  'https://ungegn-api.azurewebsites.net/API/GetAllCities/GetAllCapitals'
-const cityDetailsEndpoint =
-  'https://ungegn-api.azurewebsites.net/API/GetCitiesDetails'
+const citiesEndpoint = 'https://ungegn-api.azurewebsites.net/API/GetAllCities/GetAllCapitals'
+const cityDetailsEndpoint = 'https://ungegn-api.azurewebsites.net/API/GetCitiesDetails'
 
 // Deliberate choices where the source omits a country or lists multiple capitals.
 const capitalOverrides = new Map([
@@ -27,7 +19,6 @@ const capitalOverrides = new Map([
   [398, 'Astana'] // The source still uses Nur-Sultan; Kazakhstan restored Astana in 2022.
 ])
 
-// eslint-disable-next-line @typescript-eslint/explicit-function-return-type -- JavaScript has no return type syntax.
 async function fetchJson(url) {
   const response = await fetch(url)
   if (!response.ok) {
@@ -72,8 +63,7 @@ await Promise.all(
           toponym.language === 'English' &&
           toponym.toponymType === 'Variant name'
       )
-      const capitalName =
-        englishName?.nameShort?.trim() ?? details.details?.cityName?.trim()
+      const capitalName = englishName?.nameShort?.trim() ?? details.details?.cityName?.trim()
 
       if (details.details?.crM49 && capitalName) {
         cityDetails.push({
@@ -104,17 +94,13 @@ const capitals = catalog.map((country) => {
   const capitalName = override ?? names[0]
 
   if (!capitalName) {
-    throw new Error(
-      `Missing capital for ${country.countryName} (${country.sourceFeatureId})`
-    )
+    throw new Error(`Missing capital for ${country.countryName} (${country.sourceFeatureId})`)
   }
 
   return {
     sourceFeatureId: country.sourceFeatureId,
     capitalName,
-    ...(notes[country.sourceFeatureId]
-      ? { note: notes[country.sourceFeatureId] }
-      : {})
+    ...(notes[country.sourceFeatureId] ? { note: notes[country.sourceFeatureId] } : {})
   }
 })
 

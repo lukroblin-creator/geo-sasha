@@ -104,25 +104,27 @@ const curatedKeys = new Set(
   )
 )
 
-const generatedTerritoryLinks = (
-  explorationData.territories as GeneratedTerritoryRecord[]
-).flatMap((territory) =>
-  territory.geometryLinks.map((link) => ({
-    id: `geometry:${link.sourceId}:${territory.id}:${link.sourceFeatureId}:${link.sourcePolygonIndex ?? 'all'}`,
-    entityId: territory.id,
-    sourceId: link.sourceId,
-    sourceFeatureId: link.sourceFeatureId,
-    ...(link.sourcePolygonIndex !== undefined
-      ? { sourcePolygonIndex: link.sourcePolygonIndex }
-      : {})
-  }))
+const generatedTerritoryLinks = (explorationData.territories as GeneratedTerritoryRecord[]).flatMap(
+  (territory) =>
+    territory.geometryLinks.map((link) => ({
+      id: `geometry:${link.sourceId}:${territory.id}:${link.sourceFeatureId}:${link.sourcePolygonIndex ?? 'all'}`,
+      entityId: territory.id,
+      sourceId: link.sourceId,
+      sourceFeatureId: link.sourceFeatureId,
+      ...(link.sourcePolygonIndex !== undefined
+        ? { sourcePolygonIndex: link.sourcePolygonIndex }
+        : {})
+    }))
 )
 
 export const geographicGeometryLinks: GeographicGeometryLink[] = [
   ...curatedGeometryLinks,
-  ...generatedTerritoryLinks.filter((link) =>
-    !curatedKeys.has(
-      [link.entityId, link.sourceId, link.sourceFeatureId, link.sourcePolygonIndex ?? 'all'].join('|')
-    )
+  ...generatedTerritoryLinks.filter(
+    (link) =>
+      !curatedKeys.has(
+        [link.entityId, link.sourceId, link.sourceFeatureId, link.sourcePolygonIndex ?? 'all'].join(
+          '|'
+        )
+      )
   )
 ]

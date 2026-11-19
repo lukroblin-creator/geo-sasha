@@ -29,14 +29,28 @@ export type FlagRatioRange = {
 }
 
 export const flagNamedColorOptions = [
-  { id: 'red', label: 'Rouge', swatch: '#e53935', hueRanges: [[345, 360], [0, 15]] },
+  {
+    id: 'red',
+    label: 'Rouge',
+    swatch: '#e53935',
+    hueRanges: [
+      [345, 360],
+      [0, 15]
+    ]
+  },
   { id: 'orange', label: 'Orange', swatch: '#f28c28', hueRanges: [[15, 45]] },
   { id: 'yellow', label: 'Jaune', swatch: '#e6c229', hueRanges: [[42, 70]] },
   { id: 'green', label: 'Vert', swatch: '#45a85a', hueRanges: [[55, 165]] },
   { id: 'blue', label: 'Bleu', swatch: '#3478c8', hueRanges: [[170, 255]] },
   { id: 'purple', label: 'Violet', swatch: '#8c58b8', hueRanges: [[250, 300]] },
   { id: 'pink', label: 'Rose', swatch: '#dc72aa', hueRanges: [[300, 345]] },
-  { id: 'brown', label: 'Marron', swatch: '#805735', hueRanges: [[15, 50]], maximumLightness: 0.55 },
+  {
+    id: 'brown',
+    label: 'Marron',
+    swatch: '#805735',
+    hueRanges: [[15, 50]],
+    maximumLightness: 0.55
+  },
   { id: 'white', label: 'Blanc', swatch: '#ffffff', lightnessRange: [0.78, 1] },
   { id: 'gray', label: 'Gris', swatch: '#858b91', lightnessRange: [0.22, 0.78] },
   { id: 'black', label: 'Noir', swatch: '#202327', lightnessRange: [0, 0.22] }
@@ -45,8 +59,7 @@ export const flagNamedColorOptions = [
 export type FlagNamedColorFilterId = (typeof flagNamedColorOptions)[number]['id']
 
 export type FlagColorFilter =
-  | { kind: 'wheel'; color: string }
-  | { kind: 'named'; id: FlagNamedColorFilterId }
+  { kind: 'wheel'; color: string } | { kind: 'named'; id: FlagNamedColorFilterId }
 
 type FlagMetadata = {
   alpha2: string
@@ -244,10 +257,11 @@ function flagColorsMatchNear(flagColor: string, selectedColor: string): boolean 
   }
 
   const hueDistance = Math.abs(selected[0] - candidate[0])
-  const sameColorFamily = flagNamedColorOptions.some((option) =>
-    'hueRanges' in option &&
-    flagMatchesNamedColorOption(flagColor, option) &&
-    flagMatchesNamedColorOption(selectedColor, option)
+  const sameColorFamily = flagNamedColorOptions.some(
+    (option) =>
+      'hueRanges' in option &&
+      flagMatchesNamedColorOption(flagColor, option) &&
+      flagMatchesNamedColorOption(selectedColor, option)
   )
   return sameColorFamily || Math.min(hueDistance, 360 - hueDistance) <= 18
 }

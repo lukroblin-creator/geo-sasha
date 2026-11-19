@@ -2,7 +2,11 @@ import { useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { useLanguage } from '../data/i18n'
 
-export function SettingsMenu({ floating = false }: { floating?: boolean }): React.JSX.Element | null {
+export function SettingsMenu({
+  floating = false
+}: {
+  floating?: boolean
+}): React.JSX.Element | null {
   const { language, setLanguage, t } = useLanguage()
   const [open, setOpen] = useState(false)
   const menuRef = useRef<HTMLDivElement>(null)
@@ -51,7 +55,11 @@ export function SettingsMenu({ floating = false }: { floating?: boolean }): Reac
         </svg>
       </button>
       {open && (
-        <section className="settings-menu-popover" id="global-settings-menu" aria-label={t('Paramètres')}>
+        <section
+          className="settings-menu-popover"
+          id="global-settings-menu"
+          aria-label={t('Paramètres')}
+        >
           <h2>{t('Paramètres')}</h2>
           <label className="settings-language-field">
             <span>{t('Langue')}</span>

@@ -182,6 +182,23 @@ export function FlagRatioFilter({
   const [polygonFinished, setPolygonFinished] = useState(false)
   const [showDrawingHelp, setShowDrawingHelp] = useState(false)
   const [viewport, setViewport] = useState({ scale: 1, x: 0, y: 0 })
+  const [stageSize, setStageSize] = useState<{ width: number; height: number } | null>(null)
+
+  useEffect(() => {
+    const stage = stageRef.current
+    if (!stage) return
+    const observer = new ResizeObserver((entries) => {
+      const bounds = entries[0]?.contentRect
+      if (!bounds || bounds.width <= 0 || bounds.height <= 0) return
+      setStageSize((current) =>
+        current?.width === bounds.width && current.height === bounds.height
+          ? current
+          : { width: bounds.width, height: bounds.height }
+      )
+    })
+    observer.observe(stage)
+    return () => observer.disconnect()
+  }, [])
 
   const pushUndoSnapshot = (): void => {
     undoHistoryRef.current.push({
@@ -837,25 +854,26 @@ export function FlagRatioFilter({
         >
           {shapeMode === 'rectangle' && rectangle && marginRectangle && (
             <div className="flag-ratio-margin-box" style={rectangleStyle(marginRectangle)}>
-              {(() => {
-                const bounds = stageRef.current?.getBoundingClientRect()
-                if (!bounds) return null
-                const sideHitStyles = getMarginSideHitStyles(
-                  marginRectangle,
-                  rectangle,
-                  bounds.width,
-                  bounds.height,
-                  viewport.scale
-                )
-                return (['n', 'e', 's', 'w'] as const).map((handle) => (
-                  <span
-                    key={`side-${handle}`}
-                    className={`flag-ratio-margin-side-hit ${handle}`}
-                    data-margin-resize-handle={handle}
-                    style={sideHitStyles[handle]}
-                  />
-                ))
-              })()}
+              {stageSize &&
+                stageSize.width > 0 &&
+                stageSize.height > 0 &&
+                (() => {
+                  const sideHitStyles = getMarginSideHitStyles(
+                    marginRectangle,
+                    rectangle,
+                    stageSize.width,
+                    stageSize.height,
+                    viewport.scale
+                  )
+                  return (['n', 'e', 's', 'w'] as const).map((handle) => (
+                    <span
+                      key={`side-${handle}`}
+                      className={`flag-ratio-margin-side-hit ${handle}`}
+                      data-margin-resize-handle={handle}
+                      style={sideHitStyles[handle]}
+                    />
+                  ))
+                })()}
               {(['nw', 'n', 'ne', 'e', 'se', 's', 'sw', 'w'] as const).map((handle) => (
                 <span
                   key={handle}

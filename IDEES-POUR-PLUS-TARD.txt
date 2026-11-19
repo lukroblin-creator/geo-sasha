@@ -9,5 +9,5 @@ Modes d’affichage
 Aide à l’utilisation
 - Si la page Exploration devient trop complexe, expliquer les outils avec de courtes vidéos d’écran enregistrées ou du motion design, à la manière de Lightroom.
 - Au survol d’un bouton, afficher une brève explication avec un bouton « ? ». Cliquer sur « ? » ouvre la vidéo correspondante dans un encadré.
-
+- faire un motion design directement sur le logiciel pour l'utiliser comme animation de lancement de world atlas, donner la possibilité aux joueurs de faire le leur en faisant un systeme de keyframe ou on choisit son lissage comme dans cap cut, et faire un petit systeme de timeline qui permet de faire des cut.
 

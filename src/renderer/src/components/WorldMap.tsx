@@ -1,16 +1,11 @@
-
-import { useState, useRef, useEffect, useMemo, useCallback } from 'react'
+import { useState, useRef, useEffect, useMemo, useCallback, useLayoutEffect } from 'react'
 import { createPortal } from 'react-dom'
 import type { PointerEvent as ReactPointerEvent } from 'react'
 import type { CSSProperties, JSX, ReactNode } from 'react'
 import Map, { Source, Layer, Marker } from 'react-map-gl/maplibre'
 import { LngLat } from 'maplibre-gl'
-import pointOnFeature from '@turf/point-on-feature'
 
-import type {
-  MapLayerMouseEvent,
-  MapRef
-} from 'react-map-gl/maplibre'
+import type { MapLayerMouseEvent, MapRef } from 'react-map-gl/maplibre'
 
 import type {
   Map as MapLibreMap,
@@ -21,20 +16,9 @@ import type {
   SymbolLayerSpecification
 } from 'maplibre-gl'
 
-import type {
-  Feature,
-  FeatureCollection,
-  Geometry,
-  Point,
-  Position
-} from 'geojson'
+import type { FeatureCollection, Geometry, Point, Position } from 'geojson'
 
-import {
-  world110mMap,
-  world50mMap,
-  world10mMap,
-  world10m
-} from '../data/world'
+import { world10mMap, world10m } from '../data/world'
 import countryCatalog from '../data/quiz/countryCatalog.json'
 import countryCapitals from '../data/quiz/countryCapitals.json'
 import { getAcceptedCapitalNames, getLocalizedCapitalName } from '../data/quiz/capitalNames'
@@ -48,21 +32,22 @@ import {
 import type {
   MapLayerOpacityValues,
   MapLayerStackId,
-  MapOpacityMask
+  MapOpacityMask,
+  MapOpacityMaskDraft,
+  ManagedMapLayerId
 } from '../data/geography/mapLayerManager'
 import { defaultMapLayerOpacities, defaultMapLayerOrder } from '../data/geography/mapLayerManager'
-import {
-  addFlagTerritoryProperties
-} from '../data/quiz/mapFlagTerritories'
 import type { MapProximityResult } from '../data/quiz/mapProximity'
 import { MapFlagOverlay } from './MapFlagOverlay'
 import { MapResourceOverlay } from './MapResourceOverlay'
+import { WorldMapCameraControls } from './WorldMapCameraControls'
 import { getResourceIndustryFactsForMapFeature } from '../data/geography/resources'
 import { getExplorationDetails } from '../data/geography/exploration'
 import { fullMapLayerDensities, type MapLayerDensities } from '../data/geography/mapLayerDensity'
 import earthDayTexture from '../assets/map-layers/earth-day-mercator.jpg'
 import earthNightTexture from '../assets/map-layers/earth-night-mercator.jpg'
 import earthCloudTexture from '../assets/map-layers/earth-clouds-mercator.jpg'
+import earthTopographyTexture from '../assets/map-layers/earth-topography-mercator.jpg'
 import {
   GLOBE_TRANSITION_END_ZOOM,
   GLOBE_TRANSITION_START_ZOOM,
@@ -70,6 +55,41 @@ import {
 } from './mapProjectionUtils'
 import { useLanguage } from '../data/i18n'
 import { useSkin } from '../data/skin'
+import {
+  countryFillLayerIds,
+  getGeometryBounds,
+  getCountryFeatureAtPoint,
+  isCountryFillFeature,
+  lowZoomMissingCountryMarkers,
+  normalizeSourceFeatureId,
+  type InteractiveCountryFeature,
+  world110mFlagMap,
+  world50mFlagMap,
+  world10mFlagMap
+} from './worldMapCountrySelection'
+import { useWorldMapCountrySelection } from './useWorldMapCountrySelection'
+import {
+  cameraAxisQuaternion,
+  cameraMapOrientation,
+  mapOrientationQuaternion,
+  multiplyCameraOrientations,
+  normalizeCameraAngle,
+  normalizeCameraLatitude,
+  type CameraRotation,
+  type SavedCameraView
+} from './worldMapCamera'
+import {
+  applyOpacityMasksToTerritories,
+  createMaskedTextureUrl,
+  getOpacityMaskFeatureCollection,
+  getOpacityMaskHandlePatch,
+  getOpacityMaskHandles,
+  getOpacityMaskTarget,
+  MAX_MASKED_TEXTURE_DIMENSION,
+  PREVIEW_MASKED_TEXTURE_DIMENSION,
+  type MapTextureAssetKey,
+  type RasterOpacityMask
+} from './worldMapOpacityMasks'
 
 import {
   getEntityDisplayName,
@@ -94,16 +114,25 @@ type RiverLineRecord = {
 }
 
 function normalizePhysicalName(value: string): string {
-  return value.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLocaleLowerCase().trim()
+  return value
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLocaleLowerCase()
+    .trim()
 }
 
 const riverCoordinatesByName = (() => {
   const byName = new globalThis.Map<string, Position[][]>()
   for (const feature of riverData.features as unknown as RiverLineRecord[]) {
-    const paths = feature.geometry.type === 'LineString'
-      ? [feature.geometry.coordinates]
-      : feature.geometry.coordinates
-    for (const rawName of [feature.properties.name, feature.properties.nameEn, feature.properties.nameEs]) {
+    const paths =
+      feature.geometry.type === 'LineString'
+        ? [feature.geometry.coordinates]
+        : feature.geometry.coordinates
+    for (const rawName of [
+      feature.properties.name,
+      feature.properties.nameEn,
+      feature.properties.nameEs
+    ]) {
       if (!rawName) continue
       const key = normalizePhysicalName(rawName)
       const current = byName.get(key) ?? []
@@ -123,9 +152,12 @@ function getRiverLabelCoordinate(
   const original = map.project(fallback)
   const margin = 56
   if (
-    original.x >= margin && original.x <= canvas.clientWidth - margin &&
-    original.y >= margin && original.y <= canvas.clientHeight - margin
-  ) return fallback
+    original.x >= margin &&
+    original.x <= canvas.clientWidth - margin &&
+    original.y >= margin &&
+    original.y <= canvas.clientHeight - margin
+  )
+    return fallback
 
   const paths = riverCoordinatesByName.get(normalizePhysicalName(name)) ?? []
   const targetX = Math.max(margin, Math.min(canvas.clientWidth - margin, original.x))
@@ -137,9 +169,12 @@ function getRiverLabelCoordinate(
       const coordinate = path[index]
       const point = map.project([coordinate[0], coordinate[1]])
       if (
-        point.x < margin || point.x > canvas.clientWidth - margin ||
-        point.y < margin || point.y > canvas.clientHeight - margin
-      ) continue
+        point.x < margin ||
+        point.x > canvas.clientWidth - margin ||
+        point.y < margin ||
+        point.y > canvas.clientHeight - margin
+      )
+        continue
       const distance = Math.hypot(point.x - targetX, point.y - targetY)
       if (!nearest || distance < nearest.distance) {
         nearest = { coordinate: [coordinate[0], coordinate[1]], distance }
@@ -157,6 +192,7 @@ type WorldMapProps = {
   showLabels: boolean
   globeMode?: boolean
   onToggleGlobeMode: () => void
+  allowCameraOrbit?: boolean
   showFlagTerritories?: boolean
   showResources?: boolean
   showRivers?: boolean
@@ -169,13 +205,26 @@ type WorldMapProps = {
   drawingTool?: 'draw' | 'erase' | 'pan' | null
   onDrawingStrokesChange?: (strokes: [number, number][][]) => void
   realLayer?: 'day' | 'night' | 'clouds' | null
+  showTopography?: boolean
   layerOrder?: MapLayerStackId[]
   layerOpacities?: Partial<MapLayerOpacityValues>
   opacityMasks?: MapOpacityMask[]
+  editingOpacityMaskId?: string | null
+  onOpacityMaskGeometryChange?: (id: string, patch: Partial<MapOpacityMask>) => void
+  initialComparisonAlpha2s?: string[]
+  onComparisonSelectionChange?: (alpha2s: string[]) => void
   opacityMaskPlacement?: boolean
-  onOpacityMaskPlace?: (position: [number, number]) => void
+  opacityMaskPlacementKind?: MapOpacityMask['kind'] | null
+  opacityMaskPlacementDraft?: MapOpacityMaskDraft | null
+  onOpacityMaskPlace?: (
+    position: [number, number],
+    sourceFeatureId?: string | number,
+    multiSelection?: boolean
+  ) => void
+  onOpacityMaskSelectionConfirm?: () => void
   showSelectionFeedback?: boolean
   showWrongAnswerFeedback?: boolean
+  concealMapSelectionName?: boolean
   quizTargetFeatureId?: string | number | null
   quizBaseRegion?: QuizRegion | null
   quizTargetMaxZoom?: number
@@ -183,27 +232,47 @@ type WorldMapProps = {
   quizRevealCard?: ReactNode
   showQuizRevealCard?: boolean
   focusEntityRequest?: { entityId: string; sequence: number } | null
+  cameraViewRequest?: {
+    sequence: number
+    longitude: number
+    latitude: number
+    zoom: number
+    bearing: number
+    pitch: number
+    roll: number
+    orbitMode?: boolean
+    freeMode?: boolean
+  } | null
+  onCameraViewChange?: (view: {
+    longitude: number
+    latitude: number
+    zoom: number
+    bearing: number
+    pitch: number
+    roll: number
+    orbitMode: boolean
+    freeMode: boolean
+  }) => void
   interactionResetKey?: string | number
   onCompareCountries?: (alpha2s: string[]) => void
   perspectiveComparisonPortal?: HTMLElement | null
-  countryAccuracyByAlpha2?: Record<string, {
-    answered: number
-    correct: number
-    pointsEarned?: number
-    pointsPossible?: number
-  }>
+  countryAccuracyByAlpha2?: Record<
+    string,
+    {
+      answered: number
+      correct: number
+      pointsEarned?: number
+      pointsPossible?: number
+    }
+  >
   onCountryDeselected?: () => void
   onMapClick?: (position: [number, number]) => MapProximityResult | null
   onCountrySelected?: (
-  sourceFeatureId: string | number,
-  name: string,
-  entityId: string | null
-) => void | boolean
+    sourceFeatureId: string | number,
+    name: string,
+    entityId: string | null
+  ) => void | boolean
 }
-
-const world110mFlagMap = addFlagTerritoryProperties(world110mMap)
-const world50mFlagMap = addFlagTerritoryProperties(world50mMap)
-const world10mFlagMap = addFlagTerritoryProperties(world10mMap)
 
 const mapStyle = {
   version: 8 as const,
@@ -219,12 +288,19 @@ const mapStyle = {
   ]
 }
 
-const earthTextureCoordinates: [[number, number], [number, number], [number, number], [number, number]] = [
+const earthTextureCoordinates: [
+  [number, number],
+  [number, number],
+  [number, number],
+  [number, number]
+] = [
   [-180, 85.0511287798066],
   [180, 85.0511287798066],
   [180, -85.0511287798066],
   [-180, -85.0511287798066]
 ]
+const transparentMapLayerImage =
+  'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+jUw8AAAAASUVORK5CYII='
 
 type LabelProperties = {
   name: string
@@ -252,6 +328,11 @@ const wrongAnswerFillLayerIds = [
   'countries-wrong-answer-110m',
   'countries-wrong-answer-50m',
   'countries-wrong-answer-10m'
+] as const
+const countrySelectionBoundaryLayerIds = [
+  'countries-selected-boundary-110m',
+  'countries-selected-boundary-50m',
+  'countries-selected-boundary-10m'
 ] as const
 
 type LabelUpdateRequest = {
@@ -359,190 +440,6 @@ type MountainPeakMapFeature = {
 }
 
 const majorRiverFilter: FilterSpecification = ['<=', ['get', 'rank'], 3]
-const countryFillLayerIds = [
-  'countries-fill-110m',
-  'countries-fill-50m',
-  'countries-fill-10m'
-]
-type InteractiveCountryFeature = NonNullable<MapLayerMouseEvent['features']>[number]
-
-type NearbyFeatureHit = {
-  distance: number
-  isTinyTerritory: boolean
-}
-
-function isCountryFillFeature(feature: InteractiveCountryFeature): boolean {
-  const sourceFeatureId = feature.properties?.sourceId
-  // Ignore map fragments without a country ID; the app cannot select those.
-  return (
-    feature.layer.id.startsWith('countries-fill-') &&
-    (feature.geometry.type === 'Polygon' || feature.geometry.type === 'MultiPolygon') &&
-    (typeof sourceFeatureId === 'string' || typeof sourceFeatureId === 'number')
-  )
-}
-
-function distanceToScreenSegment(
-  point: { x: number; y: number },
-  start: { x: number; y: number },
-  end: { x: number; y: number }
-): number {
-  const deltaX = end.x - start.x
-  const deltaY = end.y - start.y
-  const lengthSquared = deltaX * deltaX + deltaY * deltaY
-  const fraction = lengthSquared === 0
-    ? 0
-    : Math.max(0, Math.min(1, ((point.x - start.x) * deltaX + (point.y - start.y) * deltaY) / lengthSquared))
-  return Math.hypot(point.x - (start.x + fraction * deltaX), point.y - (start.y + fraction * deltaY))
-}
-
-function isPointInsideScreenRing(
-  point: { x: number; y: number },
-  ring: Array<{ x: number; y: number }>
-): boolean {
-  let inside = false
-  for (let index = 0, previous = ring.length - 1; index < ring.length; previous = index, index += 1) {
-    const first = ring[index]
-    const second = ring[previous]
-    if (!first || !second) continue
-    const crossesRay = (first.y > point.y) !== (second.y > point.y)
-    if (crossesRay && point.x < ((second.x - first.x) * (point.y - first.y)) / (second.y - first.y) + first.x) {
-      inside = !inside
-    }
-  }
-  return inside
-}
-
-function getTinyTerritoryHitRadius(zoom: number): number {
-  // The pointer halo remains generous at overview scales and tightens as the map zooms in.
-  const zoomProgress = Math.max(0, Math.min(1, (zoom - 3) / 5))
-  return 20 - zoomProgress * 5
-}
-
-function getNearbyFeatureHit(
-  map: MapLibreMap,
-  geometry: Geometry,
-  point: { x: number; y: number }
-): NearbyFeatureHit | null {
-  const polygons = geometry.type === 'Polygon'
-    ? [geometry.coordinates]
-    : geometry.type === 'MultiPolygon'
-      ? geometry.coordinates
-      : []
-  const tinyTerritoryHitRadius = getTinyTerritoryHitRadius(map.getZoom())
-  let nearestHit: NearbyFeatureHit | null = null
-  let nearestTinyTerritoryHit: NearbyFeatureHit | null = null
-
-  for (const polygon of polygons) {
-    const projectedRings = polygon.map((ring) => ring.map((coordinate) =>
-      map.project([coordinate[0], coordinate[1]])
-    ).filter((projectedPoint) => Number.isFinite(projectedPoint.x + projectedPoint.y)))
-    const outerRing = projectedRings[0]
-    if (!outerRing || outerRing.length < 3) continue
-
-    let west = Infinity
-    let east = -Infinity
-    let north = Infinity
-    let south = -Infinity
-    for (const vertex of outerRing) {
-      west = Math.min(west, vertex.x)
-      east = Math.max(east, vertex.x)
-      north = Math.min(north, vertex.y)
-      south = Math.max(south, vertex.y)
-    }
-
-    const polygonWidth = Math.max(0, east - west)
-    const polygonHeight = Math.max(0, south - north)
-    const effectiveSize = Math.sqrt(polygonWidth * polygonHeight)
-    const insideOuterRing = isPointInsideScreenRing(point, outerRing)
-    const insideHole = projectedRings.slice(1).some((ring) => isPointInsideScreenRing(point, ring))
-    let distance = insideOuterRing && !insideHole ? 0 : Number.POSITIVE_INFINITY
-
-    if (distance !== 0) {
-      for (const ring of projectedRings) {
-        for (let index = 0; index < ring.length; index += 1) {
-          const start = ring[index]
-          const end = ring[(index + 1) % ring.length]
-          if (!start || !end) continue
-          distance = Math.min(distance, distanceToScreenSegment(point, start, end))
-        }
-      }
-    }
-
-    if (effectiveSize <= 18) {
-      // A target may extend over neighboring land or water when the pointer halo
-      // touches the territory's visible outline.
-      const tinyTerritoryHitDistance = distance
-      if (
-        distance <= tinyTerritoryHitRadius &&
-        (!nearestTinyTerritoryHit || tinyTerritoryHitDistance < nearestTinyTerritoryHit.distance)
-      ) {
-        nearestTinyTerritoryHit = {
-          distance: tinyTerritoryHitDistance,
-          isTinyTerritory: true
-        }
-      }
-      continue
-    }
-
-    // Keep ordinary country edges more precise than the expanded island targets.
-    const hitRadius = effectiveSize <= 38 ? 18 : 6
-    if (distance <= hitRadius && (!nearestHit || distance < nearestHit.distance)) {
-      nearestHit = { distance, isTinyTerritory: false }
-    }
-  }
-
-  return nearestTinyTerritoryHit ?? nearestHit
-}
-
-function getCountryFeatureAtPoint(
-  map: MapLibreMap,
-  point: { x: number; y: number },
-  eventFeatures?: InteractiveCountryFeature[]
-): InteractiveCountryFeature | undefined {
-  const directFeature = eventFeatures?.find(isCountryFillFeature)
-  const layers = countryFillLayerIds.filter((layerId) => map.getLayer(layerId))
-  if (!layers.length) return directFeature
-
-  const searchRadius = getTinyTerritoryHitRadius(map.getZoom())
-  const geographicPointerSearch = map.getZoom() < 2
-    ? getGeographicPointerSearch(map, point, searchRadius)
-    : null
-  const nearbyLowZoomTerritories = map.getZoom() < 2
-    ? lowZoomFallbackCountryFeatures
-      .filter(({ bounds }) => geographicPointerSearch && isGeographicBoundsNearPointer(geographicPointerSearch, bounds))
-      .map(({ feature }) => feature)
-    : []
-  const candidates = [
-    ...(directFeature ? [directFeature] : []),
-    ...map.queryRenderedFeatures(
-      [
-        [point.x - searchRadius, point.y - searchRadius],
-        [point.x + searchRadius, point.y + searchRadius]
-      ],
-      { layers }
-    ),
-    ...nearbyLowZoomTerritories
-  ]
-  let nearest: { feature: InteractiveCountryFeature; distance: number } | null = null
-  let nearestTinyTerritory: { feature: InteractiveCountryFeature; distance: number } | null = null
-  for (const candidate of candidates) {
-    if (!isCountryFillFeature(candidate as InteractiveCountryFeature)) continue
-    const feature = candidate as InteractiveCountryFeature
-    const hit = getNearbyFeatureHit(map, feature.geometry, point)
-    if (!hit) continue
-    if (hit.isTinyTerritory) {
-      if (!nearestTinyTerritory || hit.distance < nearestTinyTerritory.distance) {
-        nearestTinyTerritory = { feature, distance: hit.distance }
-      }
-    } else if (!nearest || hit.distance < nearest.distance) {
-      nearest = { feature, distance: hit.distance }
-    }
-  }
-  // An expanded tiny-territory target takes priority over the large fill beneath it.
-  // This makes a deliberate pointer placement on a small island/selectable enclave win.
-  return nearestTinyTerritory?.feature ?? directFeature ?? nearest?.feature
-}
-
 const physicalRiverLayerIds = [
   'physical-rivers-major',
   'physical-rivers-regional',
@@ -563,30 +460,29 @@ const regionalPeakFilter: FilterSpecification = [
 const localPeakFilter: FilterSpecification = ['>', ['get', 'rank'], 6]
 
 const frenchRegionNames = new Intl.DisplayNames(['fr'], { type: 'region' })
-function normalizeSourceFeatureId(sourceFeatureId: string | number): string {
-  const value = String(sourceFeatureId)
-  return /^\d+$/.test(value) ? String(Number(value)) : value
-}
-
 const frenchCountryNameBySourceId = new globalThis.Map<string, string | undefined>([
-  ...countryCatalog.map((country) => [
-    normalizeSourceFeatureId(country.sourceFeatureId),
-    frenchRegionNames.of(country.alpha2)
-  ] as const),
-  ...additionalMapFlagRegions.map((region) => [
-    normalizeSourceFeatureId(region.sourceFeatureId),
-    frenchRegionNames.of(region.alpha2)
-  ] as const)
+  ...countryCatalog.map(
+    (country) =>
+      [
+        normalizeSourceFeatureId(country.sourceFeatureId),
+        frenchRegionNames.of(country.alpha2)
+      ] as const
+  ),
+  ...additionalMapFlagRegions.map(
+    (region) =>
+      [
+        normalizeSourceFeatureId(region.sourceFeatureId),
+        frenchRegionNames.of(region.alpha2)
+      ] as const
+  )
 ])
 const alpha2BySourceId = new globalThis.Map<string, string>([
-  ...countryCatalog.map((country) => [
-    normalizeSourceFeatureId(country.sourceFeatureId),
-    country.alpha2
-  ] as const),
-  ...additionalMapFlagRegions.map((region) => [
-    normalizeSourceFeatureId(region.sourceFeatureId),
-    region.alpha2
-  ] as const)
+  ...countryCatalog.map(
+    (country) => [normalizeSourceFeatureId(country.sourceFeatureId), country.alpha2] as const
+  ),
+  ...additionalMapFlagRegions.map(
+    (region) => [normalizeSourceFeatureId(region.sourceFeatureId), region.alpha2] as const
+  )
 ])
 
 function normalizeSearchText(value: string): string {
@@ -597,252 +493,7 @@ function normalizeSearchText(value: string): string {
     .trim()
 }
 
-function getGeometryBounds(geometry: Geometry): [number, number, number, number] | null {
-  const polygons =
-    geometry.type === 'Polygon'
-      ? [geometry.coordinates]
-      : geometry.type === 'MultiPolygon'
-        ? geometry.coordinates
-        : []
-  const polygonBounds: [number, number, number, number][] = []
-
-  for (const polygon of polygons) {
-    let west = Infinity
-    let south = Infinity
-    let east = -Infinity
-    let north = -Infinity
-
-    for (const ring of polygon) {
-      for (const [longitude, latitude] of ring) {
-        west = Math.min(west, longitude)
-        south = Math.min(south, latitude)
-        east = Math.max(east, longitude)
-        north = Math.max(north, latitude)
-      }
-    }
-
-    if (Number.isFinite(west + south + east + north)) {
-      polygonBounds.push([west, south, east, north])
-    }
-  }
-
-  if (!polygonBounds.length) return null
-
-  return polygonBounds.reduce((largest, current) => {
-    const largestArea = (largest[2] - largest[0]) * (largest[3] - largest[1])
-    const currentArea = (current[2] - current[0]) * (current[3] - current[1])
-    return currentArea > largestArea ? current : largest
-  })
-}
-
-type LowZoomFallbackCountry = {
-  feature: InteractiveCountryFeature
-  bounds: [number, number, number, number]
-}
-
-const world110mSourceIds = new Set(
-  world110mFlagMap.features
-    .map((feature) => feature.properties?.sourceId)
-    .filter((sourceId): sourceId is string | number =>
-      typeof sourceId === 'string' || typeof sourceId === 'number'
-    )
-    .map(normalizeSourceFeatureId)
-)
-const lowZoomFallbackCountryFeatures: LowZoomFallbackCountry[] = world50mFlagMap.features.flatMap((country) => {
-  const polygons = country.geometry.type === 'Polygon'
-    ? [country.geometry.coordinates]
-    : country.geometry.type === 'MultiPolygon'
-      ? country.geometry.coordinates
-      : []
-
-  return polygons.flatMap((coordinates) => {
-    const geometry: Geometry = { type: 'Polygon', coordinates }
-    const bounds = getGeometryBounds(geometry)
-    if (!bounds) return []
-    return [{
-      feature: {
-        ...country,
-        geometry,
-        layer: { id: 'countries-fill-50m' }
-      } as unknown as InteractiveCountryFeature,
-      bounds
-    }]
-  })
-})
-
-const lowZoomMissingCountryMarkers: FeatureCollection<Point> = {
-  type: 'FeatureCollection',
-  features: world50mFlagMap.features.flatMap((country) => {
-    const sourceId = country.properties?.sourceId
-    if (
-      (typeof sourceId !== 'string' && typeof sourceId !== 'number') ||
-      world110mSourceIds.has(normalizeSourceFeatureId(sourceId))
-    ) return []
-
-    const location = pointOnFeature(country as unknown as Feature<Geometry>)
-    return {
-      type: 'Feature',
-      id: country.id,
-      properties: country.properties ?? {},
-      geometry: location.geometry
-    }
-  })
-}
-
-function getLongitudeDistance(first: number, second: number): number {
-  return Math.abs((((first - second) + 540) % 360) - 180)
-}
-
-type GeographicPointerSearch = {
-  longitude: number
-  latitude: number
-  longitudeRadius: number
-  latitudeRadius: number
-}
-
-function getGeographicPointerSearch(
-  map: MapLibreMap,
-  point: { x: number; y: number },
-  radius: number
-): GeographicPointerSearch {
-  const center = map.unproject([point.x, point.y])
-  const horizontal = map.unproject([point.x + radius, point.y])
-  const vertical = map.unproject([point.x, point.y + radius])
-  return {
-    longitude: center.lng,
-    latitude: center.lat,
-    longitudeRadius: getLongitudeDistance(horizontal.lng, center.lng),
-    latitudeRadius: Math.abs(vertical.lat - center.lat)
-  }
-}
-
-function isGeographicBoundsNearPointer(
-  pointer: GeographicPointerSearch,
-  bounds: [number, number, number, number]
-): boolean {
-  const boundsCenterLongitude = (bounds[0] + bounds[2]) / 2
-  const boundsCenterLatitude = (bounds[1] + bounds[3]) / 2
-  const boundsHalfLongitude = Math.min(180, (bounds[2] - bounds[0]) / 2)
-  const boundsHalfLatitude = (bounds[3] - bounds[1]) / 2
-
-  return (
-    getLongitudeDistance(boundsCenterLongitude, pointer.longitude) <= pointer.longitudeRadius + boundsHalfLongitude &&
-    Math.abs(boundsCenterLatitude - pointer.latitude) <= pointer.latitudeRadius + boundsHalfLatitude
-  )
-}
-
-function wrapLongitude(longitude: number): number {
-  return ((longitude + 180) % 360 + 360) % 360 - 180
-}
-
-function createCircleMaskGeometry(
-  center: [number, number],
-  radiusKm: number
-): Geometry {
-  const steps = 72
-  const angularDistance = Math.max(1, radiusKm) / 6371
-  const centerLatitude = (center[1] * Math.PI) / 180
-  const centerLongitude = (center[0] * Math.PI) / 180
-  const ring: Position[] = []
-
-  for (let index = 0; index <= steps; index += 1) {
-    const bearing = (index / steps) * Math.PI * 2
-    const latitude = Math.asin(
-      Math.sin(centerLatitude) * Math.cos(angularDistance) +
-      Math.cos(centerLatitude) * Math.sin(angularDistance) * Math.cos(bearing)
-    )
-    const longitude = centerLongitude + Math.atan2(
-      Math.sin(bearing) * Math.sin(angularDistance) * Math.cos(centerLatitude),
-      Math.cos(angularDistance) - Math.sin(centerLatitude) * Math.sin(latitude)
-    )
-    ring.push([wrapLongitude((longitude * 180) / Math.PI), (latitude * 180) / Math.PI])
-  }
-
-  return { type: 'Polygon', coordinates: [ring] }
-}
-
-function createRectangleMaskGeometry(
-  center: [number, number],
-  widthKm: number,
-  heightKm: number
-): Geometry {
-  const latitudeScale = Math.max(0.05, Math.cos((center[1] * Math.PI) / 180))
-  const halfWidth = widthKm / (2 * 111.32 * latitudeScale)
-  const halfHeight = heightKm / (2 * 110.574)
-  const west = wrapLongitude(center[0] - halfWidth)
-  const east = wrapLongitude(center[0] + halfWidth)
-  const south = Math.max(-85, center[1] - halfHeight)
-  const north = Math.min(85, center[1] + halfHeight)
-
-  if (west <= east) {
-    return {
-      type: 'Polygon',
-      coordinates: [[[west, south], [east, south], [east, north], [west, north], [west, south]]]
-    }
-  }
-
-  return {
-    type: 'MultiPolygon',
-    coordinates: [
-      [[[west, south], [180, south], [180, north], [west, north], [west, south]]],
-      [[[-180, south], [east, south], [east, north], [-180, north], [-180, south]]]
-    ]
-  }
-}
-
-function getOpacityMaskFeatureCollection(mask: MapOpacityMask): FeatureCollection<Geometry> {
-  if (mask.kind === 'circle' && mask.center) {
-    return {
-      type: 'FeatureCollection',
-      features: [{ type: 'Feature', properties: { maskId: mask.id }, geometry: createCircleMaskGeometry(mask.center, mask.radiusKm ?? 500) }]
-    }
-  }
-  if (mask.kind === 'rectangle' && mask.center) {
-    return {
-      type: 'FeatureCollection',
-      features: [{
-        type: 'Feature',
-        properties: { maskId: mask.id },
-        geometry: createRectangleMaskGeometry(mask.center, mask.widthKm ?? 1000, mask.heightKm ?? 700)
-      }]
-    }
-  }
-
-  const selectedCountryIds = mask.sourceFeatureIds ??
-    (mask.sourceFeatureId !== undefined ? [mask.sourceFeatureId] : [])
-  const selectedContinents = mask.continents ??
-    (mask.continent ? [mask.continent] : [])
-  const sourceFeatureIds = mask.kind === 'country'
-    ? new Set(selectedCountryIds.map(normalizeSourceFeatureId))
-    : mask.kind === 'continent'
-      ? new Set(countryCatalog
-          .filter((country) => {
-            const continentId = getContinentIdForCountry(country.alpha2)
-            return continentId !== undefined && selectedContinents.includes(continentId)
-          })
-          .map((country) => normalizeSourceFeatureId(country.sourceFeatureId)))
-      : new Set<string>()
-  const features = world10mFlagMap.features.filter((feature) => {
-    const sourceFeatureId = feature.properties?.sourceId
-    return (typeof sourceFeatureId === 'string' || typeof sourceFeatureId === 'number') &&
-      sourceFeatureIds.has(normalizeSourceFeatureId(sourceFeatureId))
-  })
-
-  return {
-    type: 'FeatureCollection',
-    features: features.map((feature) => ({
-      type: 'Feature',
-      id: `${mask.id}:${String(feature.properties?.sourceId ?? 'region')}`,
-      properties: { maskId: mask.id },
-      geometry: feature.geometry
-    }))
-  }
-}
-
-function scaleZoomOpacityExpression(
-  expression: unknown,
-  opacityScale: number
-): unknown {
+function scaleZoomOpacityExpression(expression: unknown, opacityScale: number): unknown {
   if (!Array.isArray(expression) || expression[0] !== 'interpolate') {
     return typeof expression === 'number' ? expression * opacityScale : opacityScale
   }
@@ -867,11 +518,12 @@ function getPerspectiveGhostRings(
   map: MapLibreMap,
   drag: PerspectiveDrag
 ): { x: number; y: number }[][] {
-  const polygons = geometry.type === 'Polygon'
-    ? [geometry.coordinates]
-    : geometry.type === 'MultiPolygon'
-      ? geometry.coordinates
-      : []
+  const polygons =
+    geometry.type === 'Polygon'
+      ? [geometry.coordinates]
+      : geometry.type === 'MultiPolygon'
+        ? geometry.coordinates
+        : []
   const offsetX = drag.pointer.x - drag.startPointer.x
   const offsetY = drag.pointer.y - drag.startPointer.y
   const centerX = drag.center.x + offsetX
@@ -880,8 +532,8 @@ function getPerspectiveGhostRings(
     -85.05,
     Math.min(85.05, map.unproject([centerX, centerY]).lat)
   )
-  const originScale = Math.cos(drag.originLatitude * Math.PI / 180)
-  const destinationScale = Math.cos(destinationLatitude * Math.PI / 180)
+  const originScale = Math.cos((drag.originLatitude * Math.PI) / 180)
+  const destinationScale = Math.cos((destinationLatitude * Math.PI) / 180)
   // Keep the source's map distortion at the start; correct only for the latitude change.
   const scale = Math.max(0.12, Math.min(8, originScale / destinationScale))
   const rings: { x: number; y: number }[][] = []
@@ -908,7 +560,9 @@ function getPerspectiveGhostPath(
   drag: PerspectiveDrag
 ): string {
   return getPerspectiveGhostRings(geometry, map, drag)
-    .map((points) => `M ${points.map(({ x, y }) => `${x.toFixed(1)} ${y.toFixed(1)}`).join(' L ')} Z`)
+    .map(
+      (points) => `M ${points.map(({ x, y }) => `${x.toFixed(1)} ${y.toFixed(1)}`).join(' L ')} Z`
+    )
     .join(' ')
 }
 
@@ -921,11 +575,13 @@ function isPointInsidePerspectiveGhost(
     for (let index = 0, previous = ring.length - 1; index < ring.length; previous = index++) {
       const currentPoint = ring[index]
       const previousPoint = ring[previous]
-      const crossesRay = (currentPoint.y > point.y) !== (previousPoint.y > point.y)
+      const crossesRay = currentPoint.y > point.y !== previousPoint.y > point.y
       if (
         crossesRay &&
-        point.x < ((previousPoint.x - currentPoint.x) * (point.y - currentPoint.y)) /
-          (previousPoint.y - currentPoint.y) + currentPoint.x
+        point.x <
+          ((previousPoint.x - currentPoint.x) * (point.y - currentPoint.y)) /
+            (previousPoint.y - currentPoint.y) +
+            currentPoint.x
       ) {
         inside = !inside
       }
@@ -958,38 +614,45 @@ const searchableCountries: SearchableCountry[] = world10mMap.features.flatMap((f
   const sourceFeatureKey = normalizeSourceFeatureId(sourceFeatureId)
   const frenchName = frenchCountryNameBySourceId.get(sourceFeatureKey)
   const entity = entityId ? getEntityById(entityId) : undefined
-  const entityAlpha2 = entity?.kind === 'territory'
-    ? entity.flagAlpha2 ?? getEntityById(entity.sovereignEntityId ?? '')?.alpha2
-    : entity?.alpha2
+  const entityAlpha2 =
+    entity?.kind === 'territory'
+      ? (entity.flagAlpha2 ?? getEntityById(entity.sovereignEntityId ?? '')?.alpha2)
+      : entity?.alpha2
 
-  return [{
-    kind: 'country',
-    sourceFeatureId,
-    sourceName,
-    displayName: entityId
-      ? getEntityDisplayName(entityId) ?? sourceName
-      : frenchName ?? sourceName,
-    alpha2: entityAlpha2 ?? alpha2BySourceId.get(sourceFeatureKey) ?? null,
-    entityId,
-    geometry
-  }]
+  return [
+    {
+      kind: 'country',
+      sourceFeatureId,
+      sourceName,
+      displayName: entityId
+        ? (getEntityDisplayName(entityId) ?? sourceName)
+        : (frenchName ?? sourceName),
+      alpha2: entityAlpha2 ?? alpha2BySourceId.get(sourceFeatureKey) ?? null,
+      entityId,
+      geometry
+    }
+  ]
 })
 
 const capitalRecordsBySourceId = new globalThis.Map(
-  (countryCapitals as { sourceFeatureId: number; capitalName: string }[])
-    .map((record) => [String(record.sourceFeatureId), record])
+  (countryCapitals as { sourceFeatureId: number; capitalName: string }[]).map((record) => [
+    String(record.sourceFeatureId),
+    record
+  ])
 )
 
 const searchableCapitalRecords: SearchableCapital[] = searchableCountries.flatMap((country) => {
   const capital = capitalRecordsBySourceId.get(String(country.sourceFeatureId))
   if (!capital) return []
 
-  return [{
-    kind: 'capital',
-    country,
-    displayName: capital.capitalName,
-    searchNames: getAcceptedCapitalNames(country.alpha2 ?? '', capital.capitalName)
-  }]
+  return [
+    {
+      kind: 'capital',
+      country,
+      displayName: capital.capitalName,
+      searchNames: getAcceptedCapitalNames(country.alpha2 ?? '', capital.capitalName)
+    }
+  ]
 })
 
 function haveSameLabels(
@@ -1019,6 +682,7 @@ function WorldMap({
   showLabels,
   globeMode = false,
   onToggleGlobeMode,
+  allowCameraOrbit = false,
   showFlagTerritories = false,
   showResources = false,
   showRivers = false,
@@ -1031,13 +695,22 @@ function WorldMap({
   drawingTool = null,
   onDrawingStrokesChange,
   realLayer = null,
+  showTopography = false,
   layerOrder = defaultMapLayerOrder,
   layerOpacities = defaultMapLayerOpacities,
   opacityMasks = [],
+  editingOpacityMaskId = null,
+  onOpacityMaskGeometryChange,
+  initialComparisonAlpha2s = [],
+  onComparisonSelectionChange,
   opacityMaskPlacement = false,
+  opacityMaskPlacementKind = null,
+  opacityMaskPlacementDraft = null,
   onOpacityMaskPlace,
+  onOpacityMaskSelectionConfirm,
   showSelectionFeedback = false,
   showWrongAnswerFeedback = false,
+  concealMapSelectionName = false,
   quizTargetFeatureId = null,
   quizBaseRegion = null,
   quizTargetMaxZoom,
@@ -1045,6 +718,8 @@ function WorldMap({
   quizRevealCard,
   showQuizRevealCard = false,
   focusEntityRequest,
+  cameraViewRequest,
+  onCameraViewChange,
   interactionResetKey,
   onCompareCountries,
   perspectiveComparisonPortal,
@@ -1060,38 +735,176 @@ function WorldMap({
   const density = { ...fullMapLayerDensities, ...layerDensities }
   const layerAlpha = (id: keyof MapLayerOpacityValues): number =>
     Math.max(0, Math.min(100, layerOpacities[id] ?? 100)) / 100
+  const isManagedLayerVisible = (id: ManagedMapLayerId): boolean => {
+    const enabled =
+      id === 'texture'
+        ? realLayer !== null
+        : id === 'topography'
+          ? showTopography
+          : id === 'territories'
+            ? showTerritories
+            : id === 'borders'
+              ? showBorders
+              : id === 'labels'
+                ? showLabels && density.labels > 0
+                : id === 'rivers'
+                  ? showRivers && density.rivers > 0
+                  : id === 'mountains'
+                    ? showMountains
+                    : id === 'summits'
+                      ? showSummits && density.mountains > 0
+                      : id === 'flags'
+                        ? showFlagTerritories && density.flags > 0
+                        : showResources && density.resources > 0
+    return enabled && layerAlpha(id) > 0
+  }
+  const imageLayerActive = Boolean(realLayer || showTopography)
+  const satelliteTexture =
+    realLayer === 'day'
+      ? earthDayTexture
+      : realLayer === 'night'
+        ? earthNightTexture
+        : realLayer === 'clouds'
+          ? earthCloudTexture
+          : transparentMapLayerImage
+  const satelliteTextureAssetKey: MapTextureAssetKey | null =
+    realLayer === 'night'
+      ? 'earth-night-mercator'
+      : realLayer === 'clouds'
+        ? 'earth-clouds-mercator'
+        : realLayer === 'day'
+          ? 'earth-day-mercator'
+          : null
   const layerStackAlpha = (id: MapLayerStackId): number => {
     const index = layerOrder.indexOf(id)
     return (layerOrder.length - Math.max(0, index)) * 10 + 2
   }
+  const [opacityMaskPreview, setOpacityMaskPreview] = useState<{
+    maskId: string
+    patch: Partial<MapOpacityMask>
+  } | null>(null)
+  const [opacityMaskMultiSelection, setOpacityMaskMultiSelection] = useState(() => ({
+    placement: opacityMaskPlacement,
+    active: false
+  }))
+  if (opacityMaskMultiSelection.placement !== opacityMaskPlacement) {
+    setOpacityMaskMultiSelection({ placement: opacityMaskPlacement, active: false })
+  }
+  const opacityMaskMultiSelectionActive = opacityMaskMultiSelection.active
+  const setOpacityMaskMultiSelectionActive = (active: boolean): void => {
+    setOpacityMaskMultiSelection({ placement: opacityMaskPlacement, active })
+  }
+  const opacityMaskPreviewRef = useRef<{
+    maskId: string
+    patch: Partial<MapOpacityMask>
+    frame: number | null
+  } | null>(null)
   const opacityMaskCollections = useMemo(
     () => opacityMasks.map((mask) => ({ mask, data: getOpacityMaskFeatureCollection(mask) })),
     [opacityMasks]
   )
-  const mapBackgroundColor = realLayer === 'day'
-    ? '#153a68'
-    : realLayer === 'night' || realLayer === 'clouds'
-      ? '#050713'
-      : isMinimalSkin
-        ? '#f2eee5'
-        : isMatrixSkin
-          ? 'rgba(1, 8, 3, 0.38)'
-          : '#101820'
+  const opacityMaskSelectionCount =
+    opacityMaskPlacementKind === 'country'
+      ? (opacityMaskPlacementDraft?.sourceFeatureIds?.length ??
+        Number(opacityMaskPlacementDraft?.sourceFeatureId !== undefined))
+      : opacityMaskPlacementKind === 'continent'
+        ? (opacityMaskPlacementDraft?.continents?.length ??
+          Number(opacityMaskPlacementDraft?.continent !== undefined))
+        : 0
+
+  const displayedOpacityMaskCollections = useMemo(
+    () =>
+      opacityMaskCollections.map(({ mask, data }) => {
+        if (opacityMaskPreview?.maskId !== mask.id) return { mask, data }
+        const previewMask = { ...mask, ...opacityMaskPreview.patch }
+        return { mask: previewMask, data: getOpacityMaskFeatureCollection(previewMask) }
+      }),
+    [opacityMaskCollections, opacityMaskPreview]
+  )
+  const territoryOpacityMasks = useMemo(
+    () => opacityMaskCollections.filter(({ mask }) => getOpacityMaskTarget(mask) === 'territories'),
+    [opacityMaskCollections]
+  )
+  const maskedWorld110mFlagMap = useMemo(
+    () => applyOpacityMasksToTerritories(world110mFlagMap, territoryOpacityMasks),
+    [territoryOpacityMasks]
+  )
+  const maskedWorld50mFlagMap = useMemo(
+    () => applyOpacityMasksToTerritories(world50mFlagMap, territoryOpacityMasks),
+    [territoryOpacityMasks]
+  )
+  const maskedWorld10mFlagMap = useMemo(
+    () => applyOpacityMasksToTerritories(world10mFlagMap, territoryOpacityMasks),
+    [territoryOpacityMasks]
+  )
+  const territoryMaskIsApplied = territoryOpacityMasks.some(
+    ({ mask, data }) => mask.enabled !== false && mask.opacity < 100 && data.features.length > 0
+  )
+  const mapBackgroundColor =
+    realLayer === 'day'
+      ? '#153a68'
+      : realLayer === 'night' || realLayer === 'clouds'
+        ? '#050713'
+        : showTopography
+          ? '#c7d1d0'
+          : isMinimalSkin
+            ? '#f2eee5'
+            : isMatrixSkin
+              ? 'rgba(1, 8, 3, 0.38)'
+              : '#101820'
   const [mapLoaded, setMapLoaded] = useState(false)
+  const [maskedRasterUrls, setMaskedRasterUrls] = useState<{
+    texture: { url: string; sourceUrl: string } | null
+    topography: { url: string; sourceUrl: string } | null
+  }>({ texture: null, topography: null })
+  const maskedRasterUrlSetRef = useRef(new Set<string>())
+  const maskedRasterGenerationRef = useRef(0)
   const [mapInstance, setMapInstance] = useState<MapLibreMap | null>(null)
   const [mapZoom, setMapZoom] = useState(1.5)
   const [perspectiveCorrectionEnabled, setPerspectiveCorrectionEnabled] = useState(false)
   const [perspectiveDrag, setPerspectiveDrag] = useState<PerspectiveDrag | null>(null)
   const [perspectiveOverlap, setPerspectiveOverlap] = useState<PerspectiveOverlap | null>(null)
   const [perspectiveAdjusting, setPerspectiveAdjusting] = useState(false)
+  const [cameraOrbitMode, setCameraOrbitMode] = useState(false)
+  const [cameraFreeMode, setCameraFreeMode] = useState(false)
+  const [cameraPanMode, setCameraPanMode] = useState(false)
+  const [cameraControlsOpen, setCameraControlsOpen] = useState(false)
+  const [cameraRotation, setCameraRotation] = useState<CameraRotation>({
+    yaw: 0,
+    pitch: 0,
+    roll: 0
+  })
   const perspectiveDragRef = useRef<PerspectiveDrag | null>(null)
-  const drawingPointerActiveRef = useRef(false)
-  const [comparisonSelectedCountries, setComparisonSelectedCountries] = useState<ComparisonMapSelection[]>([])
-  const [selectedPhysicalFeature, setSelectedPhysicalFeature] = useState<SelectedPhysicalFeature | null>(null)
-  const [pointerCoordinates, setPointerCoordinates] = useState<{
+  const cameraRotationBeforeOrbitRef = useRef<SavedCameraView | null>(null)
+  const cameraUnwrappedYawRef = useRef(0)
+  const cameraUnwrappedPitchRef = useRef(0)
+  const cameraFreePitchRef = useRef(0)
+  const cameraFreeRotationRef = useRef<CameraRotation>({ yaw: 0, pitch: 0, roll: 0 })
+  const cameraFreePositionRef = useRef<{
     longitude: number
     latitude: number
+    altitude: number
   } | null>(null)
+  const cameraFreeRotationApplyingRef = useRef(false)
+  const rendersMaskAsLayerTransparency = (id: ManagedMapLayerId): boolean =>
+    id === 'texture' || id === 'topography' || (id === 'territories' && territoryMaskIsApplied)
+  const drawingPointerActiveRef = useRef(false)
+  const [internalComparisonSelectedCountries, setInternalComparisonSelectedCountries] = useState<
+    ComparisonMapSelection[]
+  >([])
+  const initialComparisonAlpha2Key = initialComparisonAlpha2s.join('|')
+  const isComparisonSelectionControlled = Boolean(onComparisonSelectionChange)
+  const [selectedPhysicalFeature, setSelectedPhysicalFeature] =
+    useState<SelectedPhysicalFeature | null>(null)
+  const [pointerCoordinatesForMap, setPointerCoordinatesForMap] = useState<{
+    map: MapLibreMap
+    coordinates: {
+      longitude: number
+      latitude: number
+    }
+  } | null>(null)
+  const pointerCoordinates =
+    pointerCoordinatesForMap?.map === mapInstance ? pointerCoordinatesForMap.coordinates : null
   const [mapViewRevision, setMapViewRevision] = useState(0)
   const [resourceOverlayRevision, setResourceOverlayRevision] = useState(0)
   const [flagProjectionRevision, setFlagProjectionRevision] = useState(0)
@@ -1138,82 +951,357 @@ function WorldMap({
     entityId: string | null
     sourceFeatureId: string | number
   } | null>(null)
-  const activeInteractionState = interactionState.resetKey === interactionResetKey
-    ? interactionState
-    : {
-        resetKey: interactionResetKey,
-        selectedEntityIds: [],
-        selectedSourceFeatureId: null,
-        searchIsOpen: false,
-        searchQuery: '',
-        selectionSource: null
-      }
+  const countryClickHandlerRef = useRef<(event: MapLayerMouseEvent) => void>(() => undefined)
+  const activeInteractionState =
+    interactionState.resetKey === interactionResetKey
+      ? interactionState
+      : {
+          resetKey: interactionResetKey,
+          selectedEntityIds: [],
+          selectedSourceFeatureId: null,
+          searchIsOpen: false,
+          searchQuery: '',
+          selectionSource: null
+        }
   const selectedEntityIds = activeInteractionState.selectedEntityIds
   const selectedSourceFeatureId = activeInteractionState.selectedSourceFeatureId
   const searchIsOpen = activeInteractionState.searchIsOpen
   const searchQuery = activeInteractionState.searchQuery
+  const {
+    keyboardPreselectionFeatureRef,
+    keyboardSelectionActiveRef,
+    clearKeyboardPreselection,
+    handleCountryHover,
+    handleCountryLeave
+  } = useWorldMapCountrySelection({
+    map: mapInstance,
+    perspectiveCorrectionEnabled,
+    opacityMaskPlacement,
+    searchIsOpen,
+    searchQuery,
+    countryClickHandlerRef,
+    setHoveredCountry
+  })
+  const comparisonSelectedCountries = useMemo<ComparisonMapSelection[]>(() => {
+    if (!isComparisonSelectionControlled) return internalComparisonSelectedCountries
+    return initialComparisonAlpha2Key
+      .split('|')
+      .filter(Boolean)
+      .flatMap((alpha2) => {
+        const country = countryCatalog.find((entry) => entry.alpha2 === alpha2)
+        if (!country) return []
+        const sourceFeatureId = country.sourceFeatureId
+        return [
+          {
+            alpha2,
+            sourceFeatureId,
+            entityId: null,
+            name:
+              frenchCountryNameBySourceId.get(normalizeSourceFeatureId(sourceFeatureId)) ??
+              country.countryName
+          }
+        ]
+      })
+  }, [
+    initialComparisonAlpha2Key,
+    internalComparisonSelectedCountries,
+    isComparisonSelectionControlled
+  ])
   const comparisonSelectedEntityIds = useMemo(
-    () => comparisonSelectedCountries.flatMap((country) => country.entityId ? [country.entityId] : []),
+    () =>
+      comparisonSelectedCountries.flatMap((country) =>
+        country.entityId ? [country.entityId] : []
+      ),
     [comparisonSelectedCountries]
   )
   const comparisonSelectedSourceFeatureIds = useMemo(
     () => comparisonSelectedCountries.map((country) => country.sourceFeatureId),
     [comparisonSelectedCountries]
   )
+
   const selectedAlpha2SourceFeatureIds = useMemo(
-    () => countryCatalog
-      .filter((country) => selectedAlpha2s.includes(country.alpha2))
-      .map((country) => country.sourceFeatureId),
+    () =>
+      countryCatalog
+        .filter((country) => selectedAlpha2s.includes(country.alpha2))
+        .map((country) => country.sourceFeatureId),
     [selectedAlpha2s]
   )
   const mapOverlaySelectedEntityIds = useMemo(
     () => [...new Set([...selectedEntityIds, ...comparisonSelectedEntityIds])],
     [comparisonSelectedEntityIds, selectedEntityIds]
   )
+  const opacityMaskPlacementPreview = useMemo(() => {
+    if (!opacityMaskPlacement || !opacityMaskPlacementDraft) return null
+
+    const previewMask: MapOpacityMask = {
+      ...opacityMaskPlacementDraft,
+      id: '__opacity-mask-placement-preview__'
+    }
+    if (previewMask.kind === 'circle' || previewMask.kind === 'rectangle') {
+      if (!pointerCoordinates) return null
+      previewMask.center = [pointerCoordinates.longitude, pointerCoordinates.latitude]
+    } else {
+      if (!hoveredCountry) return null
+      if (previewMask.kind === 'country') {
+        const sourceFeatureIds =
+          previewMask.sourceFeatureIds ??
+          (previewMask.sourceFeatureId !== undefined ? [previewMask.sourceFeatureId] : [])
+        previewMask.sourceFeatureId = undefined
+        previewMask.sourceFeatureIds = [
+          ...new globalThis.Map(
+            [...sourceFeatureIds, hoveredCountry.sourceFeatureId].map(
+              (sourceFeatureId) =>
+                [normalizeSourceFeatureId(sourceFeatureId), sourceFeatureId] as const
+            )
+          ).values()
+        ]
+      } else {
+        const hoveredCatalogCountry = countryCatalog.find(
+          (country) =>
+            normalizeSourceFeatureId(country.sourceFeatureId) ===
+            normalizeSourceFeatureId(hoveredCountry.sourceFeatureId)
+        )
+        if (!hoveredCatalogCountry) return null
+        const continent = getContinentIdForCountry(hoveredCatalogCountry.alpha2)
+        if (!continent) return null
+        const continents =
+          previewMask.continents ?? (previewMask.continent ? [previewMask.continent] : [])
+        previewMask.continent = undefined
+        previewMask.continents = [...new Set([...continents, continent])]
+      }
+    }
+
+    const data = getOpacityMaskFeatureCollection(previewMask)
+    return data.features.length > 0 ? { data } : null
+  }, [hoveredCountry, opacityMaskPlacement, opacityMaskPlacementDraft, pointerCoordinates])
+
+  useEffect(() => {
+    let cancelled = false
+    const generation = ++maskedRasterGenerationRef.current
+    let previewTimer = 0
+    let finalTimer = 0
+    const collectRasterMasks = (targetLayerId: ManagedMapLayerId): RasterOpacityMask[] =>
+      opacityMaskCollections.flatMap(({ mask, data }) => {
+        if (
+          mask.enabled === false ||
+          getOpacityMaskTarget(mask) !== targetLayerId ||
+          mask.opacity >= 100 ||
+          data.features.length === 0
+        )
+          return []
+        // Punch each feature separately. Combining several territories into one
+        // even-odd path makes overlapping polygons cancel each other out.
+        return data.features.map((feature) => ({
+          geometry: feature.geometry,
+          opacity: mask.opacity
+        }))
+      })
+
+    const textureMasks = realLayer ? collectRasterMasks('texture') : []
+    const topographyMasks = showTopography ? collectRasterMasks('topography') : []
+    const releaseUrls = (urls: {
+      texture: { url: string; sourceUrl: string } | null
+      topography: { url: string; sourceUrl: string } | null
+    }): void => {
+      for (const item of [urls.texture, urls.topography]) {
+        if (!item) continue
+        URL.revokeObjectURL(item.url)
+        maskedRasterUrlSetRef.current.delete(item.url)
+      }
+    }
+    const renderMaskedRaster = async (maxDimension: number, quality: number): Promise<boolean> => {
+      const next: {
+        texture: { url: string; sourceUrl: string } | null
+        topography: { url: string; sourceUrl: string } | null
+      } = { texture: null, topography: null }
+      try {
+        if (textureMasks.length > 0) {
+          if (!satelliteTextureAssetKey)
+            throw new Error('Aucune imagerie satellite active pour ce masque')
+          const url = await createMaskedTextureUrl(
+            satelliteTexture,
+            satelliteTextureAssetKey,
+            textureMasks,
+            maxDimension,
+            quality
+          )
+          maskedRasterUrlSetRef.current.add(url)
+          next.texture = { url, sourceUrl: satelliteTexture }
+        }
+        if (topographyMasks.length > 0) {
+          const url = await createMaskedTextureUrl(
+            earthTopographyTexture,
+            'earth-topography-mercator',
+            topographyMasks,
+            maxDimension,
+            quality
+          )
+          maskedRasterUrlSetRef.current.add(url)
+          next.topography = { url, sourceUrl: earthTopographyTexture }
+        }
+      } catch (error) {
+        releaseUrls(next)
+        next.texture = null
+        next.topography = null
+        console.warn('Impossible d’appliquer le masque au calque raster.', error)
+      }
+
+      if (cancelled || generation !== maskedRasterGenerationRef.current) {
+        releaseUrls(next)
+        return false
+      }
+
+      setMaskedRasterUrls((current) => {
+        for (const item of [current.texture, current.topography]) {
+          if (!item || item.url === next.texture?.url || item.url === next.topography?.url) continue
+          window.setTimeout(() => {
+            URL.revokeObjectURL(item.url)
+            maskedRasterUrlSetRef.current.delete(item.url)
+          }, 5000)
+        }
+        return next
+      })
+      return true
+    }
+
+    previewTimer = window.setTimeout(() => {
+      void renderMaskedRaster(PREVIEW_MASKED_TEXTURE_DIMENSION, 0.66).then((rendered) => {
+        if (!rendered || cancelled) return
+        finalTimer = window.setTimeout(() => {
+          void renderMaskedRaster(MAX_MASKED_TEXTURE_DIMENSION, 0.84)
+        }, 500)
+      })
+    }, 70)
+
+    return () => {
+      cancelled = true
+      window.clearTimeout(previewTimer)
+      window.clearTimeout(finalTimer)
+    }
+  }, [
+    opacityMaskCollections,
+    realLayer,
+    satelliteTexture,
+    satelliteTextureAssetKey,
+    showTopography
+  ])
+
+  useEffect(
+    () => () => {
+      for (const url of maskedRasterUrlSetRef.current) URL.revokeObjectURL(url)
+      maskedRasterUrlSetRef.current.clear()
+    },
+    []
+  )
+
+  useEffect(
+    () => () => {
+      const frame = opacityMaskPreviewRef.current?.frame
+      if (frame !== null && frame !== undefined) window.cancelAnimationFrame(frame)
+    },
+    []
+  )
 
   useEffect(() => {
     if (!mapInstance?.getLayer('background')) return
-    mapInstance.setPaintProperty(
-      'background',
-      'background-color',
-      mapBackgroundColor
-    )
+    mapInstance.setPaintProperty('background', 'background-color', mapBackgroundColor)
   }, [mapBackgroundColor, mapInstance])
 
   useEffect(() => {
     if (!mapLoaded || !mapInstance) return
     const layerIdsForStackItem = (id: MapLayerStackId): string[] => {
-      if (id.startsWith('mask:')) return [`opacity-mask-layer-${id.slice(5)}`]
+      if (id.startsWith('mask:')) {
+        const maskId = id.slice(5)
+        return [`opacity-mask-layer-${maskId}`, `opacity-mask-outline-${maskId}`]
+      }
       switch (id) {
-        case 'texture': return ['real-earth-imagery-raster']
-        case 'territories': return countryFillLayerIds
-        case 'borders': return ['countries-borders-110m', 'countries-borders-50m', 'countries-borders-10m']
-        case 'labels': return ['countries-labels', 'low-zoom-country-marker-symbols']
-        case 'rivers': return physicalRiverLayerIds
-        case 'summits': return ['physical-mountain-peaks-major', 'physical-mountain-peaks-regional', 'physical-mountain-peaks-local']
-        default: return []
+        case 'texture':
+          return ['real-earth-imagery-raster']
+        case 'topography':
+          return ['earth-topography-raster']
+        case 'territories':
+          return countryFillLayerIds
+        case 'borders':
+          return ['countries-borders-110m', 'countries-borders-50m', 'countries-borders-10m']
+        case 'labels':
+          return ['countries-labels', 'low-zoom-country-marker-symbols']
+        case 'rivers':
+          return physicalRiverLayerIds
+        case 'summits':
+          return [
+            'physical-mountain-peaks-major',
+            'physical-mountain-peaks-regional',
+            'physical-mountain-peaks-local'
+          ]
+        default:
+          return []
       }
     }
 
-    // The stack is displayed top-to-bottom, so append its rows to the map style
-    // from the bottom upward. This keeps Canva-like drag ordering predictable.
-    for (const id of [...layerOrder].reverse()) {
-      for (const layerId of layerIdsForStackItem(id)) {
-        if (mapInstance.getLayer(layerId)) mapInstance.moveLayer(layerId)
-      }
+    let scheduledFrame: number | null = null
+    const applyLayerOrder = (): void => {
+      scheduledFrame = null
+      const styleLayers = mapInstance.getStyle()?.layers
+      if (!styleLayers) return
+
+      // The manager reads top-to-bottom; MapLibre renders style layers bottom-to-top.
+      // Reconcile whenever React or MapLibre adds/updates layers. Do not wait for
+      // isStyleLoaded(): replacing a raster image can keep the style in a loading
+      // state, and a dropped idle event would otherwise leave the stack stale.
+      const orderedLayerIds = [...layerOrder].reverse().flatMap(layerIdsForStackItem)
+      const desiredLayerIds = [
+        ...orderedLayerIds,
+        ...wrongAnswerFillLayerIds,
+        ...countrySelectionBoundaryLayerIds,
+        ...(opacityMaskPlacement
+          ? ['opacity-mask-placement-preview-fill', 'opacity-mask-placement-preview-outline']
+          : [])
+      ].filter((id, index, ids) => ids.indexOf(id) === index && mapInstance.getLayer(id))
+      const desiredIds = new Set(desiredLayerIds)
+      const currentLayerIds = styleLayers
+        .map((layer) => layer.id)
+        .filter((id) => desiredIds.has(id))
+      if (
+        desiredLayerIds.length === currentLayerIds.length &&
+        desiredLayerIds.every((id, index) => id === currentLayerIds[index])
+      )
+        return
+
+      for (const layerId of desiredLayerIds) mapInstance.moveLayer(layerId)
+    }
+    const scheduleLayerOrder = (): void => {
+      if (scheduledFrame !== null) return
+      scheduledFrame = window.requestAnimationFrame(applyLayerOrder)
     }
 
-    // Quiz feedback remains legible above all data layers.
-    for (const layerId of wrongAnswerFillLayerIds) {
-      if (mapInstance.getLayer(layerId)) mapInstance.moveLayer(layerId)
+    mapInstance.on('load', scheduleLayerOrder)
+    mapInstance.on('styledata', scheduleLayerOrder)
+    mapInstance.on('idle', scheduleLayerOrder)
+    scheduleLayerOrder()
+    return () => {
+      mapInstance.off('load', scheduleLayerOrder)
+      mapInstance.off('styledata', scheduleLayerOrder)
+      mapInstance.off('idle', scheduleLayerOrder)
+      if (scheduledFrame !== null) window.cancelAnimationFrame(scheduledFrame)
     }
-  }, [layerOrder, mapInstance, mapLoaded, showBorders, showLabels, showRivers, showSummits, realLayer, opacityMaskCollections, showWrongAnswerFeedback])
+  }, [
+    layerOrder,
+    mapInstance,
+    mapLoaded,
+    showBorders,
+    showLabels,
+    showRivers,
+    showSummits,
+    showTerritories,
+    realLayer,
+    showTopography,
+    opacityMaskCollections,
+    showWrongAnswerFeedback,
+    opacityMaskPlacement
+  ])
 
   useEffect(() => {
-    if (!mapInstance) {
-      setPointerCoordinates(null)
-      return
-    }
+    if (!mapInstance) return
 
     let latestPosition: { longitude: number; latitude: number } | null = null
     let frame: number | null = null
@@ -1227,12 +1315,12 @@ function WorldMap({
         frame = null
         const next = latestPosition
         if (!next) return
-        setPointerCoordinates((current) =>
-          current &&
-          current.longitude.toFixed(4) === next.longitude.toFixed(4) &&
-          current.latitude.toFixed(4) === next.latitude.toFixed(4)
+        setPointerCoordinatesForMap((current) =>
+          current?.map === mapInstance &&
+          current.coordinates.longitude.toFixed(4) === next.longitude.toFixed(4) &&
+          current.coordinates.latitude.toFixed(4) === next.latitude.toFixed(4)
             ? current
-            : next
+            : { map: mapInstance, coordinates: next }
         )
       })
     }
@@ -1242,7 +1330,7 @@ function WorldMap({
         window.cancelAnimationFrame(frame)
         frame = null
       }
-      setPointerCoordinates(null)
+      setPointerCoordinatesForMap((current) => (current?.map === mapInstance ? null : current))
     }
 
     mapInstance.on('mousemove', updatePosition)
@@ -1300,12 +1388,11 @@ function WorldMap({
   }, [mapInstance, perspectiveCorrectionEnabled])
 
   const isPerspectiveDragging = perspectiveDrag !== null
+  const activePerspectiveOverlap =
+    mapInstance && perspectiveCorrectionEnabled && isPerspectiveDragging ? perspectiveOverlap : null
 
   useEffect(() => {
-    if (!mapInstance || !perspectiveCorrectionEnabled || !isPerspectiveDragging) {
-      setPerspectiveOverlap(null)
-      return
-    }
+    if (!mapInstance || !perspectiveCorrectionEnabled || !isPerspectiveDragging) return
 
     const layers = countryFillLayerIds.filter((layerId) => mapInstance.getLayer(layerId))
     let disposed = false
@@ -1334,10 +1421,13 @@ function WorldMap({
       maxY = Math.min(canvas.clientHeight, maxY)
       if (maxX <= minX || maxY <= minY) return
 
-      const overlapCounts = new globalThis.Map<string, {
-        feature: InteractiveCountryFeature
-        count: number
-      }>()
+      const overlapCounts = new globalThis.Map<
+        string,
+        {
+          feature: InteractiveCountryFeature
+          count: number
+        }
+      >()
       const gridSize = 7
       for (let row = 0; row < gridSize; row += 1) {
         for (let column = 0; column < gridSize; column += 1) {
@@ -1347,20 +1437,22 @@ function WorldMap({
           }
           if (!isPointInsidePerspectiveGhost(point, rings)) continue
 
-          const feature = mapInstance.queryRenderedFeatures([point.x, point.y], { layers })
+          const feature = mapInstance
+            .queryRenderedFeatures([point.x, point.y], { layers })
             .find((candidate) => isCountryFillFeature(candidate as InteractiveCountryFeature)) as
-              InteractiveCountryFeature | undefined
+            InteractiveCountryFeature | undefined
           if (!feature) continue
 
           const sourceFeatureId = feature.properties?.sourceId
           if (typeof sourceFeatureId !== 'string' && typeof sourceFeatureId !== 'number') continue
-          const entityId = typeof feature.properties?.entityId === 'string'
-            ? feature.properties.entityId
-            : null
+          const entityId =
+            typeof feature.properties?.entityId === 'string' ? feature.properties.entityId : null
           if (
-            normalizeSourceFeatureId(sourceFeatureId) === normalizeSourceFeatureId(drag.sourceFeatureId) ||
+            normalizeSourceFeatureId(sourceFeatureId) ===
+              normalizeSourceFeatureId(drag.sourceFeatureId) ||
             (drag.entityId !== null && entityId === drag.entityId)
-          ) continue
+          )
+            continue
 
           const key = `${entityId ?? ''}:${normalizeSourceFeatureId(sourceFeatureId)}`
           const current = overlapCounts.get(key)
@@ -1379,10 +1471,11 @@ function WorldMap({
       } else {
         const feature = bestOverlap.feature
         const sourceFeatureId = feature.properties?.sourceId as string | number
-        const entityId = typeof feature.properties?.entityId === 'string'
-          ? feature.properties.entityId
-          : null
-        const fallbackName = String(feature.properties?.name ?? feature.properties?.sourceName ?? '')
+        const entityId =
+          typeof feature.properties?.entityId === 'string' ? feature.properties.entityId : null
+        const fallbackName = String(
+          feature.properties?.name ?? feature.properties?.sourceName ?? ''
+        )
         const name = entityId ? getEntityDisplayName(entityId) : undefined
         const details = getExplorationDetails(sourceFeatureId, fallbackName, entityId)
         nextOverlap = {
@@ -1406,15 +1499,6 @@ function WorldMap({
     }
   }, [mapInstance, perspectiveCorrectionEnabled, isPerspectiveDragging])
 
-  useEffect(() => {
-    if (!globeMode) return
-    perspectiveDragRef.current = null
-    setPerspectiveDrag(null)
-    setPerspectiveOverlap(null)
-    setPerspectiveAdjusting(false)
-    setPerspectiveCorrectionEnabled(false)
-  }, [globeMode])
-
   const updateInteractionState = (updates: Partial<MapInteractionState>): void => {
     setInteractionState((current) => ({
       ...(current.resetKey === interactionResetKey
@@ -1434,22 +1518,245 @@ function WorldMap({
 
   const mapRef = useRef<MapRef>(null)
 
+  const captureFreeCameraPosition = useCallback((map: MapLibreMap): void => {
+    // MapLibre exposes the camera position on its active transform (the Map
+    // wrapper currently exposes only the inverse camera calculation publicly).
+    const position = map._camera.transform.getCameraLngLat()
+    cameraFreePositionRef.current = {
+      longitude: position.lng,
+      latitude: position.lat,
+      altitude: map._camera.transform.getCameraAltitude()
+    }
+  }, [])
+
+  const applyFreeCameraRotation = useCallback(
+    (map: MapLibreMap, rotation: CameraRotation): void => {
+      if (!cameraFreePositionRef.current) captureFreeCameraPosition(map)
+      const position = cameraFreePositionRef.current
+      if (!position) return
+
+      cameraFreeRotationRef.current = rotation
+      cameraFreeRotationApplyingRef.current = true
+      try {
+        map.jumpTo(
+          map.calculateCameraOptionsFromCameraLngLatAltRotation(
+            [position.longitude, position.latitude],
+            position.altitude,
+            rotation.yaw,
+            rotation.pitch,
+            rotation.roll
+          )
+        )
+      } finally {
+        cameraFreeRotationApplyingRef.current = false
+      }
+    },
+    [captureFreeCameraPosition]
+  )
+
+  const rotateGlobeAroundItsCenter = (
+    map: MapLibreMap,
+    yawDelta: number,
+    pitchDelta: number
+  ): void => {
+    const center = map.getCenter()
+    const current = mapOrientationQuaternion(center.lng, center.lat, map.getBearing())
+    const yawRotation = cameraAxisQuaternion(0, -yawDelta)
+    const pitchRotation = cameraAxisQuaternion(1, pitchDelta)
+    // Compose in the globe's local frame so slider-sized yaw and pitch steps stay
+    // proportional near the poles. Quaternion rotation still carries through a pole;
+    // only the displayed longitude/bearing representation changes there.
+    const delta = multiplyCameraOrientations(pitchRotation, yawRotation)
+    const next = cameraMapOrientation(multiplyCameraOrientations(current, delta))
+    map.jumpTo({
+      center: [next.longitude, next.latitude],
+      bearing: next.bearing,
+      pitch: 0
+    })
+  }
+
+  const toggleCameraOrbitMode = (): void => {
+    const map = mapRef.current?.getMap()
+    if (!cameraOrbitMode) {
+      if (map) {
+        const current: SavedCameraView = {
+          yaw: map.getBearing(),
+          pitch: map.getPitch(),
+          roll: map.getRoll(),
+          center: map.getCenter().toArray(),
+          maxPitch: map.getMaxPitch()
+        }
+        cameraRotationBeforeOrbitRef.current = current
+        cameraUnwrappedYawRef.current = current.center[0]
+        cameraUnwrappedPitchRef.current = current.center[1]
+        cameraFreePitchRef.current = 0
+        cameraFreePositionRef.current = null
+        setCameraFreeMode(false)
+        setCameraRotation({
+          yaw: normalizeCameraAngle(current.center[0]),
+          pitch: normalizeCameraLatitude(current.center[1]),
+          roll: normalizeCameraAngle(current.roll)
+        })
+        map.setMaxPitch(180)
+        // A radial view keeps the globe's geometric center on the screen center.
+        // Orbiting changes the camera's subpoint instead of tilting around a surface point.
+        map.jumpTo({ bearing: 0, pitch: 0 })
+      }
+      perspectiveDragRef.current = null
+      setPerspectiveDrag(null)
+      setPerspectiveOverlap(null)
+      setPerspectiveAdjusting(false)
+      setPerspectiveCorrectionEnabled(false)
+      setCameraPanMode(false)
+      setCameraOrbitMode(true)
+      return
+    }
+
+    setCameraPanMode(false)
+    setCameraFreeMode(false)
+    cameraFreePositionRef.current = null
+    setCameraOrbitMode(false)
+    setCameraControlsOpen(false)
+    const previous = cameraRotationBeforeOrbitRef.current
+    cameraRotationBeforeOrbitRef.current = null
+    if (map && previous) {
+      const restoreMaxPitch = (): void => {
+        map.setMaxPitch(previous.maxPitch)
+      }
+      if (map.getPitch() > previous.maxPitch) {
+        map.once('moveend', restoreMaxPitch)
+      } else {
+        restoreMaxPitch()
+      }
+      map.easeTo({
+        center: previous.center,
+        bearing: previous.yaw,
+        pitch: Math.min(previous.pitch, previous.maxPitch),
+        roll: previous.roll,
+        duration: 350
+      })
+      setCameraRotation(previous)
+    }
+  }
+
+  const changeCameraAxis = (axis: keyof CameraRotation, value: number): void => {
+    const map = mapRef.current?.getMap()
+    if (cameraFreeMode) {
+      const next = {
+        ...cameraFreeRotationRef.current,
+        [axis]: value
+      }
+      if (axis === 'pitch') cameraFreePitchRef.current = value
+      if (map) {
+        applyFreeCameraRotation(map, next)
+      }
+      setCameraRotation({
+        yaw: normalizeCameraAngle(next.yaw),
+        pitch: next.pitch,
+        roll: normalizeCameraAngle(next.roll)
+      })
+      return
+    }
+
+    if (axis === 'yaw') cameraUnwrappedYawRef.current = value
+    if (axis === 'pitch') cameraUnwrappedPitchRef.current = value
+    const next: CameraRotation = {
+      yaw: normalizeCameraAngle(cameraUnwrappedYawRef.current),
+      pitch: normalizeCameraLatitude(cameraUnwrappedPitchRef.current),
+      roll: axis === 'roll' ? value : cameraRotation.roll
+    }
+    if (map) {
+      map.jumpTo({
+        center: [next.yaw, next.pitch],
+        bearing: 0,
+        pitch: 0,
+        roll: next.roll
+      })
+    }
+    setCameraRotation(next)
+  }
+
+  const toggleCameraControls = (): void => {
+    const map = mapRef.current?.getMap()
+    if (map) {
+      setCameraRotation(
+        cameraFreeMode
+          ? {
+              yaw: normalizeCameraAngle(map.getBearing()),
+              pitch: map.getPitch(),
+              roll: normalizeCameraAngle(map.getRoll())
+            }
+          : {
+              yaw: normalizeCameraAngle(cameraUnwrappedYawRef.current),
+              pitch: normalizeCameraLatitude(cameraUnwrappedPitchRef.current),
+              roll: normalizeCameraAngle(map.getRoll())
+            }
+      )
+    }
+    setCameraControlsOpen((open) => !open)
+  }
+
   useEffect(() => {
     if (!focusEntityRequest) return
     const map = mapRef.current?.getMap()
     if (!map) return
 
-    const territory = world10mMap.features.find((feature) =>
-      feature.properties?.entityId === focusEntityRequest.entityId
+    const territory = world10mMap.features.find(
+      (feature) => feature.properties?.entityId === focusEntityRequest.entityId
     )
     const bounds = territory?.geometry ? getGeometryBounds(territory.geometry) : null
     if (!bounds) return
 
     map.fitBounds(
-      [[bounds[0], bounds[1]], [bounds[2], bounds[3]]],
+      [
+        [bounds[0], bounds[1]],
+        [bounds[2], bounds[3]]
+      ],
       { padding: 56, maxZoom: 8, duration: 700 }
     )
   }, [focusEntityRequest])
+
+  useEffect(() => {
+    if (!cameraViewRequest || !mapLoaded) return
+    const map = mapRef.current?.getMap()
+    if (!map) return
+    map.setMaxPitch(Math.max(85, cameraViewRequest.pitch))
+    map.jumpTo({
+      center: [cameraViewRequest.longitude, cameraViewRequest.latitude],
+      zoom: cameraViewRequest.zoom,
+      bearing: cameraViewRequest.bearing,
+      pitch: cameraViewRequest.pitch,
+      roll: cameraViewRequest.roll
+    })
+    setCameraOrbitMode(Boolean(cameraViewRequest.orbitMode))
+    setCameraFreeMode(Boolean(cameraViewRequest.freeMode && cameraViewRequest.orbitMode))
+    setCameraPanMode(false)
+    if (cameraViewRequest.orbitMode) {
+      map.setMaxPitch(180)
+      cameraUnwrappedYawRef.current = cameraViewRequest.longitude
+      cameraUnwrappedPitchRef.current = cameraViewRequest.latitude
+      if (cameraViewRequest.freeMode) {
+        captureFreeCameraPosition(map)
+        cameraFreePitchRef.current = cameraViewRequest.pitch
+        cameraFreeRotationRef.current = {
+          yaw: cameraViewRequest.bearing,
+          pitch: cameraViewRequest.pitch,
+          roll: cameraViewRequest.roll
+        }
+      }
+    } else {
+      cameraFreePositionRef.current = null
+    }
+    cameraUnwrappedYawRef.current = cameraViewRequest.longitude
+    cameraUnwrappedPitchRef.current = cameraViewRequest.latitude
+    setCameraRotation({
+      yaw: normalizeCameraAngle(cameraViewRequest.longitude),
+      pitch: cameraViewRequest.latitude,
+      roll: normalizeCameraAngle(cameraViewRequest.roll)
+    })
+    // A sequence number is the request protocol: apply each saved view once even if its object is reconstructed.
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- request fields are immutable for a given sequence.
+  }, [cameraViewRequest?.sequence, captureFreeCameraPosition, mapLoaded])
 
   const workerRef = useRef<Worker | null>(null)
   const workerReadyRef = useRef(false)
@@ -1458,9 +1765,7 @@ function WorldMap({
   const latestLabelRequestId = useRef(0)
   const globeLabelsRequestedRef = useRef(false)
 
-  const [visibleLabels, setVisibleLabels] = useState<
-    FeatureCollection<Point, LabelProperties>
-  >({
+  const [visibleLabels, setVisibleLabels] = useState<FeatureCollection<Point, LabelProperties>>({
     type: 'FeatureCollection',
     features: []
   })
@@ -1469,7 +1774,8 @@ function WorldMap({
     if (
       (!showFlagTerritories && !showResources && !showRivers && !showMountains && !showSummits) ||
       flagOverlayRafRef.current !== null
-    ) return
+    )
+      return
     flagOverlayRafRef.current = window.requestAnimationFrame(() => {
       flagOverlayRafRef.current = null
       const map = mapRef.current?.getMap()
@@ -1490,21 +1796,23 @@ function WorldMap({
     }
     map.on('render', updateFlagProjectionRevision)
 
-    const projection = globeMode
-      ? {
-          type: [
-            'interpolate',
-            ['linear'],
-            ['zoom'],
-            GLOBE_TRANSITION_END_ZOOM,
-            // MapLibre interpolates through vertical-perspective; `globe` here
-            // is treated as an already-complete projection and causes a snap.
-            'vertical-perspective',
-            GLOBE_TRANSITION_START_ZOOM,
-            'mercator'
-          ]
-        }
-      : { type: 'mercator' }
+    const projection = cameraOrbitMode
+      ? { type: 'globe' }
+      : globeMode
+        ? {
+            type: [
+              'interpolate',
+              ['linear'],
+              ['zoom'],
+              GLOBE_TRANSITION_END_ZOOM,
+              // MapLibre interpolates through vertical-perspective; `globe` here
+              // is treated as an already-complete projection and causes a snap.
+              'vertical-perspective',
+              GLOBE_TRANSITION_START_ZOOM,
+              'mercator'
+            ]
+          }
+        : { type: 'mercator' }
 
     map.setProjection(projection as Parameters<MapLibreMap['setProjection']>[0])
     scheduleFlagOverlayUpdate()
@@ -1513,19 +1821,157 @@ function WorldMap({
     return () => {
       map.off('render', updateFlagProjectionRevision)
     }
-  }, [globeMode, mapLoaded, scheduleFlagOverlayUpdate])
+  }, [cameraOrbitMode, globeMode, mapLoaded, scheduleFlagOverlayUpdate])
 
-  useEffect(() => () => {
-    if (flagOverlayRafRef.current !== null) {
-      window.cancelAnimationFrame(flagOverlayRafRef.current)
-    }
-  }, [])
+  useEffect(() => {
+    if (!cameraOrbitMode || !mapInstance) return
 
-  useEffect(() => () => {
-    if (proximityMarkerTimeoutRef.current !== null) {
-      window.clearTimeout(proximityMarkerTimeoutRef.current)
+    const container = mapInstance.getCanvasContainer()
+    const handleCameraWheel = (event: WheelEvent): void => {
+      if ((event.target as HTMLElement | null)?.closest('.map-camera-adjustments')) return
+      const unit = event.deltaMode === 1 ? 16 : event.deltaMode === 2 ? container.clientHeight : 1
+      const deltaX = event.deltaX * unit
+      const deltaY = event.deltaY * unit
+      const primaryDelta = Math.abs(deltaY) >= Math.abs(deltaX) ? deltaY : deltaX
+
+      const requestsFreeCamera = event.metaKey && (event.altKey || event.ctrlKey || event.shiftKey)
+      if (event.metaKey && !requestsFreeCamera) {
+        event.preventDefault()
+        mapInstance.zoomTo(mapInstance.getZoom() - primaryDelta * 0.0025, { duration: 0 })
+        return
+      }
+
+      if (cameraPanMode && !requestsFreeCamera) return
+
+      event.preventDefault()
+      const useFreeCamera = cameraFreeMode || requestsFreeCamera
+      if (requestsFreeCamera && !cameraFreeMode) {
+        // Freeze the camera's actual position in space before changing its view
+        // direction. Reusing a geographic surface point here makes the globe
+        // slide when the camera rotates.
+        captureFreeCameraPosition(mapInstance)
+        cameraFreeRotationRef.current = {
+          yaw: mapInstance.getBearing(),
+          pitch: mapInstance.getPitch(),
+          roll: mapInstance.getRoll()
+        }
+        setCameraFreeMode(true)
+        setCameraPanMode(false)
+        cameraFreePitchRef.current = mapInstance.getPitch()
+      }
+
+      const next: CameraRotation = useFreeCamera
+        ? { ...cameraFreeRotationRef.current }
+        : {
+            yaw: cameraUnwrappedYawRef.current,
+            pitch: cameraUnwrappedPitchRef.current,
+            roll: mapInstance.getRoll()
+          }
+      const sensitivity = 0.14
+
+      if (useFreeCamera) {
+        const previousPitch = cameraFreePitchRef.current
+        let unwrappedPitch = previousPitch
+        if (event.altKey) {
+          next.yaw += primaryDelta * sensitivity
+        } else if (event.ctrlKey) {
+          unwrappedPitch -= primaryDelta * sensitivity
+        } else if (event.shiftKey) {
+          next.roll += primaryDelta * sensitivity
+        } else {
+          next.yaw += deltaX * sensitivity
+          unwrappedPitch -= deltaY * sensitivity
+        }
+
+        const wrappedPitch = ((unwrappedPitch % 360) + 360) % 360
+        const halfTurnDelta = Math.floor(unwrappedPitch / 180) - Math.floor(previousPitch / 180)
+        next.pitch = wrappedPitch <= 180 ? wrappedPitch : 360 - wrappedPitch
+        // Keep the camera orientation continuous while representing pitches
+        // outside [0, 180] with the equivalent yaw and roll.
+        next.yaw += halfTurnDelta * 180
+        next.roll += halfTurnDelta * 180
+        cameraFreePitchRef.current = unwrappedPitch
+        applyFreeCameraRotation(mapInstance, next)
+      } else {
+        if (event.altKey) {
+          rotateGlobeAroundItsCenter(mapInstance, primaryDelta * sensitivity, 0)
+        } else if (event.ctrlKey) {
+          rotateGlobeAroundItsCenter(mapInstance, 0, primaryDelta * sensitivity)
+        } else if (event.shiftKey) {
+          next.roll += primaryDelta * sensitivity
+          mapInstance.jumpTo({ roll: next.roll })
+        } else {
+          rotateGlobeAroundItsCenter(mapInstance, deltaX * sensitivity, deltaY * sensitivity)
+        }
+      }
+
+      if (cameraControlsOpen) {
+        const orbitCenter = mapInstance.getCenter()
+        setCameraRotation({
+          yaw: normalizeCameraAngle(useFreeCamera ? mapInstance.getBearing() : orbitCenter.lng),
+          pitch: useFreeCamera ? mapInstance.getPitch() : normalizeCameraLatitude(orbitCenter.lat),
+          roll: normalizeCameraAngle(mapInstance.getRoll())
+        })
+      }
     }
-  }, [])
+
+    container.addEventListener('wheel', handleCameraWheel, { passive: false })
+    return () => container.removeEventListener('wheel', handleCameraWheel)
+  }, [
+    applyFreeCameraRotation,
+    captureFreeCameraPosition,
+    cameraControlsOpen,
+    cameraFreeMode,
+    cameraOrbitMode,
+    cameraPanMode,
+    mapInstance
+  ])
+
+  useEffect(() => {
+    if (!cameraOrbitMode) return
+
+    const handleCameraShortcut = (event: KeyboardEvent): void => {
+      if (event.metaKey || event.ctrlKey || event.altKey || event.repeat) return
+      const target = event.target as HTMLElement | null
+      if (
+        target?.isContentEditable ||
+        target?.closest('input, textarea, select, [contenteditable="true"]')
+      )
+        return
+
+      const key = event.key.toLowerCase()
+      if (key === 'd') {
+        event.preventDefault()
+        event.stopPropagation()
+        setCameraPanMode(true)
+      } else if (key === 'c') {
+        event.preventDefault()
+        event.stopPropagation()
+        setCameraPanMode(false)
+      }
+    }
+
+    window.addEventListener('keydown', handleCameraShortcut, true)
+    return () => window.removeEventListener('keydown', handleCameraShortcut, true)
+  }, [cameraOrbitMode])
+
+  useEffect(
+    () => () => {
+      if (flagOverlayRafRef.current !== null) {
+        window.cancelAnimationFrame(flagOverlayRafRef.current)
+      }
+    },
+    []
+  )
+
+  useEffect(
+    () => () => {
+      if (proximityMarkerTimeoutRef.current !== null) {
+        window.clearTimeout(proximityMarkerTimeoutRef.current)
+      }
+    },
+    []
+  )
 
   useEffect(() => {
     if (!showBorders) return
@@ -1540,19 +1986,20 @@ function WorldMap({
     return () => window.clearTimeout(timeoutId)
   }, [showBorders])
 
-  const activeClickMarker = clickMarker?.interactionResetKey === interactionResetKey
-    && showSelectionFeedback
-    && !showBorders
-    ? clickMarker
-    : null
-  const activeProximityMarker = !showBorders &&
-    proximityMarker?.interactionResetKey === interactionResetKey
-    ? proximityMarker
-    : null
-  const activeWrongAnswerTarget = showWrongAnswerFeedback &&
-    wrongAnswerTarget?.interactionResetKey === interactionResetKey
-    ? wrongAnswerTarget
-    : null
+  const activeClickMarker =
+    clickMarker?.interactionResetKey === interactionResetKey &&
+    showSelectionFeedback &&
+    !showBorders
+      ? clickMarker
+      : null
+  const activeProximityMarker =
+    !showBorders && proximityMarker?.interactionResetKey === interactionResetKey
+      ? proximityMarker
+      : null
+  const activeWrongAnswerTarget =
+    showWrongAnswerFeedback && wrongAnswerTarget?.interactionResetKey === interactionResetKey
+      ? wrongAnswerTarget
+      : null
   const selectionBoundaryOpacity = selectionBoundaryResetKey === interactionResetKey ? 1 : 0
 
   const wrongAnswerFeatureFilter = (activeWrongAnswerTarget
@@ -1587,9 +2034,10 @@ function WorldMap({
     const movementDuration = 270
     const animate = (now: number): void => {
       const elapsed = now - startedAt
-      const opacity = elapsed <= holdDuration
-        ? 1
-        : Math.max(0, 1 - (elapsed - holdDuration) / (totalDuration - holdDuration))
+      const opacity =
+        elapsed <= holdDuration
+          ? 1
+          : Math.max(0, 1 - (elapsed - holdDuration) / (totalDuration - holdDuration))
       const movementElapsed = elapsed - holdDuration
       const movementProgress = Math.min(1, Math.max(0, movementElapsed / movementDuration))
       const movementEnvelope = 1 - movementProgress
@@ -1600,7 +2048,7 @@ function WorldMap({
 
       if (elapsed >= totalDuration) {
         wrongAnswerAnimationFrameRef.current = null
-        setWrongAnswerTarget((current) => current?.id === target.id ? null : current)
+        setWrongAnswerTarget((current) => (current?.id === target.id ? null : current))
         return
       }
 
@@ -1615,7 +2063,7 @@ function WorldMap({
       }
       setWrongAnswerFrame(0, [0, 0])
     }
-  }, [activeWrongAnswerTarget?.id, isMinimalSkin, mapLoaded])
+  }, [activeWrongAnswerTarget, isMinimalSkin, mapLoaded])
 
   useEffect(() => {
     scheduleFlagOverlayUpdate()
@@ -1633,16 +2081,13 @@ function WorldMap({
   ])
 
   const searchableCapitals = useMemo(
-    () => searchableCapitalRecords.map((capital) => ({
-      ...capital,
-      displayName: capital.country.alpha2
-        ? getLocalizedCapitalName(
-            capital.country.alpha2,
-            capital.displayName,
-            language
-          )
-        : capital.displayName
-    })),
+    () =>
+      searchableCapitalRecords.map((capital) => ({
+        ...capital,
+        displayName: capital.country.alpha2
+          ? getLocalizedCapitalName(capital.country.alpha2, capital.displayName, language)
+          : capital.displayName
+      })),
     [language]
   )
 
@@ -1650,15 +2095,15 @@ function WorldMap({
     const query = normalizeSearchText(searchQuery)
     if (!query) return []
 
-    const matchingCountries = searchableCountries
-      .filter((country) =>
-        [country.displayName, country.sourceName].some((name) =>
-          normalizeSearchText(name).startsWith(query)
-        )
+    const matchingCountries = searchableCountries.filter((country) =>
+      [country.displayName, country.sourceName].some((name) =>
+        normalizeSearchText(name).startsWith(query)
       )
-    const matchingCapitals = searchableCapitals.filter((capital) =>
-      capital.searchNames.some((name) => normalizeSearchText(name).startsWith(query)) ||
-      normalizeSearchText(capital.displayName).startsWith(query)
+    )
+    const matchingCapitals = searchableCapitals.filter(
+      (capital) =>
+        capital.searchNames.some((name) => normalizeSearchText(name).startsWith(query)) ||
+        normalizeSearchText(capital.displayName).startsWith(query)
     )
 
     return [...matchingCountries, ...matchingCapitals].sort((first, second) => {
@@ -1672,31 +2117,32 @@ function WorldMap({
   const selectedCapitalWasChosen =
     activeInteractionState.selectionSource === 'search' &&
     activeInteractionState.selectedSearchKind === 'capital'
-  const selectedSearchCountry = searchIsOpen ||
+  const selectedSearchCountry =
+    searchIsOpen ||
     (showSelectionFeedback && activeInteractionState.selectionSource === 'map') ||
     selectedCapitalWasChosen
-    ? null
-    : searchableCountries.find((country) => country.displayName === searchQuery)
+      ? null
+      : searchableCountries.find((country) => country.displayName === searchQuery)
 
-  const selectedSearchCapital = searchIsOpen ||
-    !selectedCapitalWasChosen
-    ? null
-    : searchableCapitals.find((capital) =>
-        capital.displayName === searchQuery && (
-          String(capital.country.sourceFeatureId) ===
-            String(activeInteractionState.selectedSourceFeatureId) ||
-          (capital.country.entityId !== null &&
-            activeInteractionState.selectedEntityIds.includes(capital.country.entityId))
-        )
-      ) ?? null
+  const selectedSearchCapital =
+    searchIsOpen || !selectedCapitalWasChosen
+      ? null
+      : (searchableCapitals.find(
+          (capital) =>
+            capital.displayName === searchQuery &&
+            (String(capital.country.sourceFeatureId) ===
+              String(activeInteractionState.selectedSourceFeatureId) ||
+              (capital.country.entityId !== null &&
+                activeInteractionState.selectedEntityIds.includes(capital.country.entityId)))
+        ) ?? null)
 
-  const sendLabelUpdate = (request: LabelUpdateRequest): void => {
+  const sendLabelUpdate = useCallback((request: LabelUpdateRequest): void => {
     const worker = workerRef.current
     if (!worker || !workerReadyRef.current) return
 
     workerBusyRef.current = true
     worker.postMessage(request)
-  }
+  }, [])
 
   const selectSearchResult = (result: SearchableMapResult): void => {
     const country = result.kind === 'capital' ? result.country : result
@@ -1715,9 +2161,7 @@ function WorldMap({
       : []
     updateInteractionState({
       selectedEntityIds: nextSelectedEntityIds,
-      selectedSourceFeatureId: nextSelectedEntityIds.length
-        ? null
-        : country.sourceFeatureId,
+      selectedSourceFeatureId: nextSelectedEntityIds.length ? null : country.sourceFeatureId,
       searchIsOpen: false,
       searchQuery: result.displayName,
       selectionSource: 'search',
@@ -1729,13 +2173,16 @@ function WorldMap({
     const map = mapRef.current?.getMap()
     if (bounds && map) {
       map.fitBounds(
-        [[bounds[0], bounds[1]], [bounds[2], bounds[3]]],
+        [
+          [bounds[0], bounds[1]],
+          [bounds[2], bounds[3]]
+        ],
         { padding: 56, maxZoom: 7, duration: 700 }
       )
     }
   }
 
-  const updateVisibleLabels = (): void => {
+  const updateVisibleLabels = useCallback((): void => {
     const map = mapRef.current
     const worker = workerRef.current
 
@@ -1749,7 +2196,7 @@ function WorldMap({
 
     const zoom = mapInstance.getZoom()
     let bbox: [number, number, number, number]
-    if (globeMode && zoom < GLOBE_TRANSITION_START_ZOOM) {
+    if ((globeMode || cameraOrbitMode) && zoom < GLOBE_TRANSITION_START_ZOOM) {
       // Screen-corner unprojection is not a reliable viewport on a sphere:
       // it can leave out countries on the visible hemisphere. Load all anchors
       // once, then let the globe projection show the ones facing the camera.
@@ -1761,10 +2208,7 @@ function WorldMap({
       const corners = [
         mapInstance.unproject([horizontalInset, verticalInset]),
         mapInstance.unproject([width - horizontalInset, verticalInset]),
-        mapInstance.unproject([
-          width - horizontalInset,
-          height - verticalInset
-        ]),
+        mapInstance.unproject([width - horizontalInset, height - verticalInset]),
         mapInstance.unproject([horizontalInset, height - verticalInset])
       ]
       const longitudes = corners.map((corner) => corner.lng)
@@ -1785,9 +2229,10 @@ function WorldMap({
       bbox,
       // Stable precision avoids recomputing every country label at each globe
       // zoom step; their geographic anchors do not change while the globe moves.
-      zoom: globeMode && zoom < GLOBE_TRANSITION_START_ZOOM
-        ? GLOBE_TRANSITION_END_ZOOM
-        : zoom,
+      zoom:
+        (globeMode || cameraOrbitMode) && zoom < GLOBE_TRANSITION_START_ZOOM
+          ? GLOBE_TRANSITION_END_ZOOM
+          : zoom,
       requestId
     }
 
@@ -1797,73 +2242,74 @@ function WorldMap({
     }
 
     sendLabelUpdate(request)
-  }
+  }, [cameraOrbitMode, globeMode, sendLabelUpdate])
+  const updateVisibleLabelsRef = useRef(updateVisibleLabels)
 
-  const focusOnQuizTarget = useCallback((moveToTarget = true): void => {
-    const map = mapRef.current?.getMap()
-    if (!map) return
+  useLayoutEffect(() => {
+    updateVisibleLabelsRef.current = updateVisibleLabels
+  }, [updateVisibleLabels])
 
-    if (quizTargetFeatureId === null) return
+  const focusOnQuizTarget = useCallback(
+    (moveToTarget = true): void => {
+      const map = mapRef.current?.getMap()
+      if (!map) return
 
-    const target = world10m.features.find((feature) => {
-      const properties = feature.properties as Record<string, unknown> | null
-      const sourceFeatureId = properties?.sourceId
-      return (
-        (typeof sourceFeatureId === 'string' || typeof sourceFeatureId === 'number') &&
-        normalizeSourceFeatureId(sourceFeatureId) ===
-          normalizeSourceFeatureId(quizTargetFeatureId)
-      )
-    })
-    const bounds = target?.geometry ? getGeometryBounds(target.geometry) : null
+      if (quizTargetFeatureId === null) return
 
-    if (bounds && map) {
-      const viewKey = quizTargetViewKey ?? String(quizTargetFeatureId)
-      const padding = showQuizRevealCard
-        ? {
-            top: 56,
-            right: Math.min(350, map.getCanvas().clientWidth * 0.62),
-            bottom: 56,
-            left: 56
+      const target = world10m.features.find((feature) => {
+        const properties = feature.properties as Record<string, unknown> | null
+        const sourceFeatureId = properties?.sourceId
+        return (
+          (typeof sourceFeatureId === 'string' || typeof sourceFeatureId === 'number') &&
+          normalizeSourceFeatureId(sourceFeatureId) ===
+            normalizeSourceFeatureId(quizTargetFeatureId)
+        )
+      })
+      const bounds = target?.geometry ? getGeometryBounds(target.geometry) : null
+
+      if (bounds && map) {
+        const viewKey = quizTargetViewKey ?? String(quizTargetFeatureId)
+        const padding = showQuizRevealCard
+          ? {
+              top: 56,
+              right: Math.min(350, map.getCanvas().clientWidth * 0.62),
+              bottom: 56,
+              left: 56
+            }
+          : quizTargetMaxZoom !== undefined
+            ? 112
+            : 64
+        const maxZoom = quizTargetMaxZoom ?? (showQuizRevealCard ? 9.5 : 10)
+        const targetBounds: [[number, number], [number, number]] = [
+          [bounds[0], bounds[1]],
+          [bounds[2], bounds[3]]
+        ]
+        const targetCamera = map.cameraForBounds(targetBounds, { padding, maxZoom })
+        if (targetCamera?.center && typeof targetCamera.zoom === 'number') {
+          const center = LngLat.convert(targetCamera.center).toArray()
+          const savedView = { key: viewKey, center, zoom: targetCamera.zoom }
+          if (savedQuizTargetViewRef.current?.key !== viewKey) {
+            savedQuizTargetViewRef.current = savedView
+            setSavedQuizTargetView(savedView)
           }
-        : quizTargetMaxZoom !== undefined
-          ? 112
-          : 64
-      const maxZoom = showQuizRevealCard ? 7 : (quizTargetMaxZoom ?? 4.5)
-      const targetBounds: [[number, number], [number, number]] = [
-        [bounds[0], bounds[1]],
-        [bounds[2], bounds[3]]
-      ]
-      const targetCamera = map.cameraForBounds(targetBounds, { padding, maxZoom })
-      if (targetCamera?.center && typeof targetCamera.zoom === 'number') {
-        const center = LngLat.convert(targetCamera.center).toArray()
-        const savedView = { key: viewKey, center, zoom: targetCamera.zoom }
-        if (savedQuizTargetViewRef.current?.key !== viewKey) {
-          savedQuizTargetViewRef.current = savedView
-          setSavedQuizTargetView(savedView)
+        }
+        if (moveToTarget) {
+          map.fitBounds(targetBounds, {
+            padding,
+            maxZoom,
+            duration: 650
+          })
         }
       }
-      if (moveToTarget) {
-        map.fitBounds(targetBounds, {
-          padding,
-          maxZoom,
-          duration: 650
-        })
-      }
-    }
-  }, [
-    quizTargetFeatureId,
-    quizTargetMaxZoom,
-    quizTargetViewKey,
-    showQuizRevealCard
-  ])
+    },
+    [quizTargetFeatureId, quizTargetMaxZoom, quizTargetViewKey, showQuizRevealCard]
+  )
 
   const focusOnQuizBaseView = useCallback((): void => {
     const map = mapRef.current?.getMap()
     if (!map) return
 
-    const regionBounds = quizBaseRegion
-      ? getQuizRegionFocusBounds(quizBaseRegion)
-      : null
+    const regionBounds = quizBaseRegion ? getQuizRegionFocusBounds(quizBaseRegion) : null
     if (regionBounds) {
       // Keep the quick target-view button available while the base view frames
       // the whole continent.
@@ -1881,38 +2327,35 @@ function WorldMap({
   }, [focusOnQuizTarget, quizBaseRegion, quizTargetFeatureId])
 
   useEffect(() => {
-    if (interactionResetKey === undefined) return
+    if (!mapLoaded) return
 
-    if (
-      quizTargetFeatureId !== null ||
-      (quizBaseRegion !== null && quizBaseRegion !== 'world')
-    ) {
+    if (quizTargetFeatureId !== null || (quizBaseRegion !== null && quizBaseRegion !== 'world')) {
       focusOnQuizBaseView()
       return
     }
 
-    mapRef.current?.getMap().easeTo({
-      center: [0, 0],
-      zoom: 1.5,
-      duration: 650
-    })
-  }, [focusOnQuizBaseView, interactionResetKey, quizBaseRegion, quizTargetFeatureId])
+    if (interactionResetKey !== undefined) {
+      mapRef.current?.getMap().easeTo({
+        center: [0, 0],
+        zoom: 1.5,
+        duration: 650
+      })
+    }
+  }, [focusOnQuizBaseView, interactionResetKey, mapLoaded, quizBaseRegion, quizTargetFeatureId])
 
   useEffect(() => {
-    const worker = new Worker(
-      new URL('../workers/labelWorker.ts', import.meta.url),
-      { type: 'module' }
-    )
+    const worker = new Worker(new URL('../workers/labelWorker.ts', import.meta.url), {
+      type: 'module'
+    })
 
     workerRef.current = worker
 
-    
     worker.onmessage = (event: MessageEvent<WorkerResponse>) => {
       const message = event.data
 
       if (message.type === 'ready') {
         workerReadyRef.current = true
-        updateVisibleLabels()
+        updateVisibleLabelsRef.current()
         return
       }
 
@@ -1948,7 +2391,7 @@ function WorldMap({
       workerRef.current = null
       worker.terminate()
     }
-  }, [])
+  }, [sendLabelUpdate])
 
   const showMapProximityFeedback = (longitude: number, latitude: number): void => {
     const proximity = onMapClick?.([longitude, latitude])
@@ -1968,7 +2411,7 @@ function WorldMap({
       window.clearTimeout(proximityMarkerTimeoutRef.current)
     }
     proximityMarkerTimeoutRef.current = window.setTimeout(() => {
-      setProximityMarker((current) => current?.id === markerId ? null : current)
+      setProximityMarker((current) => (current?.id === markerId ? null : current))
       proximityMarkerTimeoutRef.current = null
     }, 1500)
   }
@@ -1987,9 +2430,12 @@ function WorldMap({
     if (!layers.length) return null
 
     const point = mapInstance.project([longitude, latitude])
-    const feature = mapInstance.queryRenderedFeatures(point, { layers }).find((candidate) =>
-      candidate.geometry.type === 'Polygon' || candidate.geometry.type === 'MultiPolygon'
-    )
+    const feature = mapInstance
+      .queryRenderedFeatures(point, { layers })
+      .find(
+        (candidate) =>
+          candidate.geometry.type === 'Polygon' || candidate.geometry.type === 'MultiPolygon'
+      )
     if (!feature) {
       updateInteractionState({
         selectedEntityIds: [],
@@ -2004,9 +2450,8 @@ function WorldMap({
     }
 
     const sourceFeatureId = feature.properties?.sourceId
-    const entityId = typeof feature.properties?.entityId === 'string'
-      ? feature.properties.entityId
-      : null
+    const entityId =
+      typeof feature.properties?.entityId === 'string' ? feature.properties.entityId : null
     const sourceName = String(feature.properties?.name ?? feature.properties?.sourceName ?? '')
     if (
       (typeof sourceFeatureId !== 'string' && typeof sourceFeatureId !== 'number') ||
@@ -2017,18 +2462,20 @@ function WorldMap({
 
     const sourceKey = normalizeSourceFeatureId(sourceFeatureId)
     const entity = entityId ? getEntityById(entityId) : undefined
-    const alpha2 = entity?.kind === 'territory'
-      ? entity.flagAlpha2 ?? getEntityById(entity.sovereignEntityId ?? '')?.alpha2
-      : entity?.alpha2 ?? alpha2BySourceId.get(sourceKey)
+    const alpha2 =
+      entity?.kind === 'territory'
+        ? (entity.flagAlpha2 ?? getEntityById(entity.sovereignEntityId ?? '')?.alpha2)
+        : (entity?.alpha2 ?? alpha2BySourceId.get(sourceKey))
     const localizedCountryName = alpha2
       ? new Intl.DisplayNames([language], { type: 'region' }).of(alpha2)
       : undefined
     const frenchCountryName = entityId
       ? getEntityDisplayName(entityId)
       : frenchCountryNameBySourceId.get(sourceKey)
-    const territoryName = language === 'fr'
-      ? frenchCountryName ?? localizedCountryName ?? sourceName
-      : localizedCountryName ?? frenchCountryName ?? sourceName
+    const territoryName =
+      language === 'fr'
+        ? (frenchCountryName ?? localizedCountryName ?? sourceName)
+        : (localizedCountryName ?? frenchCountryName ?? sourceName)
     const accepted = onCountrySelected?.(sourceFeatureId, territoryName, entityId)
     if (accepted === false) return territoryName
 
@@ -2039,7 +2486,7 @@ function WorldMap({
       selectedEntityIds: entityId ? [entityId] : [],
       selectedSourceFeatureId: entityId ? null : sourceFeatureId,
       searchIsOpen: false,
-      searchQuery: territoryName,
+      searchQuery: concealMapSelectionName ? '' : territoryName,
       selectionSource: 'map'
     })
     setSelectionBoundaryResetKey(interactionResetKey)
@@ -2060,28 +2507,38 @@ function WorldMap({
       marker,
       territoryName,
       popupSide: point && canvas && point.x > canvas.clientWidth - 310 ? 'left' : 'right',
-      popupVertical: point && canvas && point.y < 105
-        ? 'top'
-        : point && canvas && point.y > canvas.clientHeight - 105
-          ? 'bottom'
-          : 'center'
+      popupVertical:
+        point && canvas && point.y < 105
+          ? 'top'
+          : point && canvas && point.y > canvas.clientHeight - 105
+            ? 'bottom'
+            : 'center'
     })
+  }
+
+  const resetPerspectiveCorrection = (): void => {
+    perspectiveDragRef.current = null
+    setPerspectiveDrag(null)
+    setPerspectiveOverlap(null)
+    setPerspectiveAdjusting(false)
+    setPerspectiveCorrectionEnabled(false)
   }
 
   const handlePerspectiveMouseDown = (event: MapLayerMouseEvent): void => {
     if (!perspectiveCorrectionEnabled || !mapInstance || globeMode) return
     if (event.originalEvent.button !== 0) return
 
-    const feature = mapInstance.queryRenderedFeatures(event.point, {
-      layers: countryFillLayerIds.filter((layerId) => mapInstance.getLayer(layerId))
-    }).find((candidate) => isCountryFillFeature(candidate as InteractiveCountryFeature))
+    const feature = mapInstance
+      .queryRenderedFeatures(event.point, {
+        layers: countryFillLayerIds.filter((layerId) => mapInstance.getLayer(layerId))
+      })
+      .find((candidate) => isCountryFillFeature(candidate as InteractiveCountryFeature))
     if (!feature) return
 
     const sourceFeatureId = feature.properties?.sourceId
     if (typeof sourceFeatureId !== 'string' && typeof sourceFeatureId !== 'number') return
-    const entityId = typeof feature.properties?.entityId === 'string'
-      ? feature.properties.entityId
-      : null
+    const entityId =
+      typeof feature.properties?.entityId === 'string' ? feature.properties.entityId : null
     const geometry = feature.geometry
     const bounds = getGeometryBounds(geometry)
     if (!bounds) return
@@ -2175,7 +2632,25 @@ function WorldMap({
   const handleCountryClick = (event: MapLayerMouseEvent): void => {
     if (perspectiveCorrectionEnabled) return
     if (opacityMaskPlacement) {
-      onOpacityMaskPlace?.([event.lngLat.lng, event.lngLat.lat])
+      const selectedMaskFeature = mapInstance
+        ? getCountryFeatureAtPoint(mapInstance, event.point, event.features)
+        : event.features?.find(isCountryFillFeature)
+      const sourceFeatureId = selectedMaskFeature?.properties?.sourceId
+      const supportsMultiSelection =
+        opacityMaskPlacementKind === 'country' || opacityMaskPlacementKind === 'continent'
+      const multiSelection =
+        supportsMultiSelection &&
+        (opacityMaskMultiSelectionActive ||
+          event.originalEvent.metaKey ||
+          event.originalEvent.ctrlKey)
+      if (multiSelection) setOpacityMaskMultiSelectionActive(true)
+      onOpacityMaskPlace?.(
+        [event.lngLat.lng, event.lngLat.lat],
+        typeof sourceFeatureId === 'string' || typeof sourceFeatureId === 'number'
+          ? sourceFeatureId
+          : undefined,
+        multiSelection
+      )
       setSelectedPhysicalFeature(null)
       return
     }
@@ -2183,13 +2658,17 @@ function WorldMap({
     const riverFeature = event.features?.find((candidate) =>
       candidate.layer.id.startsWith('physical-rivers-')
     )
-    if (riverFeature && !isComparisonClick) {
+    const keyboardFeature = keyboardSelectionActiveRef.current
+      ? keyboardPreselectionFeatureRef.current
+      : null
+    if (!keyboardFeature && riverFeature && !isComparisonClick) {
       const properties = riverFeature.properties as unknown as PhysicalPointFeature
-      const name = language === 'fr'
-        ? properties.name
-        : language === 'es'
-          ? properties.nameEs
-          : properties.nameEn
+      const name =
+        language === 'fr'
+          ? properties.name
+          : language === 'es'
+            ? properties.nameEs
+            : properties.nameEn
       if (name) {
         openPhysicalFeatureDetails({
           id: `river:${name.toLocaleLowerCase()}`,
@@ -2204,9 +2683,13 @@ function WorldMap({
     }
 
     setSelectedPhysicalFeature(null)
-    const feature = mapInstance
-      ? getCountryFeatureAtPoint(mapInstance, event.point, event.features)
-      : event.features?.find(isCountryFillFeature)
+    const feature =
+      keyboardFeature ??
+      (mapInstance
+        ? getCountryFeatureAtPoint(mapInstance, event.point, event.features)
+        : event.features?.find(isCountryFillFeature))
+    clearKeyboardPreselection()
+    setHoveredCountry(null)
     if (!feature) {
       showMapProximityFeedback(event.lngLat.lng, event.lngLat.lat)
       setHoveredCountry(null)
@@ -2225,20 +2708,16 @@ function WorldMap({
 
     const name = feature.properties?.name
     const sourceFeatureId = feature.properties?.sourceId
-    const entityId = typeof feature.properties?.entityId === 'string'
-      ? feature.properties.entityId
-      : null
+    const entityId =
+      typeof feature.properties?.entityId === 'string' ? feature.properties.entityId : null
 
-    if (
-      (typeof sourceFeatureId !== 'string' && typeof sourceFeatureId !== 'number') ||
-      !name
-    ) {
+    if ((typeof sourceFeatureId !== 'string' && typeof sourceFeatureId !== 'number') || !name) {
       return
     }
 
     const displayName = entityId
-      ? getEntityDisplayName(entityId) ?? String(name)
-      : frenchCountryNameBySourceId.get(normalizeSourceFeatureId(sourceFeatureId)) ?? String(name)
+      ? (getEntityDisplayName(entityId) ?? String(name))
+      : (frenchCountryNameBySourceId.get(normalizeSourceFeatureId(sourceFeatureId)) ?? String(name))
 
     if (territorySelectionMode) {
       const accepted = onCountrySelected?.(sourceFeatureId, displayName, entityId)
@@ -2257,11 +2736,12 @@ function WorldMap({
 
     if (onCompareCountries && isComparisonClick) {
       const clickedEntity = entityId ? getEntityById(entityId) : undefined
-      const alpha2 = clickedEntity?.kind === 'country'
-        ? clickedEntity.alpha2
-        : clickedEntity
-          ? undefined
-          : alpha2BySourceId.get(normalizeSourceFeatureId(sourceFeatureId))
+      const alpha2 =
+        clickedEntity?.kind === 'country'
+          ? clickedEntity.alpha2
+          : clickedEntity
+            ? undefined
+            : alpha2BySourceId.get(normalizeSourceFeatureId(sourceFeatureId))
       const canCompare = alpha2 && countryCatalog.some((country) => country.alpha2 === alpha2)
       if (canCompare) {
         const accepted = onCountrySelected?.(sourceFeatureId, displayName, entityId)
@@ -2272,13 +2752,17 @@ function WorldMap({
           entityId,
           name: displayName
         }
-        setComparisonSelectedCountries((current) => {
-          const alreadySelected = current.some((country) => country.alpha2 === alpha2)
-          if (alreadySelected) {
-            return current.filter((country) => country.alpha2 !== alpha2)
-          }
-          return [...current, nextSelection]
-        })
+        const alreadySelected = comparisonSelectedCountries.some(
+          (country) => country.alpha2 === alpha2
+        )
+        const nextCountries = alreadySelected
+          ? comparisonSelectedCountries.filter((country) => country.alpha2 !== alpha2)
+          : [...comparisonSelectedCountries, nextSelection]
+        if (isComparisonSelectionControlled) {
+          onComparisonSelectionChange?.(nextCountries.map((country) => country.alpha2))
+        } else {
+          setInternalComparisonSelectedCountries(nextCountries)
+        }
         setSelectionBoundaryResetKey(interactionResetKey)
         return
       }
@@ -2307,7 +2791,7 @@ function WorldMap({
       selectedEntityIds: entityId ? [entityId] : [],
       selectedSourceFeatureId: entityId ? null : sourceFeatureId,
       searchIsOpen: false,
-      searchQuery: displayName,
+      searchQuery: concealMapSelectionName ? '' : displayName,
       selectionSource: 'map'
     })
     if (showSelectionFeedback && !showBorders) {
@@ -2321,35 +2805,9 @@ function WorldMap({
       setSelectionBoundaryResetKey(interactionResetKey)
     }
   }
-
-  const handleCountryHover = (event: MapLayerMouseEvent): void => {
-    if (perspectiveCorrectionEnabled) {
-      setHoveredCountry(null)
-      return
-    }
-
-    const feature = mapInstance
-      ? getCountryFeatureAtPoint(mapInstance, event.point, event.features)
-      : event.features?.find(isCountryFillFeature)
-    const sourceFeatureId = feature?.properties?.sourceId
-    const entityId = feature?.properties?.entityId
-
-    if (typeof sourceFeatureId !== 'string' && typeof sourceFeatureId !== 'number') {
-      setHoveredCountry(null)
-      return
-    }
-
-    const nextHoveredCountry = {
-      entityId: typeof entityId === 'string' ? entityId : null,
-      sourceFeatureId
-    }
-    setHoveredCountry((current) =>
-      current?.entityId === nextHoveredCountry.entityId &&
-      current.sourceFeatureId === nextHoveredCountry.sourceFeatureId
-        ? current
-        : nextHoveredCountry
-    )
-  }
+  useLayoutEffect(() => {
+    countryClickHandlerRef.current = handleCountryClick
+  })
 
   const selectedFeatureExpressions: unknown[] = []
   if (selectedAlpha2SourceFeatureIds.length > 0) {
@@ -2360,18 +2818,16 @@ function WorldMap({
     ])
   }
   if (selectedEntityIds.length > 0) {
-    selectedFeatureExpressions.push([
-      'in',
-      ['get', 'entityId'],
-      ['literal', selectedEntityIds]
-    ])
+    selectedFeatureExpressions.push(['in', ['get', 'entityId'], ['literal', selectedEntityIds]])
   } else if (selectedSourceFeatureId !== null) {
     selectedFeatureExpressions.push(['==', ['get', 'sourceId'], selectedSourceFeatureId])
   }
   for (const country of comparisonSelectedCountries) {
-    selectedFeatureExpressions.push(country.entityId
-      ? ['==', ['get', 'entityId'], country.entityId]
-      : ['==', ['get', 'sourceId'], country.sourceFeatureId])
+    selectedFeatureExpressions.push(
+      country.entityId
+        ? ['==', ['get', 'entityId'], country.entityId]
+        : ['==', ['get', 'sourceId'], country.sourceFeatureId]
+    )
   }
   if (quizTargetFeatureId !== null) {
     selectedFeatureExpressions.push([
@@ -2384,17 +2840,9 @@ function WorldMap({
 
   const hoveredFeatureExpressions: unknown[] = []
   if (hoveredCountry?.entityId) {
-    hoveredFeatureExpressions.push([
-      '==',
-      ['get', 'entityId'],
-      hoveredCountry.entityId
-    ])
+    hoveredFeatureExpressions.push(['==', ['get', 'entityId'], hoveredCountry.entityId])
   } else if (hoveredCountry) {
-    hoveredFeatureExpressions.push([
-      '==',
-      ['get', 'sourceId'],
-      hoveredCountry.sourceFeatureId
-    ])
+    hoveredFeatureExpressions.push(['==', ['get', 'sourceId'], hoveredCountry.sourceFeatureId])
   }
   if (quizTargetFeatureId !== null) {
     hoveredFeatureExpressions.push([
@@ -2405,10 +2853,9 @@ function WorldMap({
   }
   if (hoveredFeatureExpressions.length === 0) hoveredFeatureExpressions.push(false)
 
-  const selectedFeatureFilter = [
-    'any',
-    ...selectedFeatureExpressions
-  ] as unknown as NonNullable<FillLayerSpecification['filter']>
+  const selectedFeatureFilter = ['any', ...selectedFeatureExpressions] as unknown as NonNullable<
+    FillLayerSpecification['filter']
+  >
   const hasMapSelection =
     selectedAlpha2SourceFeatureIds.length > 0 ||
     selectedEntityIds.length > 0 ||
@@ -2418,38 +2865,41 @@ function WorldMap({
 
   useEffect(() => {
     if (!mapLoaded || !mapInstance || !shouldShowSelectedBoundary) return
-    for (const layerId of [
-      'countries-selected-boundary-110m',
-      'countries-selected-boundary-50m',
-      'countries-selected-boundary-10m'
-    ]) {
+    for (const layerId of countrySelectionBoundaryLayerIds) {
       if (mapInstance.getLayer(layerId)) mapInstance.moveLayer(layerId)
     }
-  }, [mapInstance, mapLoaded, shouldShowSelectedBoundary, selectedAlpha2SourceFeatureIds, selectedEntityIds, selectedSourceFeatureId, comparisonSelectedCountries])
+  }, [
+    mapInstance,
+    mapLoaded,
+    shouldShowSelectedBoundary,
+    selectedAlpha2SourceFeatureIds,
+    selectedEntityIds,
+    selectedSourceFeatureId,
+    comparisonSelectedCountries
+  ])
 
   const selectedFillColor = [
     'case',
     ['any', ...selectedFeatureExpressions],
-    isMinimalSkin ? (realLayer ? '#a17435' : '#20201d') : isMatrixSkin ? '#00d957' : '#e5a63b',
+    isMinimalSkin
+      ? imageLayerActive
+        ? '#a17435'
+        : '#20201d'
+      : isMatrixSkin
+        ? '#00d957'
+        : '#e5a63b',
     ['any', ...hoveredFeatureExpressions],
-    isMinimalSkin ? '#e9e3d7' : isMatrixSkin ? '#0a2a14' : '#34495b',
+    isMinimalSkin ? '#fff0c2' : isMatrixSkin ? '#39de6f' : '#496b86',
     isMinimalSkin ? '#f6f2e9' : isMatrixSkin ? '#04150a' : '#263746'
   ] as unknown as NonNullable<FillLayerSpecification['paint']>['fill-color']
   const accuracyBySourceId = countryCatalog.flatMap((country) => {
     const stats = countryAccuracyByAlpha2?.[country.alpha2]
     const pointsEarned = stats?.pointsEarned ?? stats?.correct ?? 0
     const pointsPossible = stats?.pointsPossible ?? stats?.answered ?? 0
-    return pointsPossible > 0
-      ? [country.sourceFeatureId, pointsEarned / pointsPossible]
-      : []
+    return pointsPossible > 0 ? [country.sourceFeatureId, pointsEarned / pointsPossible] : []
   })
   const accuracyRateExpression = accuracyBySourceId.length
-    ? [
-        'match',
-        ['to-number', ['get', 'sourceId']],
-        ...accuracyBySourceId,
-        -1
-      ]
+    ? ['match', ['to-number', ['get', 'sourceId']], ...accuracyBySourceId, -1]
     : -1
   const territoryEntityIds = geographicEntities
     .filter((entity) => entity.kind === 'territory')
@@ -2461,7 +2911,7 @@ function WorldMap({
     false
   ]
   const fillColor = countryAccuracyByAlpha2
-    ? [
+    ? ([
         'case',
         isTerritoryFeature,
         isMinimalSkin ? '#ded6c8' : isMatrixSkin ? '#071a0c' : '#344252',
@@ -2471,60 +2921,89 @@ function WorldMap({
           'interpolate',
           ['linear'],
           accuracyRateExpression,
-          0, isMatrixSkin ? '#06210d' : '#ffffff',
-          1, isMatrixSkin ? '#36ff72' : '#c62828'
+          0,
+          isMatrixSkin ? '#06210d' : '#ffffff',
+          1,
+          isMatrixSkin ? '#36ff72' : '#c62828'
         ]
-      ] as unknown as NonNullable<FillLayerSpecification['paint']>['fill-color']
+      ] as unknown as NonNullable<FillLayerSpecification['paint']>['fill-color'])
     : selectedFillColor
 
   const fillOpacity110m: NonNullable<FillLayerSpecification['paint']>['fill-opacity'] = [
     'interpolate',
     ['linear'],
     ['zoom'],
-    2, 1,
-    3, 0
+    2,
+    1,
+    3,
+    0
   ]
   const fillOpacity50m: NonNullable<FillLayerSpecification['paint']>['fill-opacity'] = [
     'interpolate',
     ['linear'],
     ['zoom'],
-    2, 0,
-    3, 1,
-    4, 1,
-    4.5, 1,
-    5, 0
+    2,
+    0,
+    3,
+    1,
+    4,
+    1,
+    4.5,
+    1,
+    5,
+    0
   ]
   const fillOpacity10m: NonNullable<FillLayerSpecification['paint']>['fill-opacity'] = [
     'interpolate',
     ['linear'],
     ['zoom'],
-    4.5, 0,
-    5, 1
+    4.5,
+    0,
+    5,
+    1
   ]
   const territoryAlpha = showTerritories ? layerAlpha('territories') : 0
   const getFillOpacity = (
     baseOpacity: NonNullable<FillLayerSpecification['paint']>['fill-opacity']
   ): NonNullable<FillLayerSpecification['paint']>['fill-opacity'] =>
-    scaleZoomOpacityExpression(
-      baseOpacity,
-      territoryAlpha
-    ) as NonNullable<FillLayerSpecification['paint']>['fill-opacity']
+    scaleZoomOpacityExpression(baseOpacity, territoryAlpha) as NonNullable<
+      FillLayerSpecification['paint']
+    >['fill-opacity']
+  const getMaskedTerritoryFillOpacity = (
+    opacity: NonNullable<FillLayerSpecification['paint']>['fill-opacity']
+  ): NonNullable<FillLayerSpecification['paint']>['fill-opacity'] => {
+    if (!Array.isArray(opacity) || opacity[0] !== 'interpolate') return opacity
+    const [operator, interpolation, zoomExpression, ...stops] = opacity
+    const scaledStops: unknown[] = []
+    for (let index = 0; index < stops.length; index += 2) {
+      scaledStops.push(stops[index], [
+        '*',
+        stops[index + 1],
+        ['coalesce', ['get', 'opacityMaskMultiplier'], 1]
+      ])
+    }
+    // Keep zoom as the outermost expression; MapLibre rejects zoom expressions
+    // nested inside arithmetic operators for paint properties.
+    return [operator, interpolation, zoomExpression, ...scaledStops] as NonNullable<
+      FillLayerSpecification['paint']
+    >['fill-opacity']
+  }
 
   const fillPaint110m: FillLayerSpecification['paint'] = {
     'fill-color': fillColor,
     // Crossfading resolutions can expose antialiased polygon edges as faint lines.
     'fill-antialias': showBorders,
-    'fill-opacity': getFillOpacity(fillOpacity110m)
+    'fill-opacity': getMaskedTerritoryFillOpacity(getFillOpacity(fillOpacity110m))
   }
   const fillPaint50m: FillLayerSpecification['paint'] = {
     'fill-color': fillColor,
     'fill-antialias': showBorders,
-    'fill-opacity': getFillOpacity(fillOpacity50m)
+    'fill-opacity': getMaskedTerritoryFillOpacity(getFillOpacity(fillOpacity50m))
   }
   const fillPaint10m: FillLayerSpecification['paint'] = {
     'fill-color': fillColor,
     'fill-antialias': showBorders,
-    'fill-opacity': getFillOpacity(fillOpacity10m)
+    'fill-opacity': getMaskedTerritoryFillOpacity(getFillOpacity(fillOpacity10m))
   }
   const borderOpacity110m = scaleZoomOpacityExpression(
     ['interpolate', ['linear'], ['zoom'], 2, 1, 3, 0],
@@ -2557,16 +3036,33 @@ function WorldMap({
     'line-opacity': borderOpacity10m
   }
 
-  const selectionBoundaryPaint = (minZoom: number, maxZoom: number): LineLayerSpecification['paint'] => ({
-    'line-color': realLayer
-      ? isMatrixSkin ? '#d8ffdf' : '#fff1c3'
-      : isMinimalSkin ? '#20201d' : isMatrixSkin ? '#55ff82' : '#f4c45e',
-    'line-width': ['interpolate', ['linear'], ['zoom'], minZoom, realLayer ? 2 : 1.2, maxZoom, realLayer ? 3.2 : 2.4],
+  const selectionBoundaryPaint = (
+    minZoom: number,
+    maxZoom: number
+  ): LineLayerSpecification['paint'] => ({
+    'line-color': imageLayerActive
+      ? isMatrixSkin
+        ? '#d8ffdf'
+        : '#fff1c3'
+      : isMinimalSkin
+        ? '#20201d'
+        : isMatrixSkin
+          ? '#55ff82'
+          : '#f4c45e',
+    'line-width': [
+      'interpolate',
+      ['linear'],
+      ['zoom'],
+      minZoom,
+      imageLayerActive ? 2 : 1.2,
+      maxZoom,
+      imageLayerActive ? 3.2 : 2.4
+    ],
     'line-opacity': hasMapSelection ? 1 : selectionBoundaryOpacity,
     'line-opacity-transition': { duration: 320, delay: 0 }
   })
 
-  const globeLabelsActive = globeMode && mapZoom < GLOBE_TRANSITION_START_ZOOM
+  const globeLabelsActive = (globeMode || cameraOrbitMode) && mapZoom < GLOBE_TRANSITION_START_ZOOM
   const labelsForMap = useMemo(() => {
     if (!globeLabelsActive || !mapInstance) return visibleLabels
 
@@ -2583,39 +3079,54 @@ function WorldMap({
         )
       })
     }
+    // The map mutates in place; this revision re-projects labels after camera movement.
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- globeLabelRevision is an external camera invalidation signal.
   }, [globeLabelRevision, globeLabelsActive, mapInstance, mapZoom, visibleLabels])
 
   const labelsForMapDisplay = useMemo(() => {
-    const features = labelsForMap.features.filter((feature) =>
-      !showResources || !getResourceIndustryFactsForMapFeature(
-        feature.properties.entityId,
-        feature.properties.sourceFeatureId
-      ).length
-    ).sort((first, second) => first.properties.priority - second.properties.priority)
+    const features = labelsForMap.features
+      .filter(
+        (feature) =>
+          !showResources ||
+          !getResourceIndustryFactsForMapFeature(
+            feature.properties.entityId,
+            feature.properties.sourceFeatureId
+          ).length
+      )
+      .sort((first, second) => first.properties.priority - second.properties.priority)
     return { ...labelsForMap, features: features.slice(0, Math.max(0, density.labels)) }
   }, [density.labels, labelsForMap, showResources])
 
-  const displayedRiverData = useMemo(() => ({
-    ...riverData,
-    features: [...riverData.features]
-      .sort((first, second) =>
-        Number(first.properties?.rank ?? Number.MAX_SAFE_INTEGER) -
-        Number(second.properties?.rank ?? Number.MAX_SAFE_INTEGER)
-      )
-      .slice(0, Math.max(0, density.rivers))
-  }), [density.rivers])
+  const displayedRiverData = useMemo(
+    () => ({
+      ...riverData,
+      features: [...riverData.features]
+        .sort(
+          (first, second) =>
+            Number(first.properties?.rank ?? Number.MAX_SAFE_INTEGER) -
+            Number(second.properties?.rank ?? Number.MAX_SAFE_INTEGER)
+        )
+        .slice(0, Math.max(0, density.rivers))
+    }),
+    [density.rivers]
+  )
 
-  const displayedMountainData = useMemo(() => ({
-    ...mountainPeakData,
-    features: [...mountainPeakData.features]
-      .sort((first, second) => {
-        const left = first.properties as { rank?: number; elevation?: number }
-        const right = second.properties as { rank?: number; elevation?: number }
-        return (left.rank ?? Number.MAX_SAFE_INTEGER) - (right.rank ?? Number.MAX_SAFE_INTEGER) ||
-          (right.elevation ?? 0) - (left.elevation ?? 0)
-      })
-      .slice(0, Math.max(0, density.mountains))
-  }), [density.mountains])
+  const displayedMountainData = useMemo(
+    () => ({
+      ...mountainPeakData,
+      features: [...mountainPeakData.features]
+        .sort((first, second) => {
+          const left = first.properties as { rank?: number; elevation?: number }
+          const right = second.properties as { rank?: number; elevation?: number }
+          return (
+            (left.rank ?? Number.MAX_SAFE_INTEGER) - (right.rank ?? Number.MAX_SAFE_INTEGER) ||
+            (right.elevation ?? 0) - (left.elevation ?? 0)
+          )
+        })
+        .slice(0, Math.max(0, density.mountains))
+    }),
+    [density.mountains]
+  )
 
   const physicalMapMarkers = useMemo<PhysicalMapMarker[]>(() => {
     if (!mapInstance || !mapLoaded || (!showRivers && !showMountains && !showSummits)) return []
@@ -2626,12 +3137,16 @@ function WorldMap({
     const height = canvas.clientHeight
     const candidates: PhysicalMapMarker[] = []
     const localized = (properties: PhysicalPointFeature): string =>
-      language === 'fr' ? properties.name : language === 'es' ? properties.nameEs : properties.nameEn
+      language === 'fr'
+        ? properties.name
+        : language === 'es'
+          ? properties.nameEs
+          : properties.nameEn
     const localizedRangeText = (text: MountainRangeRecord['landscape']): string =>
       text[language] ?? text.en
 
     if (showRivers && density.rivers > 0) {
-      const rivers = [...riverLabelData.features as unknown as PhysicalPointFeature[]]
+      const rivers = [...(riverLabelData.features as unknown as PhysicalPointFeature[])]
         .sort((first, second) => first.rank - second.rank)
         .slice(0, density.rivers)
       for (const feature of rivers) {
@@ -2639,11 +3154,10 @@ function WorldMap({
         if (!name) continue
         const [baseLongitude, baseLatitude] = feature.coordinates ?? []
         if (baseLongitude === undefined || baseLatitude === undefined) continue
-        const [longitude, latitude] = getRiverLabelCoordinate(
-          mapInstance,
-          name,
-          [baseLongitude, baseLatitude]
-        )
+        const [longitude, latitude] = getRiverLabelCoordinate(mapInstance, name, [
+          baseLongitude,
+          baseLatitude
+        ])
         candidates.push({
           id: `river:${name.toLocaleLowerCase()}`,
           longitude,
@@ -2665,9 +3179,7 @@ function WorldMap({
         })
         const rangeName = localizedRangeText(range.name)
         const highestPeak = mountainRangeHighPoints[range.id]
-        const highestPeakName = highestPeak
-          ? localizedRangeText(highestPeak.name)
-          : null
+        const highestPeakName = highestPeak ? localizedRangeText(highestPeak.name) : null
         const projectedRange = mapInstance.project(range.center)
         candidates.push({
           id: `range:${range.id}`,
@@ -2675,9 +3187,8 @@ function WorldMap({
           latitude: range.center[1],
           kind: 'range',
           name: rangeName,
-          tooltipAlignment: projectedRange.x < 150
-            ? 'left'
-            : projectedRange.x > width - 150 ? 'right' : 'center',
+          tooltipAlignment:
+            projectedRange.x < 150 ? 'left' : projectedRange.x > width - 150 ? 'right' : 'center',
           tooltipBelow: projectedRange.y < 140,
           detail: highestPeak?.elevationMeters
             ? `${highestPeak.elevationMeters.toLocaleString(language)} m`
@@ -2698,10 +3209,13 @@ function WorldMap({
     }
 
     if (showSummits && density.mountains > 0) {
-      const peaks = [...mountainPeakData.features as unknown as MountainPeakMapFeature[]]
-        .sort((first, second) => first.properties.rank - second.properties.rank ||
-        (second.properties.elevation ?? 0) - (first.properties.elevation ?? 0)
-      ).slice(0, density.mountains)
+      const peaks = [...(mountainPeakData.features as unknown as MountainPeakMapFeature[])]
+        .sort(
+          (first, second) =>
+            first.properties.rank - second.properties.rank ||
+            (second.properties.elevation ?? 0) - (first.properties.elevation ?? 0)
+        )
+        .slice(0, density.mountains)
       for (const feature of peaks) {
         const { properties } = feature
         if (!properties.name) continue
@@ -2712,7 +3226,9 @@ function WorldMap({
           latitude,
           kind: 'mountain',
           name: localized(properties),
-          detail: properties.elevation ? `${properties.elevation.toLocaleString(language)} m` : undefined,
+          detail: properties.elevation
+            ? `${properties.elevation.toLocaleString(language)} m`
+            : undefined,
           rank: properties.rank
         })
       }
@@ -2727,7 +3243,7 @@ function WorldMap({
       const point = mapInstance.project([marker.longitude, marker.latitude])
       if (point.x < 12 || point.y < 12 || point.x > width - 12 || point.y > height - 12) continue
       if (
-        globeMode &&
+        (globeMode || cameraOrbitMode) &&
         !isGlobeLabelVisible(
           mapInstance,
           [marker.longitude, marker.latitude],
@@ -2735,13 +3251,18 @@ function WorldMap({
           GLOBE_TRANSITION_START_ZOOM,
           GLOBE_TRANSITION_END_ZOOM
         )
-      ) continue
-      if (accepted.some(({ x, y }) => Math.hypot(point.x - x, point.y - y) < minimumSpacing)) continue
+      )
+        continue
+      if (accepted.some(({ x, y }) => Math.hypot(point.x - x, point.y - y) < minimumSpacing))
+        continue
       accepted.push({ marker, x: point.x, y: point.y })
       seen.add(uniqueKey)
     }
     return accepted.map(({ marker }) => marker)
+    // The map mutates in place; this revision refreshes marker screen positions after movement.
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- mapViewRevision is an external camera invalidation signal.
   }, [
+    cameraOrbitMode,
     globeMode,
     language,
     mapInstance,
@@ -2761,12 +3282,26 @@ function WorldMap({
       (selectedPhysicalFeature?.marker.kind === 'mountain' && !showSummits) ||
       (selectedPhysicalFeature?.marker.kind === 'range' && !showMountains)
     ) {
+      // The layer visibility is controlled outside this map; close its detail popup when that source disappears.
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setSelectedPhysicalFeature(null)
     }
   }, [selectedPhysicalFeature, showMountains, showRivers, showSummits])
 
-  const riverColor = realLayer ? '#5acbfa' : isMinimalSkin ? '#5f8296' : isMatrixSkin ? '#00d76b' : '#57b9df'
-  const mountainColor = realLayer ? '#ffd36a' : isMinimalSkin ? '#827762' : isMatrixSkin ? '#62ff8c' : '#e6bd78'
+  const riverColor = imageLayerActive
+    ? '#5acbfa'
+    : isMinimalSkin
+      ? '#5f8296'
+      : isMatrixSkin
+        ? '#00d76b'
+        : '#57b9df'
+  const mountainColor = imageLayerActive
+    ? '#ffd36a'
+    : isMinimalSkin
+      ? '#827762'
+      : isMatrixSkin
+        ? '#62ff8c'
+        : '#e6bd78'
 
   const labelLayout: SymbolLayerSpecification['layout'] = {
     'text-field': ['get', 'name'],
@@ -2791,9 +3326,21 @@ function WorldMap({
   }
 
   const labelPaint: SymbolLayerSpecification['paint'] = {
-    'text-color': realLayer ? '#ffffff' : isMinimalSkin ? '#20201d' : isMatrixSkin ? '#aaffbf' : '#ffffff',
-    'text-halo-color': realLayer ? '#101820' : isMinimalSkin ? '#f2eee5' : isMatrixSkin ? '#010803' : '#101820',
-    'text-halo-width': realLayer ? 1.35 : 1,
+    'text-color': imageLayerActive
+      ? '#ffffff'
+      : isMinimalSkin
+        ? '#20201d'
+        : isMatrixSkin
+          ? '#aaffbf'
+          : '#ffffff',
+    'text-halo-color': imageLayerActive
+      ? '#101820'
+      : isMinimalSkin
+        ? '#f2eee5'
+        : isMatrixSkin
+          ? '#010803'
+          : '#101820',
+    'text-halo-width': imageLayerActive ? 1.35 : 1,
     'text-opacity': layerAlpha('labels')
   }
 
@@ -2805,23 +3352,29 @@ function WorldMap({
       <div className="perspective-area-comparison-item">
         <span>{t('Territoire déplacé')}</span>
         <strong>{perspectiveDrag.name}</strong>
-        <small>{t('Superficie')} · {getPerspectiveAreaLabel(
-          perspectiveDrag.areaKm2,
-          language === 'fr' ? 'fr-FR' : language === 'es' ? 'es-ES' : 'en-US'
-        )}</small>
+        <small>
+          {t('Superficie')} ·{' '}
+          {getPerspectiveAreaLabel(
+            perspectiveDrag.areaKm2,
+            language === 'fr' ? 'fr-FR' : language === 'es' ? 'es-ES' : 'en-US'
+          )}
+        </small>
       </div>
       <div className="perspective-area-comparison-item">
         <span>{t('Sous le fantôme')}</span>
-        <strong>{perspectiveOverlap === null
-          ? '…'
-          : perspectiveOverlap.name ?? t('Aucun territoire')}
+        <strong>
+          {activePerspectiveOverlap === null
+            ? '…'
+            : (activePerspectiveOverlap.name ?? t('Aucun territoire'))}
         </strong>
-        <small>{t('Superficie')} · {perspectiveOverlap?.name
-          ? getPerspectiveAreaLabel(
-            perspectiveOverlap.areaKm2,
-            language === 'fr' ? 'fr-FR' : language === 'es' ? 'es-ES' : 'en-US'
-          )
-          : '—'}
+        <small>
+          {t('Superficie')} ·{' '}
+          {activePerspectiveOverlap?.name
+            ? getPerspectiveAreaLabel(
+                activePerspectiveOverlap.areaKm2,
+                language === 'fr' ? 'fr-FR' : language === 'es' ? 'es-ES' : 'en-US'
+              )
+            : '—'}
         </small>
       </div>
     </aside>
@@ -2829,27 +3382,60 @@ function WorldMap({
 
   return (
     <div
-      className={`world-map-shell${perspectiveCorrectionEnabled ? ' perspective-correction-active' : ''}${perspectiveAdjusting ? ' is-adjusting-perspective' : ''}${drawingTool ? ' has-drawing-tool' : ''}${opacityMaskPlacement ? ' is-placing-opacity-mask' : ''}${hoveredCountry && !drawingTool && !perspectiveCorrectionEnabled && !opacityMaskPlacement ? ' has-country-hover' : ''}`}
+      className={`world-map-shell${perspectiveCorrectionEnabled ? ' perspective-correction-active' : ''}${cameraOrbitMode ? ' camera-orbit-mode' : ''}${cameraOrbitMode && cameraPanMode ? ' camera-pan-mode' : ''}${perspectiveAdjusting ? ' is-adjusting-perspective' : ''}${drawingTool ? ' has-drawing-tool' : ''}${opacityMaskPlacement ? ` is-placing-opacity-mask mask-placement-${opacityMaskPlacementKind ?? 'circle'}` : ''}${opacityMaskPlacementPreview ? ' has-opacity-mask-preview' : ''}${hoveredCountry && !drawingTool && !perspectiveCorrectionEnabled && !opacityMaskPlacement ? ' has-country-hover' : ''}`}
     >
       <Map
         ref={mapRef}
         onLoad={(event) => {
-          event.target.setPaintProperty(
-            'background',
-            'background-color',
-            mapBackgroundColor
-          )
+          event.target.setPaintProperty('background', 'background-color', mapBackgroundColor)
           setMapInstance(event.target)
           setMapLoaded(true)
           setMapZoom(event.target.getZoom())
+          setCameraRotation({
+            yaw: event.target.getBearing(),
+            pitch: event.target.getPitch(),
+            roll: normalizeCameraAngle(event.target.getRoll())
+          })
           updateVisibleLabels()
           focusOnQuizBaseView()
           scheduleFlagOverlayUpdate()
           setResourceOverlayRevision((current) => current + 1)
         }}
         onMove={(event) => {
+          if (cameraOrbitMode) {
+            const map = mapRef.current?.getMap()
+            if (map) {
+              if (!cameraFreeMode) {
+                const center = map.getCenter()
+                cameraUnwrappedYawRef.current = center.lng
+                cameraUnwrappedPitchRef.current = center.lat
+              } else if (!cameraFreeRotationApplyingRef.current) {
+                captureFreeCameraPosition(map)
+                cameraFreeRotationRef.current = {
+                  yaw: map.getBearing(),
+                  pitch: map.getPitch(),
+                  roll: map.getRoll()
+                }
+              }
+              if (cameraControlsOpen) {
+                if (cameraFreeMode) {
+                  setCameraRotation({
+                    yaw: normalizeCameraAngle(map.getBearing()),
+                    pitch: map.getPitch(),
+                    roll: normalizeCameraAngle(map.getRoll())
+                  })
+                } else {
+                  setCameraRotation({
+                    yaw: normalizeCameraAngle(cameraUnwrappedYawRef.current),
+                    pitch: normalizeCameraLatitude(cameraUnwrappedPitchRef.current),
+                    roll: normalizeCameraAngle(map.getRoll())
+                  })
+                }
+              }
+            }
+          }
           if (
-            !globeMode ||
+            (!globeMode && !cameraOrbitMode) ||
             event.viewState.zoom >= GLOBE_TRANSITION_START_ZOOM
           ) {
             globeLabelsRequestedRef.current = false
@@ -2874,6 +3460,17 @@ function WorldMap({
           if (map) {
             setMapZoom(map.getZoom())
             setGlobeLabelRevision((current) => current + 1)
+            const center = map.getCenter()
+            onCameraViewChange?.({
+              longitude: center.lng,
+              latitude: center.lat,
+              zoom: map.getZoom(),
+              bearing: map.getBearing(),
+              pitch: map.getPitch(),
+              roll: map.getRoll(),
+              orbitMode: cameraOrbitMode,
+              freeMode: cameraFreeMode
+            })
           }
           updateVisibleLabels()
           scheduleFlagOverlayUpdate()
@@ -2888,7 +3485,7 @@ function WorldMap({
         }}
         onMouseMove={handleCountryHover}
         onMouseDown={handlePerspectiveMouseDown}
-        onMouseLeave={() => setHoveredCountry(null)}
+        onMouseLeave={handleCountryLeave}
         initialViewState={{
           longitude: 0,
           latitude: 0,
@@ -2897,50 +3494,84 @@ function WorldMap({
         minZoom={0}
         maxZoom={12}
         mapStyle={mapStyle}
-        dragPan={!perspectiveCorrectionEnabled}
-        scrollZoom={!perspectiveCorrectionEnabled}
+        dragPan={!perspectiveCorrectionEnabled && (!cameraOrbitMode || cameraPanMode)}
+        scrollZoom={!perspectiveCorrectionEnabled && !cameraOrbitMode}
         doubleClickZoom={!perspectiveCorrectionEnabled}
         keyboard={!perspectiveCorrectionEnabled}
         boxZoom={!perspectiveCorrectionEnabled}
-        dragRotate={!perspectiveCorrectionEnabled}
-        touchZoomRotate={!perspectiveCorrectionEnabled}
-        touchPitch={!perspectiveCorrectionEnabled}
-        interactiveLayerIds={[
-          ...countryFillLayerIds,
-          ...(showRivers ? physicalRiverLayerIds : [])
-        ]}
+        dragRotate={!perspectiveCorrectionEnabled && !cameraOrbitMode}
+        touchZoomRotate={!perspectiveCorrectionEnabled && !cameraOrbitMode}
+        touchPitch={!perspectiveCorrectionEnabled && !cameraOrbitMode}
+        interactiveLayerIds={[...countryFillLayerIds, ...(showRivers ? physicalRiverLayerIds : [])]}
         onClick={handleCountryClick}
         style={{
           width: '100%',
           height: '100%'
         }}
       >
+        {/* Recréer la source raster garantit que la texture WebGL reçoit aussi son alpha masqué. */}
+        <Source
+          key={`earth-topography:${
+            maskedRasterUrls.topography?.sourceUrl === earthTopographyTexture
+              ? maskedRasterUrls.topography.url
+              : 'base'
+          }`}
+          id="earth-topography"
+          type="image"
+          url={
+            showTopography
+              ? maskedRasterUrls.topography?.sourceUrl === earthTopographyTexture
+                ? maskedRasterUrls.topography.url
+                : earthTopographyTexture
+              : transparentMapLayerImage
+          }
+          coordinates={earthTextureCoordinates}
+        >
+          <Layer
+            id="earth-topography-raster"
+            type="raster"
+            beforeId="countries-fill-110m"
+            layout={{ visibility: showTopography ? 'visible' : 'none' }}
+            paint={{
+              'raster-opacity': showTopography ? layerAlpha('topography') : 0,
+              'raster-resampling': 'linear',
+              'raster-fade-duration': 0
+            }}
+          />
+        </Source>
 
-        {realLayer && (
-          <Source
-            id="real-earth-imagery"
-            type="image"
-            url={realLayer === 'day' ? earthDayTexture : realLayer === 'night' ? earthNightTexture : earthCloudTexture}
-            coordinates={earthTextureCoordinates}
-          >
-            <Layer
-              id="real-earth-imagery-raster"
-              type="raster"
-              beforeId="countries-fill-110m"
-              paint={{
-                'raster-opacity': (realLayer === 'clouds' ? 0.88 : 1) * layerAlpha('texture'),
-                'raster-resampling': 'linear'
-              }}
-            />
-          </Source>
-        )}
+        <Source
+          key={`real-earth-imagery:${
+            maskedRasterUrls.texture?.sourceUrl === satelliteTexture
+              ? maskedRasterUrls.texture.url
+              : satelliteTexture
+          }`}
+          id="real-earth-imagery"
+          type="image"
+          url={
+            maskedRasterUrls.texture?.sourceUrl === satelliteTexture
+              ? maskedRasterUrls.texture.url
+              : satelliteTexture
+          }
+          coordinates={earthTextureCoordinates}
+        >
+          <Layer
+            id="real-earth-imagery-raster"
+            type="raster"
+            beforeId="countries-fill-110m"
+            layout={{ visibility: realLayer ? 'visible' : 'none' }}
+            paint={{
+              'raster-opacity': realLayer
+                ? (realLayer === 'clouds' ? 0.88 : 1) * layerAlpha('texture')
+                : 0,
+              'raster-resampling': 'linear',
+              'raster-fade-duration': 0
+            }}
+          />
+        </Source>
 
         {/* Résolution mondiale : 110m */}
-        <Source
-          id="countries-110m"
-          type="geojson"
-          data={world110mFlagMap}
-        >
+        <Source id="countries-110m-territory-fills" type="geojson" data={maskedWorld110mFlagMap}>
           <Layer
             id="countries-fill-110m"
             type="fill"
@@ -2948,7 +3579,8 @@ function WorldMap({
             maxzoom={3}
             paint={fillPaint110m}
           />
-
+        </Source>
+        <Source id="countries-110m" type="geojson" data={world110mFlagMap}>
           {showWrongAnswerFeedback && (
             <Layer
               id="countries-wrong-answer-110m"
@@ -2989,19 +3621,10 @@ function WorldMap({
         </Source>
 
         {/* Résolution intermédiaire : 50m */}
-        <Source
-          id="countries-50m"
-          type="geojson"
-          data={world50mFlagMap}
-        >
-          <Layer
-            id="countries-fill-50m"
-            type="fill"
-            minzoom={2}
-            maxzoom={5}
-            paint={fillPaint50m}
-          />
-
+        <Source id="countries-50m-territory-fills" type="geojson" data={maskedWorld50mFlagMap}>
+          <Layer id="countries-fill-50m" type="fill" minzoom={2} maxzoom={5} paint={fillPaint50m} />
+        </Source>
+        <Source id="countries-50m" type="geojson" data={world50mFlagMap}>
           {showWrongAnswerFeedback && (
             <Layer
               id="countries-wrong-answer-50m"
@@ -3042,18 +3665,10 @@ function WorldMap({
         </Source>
 
         {/* Résolution détaillée : 10m */}
-        <Source
-          id="countries-10m"
-          type="geojson"
-          data={world10mFlagMap}
-        >
-          <Layer
-            id="countries-fill-10m"
-            type="fill"
-            minzoom={4}
-            paint={fillPaint10m}
-          />
-
+        <Source id="countries-10m-territory-fills" type="geojson" data={maskedWorld10mFlagMap}>
+          <Layer id="countries-fill-10m" type="fill" minzoom={4} paint={fillPaint10m} />
+        </Source>
+        <Source id="countries-10m" type="geojson" data={world10mFlagMap}>
           {showWrongAnswerFeedback && (
             <Layer
               id="countries-wrong-answer-10m"
@@ -3071,12 +3686,7 @@ function WorldMap({
           )}
 
           {showBorders && (
-            <Layer
-              id="countries-borders-10m"
-              type="line"
-              minzoom={4}
-              paint={borderPaint10m}
-            />
+            <Layer id="countries-borders-10m" type="line" minzoom={4} paint={borderPaint10m} />
           )}
 
           {shouldShowSelectedBoundary && (
@@ -3091,39 +3701,35 @@ function WorldMap({
         </Source>
 
         {showLabels && density.labels > 0 && (
-          <Source
-            id="low-zoom-country-markers"
-            type="geojson"
-            data={lowZoomMissingCountryMarkers}
-          >
+          <Source id="low-zoom-country-markers" type="geojson" data={lowZoomMissingCountryMarkers}>
             <Layer
-            id="low-zoom-country-marker-symbols"
-            type="symbol"
+              id="low-zoom-country-marker-symbols"
+              type="symbol"
               minzoom={0}
               maxzoom={3}
-            layout={{
-              'text-field': '◆',
-              'text-font': ['Open Sans Regular'],
-              'text-size': ['interpolate', ['linear'], ['zoom'], 0, 9, 2, 12, 3, 0],
-              'text-anchor': 'center',
-              'text-allow-overlap': true,
-              'text-ignore-placement': true
-            }}
+              layout={{
+                'text-field': '◆',
+                'text-font': ['Open Sans Regular'],
+                'text-size': ['interpolate', ['linear'], ['zoom'], 0, 9, 2, 12, 3, 0],
+                'text-anchor': 'center',
+                'text-allow-overlap': true,
+                'text-ignore-placement': true
+              }}
               paint={{
-              'text-color': [
+                'text-color': [
                   'case',
                   ['any', ...selectedFeatureExpressions],
-                isMinimalSkin ? '#20201d' : isMatrixSkin ? '#00d957' : '#ffd166',
+                  isMinimalSkin ? '#20201d' : isMatrixSkin ? '#00d957' : '#ffd166',
                   ['any', ...hoveredFeatureExpressions],
-                isMinimalSkin ? '#20201d' : isMatrixSkin ? '#afffc3' : '#e8f6ff',
-                isMinimalSkin ? '#486b8c' : isMatrixSkin ? '#00d9db' : '#54bbf4'
-              ] as NonNullable<SymbolLayerSpecification['paint']>['text-color'],
-              'text-halo-color': isMinimalSkin ? '#f6f2e9' : isMatrixSkin ? '#010803' : '#101820',
-              'text-halo-width': 1.2,
-              'text-opacity': scaleZoomOpacityExpression(
-                ['interpolate', ['linear'], ['zoom'], 0, 0.8, 2, 1, 3, 0],
-                layerAlpha('labels')
-              ) as NonNullable<SymbolLayerSpecification['paint']>['text-opacity']
+                  isMinimalSkin ? '#20201d' : isMatrixSkin ? '#afffc3' : '#e8f6ff',
+                  isMinimalSkin ? '#486b8c' : isMatrixSkin ? '#00d9db' : '#54bbf4'
+                ] as NonNullable<SymbolLayerSpecification['paint']>['text-color'],
+                'text-halo-color': isMinimalSkin ? '#f6f2e9' : isMatrixSkin ? '#010803' : '#101820',
+                'text-halo-width': 1.2,
+                'text-opacity': scaleZoomOpacityExpression(
+                  ['interpolate', ['linear'], ['zoom'], 0, 0.8, 2, 1, 3, 0],
+                  layerAlpha('labels')
+                ) as NonNullable<SymbolLayerSpecification['paint']>['text-opacity']
               }}
             />
           </Source>
@@ -3188,7 +3794,11 @@ function WorldMap({
               paint={{
                 'circle-radius': ['interpolate', ['linear'], ['zoom'], 0, 2.2, 5, 3.6, 10, 5.5],
                 'circle-color': mountainColor,
-                'circle-stroke-color': isMinimalSkin ? '#f2eee5' : isMatrixSkin ? '#010803' : '#101820',
+                'circle-stroke-color': isMinimalSkin
+                  ? '#f2eee5'
+                  : isMatrixSkin
+                    ? '#010803'
+                    : '#101820',
                 'circle-stroke-width': 1,
                 'circle-opacity': 0.95 * layerAlpha('summits')
               }}
@@ -3201,7 +3811,11 @@ function WorldMap({
               paint={{
                 'circle-radius': ['interpolate', ['linear'], ['zoom'], 2, 2, 6, 3.5, 10, 5],
                 'circle-color': mountainColor,
-                'circle-stroke-color': isMinimalSkin ? '#f2eee5' : isMatrixSkin ? '#010803' : '#101820',
+                'circle-stroke-color': isMinimalSkin
+                  ? '#f2eee5'
+                  : isMatrixSkin
+                    ? '#010803'
+                    : '#101820',
                 'circle-stroke-width': 1,
                 'circle-opacity': 0.9 * layerAlpha('summits')
               }}
@@ -3214,7 +3828,11 @@ function WorldMap({
               paint={{
                 'circle-radius': ['interpolate', ['linear'], ['zoom'], 5, 1.8, 9, 3.6],
                 'circle-color': mountainColor,
-                'circle-stroke-color': isMinimalSkin ? '#f2eee5' : isMatrixSkin ? '#010803' : '#101820',
+                'circle-stroke-color': isMinimalSkin
+                  ? '#f2eee5'
+                  : isMatrixSkin
+                    ? '#010803'
+                    : '#101820',
                 'circle-stroke-width': 0.8,
                 'circle-opacity': 0.82 * layerAlpha('summits')
               }}
@@ -3224,45 +3842,48 @@ function WorldMap({
 
         {/* Étiquettes indépendantes des résolutions */}
         {showLabels && !showFlagTerritories && (
-          <Source
-            id="country-labels"
-            type="geojson"
-            data={labelsForMapDisplay}
-          >
-            <Layer
-              id="countries-labels"
-              type="symbol"
-              layout={labelLayout}
-              paint={labelPaint}
-            />
+          <Source id="country-labels" type="geojson" data={labelsForMapDisplay}>
+            <Layer id="countries-labels" type="symbol" layout={labelLayout} paint={labelPaint} />
           </Source>
         )}
 
         {physicalMapMarkers.map((marker) => {
           const isSelected = selectedPhysicalFeature?.marker.id === marker.id
-          const markerLayerId = marker.kind === 'river'
-            ? 'rivers'
-            : marker.kind === 'range' ? 'mountains' : 'summits'
-          const featureType = marker.kind === 'river'
-            ? 'Fleuve'
-            : marker.kind === 'range' ? 'Chaîne de montagnes' : 'Sommet'
-          const rangeFacts: [string, string][] = marker.rangeInfo ? [
-            [t('Sommets recensés'), marker.rangeInfo.summitCount > 0
-              ? `≈ ${marker.rangeInfo.summitCount.toLocaleString(language)}`
-              : 'ND'],
-            [t('Longueur approximative'), marker.rangeInfo.lengthKm
-              ? `≈ ${marker.rangeInfo.lengthKm.toLocaleString(language)} km`
-              : 'ND'],
-            [t('Point culminant'), marker.rangeInfo.highestPeakName && marker.rangeInfo.highestElevationMeters
-              ? `${marker.rangeInfo.highestPeakName} · ${marker.rangeInfo.highestElevationMeters.toLocaleString(language)} m`
-              : 'ND'],
-            [t('Paysage'), marker.rangeInfo.landscape],
-            [t('Fréquentation'), marker.rangeInfo.attendance],
-            [t('Randonnée'), marker.rangeInfo.hiking],
-            [t('Alpinisme'), marker.rangeInfo.mountaineering]
-          ] : []
+          const markerLayerId =
+            marker.kind === 'river' ? 'rivers' : marker.kind === 'range' ? 'mountains' : 'summits'
+          const featureType =
+            marker.kind === 'river'
+              ? 'Fleuve'
+              : marker.kind === 'range'
+                ? 'Chaîne de montagnes'
+                : 'Sommet'
+          const rangeFacts: [string, string][] = marker.rangeInfo
+            ? [
+                [
+                  t('Sommets recensés'),
+                  marker.rangeInfo.summitCount > 0
+                    ? `≈ ${marker.rangeInfo.summitCount.toLocaleString(language)}`
+                    : 'ND'
+                ],
+                [
+                  t('Longueur approximative'),
+                  marker.rangeInfo.lengthKm
+                    ? `≈ ${marker.rangeInfo.lengthKm.toLocaleString(language)} km`
+                    : 'ND'
+                ],
+                [
+                  t('Point culminant'),
+                  marker.rangeInfo.highestPeakName && marker.rangeInfo.highestElevationMeters
+                    ? `${marker.rangeInfo.highestPeakName} · ${marker.rangeInfo.highestElevationMeters.toLocaleString(language)} m`
+                    : 'ND'
+                ],
+                [t('Paysage'), marker.rangeInfo.landscape],
+                [t('Fréquentation'), marker.rangeInfo.attendance],
+                [t('Randonnée'), marker.rangeInfo.hiking],
+                [t('Alpinisme'), marker.rangeInfo.mountaineering]
+              ]
+            : []
           const rangeTooltipId = `mountain-range-tooltip-${marker.id.replace(/[^a-z0-9-]/gi, '-')}`
-          const rangeDescription = rangeFacts.map(([label, value]) => `${label}: ${value}`).join('. ')
           return (
             <Marker
               key={marker.id}
@@ -3295,7 +3916,7 @@ function WorldMap({
                     <button
                       className={`map-mountain-range-marker${isSelected ? ' is-selected' : ''}`}
                       type="button"
-                      aria-label={`${t('Chaîne de montagnes')}: ${marker.name}. ${rangeDescription}`}
+                      aria-label={`${t('Chaîne de montagnes')}: ${marker.name}`}
                       aria-describedby={rangeTooltipId}
                       aria-expanded={isSelected}
                       onClick={(event) => {
@@ -3322,7 +3943,9 @@ function WorldMap({
                           </div>
                         ))}
                       </dl>
-                      <small>{t('Décompte indicatif du catalogue local dans une emprise approximative.')}</small>
+                      <small>
+                        {t('Décompte indicatif du catalogue local dans une emprise approximative.')}
+                      </small>
                     </div>
                   </>
                 ) : (
@@ -3338,7 +3961,9 @@ function WorldMap({
                     }}
                   >
                     <span aria-hidden="true">▲</span>
-                    {mapZoom >= 4.5 && <span className="map-mountain-peak-name">{marker.name}</span>}
+                    {mapZoom >= 4.5 && (
+                      <span className="map-mountain-peak-name">{marker.name}</span>
+                    )}
                   </button>
                 )}
                 {isSelected && selectedPhysicalFeature && (
@@ -3368,12 +3993,13 @@ function WorldMap({
                           <strong>{marker.detail ?? 'ND'}</strong>
                         </div>
                       )}
-                      {marker.kind === 'range' && rangeFacts.map(([label, value]) => (
-                        <div key={label}>
-                          <span>{label}</span>
-                          <strong>{value}</strong>
-                        </div>
-                      ))}
+                      {marker.kind === 'range' &&
+                        rangeFacts.map(([label, value]) => (
+                          <div key={label}>
+                            <span>{label}</span>
+                            <strong>{value}</strong>
+                          </div>
+                        ))}
                       <div>
                         <span>{t('Pays ou territoire')}</span>
                         <strong>{selectedPhysicalFeature.territoryName ?? 'ND'}</strong>
@@ -3381,8 +4007,8 @@ function WorldMap({
                       <div>
                         <span>{t('Coordonnées')}</span>
                         <strong>
-                          {marker.latitude.toLocaleString(language, { maximumFractionDigits: 3 })}°,
-                          {' '}{marker.longitude.toLocaleString(language, { maximumFractionDigits: 3 })}°
+                          {marker.latitude.toLocaleString(language, { maximumFractionDigits: 3 })}°,{' '}
+                          {marker.longitude.toLocaleString(language, { maximumFractionDigits: 3 })}°
                         </strong>
                       </div>
                     </div>
@@ -3431,7 +4057,11 @@ function WorldMap({
             <div className="map-proximity-marker-anchor" aria-hidden="true">
               <span
                 className="map-proximity-score"
-                style={{ '--score-hue': `${activeProximityMarker.proximity.score * 1.2}deg` } as CSSProperties}
+                style={
+                  {
+                    '--score-hue': `${activeProximityMarker.proximity.score * 1.2}deg`
+                  } as CSSProperties
+                }
               >
                 {activeProximityMarker.proximity.score}%
                 {activeProximityMarker.proximity.distanceKm !== null && (
@@ -3442,26 +4072,197 @@ function WorldMap({
           </Marker>
         )}
 
-        {opacityMaskCollections.map(({ mask, data }) => (
-          <Source key={mask.id} id={`opacity-mask-source-${mask.id}`} type="geojson" data={data}>
+        {displayedOpacityMaskCollections.map(({ mask, data }) => {
+          const targetLayerId = getOpacityMaskTarget(mask)
+          const targetLayerVisible = targetLayerId !== null && isManagedLayerVisible(targetLayerId)
+          return (
+            <Source key={mask.id} id={`opacity-mask-source-${mask.id}`} type="geojson" data={data}>
+              <Layer
+                id={`opacity-mask-layer-${mask.id}`}
+                type="fill"
+                layout={{
+                  visibility:
+                    mask.enabled !== false &&
+                    targetLayerVisible &&
+                    targetLayerId !== null &&
+                    !rendersMaskAsLayerTransparency(targetLayerId)
+                      ? 'visible'
+                      : 'none'
+                }}
+                paint={{
+                  'fill-color': mapBackgroundColor,
+                  'fill-opacity': 1 - Math.max(0, Math.min(100, mask.opacity)) / 100,
+                  'fill-antialias': false
+                }}
+              />
+              <Layer
+                id={`opacity-mask-outline-${mask.id}`}
+                type="line"
+                layout={{
+                  visibility:
+                    editingOpacityMaskId === mask.id && targetLayerVisible ? 'visible' : 'none'
+                }}
+                paint={{
+                  'line-color': isMinimalSkin ? '#9b6b2f' : '#f0c674',
+                  'line-width': 2,
+                  'line-opacity': 0.95
+                }}
+              />
+            </Source>
+          )
+        })}
+
+        {opacityMaskPlacementPreview && (
+          <Source
+            id="opacity-mask-placement-preview-source"
+            type="geojson"
+            data={opacityMaskPlacementPreview.data}
+          >
             <Layer
-              id={`opacity-mask-layer-${mask.id}`}
+              id="opacity-mask-placement-preview-fill"
               type="fill"
               paint={{
-                'fill-color': mapBackgroundColor,
-                'fill-opacity': Math.max(0, Math.min(100, mask.opacity)) / 100,
+                'fill-color': '#68c7ff',
+                'fill-opacity': 0.2,
                 'fill-antialias': false
               }}
             />
+            <Layer
+              id="opacity-mask-placement-preview-outline"
+              type="line"
+              paint={{
+                'line-color': '#e9f7ff',
+                'line-width': 2.5,
+                'line-opacity': 0.98
+              }}
+            />
           </Source>
-        ))}
+        )}
 
+        {editingOpacityMaskId &&
+          opacityMasks
+            .filter((mask) => {
+              const targetLayerId = getOpacityMaskTarget(mask)
+              return (
+                mask.id === editingOpacityMaskId &&
+                targetLayerId !== null &&
+                isManagedLayerVisible(targetLayerId)
+              )
+            })
+            .flatMap((baseMask) => {
+              const mask =
+                opacityMaskPreview?.maskId === baseMask.id
+                  ? { ...baseMask, ...opacityMaskPreview.patch }
+                  : baseMask
+              return getOpacityMaskHandles(mask).map((handle) => (
+                <Marker
+                  key={`opacity-mask-handle-${mask.id}-${handle.kind}`}
+                  longitude={handle.longitude}
+                  latitude={handle.latitude}
+                  anchor="center"
+                  draggable
+                  style={{ zIndex: 30000 }}
+                  onDrag={(event) => {
+                    const patch = getOpacityMaskHandlePatch(baseMask, handle, [
+                      event.lngLat.lng,
+                      event.lngLat.lat
+                    ])
+                    if (!patch) return
+                    const preview = opacityMaskPreviewRef.current ?? {
+                      maskId: baseMask.id,
+                      patch,
+                      frame: null
+                    }
+                    preview.patch = patch
+                    opacityMaskPreviewRef.current = preview
+                    if (preview.frame === null) {
+                      preview.frame = window.requestAnimationFrame(() => {
+                        const currentPreview = opacityMaskPreviewRef.current
+                        if (!currentPreview) return
+                        currentPreview.frame = null
+                        setOpacityMaskPreview({
+                          maskId: currentPreview.maskId,
+                          patch: currentPreview.patch
+                        })
+                      })
+                    }
+                  }}
+                  onDragEnd={(event) => {
+                    const patch = getOpacityMaskHandlePatch(baseMask, handle, [
+                      event.lngLat.lng,
+                      event.lngLat.lat
+                    ])
+                    const frame = opacityMaskPreviewRef.current?.frame
+                    if (frame !== null && frame !== undefined) window.cancelAnimationFrame(frame)
+                    opacityMaskPreviewRef.current = null
+                    setOpacityMaskPreview(null)
+                    if (patch) onOpacityMaskGeometryChange?.(baseMask.id, patch)
+                  }}
+                >
+                  <button
+                    type="button"
+                    className={`map-opacity-mask-handle is-${handle.kind}`}
+                    aria-label={t(
+                      handle.kind === 'center'
+                        ? 'Déplacer le centre du masque'
+                        : handle.kind === 'radius'
+                          ? 'Modifier le rayon'
+                          : handle.kind === 'width'
+                            ? 'Modifier la largeur'
+                            : 'Modifier la hauteur'
+                    )}
+                    title={t(
+                      handle.kind === 'center'
+                        ? 'Déplacer le centre du masque'
+                        : handle.kind === 'radius'
+                          ? 'Modifier le rayon'
+                          : handle.kind === 'width'
+                            ? 'Modifier la largeur'
+                            : 'Modifier la hauteur'
+                    )}
+                    onClick={(event) => event.stopPropagation()}
+                  >
+                    {handle.kind === 'center' ? '✥' : '•'}
+                  </button>
+                </Marker>
+              ))
+            })}
       </Map>
+
+      {opacityMaskPlacement && (
+        <div className="map-opacity-mask-placement-status" role="status" aria-live="polite">
+          <span>
+            {opacityMaskPlacementKind === 'country' || opacityMaskPlacementKind === 'continent'
+              ? opacityMaskMultiSelectionActive
+                ? t('⌘-clique sur les territoires à ajouter ou retirer, puis valide avec la coche.')
+                : t(
+                    'Clique sur un territoire pour le choisir, ou maintiens ⌘ ou Ctrl pour en sélectionner plusieurs.'
+                  )
+              : t('Clique sur la carte pour placer le masque.')}
+          </span>
+          <kbd>Esc</kbd>
+        </div>
+      )}
+
+      {opacityMaskPlacement && opacityMaskMultiSelectionActive && opacityMaskSelectionCount > 0 && (
+        <div className="map-comparison-actions map-opacity-mask-selection-actions">
+          <button
+            className="map-comparison-action"
+            type="button"
+            title={t('Valider les territoires sélectionnés pour le masque')}
+            aria-label={`${t('Valider la sélection du masque')} (${opacityMaskSelectionCount})`}
+            onClick={onOpacityMaskSelectionConfirm}
+          >
+            {t('Valider la sélection')} <span>{opacityMaskSelectionCount}</span>
+            <span aria-hidden="true">✓</span>
+          </button>
+        </div>
+      )}
 
       {showFlagTerritories && density.flags > 0 && mapInstance && (
         <MapFlagOverlay
           map={mapInstance}
-          globeMode={globeMode && mapZoom < GLOBE_TRANSITION_START_ZOOM}
+          globeMode={(globeMode || cameraOrbitMode) && mapZoom < GLOBE_TRANSITION_START_ZOOM}
           projectionRevision={flagProjectionRevision}
           revision={mapViewRevision}
           zoom={mapZoom}
@@ -3475,14 +4276,17 @@ function WorldMap({
           showLabels={showLabels}
           selectedEntityIds={mapOverlaySelectedEntityIds}
           selectedSourceFeatureId={selectedSourceFeatureId}
-          selectedSourceFeatureIds={[...comparisonSelectedSourceFeatureIds, ...selectedAlpha2SourceFeatureIds]}
+          selectedSourceFeatureIds={[
+            ...comparisonSelectedSourceFeatureIds,
+            ...selectedAlpha2SourceFeatureIds
+          ]}
           hoveredCountry={hoveredCountry}
           quizTargetFeatureId={quizTargetFeatureId}
           selectionBoundaryOpacity={selectionBoundaryOpacity}
-          flagOpacity={realLayer ? 0.3 : 1}
+          flagOpacity={imageLayerActive ? 0.3 : 1}
           overlayOpacity={layerAlpha('flags')}
           overlayZIndex={layerStackAlpha('flags')}
-          realLayerActive={Boolean(realLayer)}
+          realLayerActive={imageLayerActive}
           wrongAnswerTarget={activeWrongAnswerTarget}
         />
       )}
@@ -3508,10 +4312,12 @@ function WorldMap({
           )}
           {drawingStrokes.map((stroke, index) => {
             if (!stroke.length) return null
-            const path = stroke.map((coordinate, pointIndex) => {
-              const point = mapInstance.project(coordinate)
-              return `${pointIndex === 0 ? 'M' : 'L'} ${point.x.toFixed(1)} ${point.y.toFixed(1)}`
-            }).join(' ')
+            const path = stroke
+              .map((coordinate, pointIndex) => {
+                const point = mapInstance.project(coordinate)
+                return `${pointIndex === 0 ? 'M' : 'L'} ${point.x.toFixed(1)} ${point.y.toFixed(1)}`
+              })
+              .join(' ')
             return (
               <path
                 key={`drawn-border-${index}`}
@@ -3541,11 +4347,10 @@ function WorldMap({
         </svg>
       )}
 
-      {perspectiveAreaComparisonPanel && (
-        perspectiveComparisonPortal
+      {perspectiveAreaComparisonPanel &&
+        (perspectiveComparisonPortal
           ? createPortal(perspectiveAreaComparisonPanel, perspectiveComparisonPortal)
-          : perspectiveAreaComparisonPanel
-      )}
+          : perspectiveAreaComparisonPanel)}
 
       {comparisonSelectedCountries.length > 0 && onCompareCountries && (
         <div className="map-comparison-actions">
@@ -3554,7 +4359,9 @@ function WorldMap({
             type="button"
             title={t('Ouvrir le comparateur avec les pays sélectionnés')}
             aria-label={`${t('Ouvrir le comparateur avec les pays sélectionnés')} (${comparisonSelectedCountries.length})`}
-            onClick={() => onCompareCountries(comparisonSelectedCountries.map((country) => country.alpha2))}
+            onClick={() =>
+              onCompareCountries(comparisonSelectedCountries.map((country) => country.alpha2))
+            }
           >
             {t('Comparer')} <span>{comparisonSelectedCountries.length}</span>
             <span aria-hidden="true">→</span>
@@ -3566,7 +4373,11 @@ function WorldMap({
             aria-label={t('Annuler la sélection de comparaison')}
             onClick={(event) => {
               event.stopPropagation()
-              setComparisonSelectedCountries([])
+              if (isComparisonSelectionControlled) {
+                onComparisonSelectionChange?.([])
+              } else {
+                setInternalComparisonSelectedCountries([])
+              }
               setSelectionBoundaryResetKey(null)
               setClickMarker(null)
               clearMapProximityFeedback()
@@ -3590,12 +4401,20 @@ function WorldMap({
         <button
           className="map-control-button map-projection-control"
           type="button"
-          title={t(globeMode ? 'Passer au plan' : 'Passer au globe')}
-          aria-label={t(globeMode ? 'Passer au plan' : 'Passer au globe')}
-          aria-pressed={globeMode}
-          onClick={onToggleGlobeMode}
+          title={t(globeMode || cameraOrbitMode ? 'Passer au plan' : 'Passer au globe')}
+          aria-label={t(globeMode || cameraOrbitMode ? 'Passer au plan' : 'Passer au globe')}
+          aria-pressed={globeMode || cameraOrbitMode}
+          onClick={() => {
+            if (cameraOrbitMode) {
+              toggleCameraOrbitMode()
+              if (globeMode) onToggleGlobeMode()
+            } else {
+              if (!globeMode) resetPerspectiveCorrection()
+              onToggleGlobeMode()
+            }
+          }}
         >
-          {globeMode ? (
+          {globeMode || cameraOrbitMode ? (
             <svg viewBox="0 0 24 24" aria-hidden="true">
               <rect x="3" y="4" width="18" height="16" rx="1.5" />
               <path d="M3 9h18M3 15h18M9 4v16M15 4v16" />
@@ -3607,7 +4426,19 @@ function WorldMap({
             </svg>
           )}
         </button>
-        {!globeMode && (
+        <WorldMapCameraControls
+          allowCameraOrbit={allowCameraOrbit}
+          cameraOrbitMode={cameraOrbitMode}
+          cameraFreeMode={cameraFreeMode}
+          cameraPanMode={cameraPanMode}
+          cameraControlsOpen={cameraControlsOpen}
+          cameraRotation={cameraRotation}
+          onToggleOrbit={toggleCameraOrbitMode}
+          onToggleControls={toggleCameraControls}
+          onTogglePanMode={() => setCameraPanMode((active) => !active)}
+          onChangeAxis={changeCameraAxis}
+        />
+        {!globeMode && !cameraOrbitMode && (
           <button
             className={`map-control-button map-perspective-control${perspectiveCorrectionEnabled ? ' is-active' : ''}`}
             type="button"
@@ -3615,14 +4446,8 @@ function WorldMap({
             aria-label={t('Perspective corrigée')}
             aria-pressed={perspectiveCorrectionEnabled}
             onClick={() => {
-              const nextEnabled = !perspectiveCorrectionEnabled
-              if (!nextEnabled) {
-                perspectiveDragRef.current = null
-                setPerspectiveDrag(null)
-                setPerspectiveOverlap(null)
-                setPerspectiveAdjusting(false)
-              }
-              setPerspectiveCorrectionEnabled(nextEnabled)
+              if (perspectiveCorrectionEnabled) resetPerspectiveCorrection()
+              else setPerspectiveCorrectionEnabled(true)
             }}
           >
             <svg viewBox="0 0 24 24" aria-hidden="true">
@@ -3636,11 +4461,13 @@ function WorldMap({
           type="button"
           title={t('Vue mondiale')}
           aria-label={t('Revenir à la vue mondiale')}
-          onClick={() => mapRef.current?.getMap().easeTo({
-            center: [0, 0],
-            zoom: 1.5,
-            duration: 450
-          })}
+          onClick={() =>
+            mapRef.current?.getMap().easeTo({
+              center: [0, 0],
+              zoom: 1.5,
+              duration: 450
+            })
+          }
         >
           ◎
         </button>
@@ -3692,7 +4519,9 @@ function WorldMap({
           {t('Chercher un pays ou une capitale')}
         </label>
         <div className="map-search-input-row">
-          <span aria-hidden="true" className="map-search-icon">⌕</span>
+          <span aria-hidden="true" className="map-search-icon">
+            ⌕
+          </span>
           <input
             id="country-search"
             className="map-search-input"
@@ -3772,9 +4601,11 @@ function WorldMap({
             {searchResults.length ? (
               searchResults.map((country) => (
                 <button
-                  key={country.kind === 'capital'
-                    ? `capital:${country.country.sourceFeatureId}:${country.displayName}`
-                    : `country:${country.sourceFeatureId}:${country.displayName}`}
+                  key={
+                    country.kind === 'capital'
+                      ? `capital:${country.country.sourceFeatureId}:${country.displayName}`
+                      : `country:${country.sourceFeatureId}:${country.displayName}`
+                  }
                   type="button"
                   className="map-search-result"
                   data-result-kind={country.kind}
@@ -3784,10 +4615,14 @@ function WorldMap({
                 >
                   {country.kind === 'capital' ? (
                     <>
-                      <span className="map-search-result-capital-icon" aria-hidden="true">🏙️</span>
+                      <span className="map-search-result-capital-icon" aria-hidden="true">
+                        🏙️
+                      </span>
                       <span className="map-search-result-copy">
                         <span>{country.displayName}</span>
-                        <small>{t('Capitale de')} {country.country.displayName}</small>
+                        <small>
+                          {t('Capitale de')} {country.country.displayName}
+                        </small>
                       </span>
                     </>
                   ) : (
@@ -3810,24 +4645,27 @@ function WorldMap({
           </div>
         )}
       </div>
-      {quizRevealCard && (
-        <div className="quiz-reveal-card-anchor">
-          {quizRevealCard}
-        </div>
-      )}
+      {quizRevealCard && <div className="quiz-reveal-card-anchor">{quizRevealCard}</div>}
       {(pointerCoordinates || isMatrixSkin) && (
-        <div className={`map-coordinate-readout${isMatrixSkin ? ' matrix-map-readout' : ''}`} aria-live="off">
+        <div
+          className={`map-coordinate-readout${isMatrixSkin ? ' matrix-map-readout' : ''}`}
+          aria-live="off"
+        >
           {pointerCoordinates ? (
             <>
-              <span><i>LAT</i> {formatMapCoordinate(pointerCoordinates.latitude)}°</span>
-              <span><i>LON</i> {formatMapCoordinate(pointerCoordinates.longitude)}°</span>
+              <span>
+                <i>LAT</i> {formatMapCoordinate(pointerCoordinates.latitude)}°
+              </span>
+              <span>
+                <i>LON</i> {formatMapCoordinate(pointerCoordinates.longitude)}°
+              </span>
             </>
-          ) : isMatrixSkin && (
-            <span className="matrix-map-readout-idle">SURVOLE LA CARTE</span>
+          ) : (
+            isMatrixSkin && <span className="matrix-map-readout-idle">SURVOLE LA CARTE</span>
           )}
           {isMatrixSkin && (
             <small>
-              PROJ {globeMode ? 'SPHERE' : 'PLAN'} · Z {mapZoom.toFixed(2)}
+              PROJ {globeMode || cameraOrbitMode ? 'SPHERE' : 'PLAN'} · Z {mapZoom.toFixed(2)}
             </small>
           )}
         </div>

@@ -19,10 +19,15 @@ export function ResourceIndustryDescription({
   const context = industry.industrialContext
   const researchSources = research?.sources ?? []
   const sources = [
-    { name: 'CIA World Factbook — archived profile', url: 'https://github.com/factbook/factbook.json' },
+    {
+      name: 'CIA World Factbook — archived profile',
+      url: 'https://github.com/factbook/factbook.json'
+    },
     ...(context?.source ? [context.source] : []),
     ...researchSources
-  ].filter((source, index, all) => all.findIndex((candidate) => candidate.url === source.url) === index)
+  ].filter(
+    (source, index, all) => all.findIndex((candidate) => candidate.url === source.url) === index
+  )
 
   return (
     <div className="resource-industry-description">
@@ -32,9 +37,16 @@ export function ResourceIndustryDescription({
         <h4>{t('Classement mondial vérifié')}</h4>
         {research?.worldRank ? (
           <div className="resource-industry-rank">
-            <strong>#{research.worldRank.position}{research.worldRank.total ? ` / ${research.worldRank.total}` : ''}</strong>
-            <span>{localized(research.worldRank.metric, language)} · {research.worldRank.year}</span>
-            {research.worldRank.share && <span>{localized(research.worldRank.share, language)}</span>}
+            <strong>
+              #{research.worldRank.position}
+              {research.worldRank.total ? ` / ${research.worldRank.total}` : ''}
+            </strong>
+            <span>
+              {localized(research.worldRank.metric, language)} · {research.worldRank.year}
+            </span>
+            {research.worldRank.share && (
+              <span>{localized(research.worldRank.share, language)}</span>
+            )}
           </div>
         ) : (
           <p>ND</p>
@@ -43,23 +55,17 @@ export function ResourceIndustryDescription({
 
       <section className="resource-industry-research-section">
         <h4>{t('Poids dans le territoire')}</h4>
-        <p>{research?.importance
-          ? localized(research.importance, language)
-          : 'ND'}</p>
+        <p>{research?.importance ? localized(research.importance, language) : 'ND'}</p>
       </section>
 
       <section className="resource-industry-research-section">
         <h4>{t('Production et savoir-faire')}</h4>
-        <p>{research?.production
-          ? localized(research.production, language)
-          : 'ND'}</p>
+        <p>{research?.production ? localized(research.production, language) : 'ND'}</p>
       </section>
 
       <section className="resource-industry-research-section">
         <h4>{t('Travail et conditions')}</h4>
-        <p>{research?.work
-          ? localized(research.work, language)
-          : 'ND'}</p>
+        <p>{research?.work ? localized(research.work, language) : 'ND'}</p>
       </section>
 
       <section className="resource-industry-research-section resource-industry-national-context">
@@ -68,14 +74,28 @@ export function ResourceIndustryDescription({
           <>
             {context.manufacturingRank && (
               <p>
-                <strong>{t('Compétitivité manufacturière')} : #{context.manufacturingRank.position} / {context.manufacturingRank.total}</strong>
-                <span> · {context.manufacturingRank.year} · {t('Rang général du pays, pas un classement de ce secteur.')}</span>
+                <strong>
+                  {t('Compétitivité manufacturière')} : #{context.manufacturingRank.position} /{' '}
+                  {context.manufacturingRank.total}
+                </strong>
+                <span>
+                  {' '}
+                  · {context.manufacturingRank.year} ·{' '}
+                  {t('Rang général du pays, pas un classement de ce secteur.')}
+                </span>
               </p>
             )}
             {context.indicators?.map((indicator) => (
-              <p className="resource-industry-context-indicator" key={`${indicator.label.fr}-${indicator.year}`}>
+              <p
+                className="resource-industry-context-indicator"
+                key={`${indicator.label.fr}-${indicator.year}`}
+              >
                 <span>{localized(indicator.label, language)}</span>
-                <strong>{typeof indicator.value === 'string' ? indicator.value : localized(indicator.value, language)}</strong>
+                <strong>
+                  {typeof indicator.value === 'string'
+                    ? indicator.value
+                    : localized(indicator.value, language)}
+                </strong>
                 <small>{indicator.year}</small>
               </p>
             ))}
@@ -99,7 +119,8 @@ export function ResourceIndustryDescription({
             {sources.map((source) => (
               <li key={source.url}>
                 <a href={source.url} target="_blank" rel="noreferrer">
-                  {t(source.name)}{source.year ? ` · ${source.year}` : ''}
+                  {t(source.name)}
+                  {source.year ? ` · ${source.year}` : ''}
                 </a>
               </li>
             ))}

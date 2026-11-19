@@ -2,6 +2,7 @@ import type { ContinentId } from '../quiz/countryContinents'
 
 export type ManagedMapLayerId =
   | 'texture'
+  | 'topography'
   | 'territories'
   | 'borders'
   | 'labels'
@@ -18,6 +19,8 @@ export type MapOpacityMask = {
   name: string
   kind: 'circle' | 'rectangle' | 'country' | 'continent'
   opacity: number
+  enabled?: boolean
+  targetLayerId?: ManagedMapLayerId | null
   center?: [number, number]
   radiusKm?: number
   widthKm?: number
@@ -40,12 +43,14 @@ export const defaultMapLayerOrder: MapLayerStackId[] = [
   'summits',
   'mountains',
   'borders',
+  'topography',
   'texture',
   'territories'
 ]
 
 export const defaultMapLayerOpacities: MapLayerOpacityValues = {
   texture: 100,
+  topography: 100,
   territories: 100,
   borders: 100,
   labels: 100,

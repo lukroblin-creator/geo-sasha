@@ -1,15 +1,7 @@
-
 import bboxClip from '@turf/bbox-clip'
 import polylabel from 'polylabel'
 
-import type {
-  Feature,
-  FeatureCollection,
-  Geometry,
-  Polygon,
-  MultiPolygon,
-  Point
-} from 'geojson'
+import type { Feature, FeatureCollection, Geometry, Polygon, MultiPolygon, Point } from 'geojson'
 import { getEntityDisplayName } from './registry'
 import { getLabelPrecision } from './labelPrecision'
 import { overseasIslandLabels } from './overseasIslandLabels'
@@ -66,10 +58,7 @@ function getPolygonBounds(coordinates: Polygon['coordinates']): Bounds | null {
 }
 
 function getGeometryBounds(geometry: Polygon | MultiPolygon): Bounds | null {
-  const polygons =
-    geometry.type === 'Polygon'
-      ? [geometry.coordinates]
-      : geometry.coordinates
+  const polygons = geometry.type === 'Polygon' ? [geometry.coordinates] : geometry.coordinates
   let combinedBounds: Bounds | null = null
 
   for (const polygon of polygons) {
@@ -126,32 +115,20 @@ function findBestLabelPoint(
   geometry: Polygon | MultiPolygon,
   precision: number
 ): LabelAnchor | null {
-  const polygons =
-    geometry.type === 'Polygon'
-      ? [geometry.coordinates]
-      : geometry.coordinates
+  const polygons = geometry.type === 'Polygon' ? [geometry.coordinates] : geometry.coordinates
 
   let bestAnchor: LabelAnchor | null = null
   let bestDistance = -1
   for (const coordinates of polygons) {
-    if (
-      !coordinates[0] ||
-      coordinates[0].length < 4
-    ) {
+    if (!coordinates[0] || coordinates[0].length < 4) {
       continue
     }
 
     try {
       const projectedCoordinates = coordinates.map((ring) =>
-        ring.map(([longitude, latitude]) => [
-          longitude,
-          toMercatorLatitude(latitude)
-        ])
+        ring.map(([longitude, latitude]) => [longitude, toMercatorLatitude(latitude)])
       )
-      const result = polylabel(
-        projectedCoordinates as [number, number][][],
-        precision
-      )
+      const result = polylabel(projectedCoordinates as [number, number][][], precision)
 
       const longitude = result[0]
       const latitude = fromMercatorLatitude(result[1])
@@ -175,9 +152,7 @@ function findBestLabelPoint(
 }
 
 /** Returns a stable interior point for the main land mass of a polygon geometry. */
-export function getGeometryInteriorPoint(
-  geometry: Geometry
-): [number, number] | null {
+export function getGeometryInteriorPoint(geometry: Geometry): [number, number] | null {
   if (geometry.type !== 'Polygon' && geometry.type !== 'MultiPolygon') return null
   return findBestLabelPoint(geometry, getLabelPrecision(0))?.coordinates ?? null
 }
@@ -221,10 +196,7 @@ export function createVisibleCountryLabels(
           countryLabelCache.set(cacheKey, anchor)
         }
       } else {
-        const clipped = bboxClip(
-          { ...country, geometry } as Feature<Polygon | MultiPolygon>,
-          bbox
-        )
+        const clipped = bboxClip({ ...country, geometry } as Feature<Polygon | MultiPolygon>, bbox)
         if (
           !clipped.geometry ||
           (clipped.geometry.type !== 'Polygon' && clipped.geometry.type !== 'MultiPolygon')
@@ -256,10 +228,7 @@ export function createVisibleCountryLabels(
 
     try {
       const geometry = country.geometry
-      if (
-        Object.keys(polygonEntityIds).length > 0 &&
-        geometry.type === 'MultiPolygon'
-      ) {
+      if (Object.keys(polygonEntityIds).length > 0 && geometry.type === 'MultiPolygon') {
         const polygonsByEntity = new Map<string, MultiPolygon['coordinates']>()
         const unlinkedPolygons: MultiPolygon['coordinates'] = []
 
@@ -278,14 +247,8 @@ export function createVisibleCountryLabels(
         // Une entité peut être constituée de plusieurs îles. On calcule un
         // seul point d'étiquette pour l'ensemble de ses polygones visibles.
         for (const [entityId, polygons] of polygonsByEntity) {
-          const entityName =
-            getEntityDisplayName(entityId) ??
-            String(properties?.name ?? 'Unknown')
-          addLabel(
-            { type: 'MultiPolygon', coordinates: polygons },
-            entityId,
-            entityName
-          )
+          const entityName = getEntityDisplayName(entityId) ?? String(properties?.name ?? 'Unknown')
+          addLabel({ type: 'MultiPolygon', coordinates: polygons }, entityId, entityName)
         }
 
         // Les polygones sans lien détaillé gardent l'étiquette habituelle du pays.
@@ -300,11 +263,7 @@ export function createVisibleCountryLabels(
         if (geometry.type !== 'Polygon' && geometry.type !== 'MultiPolygon') continue
         const entityId = properties?.entityId ?? null
         const entityName = entityId ? getEntityDisplayName(entityId) : undefined
-        addLabel(
-          geometry,
-          entityId,
-          entityName ?? String(properties?.name ?? 'Unknown')
-        )
+        addLabel(geometry, entityId, entityName ?? String(properties?.name ?? 'Unknown'))
       }
     } catch {
       // Ignore les géométries impossibles à découper.

@@ -33,9 +33,33 @@ export type EstimationQuestion = {
 const countries = countryExplorationData.countries as CountryMeasurement[]
 const profileByAlpha2 = countryProfileFacts.byAlpha2 as Record<string, ProfileMeasurement>
 const regionNames: Record<AppLanguage, Record<QuizRegion, string>> = {
-  fr: { world: 'le monde', africa: 'l’Afrique', 'north-america': 'l’Amérique du Nord', 'south-america': 'l’Amérique du Sud', asia: 'l’Asie', europe: 'l’Europe', oceania: 'l’Océanie' },
-  en: { world: 'the world', africa: 'Africa', 'north-america': 'North America', 'south-america': 'South America', asia: 'Asia', europe: 'Europe', oceania: 'Oceania' },
-  es: { world: 'el mundo', africa: 'África', 'north-america': 'América del Norte', 'south-america': 'América del Sur', asia: 'Asia', europe: 'Europa', oceania: 'Oceanía' }
+  fr: {
+    world: 'le monde',
+    africa: 'l’Afrique',
+    'north-america': 'l’Amérique du Nord',
+    'south-america': 'l’Amérique du Sud',
+    asia: 'l’Asie',
+    europe: 'l’Europe',
+    oceania: 'l’Océanie'
+  },
+  en: {
+    world: 'the world',
+    africa: 'Africa',
+    'north-america': 'North America',
+    'south-america': 'South America',
+    asia: 'Asia',
+    europe: 'Europe',
+    oceania: 'Oceania'
+  },
+  es: {
+    world: 'el mundo',
+    africa: 'África',
+    'north-america': 'América del Norte',
+    'south-america': 'América del Sur',
+    asia: 'Asia',
+    europe: 'Europa',
+    oceania: 'Oceanía'
+  }
 }
 const localizedMetricText: Record<AppLanguage, Record<string, { label: string; unit: string }>> = {
   fr: {
@@ -79,17 +103,28 @@ const prompts: Record<AppLanguage, (metric: string, region: string) => string> =
 function groupLabel(alpha2s: string[], language: AppLanguage): string {
   const countryNames = new Intl.DisplayNames([language], { type: 'region' })
   const fallbackNames = new Map(
-    (countryCatalog as { alpha2: string; countryName: string }[]).map((country) => [country.alpha2, country.countryName])
+    (countryCatalog as { alpha2: string; countryName: string }[]).map((country) => [
+      country.alpha2,
+      country.countryName
+    ])
   )
   const names = alpha2s.map((code) => countryNames.of(code) ?? fallbackNames.get(code) ?? code)
   if (names.length === 1) return names[0]
   if (names.length <= 3) return names.join(', ')
-  const suffix = language === 'fr' ? 'autres territoires' : language === 'es' ? 'otros territorios' : 'other territories'
+  const suffix =
+    language === 'fr'
+      ? 'autres territoires'
+      : language === 'es'
+        ? 'otros territorios'
+        : 'other territories'
   const conjunction = language === 'fr' ? 'et' : language === 'es' ? 'y' : 'and'
   return `${names.slice(0, 3).join(', ')} ${conjunction} ${names.length - 3} ${suffix}`
 }
 
-function sumMetric(records: CountryMeasurement[], getValue: (record: CountryMeasurement) => number | undefined): number | undefined {
+function sumMetric(
+  records: CountryMeasurement[],
+  getValue: (record: CountryMeasurement) => number | undefined
+): number | undefined {
   const values = records.map(getValue)
   if (values.some((value) => value === undefined || !Number.isFinite(value))) return undefined
   return values.reduce<number>((sum, value) => sum + (value ?? 0), 0)
@@ -108,33 +143,50 @@ function createMetricRows(
   const metrics: Array<{ id: string; value: number | undefined; groupMetric?: boolean }> = [
     { id: 'population', value: totalPopulation },
     { id: 'area', value: totalArea },
-    { id: 'populationDensity', value: totalPopulation && totalArea ? totalPopulation / totalArea : undefined },
-    ...(singleCountry ? [
-      { id: 'perimeter', value: records[0].metrics?.perimeterKm },
-      { id: 'northSouth', value: records[0].metrics?.northSouthKm },
-      { id: 'eastWest', value: records[0].metrics?.eastWestKm }
-    ] : []),
+    {
+      id: 'populationDensity',
+      value: totalPopulation && totalArea ? totalPopulation / totalArea : undefined
+    },
+    ...(singleCountry
+      ? [
+          { id: 'perimeter', value: records[0].metrics?.perimeterKm },
+          { id: 'northSouth', value: records[0].metrics?.northSouthKm },
+          { id: 'eastWest', value: records[0].metrics?.eastWestKm }
+        ]
+      : []),
     {
       id: 'highestPoint',
-      value: Math.max(...records.map((record) => profileByAlpha2[record.alpha2]?.highestPoint?.elevationMeters ?? Number.NEGATIVE_INFINITY))
+      value: Math.max(
+        ...records.map(
+          (record) =>
+            profileByAlpha2[record.alpha2]?.highestPoint?.elevationMeters ??
+            Number.NEGATIVE_INFINITY
+        )
+      )
     },
     {
       id: 'largestCity',
-      value: Math.max(...records.map((record) => Math.max(0, ...(record.cities ?? []).map((city) => city.population))))
+      value: Math.max(
+        ...records.map((record) =>
+          Math.max(0, ...(record.cities ?? []).map((city) => city.population))
+        )
+      )
     }
   ]
 
   return metrics.flatMap(({ id, value }) => {
     if (value === undefined || !Number.isFinite(value) || value <= 0) return []
     const metric = text[id]
-    return [{
-      id: `${alpha2s.join('-')}:${id}`,
-      regionName,
-      metricLabel: metric.label,
-      actualValue: id === 'populationDensity' ? Number(value.toPrecision(3)) : Math.round(value),
-      unit: metric.unit,
-      prompt: prompts[language](metric.label, regionName)
-    }]
+    return [
+      {
+        id: `${alpha2s.join('-')}:${id}`,
+        regionName,
+        metricLabel: metric.label,
+        actualValue: id === 'populationDensity' ? Number(value.toPrecision(3)) : Math.round(value),
+        unit: metric.unit,
+        prompt: prompts[language](metric.label, regionName)
+      }
+    ]
   })
 }
 
@@ -145,25 +197,29 @@ export function createEstimationQuestions(
   count = 10
 ): EstimationQuestion[] {
   const selected = new Set(selectedAlpha2s.map((code) => code.toUpperCase()))
-  const scopedCountries = selected.size > 0
-    ? countries.filter((country) => selected.has(country.alpha2))
-    : countries.filter((country) =>
-        region === 'world' || getContinentLabelForCountry(country.alpha2) ===
-          (quizRegions.find((candidate) => candidate.id === region)?.label ?? '')
-      )
+  const scopedCountries =
+    selected.size > 0
+      ? countries.filter((country) => selected.has(country.alpha2))
+      : countries.filter(
+          (country) =>
+            region === 'world' ||
+            getContinentLabelForCountry(country.alpha2) ===
+              (quizRegions.find((candidate) => candidate.id === region)?.label ?? '')
+        )
   if (!scopedCountries.length) return []
 
-  const pool = selected.size > 0
-    ? scopedCountries.flatMap((country) => {
-        const countryName = groupLabel([country.alpha2], language)
-        return createMetricRows([country], [country.alpha2], countryName, language)
-      })
-    : createMetricRows(
-        scopedCountries,
-        scopedCountries.map((country) => country.alpha2),
-        regionNames[language][region],
-        language
-      )
+  const pool =
+    selected.size > 0
+      ? scopedCountries.flatMap((country) => {
+          const countryName = groupLabel([country.alpha2], language)
+          return createMetricRows([country], [country.alpha2], countryName, language)
+        })
+      : createMetricRows(
+          scopedCountries,
+          scopedCountries.map((country) => country.alpha2),
+          regionNames[language][region],
+          language
+        )
   return shuffleItems(pool).slice(0, Math.min(count, pool.length))
 }
 

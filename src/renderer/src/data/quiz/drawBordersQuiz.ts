@@ -11,7 +11,7 @@ const gridSize = 0.25
 const earthRadiusKm = 6371.0088
 
 function normalizeLongitude(longitude: number): number {
-  return ((longitude + 180) % 360 + 360) % 360 - 180
+  return ((((longitude + 180) % 360) + 360) % 360) - 180
 }
 
 function normalizeSourceFeatureId(sourceFeatureId: string | number): string {
@@ -32,11 +32,12 @@ function cellKey(x: number, y: number): string {
 }
 
 function distanceKm(first: GeoPoint, second: GeoPoint): number {
-  const latitudeA = first[1] * Math.PI / 180
-  const latitudeB = second[1] * Math.PI / 180
+  const latitudeA = (first[1] * Math.PI) / 180
+  const latitudeB = (second[1] * Math.PI) / 180
   const deltaLatitude = latitudeB - latitudeA
-  const deltaLongitude = normalizeLongitude(second[0] - first[0]) * Math.PI / 180
-  const haversine = Math.sin(deltaLatitude / 2) ** 2 +
+  const deltaLongitude = (normalizeLongitude(second[0] - first[0]) * Math.PI) / 180
+  const haversine =
+    Math.sin(deltaLatitude / 2) ** 2 +
     Math.cos(latitudeA) * Math.cos(latitudeB) * Math.sin(deltaLongitude / 2) ** 2
   return earthRadiusKm * 2 * Math.asin(Math.min(1, Math.sqrt(haversine)))
 }
@@ -55,14 +56,23 @@ function indexPoints(points: GeoPoint[]): Map<string, GeoPoint[]> {
   return grid
 }
 
-function hasNearbyPoint(point: GeoPoint, grid: Map<string, GeoPoint[]>, toleranceKm: number): boolean {
+function hasNearbyPoint(
+  point: GeoPoint,
+  grid: Map<string, GeoPoint[]>,
+  toleranceKm: number
+): boolean {
   const longitudeCellCount = Math.round(360 / gridSize)
-  const xRadius = Math.min(12, Math.ceil(toleranceKm / (111 * Math.max(0.15, Math.cos(point[1] * Math.PI / 180)) * gridSize)) + 1)
+  const xRadius = Math.min(
+    12,
+    Math.ceil(
+      toleranceKm / (111 * Math.max(0.15, Math.cos((point[1] * Math.PI) / 180)) * gridSize)
+    ) + 1
+  )
   const yRadius = Math.ceil(toleranceKm / (111 * gridSize)) + 1
   const centerX = cellX(point[0])
   const centerY = cellY(point[1])
   for (let deltaX = -xRadius; deltaX <= xRadius; deltaX += 1) {
-    const x = ((centerX + deltaX) % longitudeCellCount + longitudeCellCount) % longitudeCellCount
+    const x = (((centerX + deltaX) % longitudeCellCount) + longitudeCellCount) % longitudeCellCount
     for (let deltaY = -yRadius; deltaY <= yRadius; deltaY += 1) {
       const candidates = grid.get(cellKey(x, centerY + deltaY))
       if (candidates?.some((candidate) => distanceKm(point, candidate) <= toleranceKm)) return true
@@ -80,7 +90,7 @@ function getRingCoordinates(geometry: Geometry): Position[][] {
 function getOuterRings(geometry: Geometry): Position[][] {
   if (geometry.type === 'Polygon') return geometry.coordinates[0] ? [geometry.coordinates[0]] : []
   if (geometry.type === 'MultiPolygon') {
-    return geometry.coordinates.flatMap((polygon) => polygon[0] ? [polygon[0]] : [])
+    return geometry.coordinates.flatMap((polygon) => (polygon[0] ? [polygon[0]] : []))
   }
   return []
 }
@@ -89,7 +99,8 @@ function appendPathSamples(path: Position[], points: GeoPoint[]): void {
   for (let index = 0; index < path.length - 1; index += 1) {
     const rawFrom = path[index]
     const rawTo = path[index + 1]
-    if (!rawFrom || !rawTo || !Number.isFinite(rawFrom[0] + rawFrom[1] + rawTo[0] + rawTo[1])) continue
+    if (!rawFrom || !rawTo || !Number.isFinite(rawFrom[0] + rawFrom[1] + rawTo[0] + rawTo[1]))
+      continue
     const from: GeoPoint = [normalizeLongitude(rawFrom[0]), rawFrom[1]]
     const to: GeoPoint = [normalizeLongitude(rawTo[0]), rawTo[1]]
     points.push(from)
@@ -123,14 +134,21 @@ function extractReferencePoints(
   const catalog = countryCatalog as CountryCatalogRow[]
   const sourceIds = new Set(
     catalog
-      .filter((country) => countryAlpha2
-        ? country.alpha2 === countryAlpha2
-        : continentFilter.length === 0 || continentFilter.some((continent) =>
-            getContinentLabelForCountry(country.alpha2) === quizRegions.find((region) => region.id === continent)?.label
-          ))
+      .filter((country) =>
+        countryAlpha2
+          ? country.alpha2 === countryAlpha2
+          : continentFilter.length === 0 ||
+            continentFilter.some(
+              (continent) =>
+                getContinentLabelForCountry(country.alpha2) ===
+                quizRegions.find((region) => region.id === continent)?.label
+            )
+      )
       .map((country) => normalizeSourceFeatureId(country.sourceFeatureId))
   )
-  const countrySourceIds = new Set(catalog.map((country) => normalizeSourceFeatureId(country.sourceFeatureId)))
+  const countrySourceIds = new Set(
+    catalog.map((country) => normalizeSourceFeatureId(country.sourceFeatureId))
+  )
 
   if (countryAlpha2) {
     const points: GeoPoint[] = []
@@ -214,7 +232,13 @@ export function scoreDrawnBorders(
   const toleranceKm = 35
   const referenceIndex = indexPoints(referencePoints)
   const drawnIndex = indexPoints(drawnPoints)
-  const precision = drawnPoints.filter((point) => hasNearbyPoint(point, referenceIndex, toleranceKm)).length / drawnPoints.length
-  const recall = referencePoints.filter((point) => hasNearbyPoint(point, drawnIndex, toleranceKm)).length / referencePoints.length
-  return precision + recall === 0 ? 0 : Math.round((2 * precision * recall / (precision + recall)) * 100)
+  const precision =
+    drawnPoints.filter((point) => hasNearbyPoint(point, referenceIndex, toleranceKm)).length /
+    drawnPoints.length
+  const recall =
+    referencePoints.filter((point) => hasNearbyPoint(point, drawnIndex, toleranceKm)).length /
+    referencePoints.length
+  return precision + recall === 0
+    ? 0
+    : Math.round(((2 * precision * recall) / (precision + recall)) * 100)
 }

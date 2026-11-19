@@ -1,4 +1,5 @@
-import WorldMap from './WorldMap'
+import { useState } from 'react'
+import WorldMap from './WorldMapLoader'
 import { getFlagImageSource } from '../data/quiz/flagAssets'
 import {
   getCountryKnowledgeCountry,
@@ -6,9 +7,12 @@ import {
 } from '../data/quiz/countryKnowledge'
 import { formatQuizScore, type QuizSession } from '../data/quiz/useQuizSession'
 import { useLanguage } from '../data/i18n'
-import { CorrectAnswerBanner } from './QuizPanels'
+import { CorrectAnswerBanner, QuizReview } from './QuizPanels'
 import { MapFullscreenBar } from './MapFullscreenBar'
 import { SkinSelector } from './AppModeSwitcher'
+import countryCatalog from '../data/quiz/countryCatalog.json'
+import { getExplorationDetails } from '../data/geography/exploration'
+import { QuizReviewCountryCard } from './QuizPanels'
 
 type CountryKnowledgeQuizViewProps = {
   alpha2: string
@@ -39,18 +43,29 @@ export function CountryKnowledgeQuizView({
   onRestart,
   onStop
 }: CountryKnowledgeQuizViewProps): React.JSX.Element {
+  const [reviewAlpha2, setReviewAlpha2] = useState<string | null>(null)
   const { language, t } = useLanguage()
   const country = getCountryKnowledgeCountry(alpha2)
   const countryNames = new Intl.DisplayNames([language], { type: 'region' })
   const countryName = countryNames.of(alpha2) ?? country?.countryName ?? alpha2
   const question = session.questionOrder[session.questionIndex]
   const total = session.questionOrder.length
+  const reviewCountry = reviewAlpha2
+    ? (countryCatalog as { alpha2: string; sourceFeatureId: number; countryName: string }[]).find(
+        (entry) => entry.alpha2 === reviewAlpha2
+      )
+    : undefined
+  const reviewPlace = reviewCountry
+    ? getExplorationDetails(reviewCountry.sourceFeatureId, reviewCountry.countryName, null)
+    : null
   const questionSettled = session.answerCorrect === true || session.answerRevealed
   const completedCount = session.questionIndex + (questionSettled ? 1 : 0)
   const progress = total ? (completedCount / total) * 100 : 0
 
   return (
-    <main className={`country-knowledge-screen${isFullscreen ? ' map-fullscreen-screen country-knowledge-map-fullscreen' : ''}`}>
+    <main
+      className={`country-knowledge-screen${isFullscreen ? ' map-fullscreen-screen country-knowledge-map-fullscreen' : ''}`}
+    >
       {isFullscreen && (
         <MapFullscreenBar
           title={`${t('Quiz pays')} · ${countryName}`}
@@ -62,8 +77,14 @@ export function CountryKnowledgeQuizView({
       <header className="statistics-header">
         <div>
           <div className="breadcrumb">{t('APPRENTISSAGE / QUIZ PAYS')}</div>
-          <h1>{t('À la découverte de')} {countryName}</h1>
-          <p>{t('Réponds à des questions sur sa capitale, ses villes, ses reliefs, sa devise, ses langues officielles, son alphabet et son domaine internet.')}</p>
+          <h1>
+            {t('À la découverte de')} {countryName}
+          </h1>
+          <p>
+            {t(
+              'Réponds à des questions sur sa capitale, ses villes, ses reliefs, sa devise, ses langues officielles, son alphabet et son domaine internet.'
+            )}
+          </p>
         </div>
         <div className="statistics-actions">
           <SkinSelector compact />
@@ -86,12 +107,24 @@ export function CountryKnowledgeQuizView({
             showLabels={false}
             globeMode={globeMode}
             onToggleGlobeMode={onToggleGlobeMode}
-            quizTargetFeatureId={country?.sourceFeatureId ?? null}
+            quizTargetFeatureId={reviewCountry?.sourceFeatureId ?? country?.sourceFeatureId ?? null}
+            quizTargetViewKey={
+              reviewCountry
+                ? `country-knowledge-review:${reviewCountry.alpha2}`
+                : `country-knowledge:${alpha2}`
+            }
+            quizTargetMaxZoom={reviewCountry ? 4.5 : undefined}
+            showQuizRevealCard={Boolean(reviewPlace)}
+            quizRevealCard={
+              reviewPlace ? (
+                <QuizReviewCountryCard place={reviewPlace} onClose={() => setReviewAlpha2(null)} />
+              ) : null
+            }
           />
           <div className="country-knowledge-country-card">
             <img src={getFlagImageSource(alpha2)} alt={`${t('Drapeau de')} ${countryName}`} />
             <div>
-                <span>{t('PAYS ÉTUDIÉ')}</span>
+              <span>{t('PAYS ÉTUDIÉ')}</span>
               <strong>{countryName}</strong>
             </div>
           </div>
@@ -104,8 +137,11 @@ export function CountryKnowledgeQuizView({
               <h2>{t('Bien joué !')}</h2>
               <p>
                 {t('Score :')}{' '}
-                <strong>{formatQuizScore(session.score, language)} / {total}</strong>
+                <strong>
+                  {formatQuizScore(session.score, language)} / {total}
+                </strong>
               </p>
+              <QuizReview session={session} onSelectCountry={setReviewAlpha2} />
               <div className="country-knowledge-complete-actions">
                 <button className="quiz-start-button" type="button" onClick={onRestart}>
                   {t('Rejouer ce pays')}
@@ -187,7 +223,9 @@ export function CountryKnowledgeQuizView({
                       </span>
                     ) : (
                       <span>
-                        {t('Ce n’est pas la bonne réponse. Tu peux voir la solution ou passer à la suite.')}
+                        {t(
+                          'Ce n’est pas la bonne réponse. Tu peux voir la solution ou passer à la suite.'
+                        )}
                       </span>
                     )}
                   </div>
@@ -202,7 +240,9 @@ export function CountryKnowledgeQuizView({
                 )}
                 {questionSettled && (
                   <button className="quiz-next-button" type="button" onClick={onNext}>
-                    {t(session.questionIndex === total - 1 ? 'Voir le résultat' : 'Question suivante')}
+                    {t(
+                      session.questionIndex === total - 1 ? 'Voir le résultat' : 'Question suivante'
+                    )}
                   </button>
                 )}
               </div>

@@ -1,9 +1,4 @@
-
-import type {
-  FeatureCollection,
-  Geometry,
-  Point
-} from 'geojson'
+import type { FeatureCollection, Geometry, Point } from 'geojson'
 
 import { createVisibleCountryLabels } from '../data/geography/labels'
 
@@ -36,7 +31,6 @@ type WorkerResponse = {
 
 let countries: FeatureCollection<Geometry> | null = null
 
-
 const workerScope = self as unknown as {
   onmessage: ((event: MessageEvent<WorkerMessage>) => void) | null
   postMessage: (message: WorkerResponse) => void
@@ -58,11 +52,7 @@ workerScope.onmessage = (event: MessageEvent<WorkerMessage>) => {
   if (message.type === 'update') {
     if (!countries) return
 
-    const labels = createVisibleCountryLabels(
-      countries,
-      message.bbox,
-      message.zoom
-    )
+    const labels = createVisibleCountryLabels(countries, message.bbox, message.zoom)
 
     workerScope.postMessage({
       type: 'labels',

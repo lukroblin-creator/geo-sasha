@@ -9,8 +9,5 @@ import {
 export type { CountryCapitalQuestion } from './buildCapitalQuestions'
 
 export function createCountryCapitalQuestions(): CountryCapitalQuestion[] {
-  return buildCapitalQuestions(
-    countryCatalog,
-    countryCapitals as CapitalRecord[]
-  )
+  return buildCapitalQuestions(countryCatalog, countryCapitals as CapitalRecord[])
 }

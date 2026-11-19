@@ -1,5 +1,10 @@
 import { quizRegions, type ContinentId, type QuizRegion } from './countryContinents'
-import type { QuizAnswers, QuizClues } from './countryQuiz'
+import {
+  supplementalQuizFactOptions,
+  type QuizAnswers,
+  type QuizClues,
+  type SupplementalQuizFactSettings
+} from './countryQuiz'
 
 export type QuizPreset = {
   id: string
@@ -8,6 +13,8 @@ export type QuizPreset = {
   questionCount: number
   clues: QuizClues
   answers: QuizAnswers
+  supplementalClues?: SupplementalQuizFactSettings
+  supplementalAnswers?: SupplementalQuizFactSettings
   gameMode?: 'base' | 'estimation' | 'draw-borders'
   estimationRegion?: QuizRegion
   estimationAlpha2s?: string[]
@@ -18,6 +25,7 @@ export type QuizPreset = {
 const STORAGE_KEY = 'world-atlas:quiz-presets:v1'
 const DEFAULT_PRESET_STORAGE_KEY = 'world-atlas:quiz-default-preset:v1'
 const contentIds = ['countryOnMap', 'flag', 'countryName', 'capital'] as const
+const supplementalContentIds = supplementalQuizFactOptions.map(({ id }) => id)
 
 export function loadDefaultQuizPresetId(): string {
   try {
@@ -43,6 +51,15 @@ function isBooleanRecord(value: unknown): value is QuizClues {
   return contentIds.every((id) => typeof record[id] === 'boolean')
 }
 
+function isSupplementalBooleanRecord(value: unknown): value is SupplementalQuizFactSettings {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return false
+  return Object.entries(value).every(
+    ([id, enabled]) =>
+      supplementalContentIds.includes(id as (typeof supplementalContentIds)[number]) &&
+      typeof enabled === 'boolean'
+  )
+}
+
 function isQuizPreset(value: unknown): value is QuizPreset {
   if (!value || typeof value !== 'object') return false
   const preset = value as Record<string, unknown>
@@ -56,15 +73,26 @@ function isQuizPreset(value: unknown): value is QuizPreset {
     preset.questionCount > 0 &&
     isBooleanRecord(preset.clues) &&
     isBooleanRecord(preset.answers) &&
-    (preset.gameMode === undefined || ['base', 'estimation', 'draw-borders'].includes(String(preset.gameMode))) &&
-    (preset.estimationRegion === undefined || quizRegions.some((region) => region.id === preset.estimationRegion)) &&
+    (preset.supplementalClues === undefined ||
+      isSupplementalBooleanRecord(preset.supplementalClues)) &&
+    (preset.supplementalAnswers === undefined ||
+      isSupplementalBooleanRecord(preset.supplementalAnswers)) &&
+    (preset.gameMode === undefined ||
+      ['base', 'estimation', 'draw-borders'].includes(String(preset.gameMode))) &&
+    (preset.estimationRegion === undefined ||
+      quizRegions.some((region) => region.id === preset.estimationRegion)) &&
     (preset.estimationAlpha2s === undefined ||
-      (Array.isArray(preset.estimationAlpha2s) && preset.estimationAlpha2s.every((code) => typeof code === 'string' && /^[A-Z]{2}$/.test(code)))) &&
+      (Array.isArray(preset.estimationAlpha2s) &&
+        preset.estimationAlpha2s.every(
+          (code) => typeof code === 'string' && /^[A-Z]{2}$/.test(code)
+        ))) &&
     (preset.drawContinents === undefined ||
-      (Array.isArray(preset.drawContinents) && preset.drawContinents.every((continent) =>
-        quizRegions.some((region) => region.id === continent && region.id !== 'world')
-      ))) &&
-    (preset.drawCountryAlpha2 === undefined || preset.drawCountryAlpha2 === null ||
+      (Array.isArray(preset.drawContinents) &&
+        preset.drawContinents.every((continent) =>
+          quizRegions.some((region) => region.id === continent && region.id !== 'world')
+        ))) &&
+    (preset.drawCountryAlpha2 === undefined ||
+      preset.drawCountryAlpha2 === null ||
       (typeof preset.drawCountryAlpha2 === 'string' && /^[A-Z]{2}$/.test(preset.drawCountryAlpha2)))
   )
 }

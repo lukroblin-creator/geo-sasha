@@ -14,9 +14,7 @@ type ExplorationTerritoryRecord = {
 const frenchRegionNames = new Intl.DisplayNames(['fr'], { type: 'region' })
 
 export function getCountryEntityId(alpha2: string): string {
-  return alpha2.toUpperCase() === 'FR'
-    ? 'country:france'
-    : `country:${alpha2.toLowerCase()}`
+  return alpha2.toUpperCase() === 'FR' ? 'country:france' : `country:${alpha2.toLowerCase()}`
 }
 
 // Registre central des entités géographiques de World Atlas.

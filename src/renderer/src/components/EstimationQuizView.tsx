@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import WorldMap from './WorldMap'
+import WorldMap from './WorldMapLoader'
 import { SkinSelector } from './AppModeSwitcher'
 import { useLanguage } from '../data/i18n'
 import { formatQuizScore } from '../data/quiz/useQuizSession'
@@ -59,13 +59,17 @@ export function EstimationQuizView({
         <div>
           <span>{t('QUIZ MONDE / ESTIMATION')}</span>
           <h1>{t('Mode estimation')}</h1>
-          <p>{completedScore === null
-            ? `${t('Question')} ${index + 1} / ${questions.length}`
-            : t('Partie terminée')}</p>
+          <p>
+            {completedScore === null
+              ? `${t('Question')} ${index + 1} / ${questions.length}`
+              : t('Partie terminée')}
+          </p>
         </div>
         <div className="special-quiz-header-actions">
           <SkinSelector compact />
-          <button type="button" onClick={onStop}>{t('Quitter la partie')}</button>
+          <button type="button" onClick={onStop}>
+            {t('Quitter la partie')}
+          </button>
         </div>
       </header>
 
@@ -84,7 +88,12 @@ export function EstimationQuizView({
             <>
               <span className="special-quiz-kicker">{question.metricLabel}</span>
               <h2>{question.prompt}</h2>
-              <form onSubmit={(event) => { event.preventDefault(); submit() }}>
+              <form
+                onSubmit={(event) => {
+                  event.preventDefault()
+                  submit()
+                }}
+              >
                 <label>
                   <span>{t('Ta estimation')}</span>
                   <div className="estimation-answer-field">
@@ -102,17 +111,30 @@ export function EstimationQuizView({
                   </div>
                 </label>
                 {precision === null ? (
-                  <button className="quiz-start-button" type="submit" disabled={!input || Number(input) <= 0}>
+                  <button
+                    className="quiz-start-button"
+                    type="submit"
+                    disabled={!input || Number(input) <= 0}
+                  >
                     {t('Valider mon estimation')}
                   </button>
                 ) : (
                   <div className="estimation-feedback">
-                    <strong>{formatQuizScore(precision * 100, language)} % {t('de précision')}</strong>
-                    <span>{t('Valeur attendue')} : {question.actualValue.toLocaleString(language)} {question.unit}</span>
+                    <strong>
+                      {formatQuizScore(precision * 100, language)} % {t('de précision')}
+                    </strong>
+                    <span>
+                      {t('Valeur attendue')} : {question.actualValue.toLocaleString(language)}{' '}
+                      {question.unit}
+                    </span>
                     {index < questions.length - 1 ? (
-                      <button className="quiz-start-button" type="button" onClick={nextQuestion}>{t('Question suivante')}</button>
+                      <button className="quiz-start-button" type="button" onClick={nextQuestion}>
+                        {t('Question suivante')}
+                      </button>
                     ) : (
-                      <button className="quiz-start-button" type="button" onClick={onStop}>{t('Retour aux réglages')}</button>
+                      <button className="quiz-start-button" type="button" onClick={onStop}>
+                        {t('Retour aux réglages')}
+                      </button>
                     )}
                   </div>
                 )}
@@ -123,17 +145,25 @@ export function EstimationQuizView({
               <span className="special-quiz-kicker">{t('Score moyen')}</span>
               <strong>{formatQuizScore(completedScore, language)} %</strong>
               <p>{t('Ta précision moyenne sur les estimations de cette partie.')}</p>
-              <button className="quiz-start-button" type="button" onClick={onRestart}>{t('Rejouer')}</button>
-              <button type="button" onClick={onStop}>{t('Quitter la partie')}</button>
+              <button className="quiz-start-button" type="button" onClick={onRestart}>
+                {t('Rejouer')}
+              </button>
+              <button type="button" onClick={onStop}>
+                {t('Quitter la partie')}
+              </button>
             </div>
           ) : (
             <div className="special-quiz-finish">
               <h2>{t('Aucune estimation disponible pour cette zone.')}</h2>
-              <button type="button" onClick={onStop}>{t('Retour aux réglages')}</button>
+              <button type="button" onClick={onStop}>
+                {t('Retour aux réglages')}
+              </button>
             </div>
           )}
           {completedScore === null && questions.length > 0 && (
-            <div className="special-quiz-score-line">{t('Précision cumulée')} : {formatQuizScore(score, language)} %</div>
+            <div className="special-quiz-score-line">
+              {t('Précision cumulée')} : {formatQuizScore(score, language)} %
+            </div>
           )}
         </section>
       </div>

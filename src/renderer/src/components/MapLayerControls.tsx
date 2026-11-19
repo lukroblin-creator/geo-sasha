@@ -59,13 +59,17 @@ export function MapLayerControls({
                 className="map-layer-density-trigger"
                 type="button"
                 aria-expanded={openLayerId === layer.id}
-                onClick={() => setOpenLayerId((current) => current === layer.id ? null : layer.id)}
+                onClick={() =>
+                  setOpenLayerId((current) => (current === layer.id ? null : layer.id))
+                }
               >
                 <span>{t(layer.label)}</span>
                 <small>
                   {layer.fixedCount !== undefined
                     ? `${layer.fixedCount} ${t('chaînes')}`
-                    : layer.enabled ? `${layer.density} / ${layer.maximum}` : t('Masquée')}
+                    : layer.enabled
+                      ? `${layer.density} / ${layer.maximum}`
+                      : t('Masquée')}
                 </small>
                 <span aria-hidden="true">{openLayerId === layer.id ? '⌃' : '⌄'}</span>
               </button>
@@ -81,13 +85,19 @@ export function MapLayerControls({
                           onChange={(event) => onToggle(layer.subLayer!.id, event.target.checked)}
                         />
                         <span>{t(layer.subLayer.label)}</span>
-                        <strong>{layer.subLayer.enabled ? `${layer.subLayer.density} / ${layer.subLayer.maximum}` : t('Masqués')}</strong>
+                        <strong>
+                          {layer.subLayer.enabled
+                            ? `${layer.subLayer.density} / ${layer.subLayer.maximum}`
+                            : t('Masqués')}
+                        </strong>
                       </label>
                       {layer.subLayer.enabled && (
                         <>
                           <label className="map-layer-density-subheading">
                             <span>{t('Sommets affichés')}</span>
-                            <strong>{layer.subLayer.density} / {layer.subLayer.maximum}</strong>
+                            <strong>
+                              {layer.subLayer.density} / {layer.subLayer.maximum}
+                            </strong>
                           </label>
                           <input
                             type="range"
@@ -96,10 +106,17 @@ export function MapLayerControls({
                             step={1}
                             value={layer.subLayer.density}
                             aria-label={`${t(layer.subLayer.label)} — ${t('Éléments affichés')}`}
-                            onChange={(event) => onDensityChange(layer.subLayer!.id, Number(event.target.value))}
+                            onChange={(event) =>
+                              onDensityChange(layer.subLayer!.id, Number(event.target.value))
+                            }
                           />
-                          <div className="map-layer-density-ends"><span>{t('Aucun')}</span><span>{t('Tout')}</span></div>
-                          <p>{t('Le premier cran affiche uniquement l’élément le plus remarquable.')}</p>
+                          <div className="map-layer-density-ends">
+                            <span>{t('Aucun')}</span>
+                            <span>{t('Tout')}</span>
+                          </div>
+                          <p>
+                            {t('Le premier cran affiche uniquement l’élément le plus remarquable.')}
+                          </p>
                         </>
                       )}
                     </>
@@ -107,7 +124,9 @@ export function MapLayerControls({
                     <>
                       <label>
                         <span>{t('Éléments affichés')}</span>
-                        <strong>{layer.density} / {layer.maximum}</strong>
+                        <strong>
+                          {layer.density} / {layer.maximum}
+                        </strong>
                       </label>
                       <input
                         type="range"
@@ -118,8 +137,13 @@ export function MapLayerControls({
                         aria-label={`${t(layer.label)} — ${t('Éléments affichés')}`}
                         onChange={(event) => onDensityChange(layer.id, Number(event.target.value))}
                       />
-                      <div className="map-layer-density-ends"><span>{t('Aucun')}</span><span>{t('Tout')}</span></div>
-                      <p>{t('Le premier cran affiche uniquement l’élément le plus remarquable.')}</p>
+                      <div className="map-layer-density-ends">
+                        <span>{t('Aucun')}</span>
+                        <span>{t('Tout')}</span>
+                      </div>
+                      <p>
+                        {t('Le premier cran affiche uniquement l’élément le plus remarquable.')}
+                      </p>
                     </>
                   )}
                 </div>

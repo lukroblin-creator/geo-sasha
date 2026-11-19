@@ -8,10 +8,7 @@ import { additionalMapFlagRegions } from '../quiz/additionalMapFlagRegions'
 import { getContinentLabelForCountry } from '../quiz/countryContinents'
 import { getEntityById, getEntityDisplayName } from './registry'
 import { normalizeSourceFeatureId } from './sourceFeatureIds'
-import {
-  getResourceIndustryFactsForMapFeature,
-  type ResourceIndustryFact
-} from './resources'
+import { getResourceIndustryFactsForMapFeature, type ResourceIndustryFact } from './resources'
 
 type CountryCatalogEntry = {
   sourceFeatureId: number
@@ -251,9 +248,11 @@ for (const territory of territoryRecords) {
 
 const unavailableReasons = explorationData.unavailableReasons as Record<string, string>
 const profileFactsByEntity = countryProfileFacts as CountryProfileFactsData
-const cultureByAlpha2 = (countryCultureData as {
-  byAlpha2: Record<string, CountryCultureFacts>
-}).byAlpha2
+const cultureByAlpha2 = (
+  countryCultureData as {
+    byAlpha2: Record<string, CountryCultureFacts>
+  }
+).byAlpha2
 
 const alpha2ByExtraSourceId = new Map(
   additionalMapFlagRegions.map((region) => [
@@ -292,9 +291,7 @@ export function getExplorationDetails(
   const territoryRecord = entity?.kind === 'territory' ? territoryById.get(entity.id) : undefined
   const extraAlpha2 = alpha2ByExtraSourceId.get(sourceId)
   const alpha2 =
-    (entity?.kind === 'territory'
-      ? territoryRecord?.alpha2 ?? entity.alpha2
-      : entity?.alpha2) ??
+    (entity?.kind === 'territory' ? (territoryRecord?.alpha2 ?? entity.alpha2) : entity?.alpha2) ??
     (entity ? undefined : extraAlpha2) ??
     catalogEntry?.alpha2 ??
     null
@@ -302,10 +299,10 @@ export function getExplorationDetails(
     entity?.kind === 'territory' && entityId ? territoryDetails[entityId] : undefined
   const capital = territoryInfo
     ? territoryInfo.capital
-    : territoryRecord?.capital ??
+    : (territoryRecord?.capital ??
       explorationByAlpha2.get(alpha2 ?? '')?.capital ??
       capitalBySourceId.get(sourceId)?.capitalName ??
-      null
+      null)
   const continent = territoryInfo
     ? territoryInfo.continent
     : alpha2
@@ -315,12 +312,13 @@ export function getExplorationDetails(
   const name = entityId
     ? (getEntityDisplayName(entityId) ?? fallbackName)
     : ((alpha2 ? frenchNames.of(alpha2) : undefined) ?? catalogEntry?.countryName ?? fallbackName)
-  const flagAlpha2 = entity?.kind === 'territory'
-    ? entity.flagAlpha2 ?? territoryRecord?.flagAlpha2 ?? null
-    : alpha2
+  const flagAlpha2 =
+    entity?.kind === 'territory'
+      ? (entity.flagAlpha2 ?? territoryRecord?.flagAlpha2 ?? null)
+      : alpha2
   const flagName = entity?.kind === 'territory' ? entity.name : name
-  const sovereignAlpha2 = territoryRecord?.sovereignAlpha2 ??
-    (entity?.kind === 'territory' ? entity.alpha2 : alpha2)
+  const sovereignAlpha2 =
+    territoryRecord?.sovereignAlpha2 ?? (entity?.kind === 'territory' ? entity.alpha2 : alpha2)
   const territories = sovereignAlpha2
     ? (territoriesBySovereignAlpha2.get(sovereignAlpha2) ?? [])
         .filter((territory) => getEntityById(territory.id))
@@ -331,16 +329,17 @@ export function getExplorationDetails(
         }))
     : []
   const record = territoryRecord ?? explorationRecord
-  const culture = alpha2 ? cultureByAlpha2[alpha2] ?? null : null
-  const medianEarnings = alpha2 ? medianEarningsByAlpha2[alpha2] ?? null : null
+  const culture = alpha2 ? (cultureByAlpha2[alpha2] ?? null) : null
+  const medianEarnings = alpha2 ? (medianEarningsByAlpha2[alpha2] ?? null) : null
   const medianEarningsRate = medianEarnings
     ? exchangeRatesByCurrency[medianEarnings.currencyCode]
     : undefined
-  const profileFacts = entity?.kind === 'territory' && entityId
-    ? profileFactsByEntity.byTerritoryId[entityId] ?? null
-    : alpha2
-      ? profileFactsByEntity.byAlpha2[alpha2] ?? null
-      : null
+  const profileFacts =
+    entity?.kind === 'territory' && entityId
+      ? (profileFactsByEntity.byTerritoryId[entityId] ?? null)
+      : alpha2
+        ? (profileFactsByEntity.byAlpha2[alpha2] ?? null)
+        : null
 
   return {
     name,
@@ -374,11 +373,12 @@ export function getExplorationDetails(
           exchangeRateDate:
             medianEarnings.currencyCode === 'EUR'
               ? economicData.metadata.snapshotDate
-              : medianEarningsRate?.date ?? null
+              : (medianEarningsRate?.date ?? null)
         }
       : null,
     resources: getResourceIndustryFactsForMapFeature(entityId, sourceId),
-    populationSource: record?.populationSource ?? territoryRecord?.populationSource ?? 'Banque mondiale',
+    populationSource:
+      record?.populationSource ?? territoryRecord?.populationSource ?? 'Banque mondiale',
     populationSourceUrl: record?.populationSourceUrl ?? null,
     metricsSource: record?.metricsSource ?? null,
     metricsSourceUrl: record?.metricsSourceUrl ?? null,

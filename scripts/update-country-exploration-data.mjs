@@ -10,7 +10,6 @@ const topologies = {
   '50m': require('world-atlas/countries-50m.json'),
   '10m': require('world-atlas/countries-10m.json')
 }
-const topology = topologies['10m']
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..')
 
 const catalog = require('../src/renderer/src/data/quiz/countryCatalog.json')
@@ -91,7 +90,8 @@ function getMetrics(geometry) {
   let largestLongitudeGap = 0
   for (let index = 0; index < sortedLongitudes.length; index += 1) {
     const current = sortedLongitudes[index]
-    const next = sortedLongitudes[(index + 1) % sortedLongitudes.length] +
+    const next =
+      sortedLongitudes[(index + 1) % sortedLongitudes.length] +
       (index === sortedLongitudes.length - 1 ? 360 : 0)
     largestLongitudeGap = Math.max(largestLongitudeGap, next - current)
   }
@@ -117,7 +117,7 @@ function isPointInRing([pointLongitude, pointLatitude], ring) {
     const adjustedA = longitudeA + 360 * Math.round((pointLongitude - longitudeA) / 360)
     const adjustedB = longitudeB + 360 * Math.round((pointLongitude - longitudeB) / 360)
     const crosses =
-      (latitudeA > pointLatitude) !== (latitudeB > pointLatitude) &&
+      latitudeA > pointLatitude !== latitudeB > pointLatitude &&
       pointLongitude <
         ((adjustedB - adjustedA) * (pointLatitude - latitudeA)) /
           (latitudeB - latitudeA || Number.EPSILON) +
@@ -128,9 +128,10 @@ function isPointInRing([pointLongitude, pointLatitude], ring) {
 }
 
 function findContainingPolygonIndex(geometry, point) {
-  return polygonsFor(geometry).findIndex((polygon) =>
-    isPointInRing(point, polygon[0]) &&
-    !polygon.slice(1).some((hole) => isPointInRing(point, hole))
+  return polygonsFor(geometry).findIndex(
+    (polygon) =>
+      isPointInRing(point, polygon[0]) &&
+      !polygon.slice(1).some((hole) => isPointInRing(point, hole))
   )
 }
 
@@ -152,10 +153,7 @@ function getCoreMapUnit(alpha2) {
   return mapUnits.find((unit) => {
     const properties = unit.properties ?? {}
     const unitCodes = [properties.ISO_A2, properties.ISO_A2_EH]
-    return (
-      properties.ADMIN === properties.SOVEREIGNT &&
-      unitCodes.includes(alpha2)
-    )
+    return properties.ADMIN === properties.SOVEREIGNT && unitCodes.includes(alpha2)
   })
 }
 
@@ -307,7 +305,8 @@ for (const unit of territoryUnits) {
   const candidateAlpha2 = String(properties.ISO_A2_EH ?? '')
   const alpha2 = /^[A-Z]{2}$/.test(candidateAlpha2) ? candidateAlpha2 : null
   const name = String(properties.NAME_FR ?? properties.NAME_EN ?? properties.ADMIN ?? 'Territoire')
-  const id = (alpha2 && territoryIdByAlpha2.get(alpha2)) ??
+  const id =
+    (alpha2 && territoryIdByAlpha2.get(alpha2)) ??
     `territory:${alpha2?.toLowerCase() ?? slug(name)}`
   const geometryLinks = getTerritoryGeometryLinks(unit, sovereignAlpha2)
   if (geometryLinks.length === 0) continue
@@ -322,7 +321,7 @@ for (const unit of territoryUnits) {
     sovereignAlpha2,
     sourceFeatureId: geometryLinks[0].sourceFeatureId,
     geometryLinks,
-    capital: alpha2 ? territoryCapitalOverrides[alpha2] ?? null : null,
+    capital: alpha2 ? (territoryCapitalOverrides[alpha2] ?? null) : null,
     population: Number.isFinite(estimate) && estimate > 0 ? Math.round(estimate) : null,
     populationYear: Number.isFinite(estimateYear) && estimateYear > 0 ? estimateYear : null,
     populationSource: 'Natural Earth estimate',
@@ -348,13 +347,15 @@ const records = catalog.map((country) => {
   const metrics = getMetrics(coreMapUnit?.geometry ?? geometry)
   const countryKnowledge = knowledgeByAlpha2.get(country.alpha2)
   const mountains = countryKnowledge?.mountains ?? []
-  const metropolitanMountains = country.alpha2 === 'FR'
-    ? mountains.filter((mountain) =>
-        !['Piton des Neiges', 'Soufrière', 'montagne Pelée', 'montagne Bellevue'].includes(
-          mountain.name
+  const metropolitanMountains =
+    country.alpha2 === 'FR'
+      ? mountains.filter(
+          (mountain) =>
+            !['Piton des Neiges', 'Soufrière', 'montagne Pelée', 'montagne Bellevue'].includes(
+              mountain.name
+            )
         )
-      )
-    : mountains
+      : mountains
 
   return {
     sourceFeatureId: country.sourceFeatureId,
@@ -381,17 +382,26 @@ const output = {
   geometrySourceUrl: mapUnitsUrl,
   geometryNote: 'Area, perimeter and spans are approximate; coastlines vary with the source scale.',
   unavailableReasons: {
-    population: 'Aucun chiffre de population n’est fourni pour cette entité dans la réponse de la Banque mondiale sélectionnée.',
-    metrics: 'La source cartographique ne fournit pas de contour exploitable pour calculer ces mesures.',
+    population:
+      'Aucun chiffre de population n’est fourni pour cette entité dans la réponse de la Banque mondiale sélectionnée.',
+    metrics:
+      'La source cartographique ne fournit pas de contour exploitable pour calculer ces mesures.',
     capital: 'La source géographique ne fournit pas de capitale vérifiée pour ce territoire.',
-    cities: 'Aucune grande ville vérifiée n’est incluse pour cette entité dans les données locales.',
+    cities:
+      'Aucune grande ville vérifiée n’est incluse pour cette entité dans les données locales.',
     mountains: 'Aucun sommet vérifié n’est inclus pour cette entité dans les données locales.',
-    lowestPoint: 'Les données Natural Earth sur les frontières terrestres ne comprennent pas de relevé vérifié des altitudes.',
-    rivers: 'ND signifie qu’aucun fleuve ou cours d’eau majeur nommé n’a été identifié dans les couches mondiales et les compléments nationaux inclus; les oueds saisonniers ne sont pas recensés de manière exhaustive.',
-    government: 'La fiche conserve la description gouvernementale de la source nationale. ND ne concerne que la classification V-Dem lorsqu’un territoire n’est pas codé dans cette base.',
-    music: 'ND signifie qu’aucun classement national comparable du genre musical le plus écouté n’est publié dans les rapports IFPI intégrés (enquêtes 2022 et 2023).',
-    funFacts: 'Les anecdotes proviennent des fiches nationales intégrées; ND ne s’affiche que si aucune anecdote exploitable n’est publiée dans la source.',
-    historicalFact: 'Les repères historiques proviennent des fiches nationales intégrées; ND ne s’affiche que si aucune référence exploitable n’est publiée dans la source.'
+    lowestPoint:
+      'Les données Natural Earth sur les frontières terrestres ne comprennent pas de relevé vérifié des altitudes.',
+    rivers:
+      'ND signifie qu’aucun fleuve ou cours d’eau majeur nommé n’a été identifié dans les couches mondiales et les compléments nationaux inclus; les oueds saisonniers ne sont pas recensés de manière exhaustive.',
+    government:
+      'La fiche conserve la description gouvernementale de la source nationale. ND ne concerne que la classification V-Dem lorsqu’un territoire n’est pas codé dans cette base.',
+    music:
+      'ND signifie qu’aucun classement national comparable du genre musical le plus écouté n’est publié dans les rapports IFPI intégrés (enquêtes 2022 et 2023).',
+    funFacts:
+      'Les anecdotes proviennent des fiches nationales intégrées; ND ne s’affiche que si aucune anecdote exploitable n’est publiée dans la source.',
+    historicalFact:
+      'Les repères historiques proviennent des fiches nationales intégrées; ND ne s’affiche que si aucune référence exploitable n’est publiée dans la source.'
   },
   countries: records,
   territories: [...territoryRecordsById.values()]

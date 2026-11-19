@@ -1,8 +1,5 @@
 import { getFlagImageSource } from '../data/quiz/flagAssets'
-import {
-  explorationEconomicSources,
-  type ExplorationDetails
-} from '../data/geography/exploration'
+import { explorationEconomicSources, type ExplorationDetails } from '../data/geography/exploration'
 import { useLanguage } from '../data/i18n'
 import { ResourceIndustryDescription } from './ResourceIndustryDescription'
 
@@ -85,7 +82,9 @@ export function ExplorationPlaceDetails({
       <div className="exploration-place-details exploration-empty-state">
         <span aria-hidden="true">⌖</span>
         <p>
-          {t('Sélectionne un pays sur la carte pour découvrir son drapeau, sa capitale et son continent.')}
+          {t(
+            'Sélectionne un pays sur la carte pour découvrir son drapeau, sa capitale et son continent.'
+          )}
         </p>
       </div>
     )
@@ -103,7 +102,9 @@ export function ExplorationPlaceDetails({
       <div className="exploration-details-eyebrow">{t('FICHE GÉOGRAPHIQUE')}</div>
       <h2 className="exploration-place-name">{place.name}</h2>
       {place.isTerritory && place.sovereignName && (
-        <p className="exploration-place-kind">{t('Territoire de')} {place.sovereignName}</p>
+        <p className="exploration-place-kind">
+          {t('Territoire de')} {place.sovereignName}
+        </p>
       )}
 
       {place.flagAlpha2 ? (
@@ -112,7 +113,9 @@ export function ExplorationPlaceDetails({
             src={getFlagImageSource(place.flagAlpha2)}
             alt={`${t('Drapeau de')} ${place.flagName}`}
           />
-          <span>{t('Drapeau de')} {place.flagName}</span>
+          <span>
+            {t('Drapeau de')} {place.flagName}
+          </span>
         </div>
       ) : (
         <div className="exploration-missing-flag">ND</div>
@@ -133,14 +136,18 @@ export function ExplorationPlaceDetails({
         <div className="exploration-extended-facts">
           {!place.isTerritory && place.territories.length > 0 && (
             <p className="exploration-fact-note">
-              {t('Les informations physiques et descriptives ci-dessous concernent le territoire principal. Les territoires éloignés disposent de leur propre fiche.')}
+              {t(
+                'Les informations physiques et descriptives ci-dessous concernent le territoire principal. Les territoires éloignés disposent de leur propre fiche.'
+              )}
             </p>
           )}
           <section className="exploration-fact-section">
             <h3>{t('Dimensions et population')}</h3>
             {place.metrics ? (
               <>
-                {place.metricsScope && <p className="exploration-fact-note">{t(place.metricsScope)}</p>}
+                {place.metricsScope && (
+                  <p className="exploration-fact-note">{t(place.metricsScope)}</p>
+                )}
                 <dl className="exploration-facts">
                   <div>
                     <dt>{t('Superficie approximative')}</dt>
@@ -175,8 +182,12 @@ export function ExplorationPlaceDetails({
               <p className="exploration-fact-note">
                 {[
                   place.population !== null ? t(place.populationSource) : null,
-                  place.metrics ? t(place.metricsSource ?? 'Contour géographique approximatif') : null
-                ].filter(Boolean).join(' · ')}
+                  place.metrics
+                    ? t(place.metricsSource ?? 'Contour géographique approximatif')
+                    : null
+                ]
+                  .filter(Boolean)
+                  .join(' · ')}
               </p>
             )}
           </section>
@@ -185,7 +196,9 @@ export function ExplorationPlaceDetails({
             <section className="exploration-fact-section">
               <h3>{t('Territoires associés')}</h3>
               <p className="exploration-fact-note">
-                {t('Les dimensions décrivent le territoire principal. La population suit le périmètre de sa source.')}
+                {t(
+                  'Les dimensions décrivent le territoire principal. La population suit le périmètre de sa source.'
+                )}
               </p>
               <ul className="exploration-territory-list">
                 {place.territories.map((territory) => (
@@ -266,7 +279,8 @@ export function ExplorationPlaceDetails({
                         <span className="exploration-culture-value">
                           ≈{' '}
                           {formatMoney(
-                            place.medianMonthlyEarnings.amount * place.medianMonthlyEarnings.euroPerUnit,
+                            place.medianMonthlyEarnings.amount *
+                              place.medianMonthlyEarnings.euroPerUnit,
                             'EUR'
                           )}{' '}
                           / {t('mois')}
@@ -274,7 +288,9 @@ export function ExplorationPlaceDetails({
                       )}
                       <span className="exploration-fact-note">
                         {t('Dernière donnée disponible')} · {place.medianMonthlyEarnings.year}
-                        {place.medianMonthlyEarnings.status === 'B' ? ` · ${t('Rupture de série')}` : ''}
+                        {place.medianMonthlyEarnings.status === 'B'
+                          ? ` · ${t('Rupture de série')}`
+                          : ''}
                         {place.medianMonthlyEarnings.definition
                           ? ` · ${t(place.medianMonthlyEarnings.definition)}`
                           : ''}
@@ -313,12 +329,14 @@ export function ExplorationPlaceDetails({
               </div>
             </dl>
             <p className="exploration-fact-note">
-              {t('Les taux sont des références indicatives, pas des cours de transaction.')} {' '}
+              {t('Les taux sont des références indicatives, pas des cours de transaction.')}{' '}
               <a href={explorationEconomicSources.currencyRates} target="_blank" rel="noreferrer">
                 {t('Source des taux')}
               </a>
               {' · '}
-              {t('Les montants salariaux correspondent à la dernière médiane mensuelle publiée pour les salariés. La définition et l’année de référence varient selon la source ; la conversion en euros est indicative et ne reflète pas le pouvoir d’achat.')}{' '}
+              {t(
+                'Les montants salariaux correspondent à la dernière médiane mensuelle publiée pour les salariés. La définition et l’année de référence varient selon la source ; la conversion en euros est indicative et ne reflète pas le pouvoir d’achat.'
+              )}{' '}
               <a href={explorationEconomicSources.medianEarnings} target="_blank" rel="noreferrer">
                 {t('Base internationale ILOSTAT')}
               </a>
@@ -372,7 +390,9 @@ export function ExplorationPlaceDetails({
                         {industry.icon}
                       </span>
                       <span>{t(industry.label)}</span>
-                      <span className="exploration-resource-chevron" aria-hidden="true">⌄</span>
+                      <span className="exploration-resource-chevron" aria-hidden="true">
+                        ⌄
+                      </span>
                     </summary>
                     <ResourceIndustryDescription industry={industry} />
                   </details>
@@ -418,24 +438,36 @@ export function ExplorationPlaceDetails({
                     )}
                   </p>
                 )}
-                {listedMountains.length > 0 && <ul>
-                  {listedMountains.slice(0, 5).map((mountain) => (
-                    <li key={mountain.name}>
-                      {mountain.name}
-                      {mountain.elevationMeters !== null && (
-                        <span> · {formatNumber(mountain.elevationMeters)} m</span>
-                      )}
-                    </li>
-                  ))}
-                </ul>}
+                {listedMountains.length > 0 && (
+                  <ul>
+                    {listedMountains.slice(0, 5).map((mountain) => (
+                      <li key={mountain.name}>
+                        {mountain.name}
+                        {mountain.elevationMeters !== null && (
+                          <span> · {formatNumber(mountain.elevationMeters)} m</span>
+                        )}
+                      </li>
+                    ))}
+                  </ul>
+                )}
                 <p className="exploration-fact-note">
-                  {Math.max(...place.mountains.map((mountain) => mountain.elevationMeters ?? 0), highestPoint?.elevationMeters ?? 0) >= 4000
+                  {Math.max(
+                    ...place.mountains.map((mountain) => mountain.elevationMeters ?? 0),
+                    highestPoint?.elevationMeters ?? 0
+                  ) >= 4000
                     ? t('Relief très montagneux selon les sommets recensés.')
-                    : Math.max(...place.mountains.map((mountain) => mountain.elevationMeters ?? 0), highestPoint?.elevationMeters ?? 0) >= 2000
+                    : Math.max(
+                          ...place.mountains.map((mountain) => mountain.elevationMeters ?? 0),
+                          highestPoint?.elevationMeters ?? 0
+                        ) >= 2000
                       ? t('Relief montagneux selon les sommets recensés.')
                       : highestPoint && place.mountains.length === 0
-                        ? t('Point culminant indiqué; la fiche ne permet pas de caractériser tout le terrain.')
-                        : t('Des reliefs sont recensés, mais la fiche ne permet pas de caractériser tout le terrain.')}
+                        ? t(
+                            'Point culminant indiqué; la fiche ne permet pas de caractériser tout le terrain.'
+                          )
+                        : t(
+                            'Des reliefs sont recensés, mais la fiche ne permet pas de caractériser tout le terrain.'
+                          )}
                 </p>
               </div>
             ) : (
@@ -465,48 +497,73 @@ export function ExplorationPlaceDetails({
               <div>
                 <dt>{t('Régime politique')}</dt>
                 <dd>
-                  {place.profileFacts?.governmentType
-                    ? <>{profileText(place.profileFacts.governmentType)}{place.profileFacts.governmentTypeYear ? ` · ${t('description gouvernementale')} ${place.profileFacts.governmentTypeYear}` : ''}{place.profileFacts.politicalRegime ? ` · ${t('classification V-Dem')} ${place.profileFacts.politicalRegime.year} : ${language === 'fr' ? place.profileFacts.politicalRegime.label : place.profileFacts.politicalRegime.sourceLabel}` : ''}</>
-                    : place.profileFacts?.politicalRegime
-                      ? `${language === 'fr' ? place.profileFacts.politicalRegime.label : place.profileFacts.politicalRegime.sourceLabel} · V-Dem ${place.profileFacts.politicalRegime.year}`
-                      : 'ND'}
+                  {place.profileFacts?.governmentType ? (
+                    <>
+                      {profileText(place.profileFacts.governmentType)}
+                      {place.profileFacts.governmentTypeYear
+                        ? ` · ${t('description gouvernementale')} ${place.profileFacts.governmentTypeYear}`
+                        : ''}
+                      {place.profileFacts.politicalRegime
+                        ? ` · ${t('classification V-Dem')} ${place.profileFacts.politicalRegime.year} : ${language === 'fr' ? place.profileFacts.politicalRegime.label : place.profileFacts.politicalRegime.sourceLabel}`
+                        : ''}
+                    </>
+                  ) : place.profileFacts?.politicalRegime ? (
+                    `${language === 'fr' ? place.profileFacts.politicalRegime.label : place.profileFacts.politicalRegime.sourceLabel} · V-Dem ${place.profileFacts.politicalRegime.year}`
+                  ) : (
+                    'ND'
+                  )}
                 </dd>
               </div>
               <div>
                 <dt>{t('Style musical le plus écouté')}</dt>
                 <dd>
-                  {place.profileFacts?.music
-                    ? <>
-                        {language === 'fr' ? place.profileFacts.music.genreFr : place.profileFacts.music.genre}
-                        {' · '}{t('rang')} {place.profileFacts.music.rank}
-                        {place.profileFacts.music.measure === 'streaming-chart'
-                          ? ` · ${place.profileFacts.music.sharePercent ?? 'ND'} % ${language === 'fr' ? 'des écoutes classées' : 'of chart streams'} · ${place.profileFacts.music.snapshotDate ? formatDate(place.profileFacts.music.snapshotDate) : place.profileFacts.music.year}`
-                          : place.profileFacts.music.measure === 'apple-chart'
-                            ? ` · ${language === 'fr' ? 'Top 100 Apple Music' : 'Apple Music Top 100'}${place.profileFacts.music.sharePercent !== null ? ` · ${place.profileFacts.music.sharePercent} % ${language === 'fr' ? 'des titres' : 'of chart entries'}` : ''} · ${place.profileFacts.music.snapshotDate ? formatDate(place.profileFacts.music.snapshotDate) : place.profileFacts.music.year}`
-                            : ` · ${place.profileFacts.music.year}${place.profileFacts.music.sharePercent !== null ? ` · ${place.profileFacts.music.sharePercent} % ${t('des répondants')}` : ''}`}
-                        {place.profileFacts.music.secondGenre
-                          ? `; ${t('rang')} ${place.profileFacts.music.secondRank} : ${language === 'fr' ? place.profileFacts.music.secondGenreFr : place.profileFacts.music.secondGenre}${place.profileFacts.music.secondSharePercent !== null ? ` · ${place.profileFacts.music.secondSharePercent} %${place.profileFacts.music.measure === 'apple-chart' ? (language === 'fr' ? ' des titres' : ' of chart entries') : ''}` : ''}`
-                          : ''}
-                        {place.profileFacts.music.sourceNote && (
-                          <p className="exploration-fact-note">
-                            {profileText(place.profileFacts.music.sourceNote)}{' '}
-                            {place.profileFacts.music.sourceUrl && (
-                              <a href={place.profileFacts.music.sourceUrl} target="_blank" rel="noreferrer">
-                                {profileText(place.profileFacts.music.sourceLabel)}
-                              </a>
-                            )}
-                          </p>
-                        )}
-                      </>
-                    : 'ND'}
+                  {place.profileFacts?.music ? (
+                    <>
+                      {language === 'fr'
+                        ? place.profileFacts.music.genreFr
+                        : place.profileFacts.music.genre}
+                      {' · '}
+                      {t('rang')} {place.profileFacts.music.rank}
+                      {place.profileFacts.music.measure === 'streaming-chart'
+                        ? ` · ${place.profileFacts.music.sharePercent ?? 'ND'} % ${language === 'fr' ? 'des écoutes classées' : 'of chart streams'} · ${place.profileFacts.music.snapshotDate ? formatDate(place.profileFacts.music.snapshotDate) : place.profileFacts.music.year}`
+                        : place.profileFacts.music.measure === 'apple-chart'
+                          ? ` · ${language === 'fr' ? 'Top 100 Apple Music' : 'Apple Music Top 100'}${place.profileFacts.music.sharePercent !== null ? ` · ${place.profileFacts.music.sharePercent} % ${language === 'fr' ? 'des titres' : 'of chart entries'}` : ''} · ${place.profileFacts.music.snapshotDate ? formatDate(place.profileFacts.music.snapshotDate) : place.profileFacts.music.year}`
+                          : ` · ${place.profileFacts.music.year}${place.profileFacts.music.sharePercent !== null ? ` · ${place.profileFacts.music.sharePercent} % ${t('des répondants')}` : ''}`}
+                      {place.profileFacts.music.secondGenre
+                        ? `; ${t('rang')} ${place.profileFacts.music.secondRank} : ${language === 'fr' ? place.profileFacts.music.secondGenreFr : place.profileFacts.music.secondGenre}${place.profileFacts.music.secondSharePercent !== null ? ` · ${place.profileFacts.music.secondSharePercent} %${place.profileFacts.music.measure === 'apple-chart' ? (language === 'fr' ? ' des titres' : ' of chart entries') : ''}` : ''}`
+                        : ''}
+                      {place.profileFacts.music.sourceNote && (
+                        <p className="exploration-fact-note">
+                          {profileText(place.profileFacts.music.sourceNote)}{' '}
+                          {place.profileFacts.music.sourceUrl && (
+                            <a
+                              href={place.profileFacts.music.sourceUrl}
+                              target="_blank"
+                              rel="noreferrer"
+                            >
+                              {profileText(place.profileFacts.music.sourceLabel)}
+                            </a>
+                          )}
+                        </p>
+                      )}
+                    </>
+                  ) : (
+                    'ND'
+                  )}
                 </dd>
               </div>
               <div>
                 <dt>{t('Anecdotes')}</dt>
                 <dd>
-                  {place.profileFacts?.funFacts.length
-                    ? <ul>{place.profileFacts.funFacts.map((fact, index) => <li key={index}>{profileText(fact)}</li>)}</ul>
-                    : 'ND'}
+                  {place.profileFacts?.funFacts.length ? (
+                    <ul>
+                      {place.profileFacts.funFacts.map((fact, index) => (
+                        <li key={index}>{profileText(fact)}</li>
+                      ))}
+                    </ul>
+                  ) : (
+                    'ND'
+                  )}
                 </dd>
               </div>
               <div>
@@ -519,29 +576,51 @@ export function ExplorationPlaceDetails({
           <section className="exploration-fact-section exploration-data-sources">
             <h3>{t('Sources et date des données')}</h3>
             <p className="exploration-fact-note">
-              {t('ND signifie que les sources intégrées ne fournissent pas de donnée exploitable pour ce champ. Les classifications politiques, enquêtes et classements musicaux sont datés.')}
+              {t(
+                'ND signifie que les sources intégrées ne fournissent pas de donnée exploitable pour ce champ. Les classifications politiques, enquêtes et classements musicaux sont datés.'
+              )}
             </p>
             {place.profileFacts?.sourceUrl && (
-              <p><a href={place.profileFacts.sourceUrl} target="_blank" rel="noreferrer">{t('Fiche source du CIA World Factbook')}</a> · {t('archive mise à jour le 22 janvier 2026')}</p>
+              <p>
+                <a href={place.profileFacts.sourceUrl} target="_blank" rel="noreferrer">
+                  {t('Fiche source du CIA World Factbook')}
+                </a>{' '}
+                · {t('archive mise à jour le 22 janvier 2026')}
+              </p>
             )}
             {place.profileFacts?.additionalSources?.map((source) => (
               <p key={source.url}>
-                <a href={source.url} target="_blank" rel="noreferrer">{profileText(source.label)}</a>
+                <a href={source.url} target="_blank" rel="noreferrer">
+                  {profileText(source.label)}
+                </a>
               </p>
             ))}
             {place.populationSourceUrl && (
-              <p><a href={place.populationSourceUrl} target="_blank" rel="noreferrer">{t(place.populationSource)}</a></p>
+              <p>
+                <a href={place.populationSourceUrl} target="_blank" rel="noreferrer">
+                  {t(place.populationSource)}
+                </a>
+              </p>
             )}
             {place.metricsSourceUrl && (
-              <p><a href={place.metricsSourceUrl} target="_blank" rel="noreferrer">{t('Source officielle des dimensions')}</a></p>
+              <p>
+                <a href={place.metricsSourceUrl} target="_blank" rel="noreferrer">
+                  {t('Source officielle des dimensions')}
+                </a>
+              </p>
             )}
             {place.metricsSecondarySourceUrl && (
-              <p><a href={place.metricsSecondarySourceUrl} target="_blank" rel="noreferrer">{t('Source du périmètre')}</a></p>
+              <p>
+                <a href={place.metricsSecondarySourceUrl} target="_blank" rel="noreferrer">
+                  {t('Source du périmètre')}
+                </a>
+              </p>
             )}
             <ul>
               <li>
                 <a href="https://github.com/mledoze/countries" target="_blank" rel="noreferrer">
-                  mledoze/countries · {t('langues officielles, devises et domaines nationaux')} · ODbL-1.0
+                  mledoze/countries · {t('langues officielles, devises et domaines nationaux')} ·
+                  ODbL-1.0
                 </a>
               </li>
               <li>
@@ -549,15 +628,85 @@ export function ExplorationPlaceDetails({
                   Unicode CLDR · {t('langues reconnues et systèmes d’écriture')} · Unicode-3.0
                 </a>
               </li>
-              <li><a href="https://www.v-dem.net/data/the-v-dem-dataset/" target="_blank" rel="noreferrer">V-Dem · {t('classification politique 2025')}</a></li>
-              <li><a href="https://www.naturalearthdata.com/downloads/10m-physical-vectors/10m-rivers-lake-centerlines/" target="_blank" rel="noreferrer">Natural Earth · {t('réseau hydrographique')}</a></li>
-              <li><a href="https://datacatalog.worldbank.org/search/dataset/0042032/major-rivers-of-the-world" target="_blank" rel="noreferrer">World Bank · {t('grands fleuves')}</a></li>
-              <li><a href="https://www.naturalearthdata.com/downloads/10m-physical-vectors/10m-geography-regions-elevation-points/" target="_blank" rel="noreferrer">Natural Earth · {t('sommets et reliefs')}</a></li>
-              <li><a href="https://www.ifpi.org/wp-content/uploads/2022/11/Engaging-with-Music-2022_full-report.pdf" target="_blank" rel="noreferrer">IFPI · {t('enquête musicale 2022')}</a></li>
-              <li><a href="https://www.ifpi.org/wp-content/uploads/2023/12/IFPI-Engaging-With-Music-2023_full-report.pdf" target="_blank" rel="noreferrer">IFPI · {t('enquête musicale 2023')}</a></li>
-              <li><a href="https://rss.applemarketingtools.com/api/v2/us/music/most-played/100/songs.json" target="_blank" rel="noreferrer">Apple · {language === 'fr' ? 'flux officiel des chansons les plus écoutées' : 'official most-played songs feed'}</a></li>
-              <li><a href="https://spotify-top.com/genres" target="_blank" rel="noreferrer">Spotify Top · {language === 'fr' ? 'répartition des genres' : 'genre breakdown'}</a></li>
-              <li><a href="https://mostpops.com/lists/music-genres/" target="_blank" rel="noreferrer">MostPops · {language === 'fr' ? 'source secondaire Apple Top 100' : 'secondary Apple Top 100 source'}</a></li>
+              <li>
+                <a
+                  href="https://www.v-dem.net/data/the-v-dem-dataset/"
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  V-Dem · {t('classification politique 2025')}
+                </a>
+              </li>
+              <li>
+                <a
+                  href="https://www.naturalearthdata.com/downloads/10m-physical-vectors/10m-rivers-lake-centerlines/"
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  Natural Earth · {t('réseau hydrographique')}
+                </a>
+              </li>
+              <li>
+                <a
+                  href="https://datacatalog.worldbank.org/search/dataset/0042032/major-rivers-of-the-world"
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  World Bank · {t('grands fleuves')}
+                </a>
+              </li>
+              <li>
+                <a
+                  href="https://www.naturalearthdata.com/downloads/10m-physical-vectors/10m-geography-regions-elevation-points/"
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  Natural Earth · {t('sommets et reliefs')}
+                </a>
+              </li>
+              <li>
+                <a
+                  href="https://www.ifpi.org/wp-content/uploads/2022/11/Engaging-with-Music-2022_full-report.pdf"
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  IFPI · {t('enquête musicale 2022')}
+                </a>
+              </li>
+              <li>
+                <a
+                  href="https://www.ifpi.org/wp-content/uploads/2023/12/IFPI-Engaging-With-Music-2023_full-report.pdf"
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  IFPI · {t('enquête musicale 2023')}
+                </a>
+              </li>
+              <li>
+                <a
+                  href="https://rss.applemarketingtools.com/api/v2/us/music/most-played/100/songs.json"
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  Apple ·{' '}
+                  {language === 'fr'
+                    ? 'flux officiel des chansons les plus écoutées'
+                    : 'official most-played songs feed'}
+                </a>
+              </li>
+              <li>
+                <a href="https://spotify-top.com/genres" target="_blank" rel="noreferrer">
+                  Spotify Top · {language === 'fr' ? 'répartition des genres' : 'genre breakdown'}
+                </a>
+              </li>
+              <li>
+                <a href="https://mostpops.com/lists/music-genres/" target="_blank" rel="noreferrer">
+                  MostPops ·{' '}
+                  {language === 'fr'
+                    ? 'source secondaire Apple Top 100'
+                    : 'secondary Apple Top 100 source'}
+                </a>
+              </li>
             </ul>
           </section>
         </div>

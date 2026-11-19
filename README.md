@@ -42,3 +42,18 @@ npm test
 ```
 
 The test command uses Node's built-in TypeScript support and requires Node.js 22.6 or newer.
+
+Before opening a pull request, run the shared quality checks and production build:
+
+```bash
+npm run verify
+npm run build
+```
+
+GitHub Actions runs both commands on pushes and pull requests.
+
+## Architecture and behavior rules
+
+- [Project direction and working rules](docs/GUIDE-DU-PROJET.md)
+- [Architecture overview](docs/ARCHITECTURE.md)
+- [Functional rules to preserve](docs/DECISIONS.md)

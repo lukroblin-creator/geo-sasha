@@ -10,6 +10,7 @@ export type CountryFlagQuestion = CountryCatalogEntry & {
   kind: 'flags'
 }
 
-export const countryFlagQuestions: CountryFlagQuestion[] = countryCatalog.map(
-  (country) => ({ ...country, kind: 'flags' as const })
-)
+export const countryFlagQuestions: CountryFlagQuestion[] = countryCatalog.map((country) => ({
+  ...country,
+  kind: 'flags' as const
+}))

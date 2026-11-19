@@ -34,8 +34,5 @@ export function getLocalizedCapitalName(
 }
 
 export function getAcceptedCapitalNames(alpha2: string, canonicalName: string): string[] {
-  return [...new Set([
-    canonicalName,
-    ...Object.values(localizedCapitalNames[alpha2] ?? {}).flat()
-  ])]
+  return [...new Set([canonicalName, ...Object.values(localizedCapitalNames[alpha2] ?? {}).flat()])]
 }

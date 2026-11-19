@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import WorldMap from './WorldMap'
+import WorldMap from './WorldMapLoader'
 import countryCatalog from '../data/quiz/countryCatalog.json'
 import {
   getContinentLabelForCountry,
@@ -8,6 +8,8 @@ import {
 } from '../data/quiz/countryContinents'
 import type { QuizMode, QuizProgress } from '../data/quiz/progress'
 import type { CountryQuizStatsByAlpha2 } from '../data/quiz/countryQuizStats'
+import type { QuizHistoryEntry } from '../data/quiz/quizHistory'
+import type { QuizPreset } from '../data/quiz/presets'
 import { useLanguage, type AppLanguage } from '../data/i18n'
 import { AppModeSwitcher, type AppPrimaryMode } from './AppModeSwitcher'
 
@@ -19,6 +21,8 @@ type StatisticsViewProps = {
   onReturn: () => void
   onOpenCountryQuiz: (alpha2: string) => void
   onModeChange: (mode: AppPrimaryMode) => void
+  quizHistory: QuizHistoryEntry[]
+  savedPresets: QuizPreset[]
 }
 
 type CountryRow = {
@@ -41,11 +45,24 @@ const modeLabels: Record<QuizMode, string> = {
   estimation: 'Mode estimation',
   'draw-borders': 'Dessine les frontières'
 }
-const quizModes: QuizMode[] = ['flags', 'capitals', 'custom', 'knowledge', 'estimation', 'draw-borders']
+const quizModes: QuizMode[] = [
+  'flags',
+  'capitals',
+  'custom',
+  'knowledge',
+  'estimation',
+  'draw-borders'
+]
 const countryQuizModes: QuizMode[] = ['flags', 'capitals', 'custom', 'knowledge']
 
 function percent(rate: number | null): string {
   return rate === null ? '—' : `${Math.round(rate * 100)} %`
+}
+
+function formatHistoryDate(value: string, language: AppLanguage): string {
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) return value
+  return new Intl.DateTimeFormat(language, { dateStyle: 'medium', timeStyle: 'short' }).format(date)
 }
 
 function getCountryRows(stats: CountryQuizStatsByAlpha2, language: AppLanguage): CountryRow[] {
@@ -77,9 +94,13 @@ export function StatisticsView({
   onToggleGlobeMode,
   onReturn,
   onOpenCountryQuiz,
-  onModeChange
+  onModeChange,
+  quizHistory,
+  savedPresets
 }: StatisticsViewProps): React.JSX.Element {
   const { language, t } = useLanguage()
+  const [page, setPage] = useState<'countries' | 'history' | 'preset'>('countries')
+  const [selectedPresetKey, setSelectedPresetKey] = useState('')
   const [selectedAlpha2, setSelectedAlpha2] = useState<string | null>(null)
   const [selectedRegion, setSelectedRegion] = useState<QuizRegion | 'all'>('all')
   const [search, setSearch] = useState('')
@@ -98,7 +119,7 @@ export function StatisticsView({
     0
   )
   const selectedCountry = selectedAlpha2
-    ? rows.find((country) => country.alpha2 === selectedAlpha2) ?? null
+    ? (rows.find((country) => country.alpha2 === selectedAlpha2) ?? null)
     : null
   const selectedStats = selectedAlpha2 ? countryStats[selectedAlpha2] : undefined
   const countryBySourceId = new Map(
@@ -106,15 +127,25 @@ export function StatisticsView({
   )
 
   const filteredRows = rows
-    .filter((country) => selectedRegion === 'all' || country.continent ===
-      quizRegions.find((region) => region.id === selectedRegion)?.label)
-    .filter((country) => country.name.toLocaleLowerCase(language).includes(search.toLocaleLowerCase(language)))
+    .filter(
+      (country) =>
+        selectedRegion === 'all' ||
+        country.continent === quizRegions.find((region) => region.id === selectedRegion)?.label
+    )
+    .filter((country) =>
+      country.name.toLocaleLowerCase(language).includes(search.toLocaleLowerCase(language))
+    )
     .sort((first, second) => {
       if (sort === 'lowest') {
-        return (first.rate ?? 2) - (second.rate ?? 2) || first.name.localeCompare(second.name, language)
+        return (
+          (first.rate ?? 2) - (second.rate ?? 2) || first.name.localeCompare(second.name, language)
+        )
       }
       if (sort === 'highest') {
-        return (second.rate ?? -1) - (first.rate ?? -1) || first.name.localeCompare(second.name, language)
+        return (
+          (second.rate ?? -1) - (first.rate ?? -1) ||
+          first.name.localeCompare(second.name, language)
+        )
       }
       return first.name.localeCompare(second.name, language)
     })
@@ -125,6 +156,29 @@ export function StatisticsView({
   const strongestCountries = [...playedRows]
     .sort((first, second) => (second.rate ?? 0) - (first.rate ?? 0))
     .slice(0, 5)
+
+  const presetChoices = useMemo(() => {
+    const choices = new Map<string, string>()
+    savedPresets.forEach((preset) => choices.set(preset.id, preset.name))
+    quizHistory.forEach((entry) => {
+      if (entry.presetId) choices.set(entry.presetId, entry.presetName ?? entry.presetId)
+    })
+    return [...choices.entries()].map(([id, name]) => ({ id, name }))
+  }, [quizHistory, savedPresets])
+  const activePresetKey = presetChoices.some(({ id }) => id === selectedPresetKey)
+    ? selectedPresetKey
+    : (presetChoices[0]?.id ?? '')
+  const presetHistory = quizHistory
+    .filter((entry) => entry.presetId === activePresetKey)
+    .sort((first, second) => first.completedAt.localeCompare(second.completedAt))
+  const presetPercentages = presetHistory.map((entry) =>
+    entry.total > 0 ? (entry.score / entry.total) * 100 : 0
+  )
+  const presetAverage = presetPercentages.length
+    ? presetPercentages.reduce((sum, value) => sum + value, 0) / presetPercentages.length
+    : null
+  const presetBest = presetPercentages.length ? Math.max(...presetPercentages) : null
+  const presetLatest = presetPercentages[presetPercentages.length - 1] ?? null
 
   const selectCountry = (alpha2: string): void => setSelectedAlpha2(alpha2)
 
@@ -137,221 +191,521 @@ export function StatisticsView({
           <p>{t('Retrouve tes résultats par quiz et par pays.')}</p>
         </div>
         <div className="statistics-actions">
-          <button
-            className="quiz-start-button"
-            type="button"
-            onClick={() => setShowAdvancedStatistics((current) => !current)}
-          >
-            {showAdvancedStatistics ? t('Statistiques essentielles') : t('Statistiques avancées')}
+          {page === 'countries' && (
+            <button
+              className="quiz-start-button"
+              type="button"
+              onClick={() => setShowAdvancedStatistics((current) => !current)}
+            >
+              {showAdvancedStatistics ? t('Statistiques essentielles') : t('Statistiques avancées')}
+            </button>
+          )}
+          <button className="quiz-start-button" type="button" onClick={onReturn}>
+            {t('Retour')}
           </button>
-          <button className="quiz-start-button" type="button" onClick={onReturn}>{t('Retour')}</button>
         </div>
       </header>
 
       <AppModeSwitcher active={null} onChange={onModeChange} />
 
+      <nav className="statistics-page-tabs" aria-label={t('Pages de statistiques')}>
+        <button
+          type="button"
+          className={page === 'countries' ? 'is-active' : ''}
+          onClick={() => setPage('countries')}
+        >
+          {t('Progression par pays')}
+        </button>
+        <button
+          type="button"
+          className={page === 'history' ? 'is-active' : ''}
+          onClick={() => setPage('history')}
+        >
+          {t('Historique des parties')}
+        </button>
+        <button
+          type="button"
+          className={page === 'preset' ? 'is-active' : ''}
+          onClick={() => setPage('preset')}
+        >
+          {t('Évolution par preset')}
+        </button>
+      </nav>
+
       <div className="statistics-content">
-        <section className="statistics-summary" aria-label={t('Résumé des résultats')}>
-          <article className="statistics-card">
-            <span>{t('Parties terminées')}</span>
-            <strong>{totalCompletedSessions}</strong>
-            <small>{t('Tous les types de quiz')}</small>
-          </article>
-          <article className="statistics-card">
-            <span>{t('Pays travaillés')}</span>
-            <strong>{playedRows.length} <small>/ {rows.length}</small></strong>
-            <small>{t('Au moins une réponse enregistrée')}</small>
-          </article>
-          <article className="statistics-card">
-            <span>{t('Questions évaluées')}</span>
-            <strong>{totalAnswered}</strong>
-            <small>{totalCorrect} {t('questions entièrement réussies')}</small>
-          </article>
-          <article className="statistics-card statistics-card-highlight">
-            <span>{t('Réussite globale')}</span>
-            <strong>{percent(overallRate)}</strong>
-            <small>{t('Points obtenus selon les essais')}</small>
-          </article>
-        </section>
-
-        {showAdvancedStatistics && <section className="statistics-mode-grid" aria-label={t('Résultats par type de quiz')}>
-          {quizModes.map((mode) => {
-            const modeStats = Object.values(countryStats).reduce(
-              (sum, country) => ({
-                answered: sum.answered + country.byMode[mode].answered,
-                correct: sum.correct + country.byMode[mode].correct,
-                pointsEarned: sum.pointsEarned + country.byMode[mode].pointsEarned,
-                pointsPossible: sum.pointsPossible + country.byMode[mode].pointsPossible
-              }),
-              { answered: 0, correct: 0, pointsEarned: 0, pointsPossible: 0 }
-            )
-            return (
-              <article className="statistics-mode-card" key={mode}>
-                <span>{t(modeLabels[mode])}</span>
-                <strong>{mode === 'estimation' || mode === 'draw-borders'
-                  ? percent(quizProgress[mode].completedSessions ? quizProgress[mode].bestScore / 100 : null)
-                  : percent(modeStats.pointsPossible ? modeStats.pointsEarned / modeStats.pointsPossible : null)}</strong>
-                <small>{mode === 'estimation' || mode === 'draw-borders'
-                  ? `${t('Meilleur score')} · ${quizProgress[mode].completedSessions} ${t('parties')}`
-                  : `${modeStats.correct} ${t('questions entièrement réussies sur')} ${modeStats.answered} · ${quizProgress[mode].completedSessions} ${t('parties')}`}</small>
+        {page === 'countries' ? (
+          <>
+            <section className="statistics-summary" aria-label={t('Résumé des résultats')}>
+              <article className="statistics-card">
+                <span>{t('Parties terminées')}</span>
+                <strong>{totalCompletedSessions}</strong>
+                <small>{t('Tous les types de quiz')}</small>
               </article>
-            )
-          })}
-        </section>}
+              <article className="statistics-card">
+                <span>{t('Pays travaillés')}</span>
+                <strong>
+                  {playedRows.length} <small>/ {rows.length}</small>
+                </strong>
+                <small>{t('Au moins une réponse enregistrée')}</small>
+              </article>
+              <article className="statistics-card">
+                <span>{t('Questions évaluées')}</span>
+                <strong>{totalAnswered}</strong>
+                <small>
+                  {totalCorrect} {t('questions entièrement réussies')}
+                </small>
+              </article>
+              <article className="statistics-card statistics-card-highlight">
+                <span>{t('Réussite globale')}</span>
+                <strong>{percent(overallRate)}</strong>
+                <small>{t('Points obtenus selon les essais')}</small>
+              </article>
+            </section>
 
-        <section className={`statistics-map-layout${showAdvancedStatistics ? '' : ' statistics-map-layout-basic'}`}>
-          <div className="statistics-map-panel">
+            {showAdvancedStatistics && (
+              <section
+                className="statistics-mode-grid"
+                aria-label={t('Résultats par type de quiz')}
+              >
+                {quizModes.map((mode) => {
+                  const modeStats = Object.values(countryStats).reduce(
+                    (sum, country) => ({
+                      answered: sum.answered + country.byMode[mode].answered,
+                      correct: sum.correct + country.byMode[mode].correct,
+                      pointsEarned: sum.pointsEarned + country.byMode[mode].pointsEarned,
+                      pointsPossible: sum.pointsPossible + country.byMode[mode].pointsPossible
+                    }),
+                    { answered: 0, correct: 0, pointsEarned: 0, pointsPossible: 0 }
+                  )
+                  return (
+                    <article className="statistics-mode-card" key={mode}>
+                      <span>{t(modeLabels[mode])}</span>
+                      <strong>
+                        {mode === 'estimation' || mode === 'draw-borders'
+                          ? percent(
+                              quizProgress[mode].completedSessions
+                                ? quizProgress[mode].bestScore / 100
+                                : null
+                            )
+                          : percent(
+                              modeStats.pointsPossible
+                                ? modeStats.pointsEarned / modeStats.pointsPossible
+                                : null
+                            )}
+                      </strong>
+                      <small>
+                        {mode === 'estimation' || mode === 'draw-borders'
+                          ? `${t('Meilleur score')} · ${quizProgress[mode].completedSessions} ${t('parties')}`
+                          : `${modeStats.correct} ${t('questions entièrement réussies sur')} ${modeStats.answered} · ${quizProgress[mode].completedSessions} ${t('parties')}`}
+                      </small>
+                    </article>
+                  )
+                })}
+              </section>
+            )}
+
+            <section
+              className={`statistics-map-layout${showAdvancedStatistics ? '' : ' statistics-map-layout-basic'}`}
+            >
+              <div className="statistics-map-panel">
+                <div className="statistics-section-heading">
+                  <div>
+                    <h2>{t('Réussite par pays')}</h2>
+                    <p>{t('La carte montre les points acquis, en tenant compte des essais.')}</p>
+                  </div>
+                </div>
+                <div className="statistics-map-canvas">
+                  <WorldMap
+                    showBorders
+                    showLabels
+                    globeMode={globeMode}
+                    onToggleGlobeMode={onToggleGlobeMode}
+                    countryAccuracyByAlpha2={countryStats}
+                    onCountrySelected={
+                      showAdvancedStatistics
+                        ? (sourceFeatureId) => {
+                            const alpha2 = countryBySourceId.get(Number(sourceFeatureId))
+                            if (alpha2) selectCountry(alpha2)
+                          }
+                        : undefined
+                    }
+                    onCountryDeselected={
+                      showAdvancedStatistics ? () => setSelectedAlpha2(null) : undefined
+                    }
+                  />
+                </div>
+                <div
+                  className="statistics-map-legend"
+                  aria-label={t('Légende du taux de réussite')}
+                >
+                  <span>{t('Pas encore joué')}</span>
+                  <i className="statistics-no-data-swatch" />
+                  <span>0 %</span>
+                  <i className="statistics-gradient-swatch" />
+                  <span>100 %</span>
+                </div>
+              </div>
+
+              {showAdvancedStatistics && (
+                <aside className="statistics-country-panel" aria-live="polite">
+                  {selectedCountry ? (
+                    <>
+                      <div className="section-label">{t('FICHE DE PROGRESSION')}</div>
+                      <h2>{selectedCountry.name}</h2>
+                      <div className="statistics-country-rate">
+                        <strong>{percent(selectedCountry.rate)}</strong>
+                        <span>
+                          {selectedCountry.correct} {t('questions entièrement réussies sur')}{' '}
+                          {selectedCountry.answered}
+                        </span>
+                        <small>
+                          {formatPoints(selectedCountry.pointsEarned, language)} /{' '}
+                          {formatPoints(selectedCountry.pointsPossible, language)} {t('points')}
+                        </small>
+                      </div>
+                      <div className="statistics-country-modes">
+                        {countryQuizModes.map((mode) => {
+                          const modeStats = selectedStats?.byMode[mode]
+                          const rate = modeStats?.pointsPossible
+                            ? modeStats.pointsEarned / modeStats.pointsPossible
+                            : null
+                          return (
+                            <div key={mode}>
+                              <span>{t(modeLabels[mode])}</span>
+                              <strong>{percent(rate)}</strong>
+                              <small>
+                                {modeStats?.correct ?? 0} / {modeStats?.answered ?? 0} ·{' '}
+                                {formatPoints(modeStats?.pointsEarned ?? 0, language)} /{' '}
+                                {formatPoints(modeStats?.pointsPossible ?? 0, language)}{' '}
+                                {t('points')}
+                              </small>
+                            </div>
+                          )
+                        })}
+                      </div>
+                      {selectedStats && Object.keys(selectedStats.byAnswer).length > 0 && (
+                        <div className="statistics-country-answers">
+                          <h3>{t('Résultats par élément')}</h3>
+                          {Object.entries(selectedStats.byAnswer).map(([id, answerStats]) => (
+                            <div key={id}>
+                              <span>{t(getAnswerDimensionLabel(id))}</span>
+                              <strong>
+                                {percent(
+                                  answerStats.pointsPossible
+                                    ? answerStats.pointsEarned / answerStats.pointsPossible
+                                    : null
+                                )}
+                              </strong>
+                              <small>
+                                {answerStats.correct} / {answerStats.answered} ·{' '}
+                                {formatPoints(answerStats.pointsEarned, language)} /{' '}
+                                {formatPoints(answerStats.pointsPossible, language)} {t('points')}
+                              </small>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                      <button
+                        className="quiz-start-button"
+                        type="button"
+                        onClick={() => onOpenCountryQuiz(selectedCountry.alpha2)}
+                      >
+                        {t('Lancer un quiz pays')}
+                      </button>
+                    </>
+                  ) : (
+                    <div className="statistics-empty-selection">
+                      <div className="section-label">{t('FICHE DE PROGRESSION')}</div>
+                      <h2>{t('Choisis un pays')}</h2>
+                      <p>
+                        {t(
+                          'Clique sur un pays de la carte ou de la liste pour voir le détail de tes réponses.'
+                        )}
+                      </p>
+                    </div>
+                  )}
+                </aside>
+              )}
+            </section>
+
+            {showAdvancedStatistics && (
+              <section className="statistics-ranking-grid">
+                <CountryRanking
+                  title="À retravailler"
+                  rows={weakestCountries}
+                  onSelect={selectCountry}
+                />
+                <CountryRanking
+                  title="Bien maîtrisés"
+                  rows={strongestCountries}
+                  onSelect={selectCountry}
+                />
+              </section>
+            )}
+
+            {showAdvancedStatistics && (
+              <section className="statistics-table-panel">
+                <div className="statistics-section-heading">
+                  <div>
+                    <h2>{t('Tous les pays')}</h2>
+                    <p>{t('Filtre et trie l’historique de tes réponses.')}</p>
+                  </div>
+                  <div className="statistics-table-filters">
+                    <input
+                      type="search"
+                      aria-label={t('Chercher un pays dans les statistiques')}
+                      placeholder={t('Chercher un pays')}
+                      value={search}
+                      onChange={(event) => setSearch(event.target.value)}
+                    />
+                    <select
+                      aria-label={t('Filtrer par continent')}
+                      value={selectedRegion}
+                      onChange={(event) =>
+                        setSelectedRegion(event.target.value as QuizRegion | 'all')
+                      }
+                    >
+                      <option value="all">{t('Tous les continents')}</option>
+                      {quizRegions
+                        .filter((region) => region.id !== 'world')
+                        .map((region) => (
+                          <option key={region.id} value={region.id}>
+                            {t(region.label)}
+                          </option>
+                        ))}
+                    </select>
+                    <select
+                      aria-label={t('Trier les pays')}
+                      value={sort}
+                      onChange={(event) => setSort(event.target.value as typeof sort)}
+                    >
+                      <option value="lowest">{t('Réussite la plus basse')}</option>
+                      <option value="highest">{t('Réussite la plus haute')}</option>
+                      <option value="name">{t('Ordre alphabétique')}</option>
+                    </select>
+                  </div>
+                </div>
+                <div className="statistics-table-scroll">
+                  <table className="statistics-table">
+                    <thead>
+                      <tr>
+                        <th>{t('Pays')}</th>
+                        <th>{t('Continent')}</th>
+                        <th>{t('Questions entièrement réussies')}</th>
+                        <th>{t('Réussite')}</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {filteredRows.map((country) => (
+                        <tr
+                          key={country.alpha2}
+                          className={country.alpha2 === selectedAlpha2 ? 'selected' : ''}
+                        >
+                          <td>
+                            <button type="button" onClick={() => selectCountry(country.alpha2)}>
+                              {country.name}
+                            </button>
+                          </td>
+                          <td>{t(country.continent)}</td>
+                          <td>
+                            {country.correct} / {country.answered} ·{' '}
+                            {formatPoints(country.pointsEarned, language)} /{' '}
+                            {formatPoints(country.pointsPossible, language)}
+                          </td>
+                          <td>{percent(country.rate)}</td>
+                        </tr>
+                      ))}
+                      {filteredRows.length === 0 && (
+                        <tr>
+                          <td colSpan={4}>{t('Aucun pays ne correspond à cette recherche.')}</td>
+                        </tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              </section>
+            )}
+          </>
+        ) : page === 'history' ? (
+          <section className="quiz-history-page">
             <div className="statistics-section-heading">
               <div>
-                <h2>{t('Réussite par pays')}</h2>
-                <p>{t('La carte montre les points acquis, en tenant compte des essais.')}</p>
+                <h2>{t('Historique des parties')}</h2>
+                <p>{t('Retrouve les réglages et les scores de tes parties terminées.')}</p>
               </div>
             </div>
-            <div className="statistics-map-canvas">
-              <WorldMap
-                showBorders
-                showLabels
-                globeMode={globeMode}
-                onToggleGlobeMode={onToggleGlobeMode}
-                countryAccuracyByAlpha2={countryStats}
-                onCountrySelected={showAdvancedStatistics
-                  ? (sourceFeatureId) => {
-                      const alpha2 = countryBySourceId.get(Number(sourceFeatureId))
-                      if (alpha2) selectCountry(alpha2)
-                    }
-                  : undefined}
-                onCountryDeselected={showAdvancedStatistics ? () => setSelectedAlpha2(null) : undefined}
-              />
+            {quizHistory.length ? (
+              <div className="quiz-history-list">
+                {[...quizHistory]
+                  .sort((a, b) => b.completedAt.localeCompare(a.completedAt))
+                  .map((entry) => (
+                    <article className="quiz-history-card" key={entry.id}>
+                      <div className="quiz-history-card-heading">
+                        <div>
+                          <strong>{entry.presetName ?? t(modeLabels[entry.mode])}</strong>
+                          <span>
+                            {formatHistoryDate(entry.completedAt, language)} · {t(entry.region)}
+                          </span>
+                        </div>
+                        <b>
+                          {formatPoints(entry.score, language)} /{' '}
+                          {formatPoints(entry.total, language)}
+                        </b>
+                      </div>
+                      <div className="quiz-history-settings">
+                        {entry.settings.map((setting, index) => (
+                          <span key={`${entry.id}:${index}`}>{setting}</span>
+                        ))}
+                      </div>
+                      <small>
+                        {entry.questions.length} {t('questions enregistrées')}
+                      </small>
+                    </article>
+                  ))}
+              </div>
+            ) : (
+              <div className="statistics-empty-selection">
+                <h2>{t('Aucune partie enregistrée')}</h2>
+                <p>
+                  {t('Les parties terminées apparaîtront ici avec leurs réglages et leur score.')}
+                </p>
+              </div>
+            )}
+          </section>
+        ) : (
+          <section className="quiz-history-page quiz-preset-history-page">
+            <div className="statistics-section-heading">
+              <div>
+                <h2>{t('Évolution par preset')}</h2>
+                <p>{t('Compare tes scores successifs sur un même quiz.')}</p>
+              </div>
+              <select
+                aria-label={t('Choisir un preset à analyser')}
+                value={activePresetKey}
+                onChange={(event) => setSelectedPresetKey(event.target.value)}
+                disabled={!presetChoices.length}
+              >
+                {presetChoices.map((preset) => (
+                  <option key={preset.id} value={preset.id}>
+                    {preset.name}
+                  </option>
+                ))}
+              </select>
             </div>
-            <div className="statistics-map-legend" aria-label={t('Légende du taux de réussite')}>
-              <span>{t('Pas encore joué')}</span>
-              <i className="statistics-no-data-swatch" />
-              <span>0 %</span>
-              <i className="statistics-gradient-swatch" />
-              <span>100 %</span>
-            </div>
-          </div>
-
-          {showAdvancedStatistics && <aside className="statistics-country-panel" aria-live="polite">
-            {selectedCountry ? (
+            {presetHistory.length ? (
               <>
-                <div className="section-label">{t('FICHE DE PROGRESSION')}</div>
-                <h2>{selectedCountry.name}</h2>
-                <div className="statistics-country-rate">
-                  <strong>{percent(selectedCountry.rate)}</strong>
-                  <span>{selectedCountry.correct} {t('questions entièrement réussies sur')} {selectedCountry.answered}</span>
-                  <small>{formatPoints(selectedCountry.pointsEarned, language)} / {formatPoints(selectedCountry.pointsPossible, language)} {t('points')}</small>
+                <div className="statistics-summary quiz-preset-summary">
+                  <article className="statistics-card">
+                    <span>{t('Parties jouées')}</span>
+                    <strong>{presetHistory.length}</strong>
+                  </article>
+                  <article className="statistics-card">
+                    <span>{t('Moyenne')}</span>
+                    <strong>{percent(presetAverage === null ? null : presetAverage / 100)}</strong>
+                  </article>
+                  <article className="statistics-card">
+                    <span>{t('Meilleur score')}</span>
+                    <strong>{percent(presetBest === null ? null : presetBest / 100)}</strong>
+                  </article>
+                  <article className="statistics-card statistics-card-highlight">
+                    <span>{t('Dernier score')}</span>
+                    <strong>{percent(presetLatest === null ? null : presetLatest / 100)}</strong>
+                  </article>
                 </div>
-                <div className="statistics-country-modes">
-                  {countryQuizModes.map((mode) => {
-                    const modeStats = selectedStats?.byMode[mode]
-                    const rate = modeStats?.pointsPossible
-                      ? modeStats.pointsEarned / modeStats.pointsPossible
-                      : null
-                    return (
-                      <div key={mode}>
-                        <span>{t(modeLabels[mode])}</span>
-                        <strong>{percent(rate)}</strong>
-                        <small>{modeStats?.correct ?? 0} / {modeStats?.answered ?? 0} · {formatPoints(modeStats?.pointsEarned ?? 0, language)} / {formatPoints(modeStats?.pointsPossible ?? 0, language)} {t('points')}</small>
-                      </div>
-                    )
-                  })}
+                <div className="quiz-preset-chart-panel">
+                  <h3>{t('Progression des scores')}</h3>
+                  <svg
+                    viewBox="0 0 600 210"
+                    role="img"
+                    aria-label={t('Graphique de progression des scores')}
+                  >
+                    <path d="M42 15V180H580" className="quiz-preset-chart-axis" />
+                    {[0, 25, 50, 75, 100].map((tick) => {
+                      const y = 180 - tick * 1.55
+                      return (
+                        <g key={tick}>
+                          <path d={`M42 ${y}H580`} className="quiz-preset-chart-gridline" />
+                          <text x="34" y={y + 4}>
+                            {tick}
+                          </text>
+                        </g>
+                      )
+                    })}
+                    {presetPercentages.length > 0 && (
+                      <>
+                        <polyline
+                          className="quiz-preset-chart-line"
+                          points={presetPercentages
+                            .map((value, index) => {
+                              const x =
+                                presetPercentages.length === 1
+                                  ? 310
+                                  : 52 + index * (516 / (presetPercentages.length - 1))
+                              const y = 180 - Math.max(0, Math.min(100, value)) * 1.55
+                              return `${x},${y}`
+                            })
+                            .join(' ')}
+                        />
+                        {presetPercentages.map((value, index) => {
+                          const x =
+                            presetPercentages.length === 1
+                              ? 310
+                              : 52 + index * (516 / (presetPercentages.length - 1))
+                          const y = 180 - Math.max(0, Math.min(100, value)) * 1.55
+                          return (
+                            <circle
+                              key={`${index}:${value}`}
+                              cx={x}
+                              cy={y}
+                              r="4"
+                              className="quiz-preset-chart-point"
+                            >
+                              <title>{`${index + 1} · ${Math.round(value)} %`}</title>
+                            </circle>
+                          )
+                        })}
+                      </>
+                    )}
+                  </svg>
                 </div>
-                {selectedStats && Object.keys(selectedStats.byAnswer).length > 0 && (
-                  <div className="statistics-country-answers">
-                    <h3>{t('Résultats par élément')}</h3>
-                    {Object.entries(selectedStats.byAnswer).map(([id, answerStats]) => (
-                      <div key={id}>
-                        <span>{t(getAnswerDimensionLabel(id))}</span>
-                        <strong>{percent(answerStats.pointsPossible
-                          ? answerStats.pointsEarned / answerStats.pointsPossible
-                          : null)}</strong>
-                        <small>{answerStats.correct} / {answerStats.answered} · {formatPoints(answerStats.pointsEarned, language)} / {formatPoints(answerStats.pointsPossible, language)} {t('points')}</small>
+                <div className="quiz-history-list">
+                  {[...presetHistory].reverse().map((entry) => (
+                    <article className="quiz-history-card" key={entry.id}>
+                      <div className="quiz-history-card-heading">
+                        <div>
+                          <strong>{formatHistoryDate(entry.completedAt, language)}</strong>
+                          <span>{t(entry.region)}</span>
+                        </div>
+                        <b>
+                          {formatPoints(entry.score, language)} /{' '}
+                          {formatPoints(entry.total, language)}
+                        </b>
                       </div>
-                    ))}
-                  </div>
-                )}
-                <button
-                  className="quiz-start-button"
-                  type="button"
-                  onClick={() => onOpenCountryQuiz(selectedCountry.alpha2)}
-                >
-                  {t('Lancer un quiz pays')}
-                </button>
+                      <div className="quiz-history-settings">
+                        {entry.settings.map((setting, index) => (
+                          <span key={`${entry.id}:${index}`}>{setting}</span>
+                        ))}
+                      </div>
+                    </article>
+                  ))}
+                </div>
               </>
             ) : (
               <div className="statistics-empty-selection">
-                <div className="section-label">{t('FICHE DE PROGRESSION')}</div>
-                <h2>{t('Choisis un pays')}</h2>
-                <p>{t('Clique sur un pays de la carte ou de la liste pour voir le détail de tes réponses.')}</p>
+                <h2>
+                  {presetChoices.length
+                    ? t('Aucune partie pour ce preset')
+                    : t('Aucun preset enregistré')}
+                </h2>
+                <p>
+                  {t(
+                    'Les scores apparaîtront ici après une partie lancée avec un preset sauvegardé.'
+                  )}
+                </p>
               </div>
             )}
-          </aside>}
-        </section>
-
-        {showAdvancedStatistics && <section className="statistics-ranking-grid">
-          <CountryRanking title="À retravailler" rows={weakestCountries} onSelect={selectCountry} />
-          <CountryRanking title="Bien maîtrisés" rows={strongestCountries} onSelect={selectCountry} />
-        </section>}
-
-        {showAdvancedStatistics && <section className="statistics-table-panel">
-          <div className="statistics-section-heading">
-            <div>
-              <h2>{t('Tous les pays')}</h2>
-              <p>{t('Filtre et trie l’historique de tes réponses.')}</p>
-            </div>
-            <div className="statistics-table-filters">
-              <input
-                type="search"
-                aria-label={t('Chercher un pays dans les statistiques')}
-                placeholder={t('Chercher un pays')}
-                value={search}
-                onChange={(event) => setSearch(event.target.value)}
-              />
-              <select
-                aria-label={t('Filtrer par continent')}
-                value={selectedRegion}
-                onChange={(event) => setSelectedRegion(event.target.value as QuizRegion | 'all')}
-              >
-                <option value="all">{t('Tous les continents')}</option>
-                {quizRegions.filter((region) => region.id !== 'world').map((region) => (
-                  <option key={region.id} value={region.id}>{t(region.label)}</option>
-                ))}
-              </select>
-              <select
-                aria-label={t('Trier les pays')}
-                value={sort}
-                onChange={(event) => setSort(event.target.value as typeof sort)}
-              >
-                <option value="lowest">{t('Réussite la plus basse')}</option>
-                <option value="highest">{t('Réussite la plus haute')}</option>
-                <option value="name">{t('Ordre alphabétique')}</option>
-              </select>
-            </div>
-          </div>
-          <div className="statistics-table-scroll">
-            <table className="statistics-table">
-              <thead>
-                <tr><th>{t('Pays')}</th><th>{t('Continent')}</th><th>{t('Questions entièrement réussies')}</th><th>{t('Réussite')}</th></tr>
-              </thead>
-              <tbody>
-                {filteredRows.map((country) => (
-                  <tr key={country.alpha2} className={country.alpha2 === selectedAlpha2 ? 'selected' : ''}>
-                    <td>
-                      <button type="button" onClick={() => selectCountry(country.alpha2)}>{country.name}</button>
-                    </td>
-                    <td>{t(country.continent)}</td>
-                    <td>{country.correct} / {country.answered} · {formatPoints(country.pointsEarned, language)} / {formatPoints(country.pointsPossible, language)}</td>
-                    <td>{percent(country.rate)}</td>
-                  </tr>
-                ))}
-                {filteredRows.length === 0 && (
-                  <tr><td colSpan={4}>{t('Aucun pays ne correspond à cette recherche.')}</td></tr>
-                )}
-              </tbody>
-            </table>
-          </div>
-        </section>}
+          </section>
+        )}
       </div>
     </main>
   )
@@ -393,12 +747,21 @@ function CountryRanking({
   return (
     <section className="statistics-ranking-panel">
       <h2>{t(title)}</h2>
-      {rows.length ? rows.map((country) => (
-        <button type="button" key={country.alpha2} onClick={() => onSelect(country.alpha2)}>
-          <span>{country.name}</span>
-          <span>{percent(country.rate)} <small>({country.correct}/{country.answered})</small></span>
-        </button>
-      )) : <p>{t('Les résultats apparaîtront après quelques questions.')}</p>}
+      {rows.length ? (
+        rows.map((country) => (
+          <button type="button" key={country.alpha2} onClick={() => onSelect(country.alpha2)}>
+            <span>{country.name}</span>
+            <span>
+              {percent(country.rate)}{' '}
+              <small>
+                ({country.correct}/{country.answered})
+              </small>
+            </span>
+          </button>
+        ))
+      ) : (
+        <p>{t('Les résultats apparaîtront après quelques questions.')}</p>
+      )}
     </section>
   )
 }

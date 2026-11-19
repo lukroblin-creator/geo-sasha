@@ -12,6 +12,7 @@ import {
   submitQuizAnswer,
   submitQuizAnswerItems
 } from '../src/renderer/src/data/quiz/useQuizSession.ts'
+import { summarizeQuizHistoryQuestions } from '../src/renderer/src/data/quiz/quizHistory.ts'
 import { loadQuizProgress, saveCompletedQuiz } from '../src/renderer/src/data/quiz/progress.ts'
 import {
   loadCountryQuizStats,
@@ -41,7 +42,12 @@ const explorationCountries = JSON.parse(
     new URL('../src/renderer/src/data/quiz/countryExplorationData.json', import.meta.url),
     'utf8'
   )
-).countries as { sourceFeatureId: string | number; alpha2: string; capital: string | null; population: number | null }[]
+).countries as {
+  sourceFeatureId: string | number
+  alpha2: string
+  capital: string | null
+  population: number | null
+}[]
 
 function setLocalStorage(initialValues: Record<string, string> = {}): void {
   const values = new Map(Object.entries(initialValues))
@@ -164,6 +170,34 @@ test('une question combinée répartit son point et garde les essais séparés p
   assert.equal(session.score, 1 / 3 + 0.5 / 3 + 0.5 / 3)
   assert.equal(session.answerAttempts.capital, 2)
   assert.equal(session.answerCorrect, true)
+})
+
+test('le résumé d’historique conserve le pays, le résultat et les points', (): void => {
+  const [summary] = summarizeQuizHistoryQuestions(
+    [
+      {
+        question: { alpha2: 'CA', frenchCountryName: 'Canada', capitalName: 'Ottawa' },
+        correct: true,
+        revealed: false,
+        selectedAnswer: 'Canada',
+        answerAttempts: { countryName: 2 },
+        answerPoints: { countryName: 0.5 }
+      }
+    ],
+    'fr'
+  )
+
+  assert.deepEqual(summary, {
+    alpha2: 'CA',
+    countryName: 'Canada',
+    prompt: 'Pays à retrouver',
+    answer: 'Canada · Ottawa',
+    selectedAnswer: 'Canada',
+    correct: true,
+    revealed: false,
+    attempts: 2,
+    points: 0.5
+  })
 })
 
 test('la progression sauvegarde les scores séparément par quiz', (): void => {
@@ -333,13 +367,19 @@ test('les fiches reconnaissent les identifiants géographiques complétés par d
     ])
   )
 
-  for (const [paddedId, alpha2] of [['012', 'DZ'], ['076', 'BR']]) {
+  for (const [paddedId, alpha2] of [
+    ['012', 'DZ'],
+    ['076', 'BR']
+  ]) {
     const country = countriesBySourceId.get(normalizeSourceFeatureId(paddedId))
     assert.equal(country?.alpha2, alpha2)
     assert.ok(country?.capital)
     assert.ok(country?.population)
 
-    assert.equal(normalizeSourceFeatureId(country?.sourceFeatureId), normalizeSourceFeatureId(paddedId))
+    assert.equal(
+      normalizeSourceFeatureId(country?.sourceFeatureId),
+      normalizeSourceFeatureId(paddedId)
+    )
   }
 })
 

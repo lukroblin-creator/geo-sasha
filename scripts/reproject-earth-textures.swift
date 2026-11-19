@@ -10,15 +10,24 @@ guard CommandLine.arguments.count == 3 else {
 
 let inputDirectory = URL(fileURLWithPath: CommandLine.arguments[1], isDirectory: true)
 let outputDirectory = URL(fileURLWithPath: CommandLine.arguments[2], isDirectory: true)
-let textureFiles = [("earth-day.jpg", "earth-day-mercator.jpg"), ("earth-night.jpg", "earth-night-mercator.jpg"), ("earth-clouds.jpg", "earth-clouds-mercator.jpg")]
+let textureFiles = [
+  ("earth-day.jpg", "earth-day-mercator.jpg"),
+  ("earth-night.jpg", "earth-night-mercator.jpg"),
+  ("earth-clouds.jpg", "earth-clouds-mercator.jpg"),
+  ("earth-topography.tif", "earth-topography-mercator.jpg")
+]
 let maximumLatitude = 85.0511287798066
 let maximumMercatorY = log(tan(Double.pi / 4 + maximumLatitude * Double.pi / 360))
 
 try FileManager.default.createDirectory(at: outputDirectory, withIntermediateDirectories: true)
 
+var processedTextureCount = 0
+
 for (inputName, outputName) in textureFiles {
   let inputURL = inputDirectory.appendingPathComponent(inputName)
   let outputURL = outputDirectory.appendingPathComponent(outputName)
+
+  guard FileManager.default.fileExists(atPath: inputURL.path) else { continue }
 
   guard
     let imageSource = CGImageSourceCreateWithURL(inputURL as CFURL, nil),
@@ -27,8 +36,8 @@ for (inputName, outputName) in textureFiles {
     throw NSError(domain: "EarthTexture", code: 1, userInfo: [NSLocalizedDescriptionKey: "Cannot read \(inputURL.path)"])
   }
 
-  let width = image.width
-  let sourceHeight = image.height
+  let width = min(image.width, 8192)
+  let sourceHeight = max(1, Int((Double(image.height) * Double(width) / Double(image.width)).rounded()))
   // A full-width Web Mercator world is square in projected coordinates.
   // Keeping the original 2:1 equirectangular height would squash it vertically.
   let outputHeight = width
@@ -105,5 +114,10 @@ for (inputName, outputName) in textureFiles {
     throw NSError(domain: "EarthTexture", code: 4, userInfo: [NSLocalizedDescriptionKey: "Cannot write projected image \(outputURL.path)"])
   }
 
+  processedTextureCount += 1
   print("Reprojected \(inputName) as \(outputName) to \(width) × \(outputHeight) Web Mercator pixels")
+}
+
+guard processedTextureCount > 0 else {
+  throw NSError(domain: "EarthTexture", code: 5, userInfo: [NSLocalizedDescriptionKey: "No supported texture files found in \(inputDirectory.path)"])
 }

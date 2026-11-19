@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import WorldMap from './WorldMap'
+import WorldMap from './WorldMapLoader'
 import { SkinSelector } from './AppModeSwitcher'
 import { useLanguage } from '../data/i18n'
 import { scoreDrawnBorders } from '../data/quiz/drawBordersQuiz'
@@ -42,31 +42,57 @@ export function DrawBordersQuizView({
         <div>
           <span>{t('QUIZ MONDE / FRONTIÈRES')}</span>
           <h1>{t('Dessine les frontières')}</h1>
-          <p>{countryAlpha2
-            ? new Intl.DisplayNames([language], { type: 'region' }).of(countryAlpha2) ?? countryAlpha2
-            : continents.length === 0
-              ? t('Monde entier')
-              : continents.map((id) => t(quizRegions.find((region) => region.id === id)?.label ?? id)).join(' · ')}</p>
+          <p>
+            {countryAlpha2
+              ? (new Intl.DisplayNames([language], { type: 'region' }).of(countryAlpha2) ??
+                countryAlpha2)
+              : continents.length === 0
+                ? t('Monde entier')
+                : continents
+                    .map((id) => t(quizRegions.find((region) => region.id === id)?.label ?? id))
+                    .join(' · ')}
+          </p>
         </div>
         <div className="special-quiz-header-actions">
           <SkinSelector compact />
-          <button type="button" onClick={onStop}>{t('Quitter la partie')}</button>
+          <button type="button" onClick={onStop}>
+            {t('Quitter la partie')}
+          </button>
         </div>
       </header>
 
       <section className="draw-borders-workspace">
         <div className="draw-borders-toolbar" aria-label={t('Outils de dessin')}>
           <div className="draw-borders-tools">
-            <button type="button" disabled={score !== null} className={tool === 'draw' ? 'is-active' : ''} onClick={() => setTool('draw')}>
+            <button
+              type="button"
+              disabled={score !== null}
+              className={tool === 'draw' ? 'is-active' : ''}
+              onClick={() => setTool('draw')}
+            >
               ✎ {t('Tracer')}
             </button>
-            <button type="button" disabled={score !== null} className={tool === 'erase' ? 'is-active' : ''} onClick={() => setTool('erase')}>
+            <button
+              type="button"
+              disabled={score !== null}
+              className={tool === 'erase' ? 'is-active' : ''}
+              onClick={() => setTool('erase')}
+            >
               ⌫ {t('Gomme')}
             </button>
-            <button type="button" disabled={score !== null} className={tool === 'pan' ? 'is-active' : ''} onClick={() => setTool('pan')}>
+            <button
+              type="button"
+              disabled={score !== null}
+              className={tool === 'pan' ? 'is-active' : ''}
+              onClick={() => setTool('pan')}
+            >
               ✋ {t('Déplacer la carte')}
             </button>
-            <button type="button" disabled={!strokes.length} onClick={() => setStrokes((current) => current.slice(0, -1))}>
+            <button
+              type="button"
+              disabled={!strokes.length}
+              onClick={() => setStrokes((current) => current.slice(0, -1))}
+            >
               ↶ {t('Annuler le dernier trait')}
             </button>
             <button type="button" disabled={!strokes.length} onClick={() => setStrokes([])}>
@@ -74,12 +100,20 @@ export function DrawBordersQuizView({
             </button>
           </div>
           {score === null ? (
-            <button className="quiz-start-button" type="button" onClick={finish}>{t('Terminer et calculer le score')}</button>
+            <button className="quiz-start-button" type="button" onClick={finish}>
+              {t('Terminer et calculer le score')}
+            </button>
           ) : (
             <div className="draw-borders-result" role="status">
-              <strong>{t('Précision')} : {score.toLocaleString(language)} %</strong>
-              <button className="quiz-start-button" type="button" onClick={onRestart}>{t('Rejouer')}</button>
-              <button type="button" onClick={onStop}>{t('Quitter la partie')}</button>
+              <strong>
+                {t('Précision')} : {score.toLocaleString(language)} %
+              </strong>
+              <button className="quiz-start-button" type="button" onClick={onRestart}>
+                {t('Rejouer')}
+              </button>
+              <button type="button" onClick={onStop}>
+                {t('Quitter la partie')}
+              </button>
             </div>
           )}
         </div>

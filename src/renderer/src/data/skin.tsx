@@ -40,11 +40,7 @@ export function SkinProvider({ children }: { children: ReactNode }): React.JSX.E
 
   const setSkin = (nextSkin: AppSkin): void => setCurrentSkin(nextSkin)
 
-  return (
-    <SkinContext.Provider value={{ skin, setSkin }}>
-      {children}
-    </SkinContext.Provider>
-  )
+  return <SkinContext.Provider value={{ skin, setSkin }}>{children}</SkinContext.Provider>
 }
 
 export function useSkin(): SkinContextValue {

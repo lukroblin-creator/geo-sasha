@@ -213,7 +213,8 @@ function getHemisphereDot(coordinate: Position, context: GlobeClipContext): numb
 
   return (
     context.sinCenterLatitude * sphericalCoordinate.sinLatitude +
-    context.cosCenterLatitude * sphericalCoordinate.cosLatitude *
+    context.cosCenterLatitude *
+      sphericalCoordinate.cosLatitude *
       Math.cos(sphericalCoordinate.longitudeRadians - context.centerLongitudeRadians)
   )
 }
@@ -230,12 +231,10 @@ function isPointInsideRing(point: Position, ring: Position[]): boolean {
   let previousLatitude = ring[0][1]
 
   for (let index = 1; index < ring.length; index += 1) {
-    const longitude = previousLongitude + getShortestLongitudeDelta(
-      previousLongitude,
-      ring[index][0]
-    )
+    const longitude =
+      previousLongitude + getShortestLongitudeDelta(previousLongitude, ring[index][0])
     const latitude = ring[index][1]
-    const crossesLatitude = (latitude > pointLatitude) !== (previousLatitude > pointLatitude)
+    const crossesLatitude = latitude > pointLatitude !== previousLatitude > pointLatitude
     if (
       crossesLatitude &&
       queryLongitude <
@@ -322,7 +321,7 @@ function getVisibleBoundaryArc(
 ): Position[] {
   const startAngle = getGlobeBoundaryAngle(from, context)
   const endAngle = getGlobeBoundaryAngle(to, context)
-  const positiveDelta = ((endAngle - startAngle + Math.PI * 2) % (Math.PI * 2))
+  const positiveDelta = (endAngle - startAngle + Math.PI * 2) % (Math.PI * 2)
   const negativeDelta = positiveDelta - Math.PI * 2
   const positiveMidpoint = getGlobeBoundaryCoordinate(startAngle + positiveDelta / 2, context)
   const negativeMidpoint = getGlobeBoundaryCoordinate(startAngle + negativeDelta / 2, context)
@@ -482,9 +481,11 @@ function geometryToScreenShape(
 
     const rings = [
       ...outerRings,
-      ...polygon.slice(1).flatMap((ring) =>
-        globeClipContext ? clipRingToVisibleGlobe(ring, globeClipContext) : [ring]
-      )
+      ...polygon
+        .slice(1)
+        .flatMap((ring) =>
+          globeClipContext ? clipRingToVisibleGlobe(ring, globeClipContext) : [ring]
+        )
     ]
     const polygonPaths = rings.flatMap((ring) => {
       if (ring.length < 4) return []
@@ -599,14 +600,21 @@ export const MapFlagOverlay = memo(function MapFlagOverlay({
   const width = map.getCanvas().clientWidth
   const height = map.getCanvas().clientHeight
   const limitFlagCount = maxFlags < labels.features.length
+  // These counters invalidate geometry derived from MapLibre's mutable camera
+  // and canvas dimensions, which React cannot observe through the Map instance.
   const globeClipContext = useMemo(
     () =>
       globeMode
         ? createGlobeClipContext(
             map,
-            getGlobeVisibilityThreshold(zoom, GLOBE_TRANSITION_START_ZOOM, GLOBE_TRANSITION_END_ZOOM)
+            getGlobeVisibilityThreshold(
+              zoom,
+              GLOBE_TRANSITION_START_ZOOM,
+              GLOBE_TRANSITION_END_ZOOM
+            )
           )
         : undefined,
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- camera and map revisions are intentional invalidation signals.
     [cameraRevision, globeMode, map, revision, zoom]
   )
   const globeBoundaryPath = useMemo(
@@ -614,6 +622,7 @@ export const MapFlagOverlay = memo(function MapFlagOverlay({
       globeClipContext && globeClipContext.visibilityThreshold >= 0
         ? getGlobeBoundaryScreenPath(map, globeClipContext)
         : '',
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- canvas size changes independently of the Map object.
     [globeClipContext, height, map, width]
   )
 
@@ -623,13 +632,17 @@ export const MapFlagOverlay = memo(function MapFlagOverlay({
     const rankedLabels = [...labels.features]
       .sort((first, second) => first.properties.priority - second.properties.priority)
       .slice(0, Math.max(0, Math.floor(maxFlags)))
-    const allowedEntities = new Set(rankedLabels.flatMap((label) =>
-      label.properties.entityId ? [label.properties.entityId] : []
-    ))
-    const allowedSources = new Set(rankedLabels.flatMap((label) => {
-      const id = label.properties.sourceFeatureId
-      return id === null || id === undefined ? [] : [normalizeId(id)]
-    }))
+    const allowedEntities = new Set(
+      rankedLabels.flatMap((label) =>
+        label.properties.entityId ? [label.properties.entityId] : []
+      )
+    )
+    const allowedSources = new Set(
+      rankedLabels.flatMap((label) => {
+        const id = label.properties.sourceFeatureId
+        return id === null || id === undefined ? [] : [normalizeId(id)]
+      })
+    )
     const features = world110m.features.flatMap((feature, index) => {
       const geometry = feature.geometry
       if (!geometry || (geometry.type !== 'Polygon' && geometry.type !== 'MultiPolygon')) {
@@ -645,19 +658,19 @@ export const MapFlagOverlay = memo(function MapFlagOverlay({
           ? properties.sourceId
           : null
       const entityId = typeof properties.entityId === 'string' ? properties.entityId : null
-      if (limitFlagCount && (
-        (entityId && !allowedEntities.has(entityId)) ||
-        (!entityId && (sourceFeatureId === null || !allowedSources.has(normalizeId(sourceFeatureId))))
-      )) return []
+      if (
+        limitFlagCount &&
+        ((entityId && !allowedEntities.has(entityId)) ||
+          (!entityId &&
+            (sourceFeatureId === null || !allowedSources.has(normalizeId(sourceFeatureId)))))
+      )
+        return []
       const rawKey = String(feature.id ?? `${sourceFeatureId ?? 'feature'}-${index}`)
 
       const polygons = geometry.type === 'Polygon' ? [geometry.coordinates] : geometry.coordinates
 
       return polygons.flatMap((polygon, polygonIndex) => {
-        const screenShape = geometryToScreenShape(
-          { type: 'Polygon', coordinates: polygon },
-          map
-        )
+        const screenShape = geometryToScreenShape({ type: 'Polygon', coordinates: polygon }, map)
         if (!screenShape) return []
 
         return [
@@ -673,7 +686,19 @@ export const MapFlagOverlay = memo(function MapFlagOverlay({
     })
 
     return { camera: getCameraSnapshot(map), features }
-  }, [globeMode, height, labels, map, maxFlags, projectionRevision, width, world110m])
+    // Canvas and projection revisions invalidate geometry generated from MapLibre's mutable state.
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- these are external refresh signals.
+  }, [
+    globeMode,
+    height,
+    labels,
+    limitFlagCount,
+    map,
+    maxFlags,
+    projectionRevision,
+    width,
+    world110m
+  ])
 
   useLayoutEffect(() => {
     baselineCameraRef.current = baseline.camera
@@ -776,13 +801,17 @@ export const MapFlagOverlay = memo(function MapFlagOverlay({
     const rankedLabels = [...labels.features]
       .sort((first, second) => first.properties.priority - second.properties.priority)
       .slice(0, Math.max(0, Math.floor(maxFlags)))
-    const allowedEntities = new Set(rankedLabels.flatMap((label) =>
-      label.properties.entityId ? [label.properties.entityId] : []
-    ))
-    const allowedSources = new Set(rankedLabels.flatMap((label) => {
-      const id = label.properties.sourceFeatureId
-      return id === null || id === undefined ? [] : [normalizeId(id)]
-    }))
+    const allowedEntities = new Set(
+      rankedLabels.flatMap((label) =>
+        label.properties.entityId ? [label.properties.entityId] : []
+      )
+    )
+    const allowedSources = new Set(
+      rankedLabels.flatMap((label) => {
+        const id = label.properties.sourceFeatureId
+        return id === null || id === undefined ? [] : [normalizeId(id)]
+      })
+    )
     // Le calque reste limité à la zone visible pour éviter de reprojeter des milliers
     // de sommets inutiles après chaque déplacement de la carte.
     const resolutions = [
@@ -801,10 +830,7 @@ export const MapFlagOverlay = memo(function MapFlagOverlay({
     const groupedFeatures = new Map<string, FlagOverlayFeature>()
 
     for (const { dataset, id: resolutionId } of resolutions) {
-      const resolutionOpacity = getResolutionOpacity(
-        resolutionId as '110m' | '50m' | '10m',
-        zoom
-      )
+      const resolutionOpacity = getResolutionOpacity(resolutionId as '110m' | '50m' | '10m', zoom)
       if (resolutionOpacity <= 0) continue
       dataset.features.forEach((feature, index) => {
         const geometry = feature.geometry
@@ -822,10 +848,13 @@ export const MapFlagOverlay = memo(function MapFlagOverlay({
             : null
         const entityId = typeof properties.entityId === 'string' ? properties.entityId : null
         const alpha2 = typeof properties.flagAlpha2 === 'string' ? properties.flagAlpha2 : null
-        if (limitFlagCount && (
-          (entityId && !allowedEntities.has(entityId)) ||
-          (!entityId && (sourceFeatureId === null || !allowedSources.has(normalizeId(sourceFeatureId))))
-        )) return
+        if (
+          limitFlagCount &&
+          ((entityId && !allowedEntities.has(entityId)) ||
+            (!entityId &&
+              (sourceFeatureId === null || !allowedSources.has(normalizeId(sourceFeatureId)))))
+        )
+          return
         const rawKey = String(feature.id ?? `${sourceFeatureId ?? 'feature'}-${index}`)
         const groupId = entityId
           ? `entity:${entityId}`
@@ -880,7 +909,19 @@ export const MapFlagOverlay = memo(function MapFlagOverlay({
     }
 
     return Array.from(groupedFeatures.values())
-  }, [cameraRevision, globeMode, labels, map, maxFlags, revision, world10m, world110m, world50m, zoom])
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- revision refreshes screen geometry after MapLibre changes its camera in place.
+  }, [
+    globeClipContext,
+    labels,
+    limitFlagCount,
+    map,
+    maxFlags,
+    revision,
+    world10m,
+    world110m,
+    world50m,
+    zoom
+  ])
 
   const allFlagFeatures = useMemo(
     () => [...baseline.features, ...overlayFeatures],
@@ -942,6 +983,7 @@ export const MapFlagOverlay = memo(function MapFlagOverlay({
             : []
         )
       ),
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- a loaded flag image triggers this explicit cache refresh.
     [allFlagFeatures, flagImageRevision]
   )
 
@@ -1019,7 +1061,8 @@ export const MapFlagOverlay = memo(function MapFlagOverlay({
     }
 
     return placed
-  }, [cameraRevision, labels, map, maxLabels, revision, showLabels, zoom])
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- these revisions refresh screen geometry from MapLibre's mutable camera.
+  }, [cameraRevision, globeMode, labels, map, maxLabels, revision, showLabels, zoom])
 
   if (width <= 0 || height <= 0) return <></>
 
@@ -1029,12 +1072,13 @@ export const MapFlagOverlay = memo(function MapFlagOverlay({
   const isSelected = (feature: FlagOverlayFeature): boolean => {
     const selectedFromMap =
       (feature.entityId !== null && selectedEntityIds.includes(feature.entityId)) ||
-      feature.sourceFeatureIds.some((sourceFeatureId) =>
-        (selectedSourceFeatureId !== null &&
-          normalizeId(sourceFeatureId) === normalizeId(selectedSourceFeatureId)) ||
-        selectedSourceFeatureIds.some(
-          (selectedId) => normalizeId(sourceFeatureId) === normalizeId(selectedId)
-        )
+      feature.sourceFeatureIds.some(
+        (sourceFeatureId) =>
+          (selectedSourceFeatureId !== null &&
+            normalizeId(sourceFeatureId) === normalizeId(selectedSourceFeatureId)) ||
+          selectedSourceFeatureIds.some(
+            (selectedId) => normalizeId(sourceFeatureId) === normalizeId(selectedId)
+          )
       )
     const selectedForQuiz = feature.sourceFeatureIds.some(
       (sourceFeatureId) =>
@@ -1067,9 +1111,8 @@ export const MapFlagOverlay = memo(function MapFlagOverlay({
     selectedSourceFeatureId !== null ||
     selectedSourceFeatureIds.length > 0 ||
     quizTargetFeatureId !== null
-  const visibleSelectionBoundaryOpacity = selectionBoundaryOpacity > 0
-    ? selectionBoundaryOpacity
-    : hasSelection ? 1 : 0
+  const visibleSelectionBoundaryOpacity =
+    selectionBoundaryOpacity > 0 ? selectionBoundaryOpacity : hasSelection ? 1 : 0
 
   return (
     <div
@@ -1105,11 +1148,7 @@ export const MapFlagOverlay = memo(function MapFlagOverlay({
           )}
         </defs>
 
-        <g
-          clipPath={
-            globeBoundaryPath ? 'url(#map-flag-globe-boundary-baseline)' : undefined
-          }
-        >
+        <g clipPath={globeBoundaryPath ? 'url(#map-flag-globe-boundary-baseline)' : undefined}>
           {baseline.features.map((feature) => (
             <g key={feature.key}>
               {(flagImageLayers.get(feature.key) ?? []).map(({ clipId, layers }) => (
@@ -1127,13 +1166,14 @@ export const MapFlagOverlay = memo(function MapFlagOverlay({
                   ))}
                 </g>
               ))}
-              {isWrongAnswer(feature) && feature.polygons.map(({ path }, index) => (
-                <path
-                  key={`wrong-answer-${wrongAnswerTarget?.id}-${feature.key}-${index}`}
-                  className="map-wrong-answer-highlight"
-                  d={path}
-                />
-              ))}
+              {isWrongAnswer(feature) &&
+                feature.polygons.map(({ path }, index) => (
+                  <path
+                    key={`wrong-answer-${wrongAnswerTarget?.id}-${feature.key}-${index}`}
+                    className="map-wrong-answer-highlight"
+                    d={path}
+                  />
+                ))}
             </g>
           ))}
         </g>
@@ -1162,11 +1202,7 @@ export const MapFlagOverlay = memo(function MapFlagOverlay({
                       id={`map-flag-clip-detail-${feature.key}-${index}`}
                       clipPathUnits="userSpaceOnUse"
                     >
-                      <path
-                        d={path}
-                        fillRule="evenodd"
-                        clipRule="evenodd"
-                      />
+                      <path d={path} fillRule="evenodd" clipRule="evenodd" />
                     </clipPath>
                   ))
                 ]
@@ -1207,7 +1243,9 @@ export const MapFlagOverlay = memo(function MapFlagOverlay({
                       d={path}
                       fill={
                         skin === 'minimal'
-                          ? realLayerActive ? '#a17435' : '#20201d'
+                          ? realLayerActive
+                            ? '#a17435'
+                            : '#20201d'
                           : skin === 'matrix'
                             ? '#00d957'
                             : '#e5a63b'
@@ -1245,7 +1283,9 @@ export const MapFlagOverlay = memo(function MapFlagOverlay({
                       fill="none"
                       stroke={
                         realLayerActive
-                          ? skin === 'matrix' ? '#d8ffdf' : '#fff1c3'
+                          ? skin === 'matrix'
+                            ? '#d8ffdf'
+                            : '#fff1c3'
                           : skin === 'minimal'
                             ? '#77736b'
                             : skin === 'matrix'

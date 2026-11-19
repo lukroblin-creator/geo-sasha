@@ -1,8 +1,4 @@
-import type {
-  GeographicDataSource,
-  GeographicEntity,
-  GeographicGeometryLink
-} from './types'
+import type { GeographicDataSource, GeographicEntity, GeographicGeometryLink } from './types'
 import { geographicEntities } from './entities'
 import { geographicDataSources } from './sources'
 import { geographicGeometryLinks } from './geometries'
@@ -15,12 +11,8 @@ export function getEntityById(id: string): GeographicEntity | undefined {
 }
 
 // Recherche les territoires rattachés à une entité souveraine.
-export function getTerritoriesBySovereign(
-  sovereignEntityId: string
-): GeographicEntity[] {
-  return geographicEntities.filter(
-    (entity) => entity.sovereignEntityId === sovereignEntityId
-  )
+export function getTerritoriesBySovereign(sovereignEntityId: string): GeographicEntity[] {
+  return geographicEntities.filter((entity) => entity.sovereignEntityId === sovereignEntityId)
 }
 
 export function getEntityDisplayName(id: string): string | undefined {
@@ -38,22 +30,15 @@ export function getEntityDisplayName(id: string): string | undefined {
 // ainsi qu'à ses territoires rattachés.
 // Récupère l'identifiant d'une entité et ceux de ses territoires rattachés.
 export function getRelatedEntityIds(entityId: string): string[] {
-  return [
-    entityId,
-    ...getTerritoriesBySovereign(entityId).map((entity) => entity.id)
-  ]
+  return [entityId, ...getTerritoriesBySovereign(entityId).map((entity) => entity.id)]
 }
 
 // Récupère toutes les géométries associées à une entité
 // ainsi qu'à ses territoires rattachés.
-export function getGeometryLinksForEntity(
-  entityId: string
-): GeographicGeometryLink[] {
+export function getGeometryLinksForEntity(entityId: string): GeographicGeometryLink[] {
   const relatedEntityIds = new Set(getRelatedEntityIds(entityId))
 
-  return geographicGeometryLinks.filter(
-    (link) => relatedEntityIds.has(link.entityId)
-  )
+  return geographicGeometryLinks.filter((link) => relatedEntityIds.has(link.entityId))
 }
 
 // Recherche une géométrie à partir de sa source et de son identifiant d'origine.

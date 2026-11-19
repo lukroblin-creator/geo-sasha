@@ -41,14 +41,15 @@ const translations: Record<Exclude<AppLanguage, 'fr'>, Record<string, string>> =
     'PARAMÈTRES DE LA PARTIE': 'GAME SETTINGS',
     'Choisis comment jouer': 'Choose how to play',
     'ZONE GÉOGRAPHIQUE': 'GEOGRAPHIC AREA',
-    'Choisis une zone géographique, le nombre de pays et les indices ou réponses de la partie.': 'Choose a geographic area, the number of countries, and the clues or answers for your game.',
+    'Choisis une zone géographique, le nombre de pays et les indices ou réponses de la partie.':
+      'Choose a geographic area, the number of countries, and the clues or answers for your game.',
     'Partie aléatoire': 'Random game',
     Preset: 'Preset',
     'Choisir et lancer un preset': 'Choose and launch a preset',
     'Lancer le preset par défaut': 'Launch the default preset',
     'Aucun preset par défaut': 'No default preset',
-    'Aucun preset enregistré': 'No saved presets',
-    'Enregistre un preset dans les réglages pour le lancer ici.': 'Save a preset in settings to launch it here.',
+    'Enregistre un preset dans les réglages pour le lancer ici.':
+      'Save a preset in settings to launch it here.',
     'Par défaut': 'Default',
     'Choisir indices et réponses': 'Choose clues and answers',
     'Choisir les indices et les réponses': 'Choose clues and answers',
@@ -58,6 +59,19 @@ const translations: Record<Exclude<AppLanguage, 'fr'>, Record<string, string>> =
     'Nom du pays': 'Country name',
     Capitale: 'Capital',
     'Territoire sur la carte': 'Territory on the map',
+    'Langue officielle': 'Official language',
+    'Extension web': 'Web domain',
+    'Ajouter un indice': 'Add a clue',
+    'Ajouter une réponse': 'Add an answer',
+    'Supprimer cette réponse': 'Remove this answer',
+    'Sélectionne les pays sur la carte': 'Select the countries on the map',
+    'Aucun pays sélectionné': 'No countries selected',
+    'Réponse incorrecte': 'Incorrect answer',
+    'Réponses manquantes': 'Missing answers',
+    point: 'point',
+    gagné: 'earned',
+    'Retirer cet élément': 'Remove this item',
+    'Toutes les données sont déjà ajoutées.': 'All available facts have already been added.',
     'Cocher un élément dans une colonne le retire automatiquement de l’autre. Choisis au moins un indice et une réponse, puis démarre une nouvelle partie.':
       'Selecting an item in one column automatically removes it from the other. Choose at least one clue and one answer, then start a new game.',
     'Nouvelle partie': 'New game',
@@ -77,8 +91,22 @@ const translations: Record<Exclude<AppLanguage, 'fr'>, Record<string, string>> =
     'Suppression impossible sur cet appareil.': 'Could not delete on this device.',
     'Preset supprimé.': 'Preset deleted.',
     'Carte mondiale': 'World map',
+    'Chargement de la carte': 'Loading map',
     'Passer au globe': 'Switch to globe',
     'Passer au plan': 'Switch to flat map',
+    'Caméra 3D — rotation libre autour du globe': '3D camera — free orbit around the globe',
+    'Afficher les réglages caméra': 'Show camera controls',
+    'Masquer les réglages caméra': 'Hide camera controls',
+    Pitch: 'Pitch',
+    Yaw: 'Yaw',
+    Roll: 'Roll',
+    'Déplacer la carte': 'Move the map',
+    'Curseur du jeu': 'Game cursor',
+    'Déplacer la carte (D)': 'Move the map (D)',
+    'Curseur du jeu (C)': 'Game cursor (C)',
+    'Caméra libre : ancrage détaché': 'Free camera: globe anchor detached',
+    'Deux doigts : orbite · ⌘ défilement : zoom · ⌥ yaw · Ctrl pitch · ⇧ roll · ⌘⌥ / ⌘Ctrl / ⌘⇧ : caméra libre · D/C : déplacement/curseur':
+      'Two fingers: orbit · ⌘ scroll: zoom · ⌥ yaw · Ctrl pitch · ⇧ roll · ⌘⌥ / ⌘Ctrl / ⌘⇧: free camera · D/C: pan/game cursor',
     'Perspective corrigée': 'Corrected perspective',
     'Territoire déplacé': 'Dragged territory',
     'Sous le fantôme': 'Under the ghost',
@@ -108,17 +136,21 @@ const translations: Record<Exclude<AppLanguage, 'fr'>, Record<string, string>> =
     'COMPARAISON / MONDE': 'COMPARISON / WORLD',
     'Comparer des pays': 'Compare countries',
     Comparer: 'Compare',
-    'Ouvrir le comparateur avec les pays sélectionnés': 'Open the comparator with selected countries',
+    'Ouvrir le comparateur avec les pays sélectionnés':
+      'Open the comparator with selected countries',
     'Annuler la sélection de comparaison': 'Clear the comparison selection',
-    'cmd + clic pour sélectionner des pays et les comparer': 'cmd + click to select countries and compare them',
-    'Choisis les pays et les informations à comparer.': 'Choose the countries and information to compare.',
+    'cmd + clic pour sélectionner des pays et les comparer':
+      'cmd + click to select countries and compare them',
+    'Choisis les pays et les informations à comparer.':
+      'Choose the countries and information to compare.',
     'pays sélectionnés': 'countries selected',
     'PAYS À COMPARER': 'COUNTRIES TO COMPARE',
     'Sélection des pays': 'Country selection',
     'Ajouter un pays': 'Add a country',
     'Rechercher un pays…': 'Search for a country…',
     'Filtres de pays': 'Country filters',
-    'Ajoute des critères et combine-les en mode simple ou avancé. Les pays correspondants sont ajoutés au comparateur.': 'Add criteria and combine them in simple or advanced mode. Matching countries are added to the comparison.',
+    'Ajoute des critères et combine-les en mode simple ou avancé. Les pays correspondants sont ajoutés au comparateur.':
+      'Add criteria and combine them in simple or advanced mode. Matching countries are added to the comparison.',
     Logique: 'Logic',
     '+ · Au moins un filtre': '+ · At least one filter',
     'ET · Tous les filtres': 'AND · All filters',
@@ -127,7 +159,8 @@ const translations: Record<Exclude<AppLanguage, 'fr'>, Record<string, string>> =
     'Masquer le calculateur avancé': 'Hide the advanced calculator',
     'Avancé personnalisé': 'Custom advanced logic',
     'Calculateur avancé': 'Advanced calculator',
-    'Choisis une relation entre chaque paire ; sans parenthèses, les relations sont évaluées de gauche à droite.': 'Choose a relation between each adjacent pair; without parentheses, relations are evaluated from left to right.',
+    'Choisis une relation entre chaque paire ; sans parenthèses, les relations sont évaluées de gauche à droite.':
+      'Choose a relation between each adjacent pair; without parentheses, relations are evaluated from left to right.',
     Relation: 'Relation',
     'Groupes parenthésés': 'Filter groups',
     Parenthèse: 'Parenthesis',
@@ -136,10 +169,12 @@ const translations: Record<Exclude<AppLanguage, 'fr'>, Record<string, string>> =
     'Ajouter le groupe': 'Add group',
     'Ajouter une parenthèse': 'Add a parenthesis group',
     'Retirer le groupe': 'Remove group',
-    'Filtre les pays sur toutes les caractéristiques. Choisis comment combiner deux filtres ; les résultats sont ajoutés au comparateur.': 'Filter countries by any characteristic. Choose how two filters combine; results are added to the comparison.',
+    'Filtre les pays sur toutes les caractéristiques. Choisis comment combiner deux filtres ; les résultats sont ajoutés au comparateur.':
+      'Filter countries by any characteristic. Choose how two filters combine; results are added to the comparison.',
     'Calculateur de filtres': 'Filter calculator',
     Calculateur: 'Calculator',
-    'Choisis les pays à conserver selon leur présence dans A et B.': 'Choose which countries to keep based on whether they match A, B, both, or neither.',
+    'Choisis les pays à conserver selon leur présence dans A et B.':
+      'Choose which countries to keep based on whether they match A, B, both, or neither.',
     'Filtre A': 'Filter A',
     'Filtre B': 'Filter B',
     Filtre: 'Filter',
@@ -151,12 +186,14 @@ const translations: Record<Exclude<AppLanguage, 'fr'>, Record<string, string>> =
     'B seulement': 'B only',
     'Ni A ni B': 'Neither A nor B',
     'Les zones cochées sont réunies par OU.': 'Checked groups are combined with OR.',
-    'Les autres filtres actifs restent cumulés avec le résultat (ET).': 'Other active filters still apply to the result (AND).',
+    'Les autres filtres actifs restent cumulés avec le résultat (ET).':
+      'Other active filters still apply to the result (AND).',
     'Intersection · A et B': 'Intersection · A and B',
     'A + B · Union': 'A + B · Union',
     'Différence · A sans B': 'Difference · A without B',
     'Différence · B sans A': 'Difference · B without A',
-    'Différence symétrique · A ou B, mais pas les deux': 'Symmetric difference · A or B, but not both',
+    'Différence symétrique · A ou B, mais pas les deux':
+      'Symmetric difference · A or B, but not both',
     'Complément de A · tout sauf A': 'Complement of A · everything except A',
     'Complément de B · tout sauf B': 'Complement of B · everything except B',
     'Tout sauf l’intersection': 'Everything except the intersection',
@@ -205,12 +242,13 @@ const translations: Record<Exclude<AppLanguage, 'fr'>, Record<string, string>> =
     'Rechercher un élément à comparer…': 'Search comparison items…',
     'Rechercher un élément à comparer': 'Search comparison items',
     'Aucun élément correspondant à ajouter.': 'No matching item to add.',
-    'Superficie': 'Area',
-    'Périmètre': 'Perimeter',
+    Superficie: 'Area',
+    Périmètre: 'Perimeter',
     'Grandes villes': 'Major cities',
     'Reliefs majeurs': 'Major landforms',
-    'Indisponible': 'Unavailable',
-    'Ajoute au moins un pays pour afficher le tableau.': 'Add at least one country to show the table.',
+    Indisponible: 'Unavailable',
+    'Ajoute au moins un pays pour afficher le tableau.':
+      'Add at least one country to show the table.',
     'Choisis au moins une information à comparer.': 'Choose at least one item to compare.',
     'Les mesures géographiques sont approximatives ; les données absentes sont indiquées comme indisponibles.':
       'Geographic measurements are approximate; missing data is marked as unavailable.',
@@ -234,20 +272,53 @@ const translations: Record<Exclude<AppLanguage, 'fr'>, Record<string, string>> =
     'Cette couche sera ajoutée plus tard': 'This layer will be added later',
     'Monde entier': 'Whole world',
     'Choisis la zone à dessiner': 'Choose the area to draw',
-    'Sélectionne un pays précis ou un ou plusieurs continents. Sans filtre, le jeu utilise le monde entier.': 'Choose one country or one or more continents. With no filter, the game uses the whole world.',
+    'Sélectionne un pays précis ou un ou plusieurs continents. Sans filtre, le jeu utilise le monde entier.':
+      'Choose one country or one or more continents. With no filter, the game uses the whole world.',
     'OU CHOISIS UN PAYS': 'OR CHOOSE A COUNTRY',
     'Commence à taper le nom d’un pays…': 'Start typing a country name…',
-    'Aucun pays trouvé.': 'No countries found.',
     'AFFICHAGE CARTOGRAPHIQUE': 'MAP DISPLAY',
     Calques: 'Layers',
     Calque: 'Layer',
     'Gérer l’ordre et l’opacité des calques': 'Manage layer order and opacity',
     'Gestion des calques': 'Layer manager',
-    'Glisse une ligne au-dessus ou en dessous des autres couches.': 'Drag a row above or below the other layers.',
+    'Glisse les calques verticalement ; dépose un masque à droite pour le lier, ou au-dessus de la pile pour le détacher.':
+      'Drag layers vertically; drop a mask to the right to attach it, or above the stack to detach it.',
+    'Les calques restent dans la pile ; les masques sans cible vont au-dessus. Glisse un masque à droite d’un calque pour l’associer.':
+      'Layers remain in the stack; unassigned masks move above them. Drag a mask to the right of a layer to attach it.',
+    'Masque non assigné · au-dessus de la pile': 'Unassigned mask · above the stack',
+    'Relâcher ici pour détacher et replacer au-dessus':
+      'Drop here to detach and move above the stack',
+    'Déposer ici pour placer au sommet': 'Drop here to move to the top',
+    'Relâcher pour associer le masque': 'Drop to attach the mask',
+    'Masques non assignés': 'Unassigned masks',
+    'Au-dessus de la pile · glisse un masque ici pour le détacher':
+      'Above the stack · drop a mask here to detach it',
+    'Déposer ici pour retirer l’affiliation': 'Drop here to remove the attachment',
+    Masques: 'Masks',
+    'Agissent sur': 'Affecting',
+    'Masques appliqués à': 'Masks applied to',
+    'Déposer un masque ici pour le lier à ce calque': 'Drop a mask here to attach it to this layer',
+    'Non assigné · au-dessus de la pile': 'Unassigned · above the stack',
     'Ordre des calques, du dessus vers le dessous': 'Layer order, top to bottom',
     'Déplacer le calque': 'Move layer',
+    'Déplacer le masque': 'Move mask',
+    'Glisser à droite d’un calque pour lui appliquer le masque ; à gauche pour le détacher':
+      'Drop to the right of a layer to attach the mask; to the left to detach it',
     'Glisser pour changer l’ordre': 'Drag to change order',
+    'Masque attaché au calque': 'Mask attached to layer',
+    'Le masque suit le calque ciblé': 'The mask follows its target layer',
+    'Calque visé': 'Target layer',
+    Activé: 'Enabled',
+    Désactivé: 'Disabled',
+    'Activer le masque': 'Enable mask',
+    'Désactiver le masque': 'Disable mask',
     'Afficher le calque': 'Show layer',
+    'Masquer les poignées': 'Hide handles',
+    'Afficher les poignées sur la carte': 'Show handles on map',
+    'Déplacer le centre du masque': 'Move mask center',
+    'Modifier le rayon': 'Adjust radius',
+    'Modifier la largeur': 'Adjust width',
+    'Modifier la hauteur': 'Adjust height',
     Opacité: 'Opacity',
     'Éléments affichés': 'Visible features',
     Aucun: 'None',
@@ -263,26 +334,65 @@ const translations: Record<Exclude<AppLanguage, 'fr'>, Record<string, string>> =
     'Continent à utiliser': 'Continent to use',
     'Territoires à utiliser': 'Territories to use',
     'Continents à utiliser': 'Continents to use',
-    'Maintiens ⌘ ou Ctrl et clique pour sélectionner plusieurs éléments.': 'Hold ⌘ or Ctrl and click to select multiple items.',
+    'Rechercher un pays': 'Search for a country',
+    'Saisis le nom d’un pays…': 'Type a country name…',
+    'Pays sélectionnés': 'Selected countries',
+    'territoire sélectionné': 'territory selected',
+    'territoires sélectionnés': 'territories selected',
+    'Territoire sélectionné': 'Territory selected',
+    'Aucun pays trouvé.': 'No countries found.',
+    'Rechercher un pays ou un continent': 'Search for a country or continent',
+    'Saisis un pays ou un continent…': 'Type a country or continent…',
+    'Aucun continent trouvé.': 'No continents found.',
+    'Une recherche par pays affiche son continent dans la liste.':
+      'Searching for a country shows its continent in the list.',
+    'Continents sélectionnés': 'Selected continents',
+    'Maintiens ⌘ ou Ctrl et clique pour sélectionner plusieurs éléments.':
+      'Hold ⌘ or Ctrl and click to select multiple items.',
     'Déplier le groupe': 'Expand group',
     'Replier le groupe': 'Collapse group',
     'Sous-calques': 'Sub-layers',
     'Rayon du cercle': 'Circle radius',
     Largeur: 'Width',
     Hauteur: 'Height',
-    'Opacité dans la zone': 'Opacity in the area',
+    'Opacité du calque dans la zone': 'Layer opacity in the area',
+    '0 % rend le calque transparent dans la zone ; 100 % le laisse intact. Le masque révèle les calques placés dessous.':
+      '0% makes the layer transparent in this area; 100% leaves it intact. The mask reveals layers underneath.',
     'Annuler le placement': 'Cancel placement',
+    'Annuler la recherche': 'Cancel map search',
     'Placer sur la carte': 'Place on map',
+    'Rechercher sur la carte': 'Search on map',
+    'Valider la sélection': 'Confirm selection',
+    'Valider la sélection du masque': 'Confirm mask selection',
+    'Valider les territoires sélectionnés pour le masque':
+      'Confirm selected territories for the mask',
+    'Clique sur un territoire pour le choisir, ou maintiens ⌘ ou Ctrl pour en sélectionner plusieurs.':
+      'Click a territory to select it, or hold ⌘ or Ctrl to select several.',
+    '⌘-clique sur les territoires à ajouter ou retirer, puis valide avec la coche.':
+      '⌘-click territories to add or remove them, then confirm with the check mark.',
     'Ajouter le masque': 'Add mask',
-    'Clique sur la carte pour placer le centre du masque.': 'Click the map to place the mask center.',
+    'Clique sur la carte pour placer le centre du masque.':
+      'Click the map to place the mask center.',
+    'Clique sur un territoire de la carte pour le sélectionner comme masque.':
+      'Click a territory on the map to select it as a mask.',
+    'Clique sur un territoire pour sélectionner la zone du masque.':
+      'Click a territory to select the mask area.',
+    'Clique sur la carte pour placer le masque.': 'Click the map to place the mask.',
     'Modifier le masque': 'Edit mask',
     Rayon: 'Radius',
     'Repositionner sur la carte': 'Reposition on map',
     'Clique sur la carte pour repositionner le masque.': 'Click the map to reposition the mask.',
-    'Le masque atténue les calques placés sous lui dans la liste.': 'The mask dims the layers placed below it in the stack.',
+    'Le masque rend le calque visé transparent dans cette zone pour révéler les calques placés dessous.':
+      'The mask makes the target layer transparent in this area to reveal the layers below.',
     Cercle: 'Circle',
     Territoire: 'Territory',
     'Texture réelle': 'Real texture',
+    Topographie: 'Topography',
+    'Relief ombré et couleurs d’altitude (Natural Earth, échelle 1:50m)':
+      'Shaded relief and elevation colors (Natural Earth, 1:50m scale)',
+    'Imagerie satellite': 'Satellite imagery',
+    'Jour, Nuit ou Nuages — couche indépendante de la topographie':
+      'Day, Night, or Clouds — independent of the topography layer',
     Territoires: 'Territories',
     'Fond neutre': 'Neutral base',
     Continents: 'Continents',
@@ -295,7 +405,7 @@ const translations: Record<Exclude<AppLanguage, 'fr'>, Record<string, string>> =
     chaînes: 'ranges',
     Sommets: 'Summits',
     Sommet: 'Summit',
-    'Masqués': 'Hidden',
+    Masqués: 'Hidden',
     'Sommets affichés': 'Summits shown',
     'Principales chaînes de montagnes documentées': 'Show the main documented mountain ranges',
     'Sommets recensés': 'Catalogued summits',
@@ -312,7 +422,8 @@ const translations: Record<Exclude<AppLanguage, 'fr'>, Record<string, string>> =
     'Pays ou territoire': 'Country or territory',
     Coordonnées: 'Coordinates',
     'Afficher les principaux fleuves documentés': 'Show the main documented rivers',
-    'Afficher les principaux sommets et reliefs documentés': 'Show the main documented peaks and landforms',
+    'Afficher les principaux sommets et reliefs documentés':
+      'Show the main documented peaks and landforms',
     'Noms des pays': 'Country names',
     Réelle: 'Satellite',
     Texture: 'Texture',
@@ -322,7 +433,8 @@ const translations: Record<Exclude<AppLanguage, 'fr'>, Record<string, string>> =
     'Variantes de la couche réelle': 'Satellite layer options',
     'Afficher les variantes de la couche réelle': 'Show satellite layer options',
     'Masquer les variantes de la couche réelle': 'Hide satellite layer options',
-    'Afficher une image globale de la Terre, disponible hors ligne': 'Show a global Earth image available offline',
+    'Afficher une image globale de la Terre, disponible hors ligne':
+      'Show a global Earth image available offline',
     'Image satellite du jour': 'Daytime satellite imagery',
     'Image nocturne des lumières terrestres': 'Nighttime Earth lights imagery',
     'Couverture nuageuse mondiale': 'Global cloud cover imagery',
@@ -356,53 +468,83 @@ const translations: Record<Exclude<AppLanguage, 'fr'>, Record<string, string>> =
     mois: 'month',
     'Dernière donnée disponible': 'Latest available observation',
     'Rupture de série': 'Break in series',
-    'Les taux sont des références indicatives, pas des cours de transaction.': 'Rates are indicative references, not transaction prices.',
+    'Les taux sont des références indicatives, pas des cours de transaction.':
+      'Rates are indicative references, not transaction prices.',
     'Source des taux': 'Rate source',
-    'Salaire net mensuel estimé sur l’enquête nationale ONS menée en 2011.': 'Estimated net monthly earnings from the ONS national survey conducted in 2011.',
-    'Les montants salariaux correspondent à la dernière médiane mensuelle publiée pour les salariés. La définition et l’année de référence varient selon la source ; la conversion en euros est indicative et ne reflète pas le pouvoir d’achat.': 'Salary figures are the latest published monthly median for employees. Definitions and reference years vary by source; the euro conversion is indicative and does not reflect purchasing power.',
+    'Salaire net mensuel estimé sur l’enquête nationale ONS menée en 2011.':
+      'Estimated net monthly earnings from the ONS national survey conducted in 2011.',
+    'Les montants salariaux correspondent à la dernière médiane mensuelle publiée pour les salariés. La définition et l’année de référence varient selon la source ; la conversion en euros est indicative et ne reflète pas le pouvoir d’achat.':
+      'Salary figures are the latest published monthly median for employees. Definitions and reference years vary by source; the euro conversion is indicative and does not reflect purchasing power.',
     'Base internationale ILOSTAT': 'ILOSTAT international dataset',
     'Extension web du pays': 'Country web domain',
     'Alphabet et systèmes d’écriture': 'Alphabet and writing systems',
     Caractères: 'Characters',
     'Phrase exemple': 'Example phrase',
-    'langues officielles, devises et domaines nationaux': 'official languages, currencies, and country domains',
+    'langues officielles, devises et domaines nationaux':
+      'official languages, currencies, and country domains',
     'langues reconnues et systèmes d’écriture': 'recognized languages and writing systems',
-    'Activités industrielles documentées pour ce territoire.': 'Industries documented for this territory.',
-    'Aucune donnée industrielle hors ligne n’est disponible pour ce territoire.': 'No offline industry data is available for this territory.',
-    'Activités détaillées mentionnées dans la source (termes originaux)': 'Specific activities listed in the source (original wording)',
+    'Activités industrielles documentées pour ce territoire.':
+      'Industries documented for this territory.',
+    'Aucune donnée industrielle hors ligne n’est disponible pour ce territoire.':
+      'No offline industry data is available for this territory.',
+    'Activités détaillées mentionnées dans la source (termes originaux)':
+      'Specific activities listed in the source (original wording)',
     'Classement mondial vérifié': 'Verified global ranking',
-    'Aucun classement mondial comparable propre à ce secteur n’est disponible hors ligne.': 'No comparable global ranking for this sector is available offline.',
+    'Aucun classement mondial comparable propre à ce secteur n’est disponible hors ligne.':
+      'No comparable global ranking for this sector is available offline.',
     'Poids dans le territoire': 'Importance in this territory',
-    'Les données hors ligne ne permettent pas de mesurer précisément le poids de ce secteur dans ce territoire.': 'Offline data do not allow this sector’s importance in this territory to be measured precisely.',
+    'Les données hors ligne ne permettent pas de mesurer précisément le poids de ce secteur dans ce territoire.':
+      'Offline data do not allow this sector’s importance in this territory to be measured precisely.',
     'Production et savoir-faire': 'Production and know-how',
-    'Les méthodes de production propres à ce territoire ne sont pas documentées dans les données hors ligne.': 'Production methods specific to this territory are not documented in the offline data.',
+    'Les méthodes de production propres à ce territoire ne sont pas documentées dans les données hors ligne.':
+      'Production methods specific to this territory are not documented in the offline data.',
     'Travail et conditions': 'Work and conditions',
-    'Aucune donnée vérifiée sur les conditions de travail propres à ce secteur n’est incluse hors ligne.': 'No verified offline data on working conditions specific to this sector are included.',
+    'Aucune donnée vérifiée sur les conditions de travail propres à ce secteur n’est incluse hors ligne.':
+      'No verified offline data on working conditions specific to this sector are included.',
     'Contexte industriel national': 'National industrial context',
-    'Aucun indicateur industriel national vérifié n’est inclus pour ce territoire dans les données hors ligne.': 'No verified national industrial indicators for this territory are included in the offline data.',
+    'Aucun indicateur industriel national vérifié n’est inclus pour ce territoire dans les données hors ligne.':
+      'No verified national industrial indicators for this territory are included in the offline data.',
     'Compétitivité manufacturière': 'Manufacturing competitiveness',
-    'Rang général du pays, pas un classement de ce secteur.': 'Overall country rank, not a ranking for this sector.',
+    'Rang général du pays, pas un classement de ce secteur.':
+      'Overall country rank, not a ranking for this sector.',
     Sources: 'Sources',
     'CIA World Factbook — archived profile': 'CIA World Factbook — archived profile',
     'Banque mondiale, Algeria country overview': 'World Bank, Algeria country overview',
-    'UNIDO, International Yearbook of Industrial Statistics': 'UNIDO, International Yearbook of Industrial Statistics',
+    'UNIDO, International Yearbook of Industrial Statistics':
+      'UNIDO, International Yearbook of Industrial Statistics',
     'OIT, resultados del proyecto SCORE en Brasil': 'ILO, SCORE project results in Brazil',
-    'Activité économique recensée dans ce territoire.': 'Economic activity documented in this territory.',
-    'Les activités agricoles et la transformation des produits alimentaires recensées dans ce territoire.': 'Agricultural activities and food processing documented in this territory.',
-    'L’extraction ou le traitement de minerais et de ressources du sous-sol recensés dans ce territoire.': 'Mining or processing of minerals and subsurface resources documented in this territory.',
-    'La production, l’extraction ou la transformation de ressources énergétiques recensées dans ce territoire.': 'Production, extraction, or processing of energy resources documented in this territory.',
-    'La pêche, l’aquaculture ou la transformation de produits de la mer recensées dans ce territoire.': 'Fishing, aquaculture, or seafood processing documented in this territory.',
-    'L’exploitation forestière et la transformation du bois recensées dans ce territoire.': 'Forestry and wood processing documented in this territory.',
-    'La fabrication ou l’assemblage de véhicules recensés dans ce territoire.': 'Vehicle manufacturing or assembly documented in this territory.',
-    'La fabrication ou les activités aéronautiques et spatiales recensées dans ce territoire.': 'Aerospace manufacturing or activities documented in this territory.',
-    'La fabrication de textiles, de vêtements ou d’articles en cuir recensée dans ce territoire.': 'Textile, clothing, or leather goods manufacturing documented in this territory.',
-    'La fabrication de matériel électronique ou les télécommunications recensées dans ce territoire.': 'Electronics manufacturing or telecommunications documented in this territory.',
-    'Les activités touristiques recensées dans ce territoire.': 'Tourism activities documented in this territory.',
-    'Les activités de transport, de navigation ou de construction navale recensées dans ce territoire.': 'Transport, shipping, or shipbuilding activities documented in this territory.',
-    'La construction et la production de matériaux recensées dans ce territoire.': 'Construction and building-material production documented in this territory.',
-    'La production chimique, pétrochimique ou pharmaceutique recensée dans ce territoire.': 'Chemical, petrochemical, or pharmaceutical production documented in this territory.',
-    'Les activités de services, de finance ou d’assurance recensées dans ce territoire.': 'Service, finance, or insurance activities documented in this territory.',
-    'Les activités de fabrication et de transformation recensées dans ce territoire.': 'Manufacturing and processing activities documented in this territory.',
+    'Activité économique recensée dans ce territoire.':
+      'Economic activity documented in this territory.',
+    'Les activités agricoles et la transformation des produits alimentaires recensées dans ce territoire.':
+      'Agricultural activities and food processing documented in this territory.',
+    'L’extraction ou le traitement de minerais et de ressources du sous-sol recensés dans ce territoire.':
+      'Mining or processing of minerals and subsurface resources documented in this territory.',
+    'La production, l’extraction ou la transformation de ressources énergétiques recensées dans ce territoire.':
+      'Production, extraction, or processing of energy resources documented in this territory.',
+    'La pêche, l’aquaculture ou la transformation de produits de la mer recensées dans ce territoire.':
+      'Fishing, aquaculture, or seafood processing documented in this territory.',
+    'L’exploitation forestière et la transformation du bois recensées dans ce territoire.':
+      'Forestry and wood processing documented in this territory.',
+    'La fabrication ou l’assemblage de véhicules recensés dans ce territoire.':
+      'Vehicle manufacturing or assembly documented in this territory.',
+    'La fabrication ou les activités aéronautiques et spatiales recensées dans ce territoire.':
+      'Aerospace manufacturing or activities documented in this territory.',
+    'La fabrication de textiles, de vêtements ou d’articles en cuir recensée dans ce territoire.':
+      'Textile, clothing, or leather goods manufacturing documented in this territory.',
+    'La fabrication de matériel électronique ou les télécommunications recensées dans ce territoire.':
+      'Electronics manufacturing or telecommunications documented in this territory.',
+    'Les activités touristiques recensées dans ce territoire.':
+      'Tourism activities documented in this territory.',
+    'Les activités de transport, de navigation ou de construction navale recensées dans ce territoire.':
+      'Transport, shipping, or shipbuilding activities documented in this territory.',
+    'La construction et la production de matériaux recensées dans ce territoire.':
+      'Construction and building-material production documented in this territory.',
+    'La production chimique, pétrochimique ou pharmaceutique recensée dans ce territoire.':
+      'Chemical, petrochemical, or pharmaceutical production documented in this territory.',
+    'Les activités de services, de finance ou d’assurance recensées dans ce territoire.':
+      'Service, finance, or insurance activities documented in this territory.',
+    'Les activités de fabrication et de transformation recensées dans ce territoire.':
+      'Manufacturing and processing activities documented in this territory.',
     Fermer: 'Close',
     'Intégrer le drapeau dans le contour des pays et territoires':
       'Show each country and territory flag inside its outline',
@@ -572,7 +714,6 @@ const translations: Record<Exclude<AppLanguage, 'fr'>, Record<string, string>> =
     'Bien maîtrisés': 'Well mastered',
     'Les résultats apparaîtront après quelques questions.':
       'Results will appear after you answer a few questions.',
-    'Tous les pays': 'All countries',
     'Filtre et trie l’historique de tes réponses.': 'Filter and sort your answer history.',
     'Chercher un pays dans les statistiques': 'Search for a country in statistics',
     'Filtrer par continent': 'Filter by continent',
@@ -646,18 +787,23 @@ const translations: Record<Exclude<AppLanguage, 'fr'>, Record<string, string>> =
       'Main territory, excluding dependencies and distant territories.',
     'Contour Natural Earth disponible ; la distinction métropole / territoires associés est incomplète.':
       'Natural Earth boundary available; the split between mainland and associated territories is incomplete.',
-    'Mesures géographiques indisponibles pour cette géométrie.': 'Geographic measurements are unavailable for this geometry.',
-    'Population indisponible dans la source sélectionnée.': 'Population unavailable in the selected source.',
+    'Mesures géographiques indisponibles pour cette géométrie.':
+      'Geographic measurements are unavailable for this geometry.',
+    'Population indisponible dans la source sélectionnée.':
+      'Population unavailable in the selected source.',
     'Villes et reliefs': 'Cities and landforms',
     'Relief majeur et caractère du terrain': 'Major landforms and terrain',
     'Grandes villes recensées': 'Major cities listed',
-    'Grandes villes indisponibles dans les données locales.': 'Major cities are unavailable in the local data.',
+    'Grandes villes indisponibles dans les données locales.':
+      'Major cities are unavailable in the local data.',
     'Sommets et reliefs majeurs recensés': 'Listed peaks and major landforms',
-    'Relief très montagneux selon les sommets recensés.': 'Very mountainous according to listed peaks.',
+    'Relief très montagneux selon les sommets recensés.':
+      'Very mountainous according to listed peaks.',
     'Relief montagneux selon les sommets recensés.': 'Mountainous according to listed peaks.',
     'Des reliefs sont recensés, mais la fiche ne permet pas de caractériser tout le terrain.':
       'Some landforms are listed, but the data does not describe the whole terrain.',
-    'Relief indisponible : aucun sommet vérifié dans les données locales.': 'Landforms unavailable: no verified peaks in the local data.',
+    'Relief indisponible : aucun sommet vérifié dans les données locales.':
+      'Landforms unavailable: no verified peaks in the local data.',
     'Autres informations': 'Other information',
     'Point le plus bas': 'Lowest point',
     'Point culminant': 'Highest point',
@@ -685,8 +831,10 @@ const translations: Record<Exclude<AppLanguage, 'fr'>, Record<string, string>> =
       'Highest point listed; the profile does not characterize the full terrain.',
     'Les informations physiques et descriptives ci-dessous concernent le territoire principal. Les territoires éloignés disposent de leur propre fiche.':
       'The physical and descriptive information below covers the main territory. Distant territories have their own profile.',
-    'Gouvernorat de l’État de la Cité du Vatican · 2024': 'Governorate of Vatican City State · 2024',
-    'État du Vatican · superficie et dimensions maximales officielles': 'Vatican City State · official area and maximum dimensions',
+    'Gouvernorat de l’État de la Cité du Vatican · 2024':
+      'Governorate of Vatican City State · 2024',
+    'État du Vatican · superficie et dimensions maximales officielles':
+      'Vatican City State · official area and maximum dimensions',
     'Vatican News · périmètre territorial': 'Vatican News · territorial perimeter',
     'Source officielle des dimensions': 'Official source for dimensions',
     'Source du périmètre': 'Source for perimeter',
@@ -762,7 +910,79 @@ const translations: Record<Exclude<AppLanguage, 'fr'>, Record<string, string>> =
     à: 'to',
     'ratios disponibles · aimantation légère': 'ratios available · light snapping',
     'Le contour filtre quand il est fermé, avec le bon nombre de sommets et une forme proche.':
-      'The outline filters flags once it is closed, has the right number of vertices, and has a similar shape.'
+      'The outline filters flags once it is closed, has the right number of vertices, and has a similar shape.',
+    'Nom de la vue': 'View name',
+    'Nom de la vue à enregistrer': 'Name for this saved view',
+    'Enregistrer la vue': 'Save view',
+    'Enregistrer les calques, masques et la vue caméra': 'Save layers, masks, and camera view',
+    'Vues enregistrées': 'Saved views',
+    Charger: 'Load',
+    'Supprimer la vue sélectionnée': 'Delete selected view',
+    'Vue enregistrée.': 'View saved.',
+    'Vue supprimée.': 'View deleted.',
+    'Impossible d’enregistrer cette vue sur cet appareil.':
+      'Could not save this view on this device.',
+    Vue: 'View',
+    'Vue chargée': 'View loaded',
+    'Commandes caméra': 'Camera controls',
+    'Glisser à deux doigts : tourner autour du globe': 'Two-finger drag: orbit around the globe',
+    '⌘ + défilement : zoom': '⌘ + scroll: zoom',
+    '⌥ + défilement : lacet · Ctrl + défilement : inclinaison · ⇧ + défilement : roulis':
+      '⌥ + scroll: yaw · Ctrl + scroll: pitch · ⇧ + scroll: roll',
+    '⌘⇧ + défilement : déplacer la carte · D : déplacer · C : curseur de sélection':
+      '⌘⇧ + scroll: pan · D: pan tool · C: selection cursor',
+    'Comprendre les correspondances': 'Understand matches',
+    'Aucun pays ne correspond à cette combinaison.': 'No countries match this combination.',
+    'relation personnalisée': 'custom relation',
+    'aucune zone': 'no regions',
+    bandes: 'bands',
+    horizontales: 'horizontal',
+    verticales: 'vertical',
+    obliques: 'diagonal',
+    'forme dessinée': 'drawn shape',
+    'proportions sélectionnées': 'selected proportions',
+    'critères de drapeau': 'flag criteria',
+    'Révision des réponses': 'Answer review',
+    'Pays à retrouver': 'Country to identify',
+    'Drapeau à reconnaître': 'Flag to identify',
+    'Réponse correcte': 'Correct answer',
+    'Ta réponse': 'Your answer',
+    Réussi: 'Correct',
+    'Solution consultée': 'Answer revealed',
+    'À revoir': 'Review',
+    essai: 'attempt',
+    essais: 'attempts',
+    'Replier la fiche': 'Collapse country profile',
+    'Déplier la fiche': 'Expand country profile',
+    'Fermer la fiche': 'Close country profile',
+    'Pages de statistiques': 'Statistics pages',
+    'Progression par pays': 'Country progress',
+    'Historique des parties': 'Game history',
+    'Évolution par preset': 'Preset progress',
+    'Retrouve les réglages et les scores de tes parties terminées.':
+      'Review the settings and scores from completed games.',
+    'Aucune partie enregistrée': 'No games recorded yet',
+    'Les parties terminées apparaîtront ici avec leurs réglages et leur score.':
+      'Completed games will appear here with their settings and score.',
+    'questions enregistrées': 'questions recorded',
+    'Choisir un preset à analyser': 'Choose a preset to review',
+    'Compare tes scores successifs sur un même quiz.':
+      'Compare your scores over time for the same quiz.',
+    'Parties jouées': 'Games played',
+    Moyenne: 'Average',
+    'Dernier score': 'Latest score',
+    'Progression des scores': 'Score progress',
+    'Graphique de progression des scores': 'Score progress chart',
+    'Aucune partie pour ce preset': 'No games for this preset yet',
+    'Aucun preset enregistré': 'No saved presets',
+    'Les scores apparaîtront ici après une partie lancée avec un preset sauvegardé.':
+      'Scores will appear here after playing with a saved preset.',
+    'Nombre de pays': 'Countries',
+    'Pays étudié': 'Country studied',
+    'Nombre de questions': 'Questions',
+    'Mode estimation': 'Estimation mode',
+    'Dessine les frontières': 'Draw the borders',
+    Zone: 'Area'
   },
   es: {
     'APPRENTISSAGE / MONDE': 'APRENDIZAJE / MUNDO',
@@ -799,14 +1019,15 @@ const translations: Record<Exclude<AppLanguage, 'fr'>, Record<string, string>> =
     'PARAMÈTRES DE LA PARTIE': 'AJUSTES DE LA PARTIDA',
     'Choisis comment jouer': 'Elige cómo jugar',
     'ZONE GÉOGRAPHIQUE': 'ZONA GEOGRÁFICA',
-    'Choisis une zone géographique, le nombre de pays et les indices ou réponses de la partie.': 'Elige una zona geográfica, el número de países y las pistas o respuestas de la partida.',
+    'Choisis une zone géographique, le nombre de pays et les indices ou réponses de la partie.':
+      'Elige una zona geográfica, el número de países y las pistas o respuestas de la partida.',
     'Partie aléatoire': 'Partida aleatoria',
     Preset: 'Preset',
     'Choisir et lancer un preset': 'Elegir e iniciar un preset',
     'Lancer le preset par défaut': 'Iniciar el preset predeterminado',
     'Aucun preset par défaut': 'No hay preset predeterminado',
-    'Aucun preset enregistré': 'No hay presets guardados',
-    'Enregistre un preset dans les réglages pour le lancer ici.': 'Guarda un preset en los ajustes para iniciarlo aquí.',
+    'Enregistre un preset dans les réglages pour le lancer ici.':
+      'Guarda un preset en los ajustes para iniciarlo aquí.',
     'Par défaut': 'Predeterminado',
     'Choisir indices et réponses': 'Elegir pistas y respuestas',
     'Choisir les indices et les réponses': 'Elegir pistas y respuestas',
@@ -816,6 +1037,19 @@ const translations: Record<Exclude<AppLanguage, 'fr'>, Record<string, string>> =
     'Nom du pays': 'Nombre del país',
     Capitale: 'Capital',
     'Territoire sur la carte': 'Territorio en el mapa',
+    'Langue officielle': 'Idioma oficial',
+    'Extension web': 'Dominio web',
+    'Ajouter un indice': 'Añadir una pista',
+    'Ajouter une réponse': 'Añadir una respuesta',
+    'Supprimer cette réponse': 'Eliminar esta respuesta',
+    'Sélectionne les pays sur la carte': 'Selecciona los países en el mapa',
+    'Aucun pays sélectionné': 'No hay países seleccionados',
+    'Réponse incorrecte': 'Respuesta incorrecta',
+    'Réponses manquantes': 'Respuestas pendientes',
+    point: 'punto',
+    gagné: 'ganado',
+    'Retirer cet élément': 'Quitar este elemento',
+    'Toutes les données sont déjà ajoutées.': 'Ya se añadieron todos los datos disponibles.',
     'Cocher un élément dans une colonne le retire automatiquement de l’autre. Choisis au moins un indice et une réponse, puis démarre une nouvelle partie.':
       'Al marcar un elemento en una columna, se quita automáticamente de la otra. Elige al menos una pista y una respuesta y empieza una partida nueva.',
     'Nouvelle partie': 'Nueva partida',
@@ -835,8 +1069,22 @@ const translations: Record<Exclude<AppLanguage, 'fr'>, Record<string, string>> =
     'Suppression impossible sur cet appareil.': 'No se pudo eliminar en este dispositivo.',
     'Preset supprimé.': 'Preset eliminado.',
     'Carte mondiale': 'Mapa mundial',
+    'Chargement de la carte': 'Cargando el mapa',
     'Passer au globe': 'Cambiar al globo',
     'Passer au plan': 'Cambiar al mapa plano',
+    'Caméra 3D — rotation libre autour du globe': 'Cámara 3D — órbita libre alrededor del globo',
+    'Afficher les réglages caméra': 'Mostrar controles de cámara',
+    'Masquer les réglages caméra': 'Ocultar controles de cámara',
+    Pitch: 'Pitch',
+    Yaw: 'Yaw',
+    Roll: 'Roll',
+    'Déplacer la carte': 'Mover el mapa',
+    'Curseur du jeu': 'Cursor del juego',
+    'Déplacer la carte (D)': 'Mover el mapa (D)',
+    'Curseur du jeu (C)': 'Cursor del juego (C)',
+    'Caméra libre : ancrage détaché': 'Cámara libre: anclaje del globo desacoplado',
+    'Deux doigts : orbite · ⌘ défilement : zoom · ⌥ yaw · Ctrl pitch · ⇧ roll · ⌘⌥ / ⌘Ctrl / ⌘⇧ : caméra libre · D/C : déplacement/curseur':
+      'Dos dedos: órbita · ⌘ desplazamiento: zoom · ⌥ yaw · Ctrl pitch · ⇧ roll · ⌘⌥ / ⌘Ctrl / ⌘⇧: cámara libre · D/C: mover/cursor del juego',
     'Perspective corrigée': 'Perspectiva corregida',
     'Territoire déplacé': 'Territorio desplazado',
     'Sous le fantôme': 'Bajo la silueta',
@@ -866,17 +1114,21 @@ const translations: Record<Exclude<AppLanguage, 'fr'>, Record<string, string>> =
     'COMPARAISON / MONDE': 'COMPARACIÓN / MUNDO',
     'Comparer des pays': 'Comparar países',
     Comparer: 'Comparar',
-    'Ouvrir le comparateur avec les pays sélectionnés': 'Abrir el comparador con los países seleccionados',
+    'Ouvrir le comparateur avec les pays sélectionnés':
+      'Abrir el comparador con los países seleccionados',
     'Annuler la sélection de comparaison': 'Borrar la selección para comparar',
-    'cmd + clic pour sélectionner des pays et les comparer': 'cmd + clic para seleccionar países y compararlos',
-    'Choisis les pays et les informations à comparer.': 'Elige los países y la información que quieres comparar.',
+    'cmd + clic pour sélectionner des pays et les comparer':
+      'cmd + clic para seleccionar países y compararlos',
+    'Choisis les pays et les informations à comparer.':
+      'Elige los países y la información que quieres comparar.',
     'pays sélectionnés': 'países seleccionados',
     'PAYS À COMPARER': 'PAÍSES PARA COMPARAR',
     'Sélection des pays': 'Selección de países',
     'Ajouter un pays': 'Añadir un país',
     'Rechercher un pays…': 'Buscar un país…',
     'Filtres de pays': 'Filtros de países',
-    'Ajoute des critères et combine-les en mode simple ou avancé. Les pays correspondants sont ajoutés au comparateur.': 'Añade criterios y combínalos en modo simple o avanzado. Los países coincidentes se añaden a la comparación.',
+    'Ajoute des critères et combine-les en mode simple ou avancé. Les pays correspondants sont ajoutés au comparateur.':
+      'Añade criterios y combínalos en modo simple o avanzado. Los países coincidentes se añaden a la comparación.',
     Logique: 'Lógica',
     '+ · Au moins un filtre': '+ · Al menos un filtro',
     'ET · Tous les filtres': 'Y · Todos los filtros',
@@ -885,7 +1137,8 @@ const translations: Record<Exclude<AppLanguage, 'fr'>, Record<string, string>> =
     'Masquer le calculateur avancé': 'Ocultar la calculadora avanzada',
     'Avancé personnalisé': 'Lógica avanzada personalizada',
     'Calculateur avancé': 'Calculadora avanzada',
-    'Choisis une relation entre chaque paire ; sans parenthèses, les relations sont évaluées de gauche à droite.': 'Elige una relación entre cada pareja consecutiva; sin paréntesis, se evalúan de izquierda a derecha.',
+    'Choisis une relation entre chaque paire ; sans parenthèses, les relations sont évaluées de gauche à droite.':
+      'Elige una relación entre cada pareja consecutiva; sin paréntesis, se evalúan de izquierda a derecha.',
     Relation: 'Relación',
     'Groupes parenthésés': 'Grupos de filtros',
     Parenthèse: 'Paréntesis',
@@ -894,10 +1147,12 @@ const translations: Record<Exclude<AppLanguage, 'fr'>, Record<string, string>> =
     'Ajouter le groupe': 'Añadir grupo',
     'Ajouter une parenthèse': 'Añadir un grupo entre paréntesis',
     'Retirer le groupe': 'Eliminar grupo',
-    'Filtre les pays sur toutes les caractéristiques. Choisis comment combiner deux filtres ; les résultats sont ajoutés au comparateur.': 'Filtra los países por cualquier característica. Elige cómo combinar dos filtros; los resultados se añaden a la comparación.',
+    'Filtre les pays sur toutes les caractéristiques. Choisis comment combiner deux filtres ; les résultats sont ajoutés au comparateur.':
+      'Filtra los países por cualquier característica. Elige cómo combinar dos filtros; los resultados se añaden a la comparación.',
     'Calculateur de filtres': 'Calculadora de filtros',
     Calculateur: 'Calculadora',
-    'Choisis les pays à conserver selon leur présence dans A et B.': 'Elige qué países conservar según coincidan con A, B, ambos o ninguno.',
+    'Choisis les pays à conserver selon leur présence dans A et B.':
+      'Elige qué países conservar según coincidan con A, B, ambos o ninguno.',
     'Filtre A': 'Filtro A',
     'Filtre B': 'Filtro B',
     Filtre: 'Filtro',
@@ -909,12 +1164,14 @@ const translations: Record<Exclude<AppLanguage, 'fr'>, Record<string, string>> =
     'B seulement': 'Solo B',
     'Ni A ni B': 'Ni A ni B',
     'Les zones cochées sont réunies par OU.': 'Los grupos marcados se combinan con O.',
-    'Les autres filtres actifs restent cumulés avec le résultat (ET).': 'Los demás filtros activos siguen aplicándose al resultado (Y).',
+    'Les autres filtres actifs restent cumulés avec le résultat (ET).':
+      'Los demás filtros activos siguen aplicándose al resultado (Y).',
     'Intersection · A et B': 'Intersección · A y B',
     'A + B · Union': 'A + B · Unión',
     'Différence · A sans B': 'Diferencia · A sin B',
     'Différence · B sans A': 'Diferencia · B sin A',
-    'Différence symétrique · A ou B, mais pas les deux': 'Diferencia simétrica · A o B, pero no ambos',
+    'Différence symétrique · A ou B, mais pas les deux':
+      'Diferencia simétrica · A o B, pero no ambos',
     'Complément de A · tout sauf A': 'Complemento de A · todo excepto A',
     'Complément de B · tout sauf B': 'Complemento de B · todo excepto B',
     'Tout sauf l’intersection': 'Todo excepto la intersección',
@@ -943,7 +1200,8 @@ const translations: Record<Exclude<AppLanguage, 'fr'>, Record<string, string>> =
     'Couleur personnalisée': 'Color personalizado',
     'Ajouter la couleur': 'Añadir color',
     'Couleurs du drapeau': 'Colores de la bandera',
-    'Toutes les couleurs sélectionnées sont requises': 'Se requieren todos los colores seleccionados',
+    'Toutes les couleurs sélectionnées sont requises':
+      'Se requieren todos los colores seleccionados',
     'pays ajoutés au comparateur': 'países añadidos a la comparación',
     correspondances: 'coincidencias',
     'Effacer les filtres': 'Borrar filtros',
@@ -954,10 +1212,12 @@ const translations: Record<Exclude<AppLanguage, 'fr'>, Record<string, string>> =
     'Population des grandes villes': 'Población de las ciudades principales',
     'Altitude des sommets recensés': 'Altitud de las cumbres catalogadas',
     'Conversion des devises en euros': 'Conversión de divisas a euros',
-    'Indicateurs chiffrés des ressources et industries': 'Indicadores numéricos de recursos e industrias',
+    'Indicateurs chiffrés des ressources et industries':
+      'Indicadores numéricos de recursos e industrias',
     'Classement et audience musicale': 'Clasificación y audiencia musical',
     Retirer: 'Quitar',
-    'Recherche un pays pour commencer la comparaison.': 'Busca un país para empezar la comparación.',
+    'Recherche un pays pour commencer la comparaison.':
+      'Busca un país para empezar la comparación.',
     INFORMATIONS: 'INFORMACIÓN',
     'Éléments à comparer': 'Datos que comparar',
     'Rechercher un élément à comparer…': 'Buscar datos para comparar…',
@@ -968,7 +1228,8 @@ const translations: Record<Exclude<AppLanguage, 'fr'>, Record<string, string>> =
     'Grandes villes': 'Ciudades principales',
     'Reliefs majeurs': 'Relieves principales',
     Indisponible: 'No disponible',
-    'Ajoute au moins un pays pour afficher le tableau.': 'Añade al menos un país para mostrar la tabla.',
+    'Ajoute au moins un pays pour afficher le tableau.':
+      'Añade al menos un país para mostrar la tabla.',
     'Choisis au moins une information à comparer.': 'Elige al menos un dato para comparar.',
     'Les mesures géographiques sont approximatives ; les données absentes sont indiquées comme indisponibles.':
       'Las medidas geográficas son aproximadas; los datos que faltan aparecen como no disponibles.',
@@ -992,20 +1253,54 @@ const translations: Record<Exclude<AppLanguage, 'fr'>, Record<string, string>> =
     'Cette couche sera ajoutée plus tard': 'Esta capa se añadirá más adelante',
     'Monde entier': 'Mundo entero',
     'Choisis la zone à dessiner': 'Elige la zona que vas a dibujar',
-    'Sélectionne un pays précis ou un ou plusieurs continents. Sans filtre, le jeu utilise le monde entier.': 'Elige un país o uno o varios continentes. Sin filtro, el juego utiliza el mundo entero.',
+    'Sélectionne un pays précis ou un ou plusieurs continents. Sans filtre, le jeu utilise le monde entier.':
+      'Elige un país o uno o varios continentes. Sin filtro, el juego utiliza el mundo entero.',
     'OU CHOISIS UN PAYS': 'O ELIGE UN PAÍS',
     'Commence à taper le nom d’un pays…': 'Empieza a escribir el nombre de un país…',
-    'Aucun pays trouvé.': 'No se encontraron países.',
     'AFFICHAGE CARTOGRAPHIQUE': 'VISUALIZACIÓN DEL MAPA',
     Calques: 'Capas',
     Calque: 'Capa',
     'Gérer l’ordre et l’opacité des calques': 'Gestionar el orden y la opacidad de las capas',
     'Gestion des calques': 'Gestor de capas',
-    'Glisse une ligne au-dessus ou en dessous des autres couches.': 'Arrastra una fila por encima o por debajo de las demás capas.',
+    'Glisse les calques verticalement ; dépose un masque à droite pour le lier, ou au-dessus de la pile pour le détacher.':
+      'Arrastra las capas verticalmente; suelta una máscara a la derecha para vincularla o encima de la pila para separarla.',
+    'Les calques restent dans la pile ; les masques sans cible vont au-dessus. Glisse un masque à droite d’un calque pour l’associer.':
+      'Las capas permanecen en la pila; las máscaras sin asignar van encima. Arrastra una máscara a la derecha de una capa para vincularla.',
+    'Masque non assigné · au-dessus de la pile': 'Máscara sin asignar · encima de la pila',
+    'Relâcher ici pour détacher et replacer au-dessus':
+      'Suelta aquí para separar y colocar encima de la pila',
+    'Déposer ici pour placer au sommet': 'Suelta aquí para mover al principio',
+    'Relâcher pour associer le masque': 'Suelta para vincular la máscara',
+    'Masques non assignés': 'Máscaras sin asignar',
+    'Au-dessus de la pile · glisse un masque ici pour le détacher':
+      'Encima de la pila · suelta aquí una máscara para separarla',
+    'Déposer ici pour retirer l’affiliation': 'Suelta aquí para quitar la asociación',
+    Masques: 'Máscaras',
+    'Agissent sur': 'Afectan a',
+    'Masques appliqués à': 'Máscaras aplicadas a',
+    'Déposer un masque ici pour le lier à ce calque':
+      'Suelta aquí una máscara para vincularla a esta capa',
+    'Non assigné · au-dessus de la pile': 'Sin asignar · encima de la pila',
     'Ordre des calques, du dessus vers le dessous': 'Orden de las capas, de arriba abajo',
     'Déplacer le calque': 'Mover capa',
+    'Déplacer le masque': 'Mover máscara',
+    'Glisser à droite d’un calque pour lui appliquer le masque ; à gauche pour le détacher':
+      'Suelta a la derecha de una capa para aplicarle la máscara; a la izquierda para separarla',
     'Glisser pour changer l’ordre': 'Arrastrar para cambiar el orden',
+    'Masque attaché au calque': 'Máscara vinculada a la capa',
+    'Le masque suit le calque ciblé': 'La máscara sigue a la capa seleccionada',
+    'Calque visé': 'Capa seleccionada',
+    Activé: 'Activada',
+    Désactivé: 'Desactivada',
+    'Activer le masque': 'Activar máscara',
+    'Désactiver le masque': 'Desactivar máscara',
     'Afficher le calque': 'Mostrar capa',
+    'Masquer les poignées': 'Ocultar controles',
+    'Afficher les poignées sur la carte': 'Mostrar controles en el mapa',
+    'Déplacer le centre du masque': 'Mover el centro de la máscara',
+    'Modifier le rayon': 'Ajustar el radio',
+    'Modifier la largeur': 'Ajustar el ancho',
+    'Modifier la hauteur': 'Ajustar la altura',
     Opacité: 'Opacidad',
     'Éléments affichés': 'Elementos visibles',
     Aucun: 'Ninguno',
@@ -1021,23 +1316,57 @@ const translations: Record<Exclude<AppLanguage, 'fr'>, Record<string, string>> =
     'Continent à utiliser': 'Continente que se usará',
     'Territoires à utiliser': 'Territorios que se usarán',
     'Continents à utiliser': 'Continentes que se usarán',
-    'Maintiens ⌘ ou Ctrl et clique pour sélectionner plusieurs éléments.': 'Mantén pulsado ⌘ o Ctrl y haz clic para seleccionar varios elementos.',
+    'Rechercher un pays': 'Buscar un país',
+    'Saisis le nom d’un pays…': 'Escribe el nombre de un país…',
+    'Pays sélectionnés': 'Países seleccionados',
+    'territoire sélectionné': 'territorio seleccionado',
+    'territoires sélectionnés': 'territorios seleccionados',
+    'Territoire sélectionné': 'Territorio seleccionado',
+    'Aucun pays trouvé.': 'No se encontraron países.',
+    'Rechercher un pays ou un continent': 'Buscar un país o un continente',
+    'Saisis un pays ou un continent…': 'Escribe un país o un continente…',
+    'Aucun continent trouvé.': 'No se encontraron continentes.',
+    'Une recherche par pays affiche son continent dans la liste.':
+      'Al buscar un país, se muestra su continente en la lista.',
+    'Continents sélectionnés': 'Continentes seleccionados',
+    'Maintiens ⌘ ou Ctrl et clique pour sélectionner plusieurs éléments.':
+      'Mantén pulsado ⌘ o Ctrl y haz clic para seleccionar varios elementos.',
     'Déplier le groupe': 'Expandir grupo',
     'Replier le groupe': 'Contraer grupo',
     'Sous-calques': 'Subcapas',
     'Rayon du cercle': 'Radio del círculo',
     Largeur: 'Ancho',
     Hauteur: 'Alto',
-    'Opacité dans la zone': 'Opacidad en la zona',
+    'Opacité du calque dans la zone': 'Opacidad de la capa en la zona',
+    '0 % rend le calque transparent dans la zone ; 100 % le laisse intact. Le masque révèle les calques placés dessous.':
+      '0% vuelve transparente la capa en esta zona; 100% la deja intacta. La máscara muestra las capas inferiores.',
     'Annuler le placement': 'Cancelar colocación',
+    'Annuler la recherche': 'Cancelar búsqueda en el mapa',
     'Placer sur la carte': 'Colocar en el mapa',
+    'Rechercher sur la carte': 'Buscar en el mapa',
+    'Valider la sélection': 'Confirmar selección',
+    'Valider la sélection du masque': 'Confirmar selección de máscara',
+    'Valider les territoires sélectionnés pour le masque':
+      'Confirmar los territorios seleccionados para la máscara',
+    'Clique sur un territoire pour le choisir, ou maintiens ⌘ ou Ctrl pour en sélectionner plusieurs.':
+      'Haz clic en un territorio para seleccionarlo o mantén ⌘ o Ctrl para seleccionar varios.',
+    '⌘-clique sur les territoires à ajouter ou retirer, puis valide avec la coche.':
+      'Haz clic con ⌘ en los territorios para añadirlos o quitarlos y confirma con la marca.',
     'Ajouter le masque': 'Añadir máscara',
-    'Clique sur la carte pour placer le centre du masque.': 'Haz clic en el mapa para colocar el centro de la máscara.',
+    'Clique sur la carte pour placer le centre du masque.':
+      'Haz clic en el mapa para colocar el centro de la máscara.',
+    'Clique sur un territoire de la carte pour le sélectionner comme masque.':
+      'Haz clic en un territorio del mapa para seleccionarlo como máscara.',
+    'Clique sur un territoire pour sélectionner la zone du masque.':
+      'Haz clic en un territorio para seleccionar la zona de la máscara.',
+    'Clique sur la carte pour placer le masque.': 'Haz clic en el mapa para colocar la máscara.',
     'Modifier le masque': 'Editar máscara',
     Rayon: 'Radio',
     'Repositionner sur la carte': 'Reubicar en el mapa',
-    'Clique sur la carte pour repositionner le masque.': 'Haz clic en el mapa para reubicar la máscara.',
-    'Le masque atténue les calques placés sous lui dans la liste.': 'La máscara atenúa las capas que aparecen debajo en la lista.',
+    'Clique sur la carte pour repositionner le masque.':
+      'Haz clic en el mapa para reubicar la máscara.',
+    'Le masque rend le calque visé transparent dans cette zone pour révéler les calques placés dessous.':
+      'La máscara vuelve transparente la capa seleccionada en esta zona para mostrar las capas inferiores.',
     Cercle: 'Círculo',
     Territoire: 'Territorio',
     'Texture réelle': 'Textura real',
@@ -1053,9 +1382,10 @@ const translations: Record<Exclude<AppLanguage, 'fr'>, Record<string, string>> =
     chaînes: 'cadenas',
     Sommets: 'Cumbres',
     Sommet: 'Cumbre',
-    'Masqués': 'Ocultos',
+    Masqués: 'Ocultos',
     'Sommets affichés': 'Cumbres visibles',
-    'Principales chaînes de montagnes documentées': 'Mostrar las principales cadenas montañosas documentadas',
+    'Principales chaînes de montagnes documentées':
+      'Mostrar las principales cadenas montañosas documentadas',
     'Sommets recensés': 'Cumbres catalogadas',
     'Longueur approximative': 'Longitud aproximada',
     Paysage: 'Paisaje',
@@ -1070,8 +1400,15 @@ const translations: Record<Exclude<AppLanguage, 'fr'>, Record<string, string>> =
     'Pays ou territoire': 'País o territorio',
     Coordonnées: 'Coordenadas',
     'Afficher les principaux fleuves documentés': 'Mostrar los principales ríos documentados',
-    'Afficher les principaux sommets et reliefs documentés': 'Mostrar las principales cumbres y relieves documentados',
+    'Afficher les principaux sommets et reliefs documentés':
+      'Mostrar las principales cumbres y relieves documentados',
     'Noms des pays': 'Nombres de países',
+    Topographie: 'Topografía',
+    'Relief ombré et couleurs d’altitude (Natural Earth, échelle 1:50m)':
+      'Relieve sombreado y colores de altitud (Natural Earth, escala 1:50m)',
+    'Imagerie satellite': 'Imágenes satelitales',
+    'Jour, Nuit ou Nuages — couche indépendante de la topographie':
+      'Día, Noche o Nubes — independiente de la capa topográfica',
     Réelle: 'Satélite',
     Texture: 'Textura',
     Jour: 'Día',
@@ -1080,7 +1417,8 @@ const translations: Record<Exclude<AppLanguage, 'fr'>, Record<string, string>> =
     'Variantes de la couche réelle': 'Opciones de la capa satelital',
     'Afficher les variantes de la couche réelle': 'Mostrar opciones de la capa satelital',
     'Masquer les variantes de la couche réelle': 'Ocultar opciones de la capa satelital',
-    'Afficher une image globale de la Terre, disponible hors ligne': 'Mostrar una imagen global de la Tierra disponible sin conexión',
+    'Afficher une image globale de la Terre, disponible hors ligne':
+      'Mostrar una imagen global de la Tierra disponible sin conexión',
     'Image satellite du jour': 'Imagen satelital diurna',
     'Image nocturne des lumières terrestres': 'Imagen nocturna de las luces terrestres',
     'Couverture nuageuse mondiale': 'Cobertura nubosa mundial',
@@ -1114,53 +1452,83 @@ const translations: Record<Exclude<AppLanguage, 'fr'>, Record<string, string>> =
     mois: 'mes',
     'Dernière donnée disponible': 'Último dato disponible',
     'Rupture de série': 'Ruptura de serie',
-    'Les taux sont des références indicatives, pas des cours de transaction.': 'Los tipos son referencias orientativas, no cotizaciones de transacción.',
+    'Les taux sont des références indicatives, pas des cours de transaction.':
+      'Los tipos son referencias orientativas, no cotizaciones de transacción.',
     'Source des taux': 'Fuente de los tipos',
-    'Salaire net mensuel estimé sur l’enquête nationale ONS menée en 2011.': 'Salario neto mensual estimado a partir de la encuesta nacional de la ONS realizada en 2011.',
-    'Les montants salariaux correspondent à la dernière médiane mensuelle publiée pour les salariés. La définition et l’année de référence varient selon la source ; la conversion en euros est indicative et ne reflète pas le pouvoir d’achat.': 'Los salarios corresponden a la última mediana mensual publicada para empleados. La definición y el año de referencia varían según la fuente; la conversión a euros es orientativa y no refleja el poder adquisitivo.',
+    'Salaire net mensuel estimé sur l’enquête nationale ONS menée en 2011.':
+      'Salario neto mensual estimado a partir de la encuesta nacional de la ONS realizada en 2011.',
+    'Les montants salariaux correspondent à la dernière médiane mensuelle publiée pour les salariés. La définition et l’année de référence varient selon la source ; la conversion en euros est indicative et ne reflète pas le pouvoir d’achat.':
+      'Los salarios corresponden a la última mediana mensual publicada para empleados. La definición y el año de referencia varían según la fuente; la conversión a euros es orientativa y no refleja el poder adquisitivo.',
     'Base internationale ILOSTAT': 'Base internacional ILOSTAT',
     'Extension web du pays': 'Dominio web del país',
     'Alphabet et systèmes d’écriture': 'Alfabeto y sistemas de escritura',
     Caractères: 'Caracteres',
     'Phrase exemple': 'Frase de ejemplo',
-    'langues officielles, devises et domaines nationaux': 'idiomas oficiales, monedas y dominios nacionales',
+    'langues officielles, devises et domaines nationaux':
+      'idiomas oficiales, monedas y dominios nacionales',
     'langues reconnues et systèmes d’écriture': 'idiomas reconocidos y sistemas de escritura',
-    'Activités industrielles documentées pour ce territoire.': 'Industrias documentadas en este territorio.',
-    'Aucune donnée industrielle hors ligne n’est disponible pour ce territoire.': 'No hay datos industriales sin conexión para este territorio.',
-    'Activités détaillées mentionnées dans la source (termes originaux)': 'Actividades específicas indicadas en la fuente (texto original)',
+    'Activités industrielles documentées pour ce territoire.':
+      'Industrias documentadas en este territorio.',
+    'Aucune donnée industrielle hors ligne n’est disponible pour ce territoire.':
+      'No hay datos industriales sin conexión para este territorio.',
+    'Activités détaillées mentionnées dans la source (termes originaux)':
+      'Actividades específicas indicadas en la fuente (texto original)',
     'Classement mondial vérifié': 'Clasificación mundial verificada',
-    'Aucun classement mondial comparable propre à ce secteur n’est disponible hors ligne.': 'No hay una clasificación mundial comparable de este sector disponible sin conexión.',
+    'Aucun classement mondial comparable propre à ce secteur n’est disponible hors ligne.':
+      'No hay una clasificación mundial comparable de este sector disponible sin conexión.',
     'Poids dans le territoire': 'Importancia en este territorio',
-    'Les données hors ligne ne permettent pas de mesurer précisément le poids de ce secteur dans ce territoire.': 'Los datos sin conexión no permiten medir con precisión la importancia de este sector en este territorio.',
+    'Les données hors ligne ne permettent pas de mesurer précisément le poids de ce secteur dans ce territoire.':
+      'Los datos sin conexión no permiten medir con precisión la importancia de este sector en este territorio.',
     'Production et savoir-faire': 'Producción y conocimientos técnicos',
-    'Les méthodes de production propres à ce territoire ne sont pas documentées dans les données hors ligne.': 'Los datos sin conexión no documentan los métodos de producción propios de este territorio.',
+    'Les méthodes de production propres à ce territoire ne sont pas documentées dans les données hors ligne.':
+      'Los datos sin conexión no documentan los métodos de producción propios de este territorio.',
     'Travail et conditions': 'Trabajo y condiciones',
-    'Aucune donnée vérifiée sur les conditions de travail propres à ce secteur n’est incluse hors ligne.': 'No se incluyen datos verificados sin conexión sobre las condiciones laborales específicas de este sector.',
+    'Aucune donnée vérifiée sur les conditions de travail propres à ce secteur n’est incluse hors ligne.':
+      'No se incluyen datos verificados sin conexión sobre las condiciones laborales específicas de este sector.',
     'Contexte industriel national': 'Contexto industrial nacional',
-    'Aucun indicateur industriel national vérifié n’est inclus pour ce territoire dans les données hors ligne.': 'Los datos sin conexión no incluyen indicadores industriales nacionales verificados para este territorio.',
+    'Aucun indicateur industriel national vérifié n’est inclus pour ce territoire dans les données hors ligne.':
+      'Los datos sin conexión no incluyen indicadores industriales nacionales verificados para este territorio.',
     'Compétitivité manufacturière': 'Competitividad manufacturera',
-    'Rang général du pays, pas un classement de ce secteur.': 'Clasificación general del país, no de este sector.',
+    'Rang général du pays, pas un classement de ce secteur.':
+      'Clasificación general del país, no de este sector.',
     Sources: 'Fuentes',
     'CIA World Factbook — archived profile': 'CIA World Factbook — perfil archivado',
     'Banque mondiale, Algeria country overview': 'Banco Mundial, panorama de Argelia',
-    'UNIDO, International Yearbook of Industrial Statistics': 'ONUDI, anuario internacional de estadísticas industriales',
+    'UNIDO, International Yearbook of Industrial Statistics':
+      'ONUDI, anuario internacional de estadísticas industriales',
     'OIT, resultados del proyecto SCORE en Brasil': 'OIT, resultados del proyecto SCORE en Brasil',
-    'Activité économique recensée dans ce territoire.': 'Actividad económica documentada en este territorio.',
-    'Les activités agricoles et la transformation des produits alimentaires recensées dans ce territoire.': 'Actividades agrícolas y transformación de alimentos documentadas en este territorio.',
-    'L’extraction ou le traitement de minerais et de ressources du sous-sol recensés dans ce territoire.': 'Extracción o procesamiento de minerales y recursos del subsuelo documentados en este territorio.',
-    'La production, l’extraction ou la transformation de ressources énergétiques recensées dans ce territoire.': 'Producción, extracción o procesamiento de recursos energéticos documentados en este territorio.',
-    'La pêche, l’aquaculture ou la transformation de produits de la mer recensées dans ce territoire.': 'Pesca, acuicultura o procesamiento de productos del mar documentados en este territorio.',
-    'L’exploitation forestière et la transformation du bois recensées dans ce territoire.': 'Explotación forestal y transformación de madera documentadas en este territorio.',
-    'La fabrication ou l’assemblage de véhicules recensés dans ce territoire.': 'Fabricación o ensamblaje de vehículos documentados en este territorio.',
-    'La fabrication ou les activités aéronautiques et spatiales recensées dans ce territoire.': 'Fabricación o actividades aeronáuticas y espaciales documentadas en este territorio.',
-    'La fabrication de textiles, de vêtements ou d’articles en cuir recensée dans ce territoire.': 'Fabricación de textiles, ropa o artículos de cuero documentada en este territorio.',
-    'La fabrication de matériel électronique ou les télécommunications recensées dans ce territoire.': 'Fabricación de equipos electrónicos o telecomunicaciones documentadas en este territorio.',
-    'Les activités touristiques recensées dans ce territoire.': 'Actividades turísticas documentadas en este territorio.',
-    'Les activités de transport, de navigation ou de construction navale recensées dans ce territoire.': 'Actividades de transporte, navegación o construcción naval documentadas en este territorio.',
-    'La construction et la production de matériaux recensées dans ce territoire.': 'Construcción y producción de materiales documentadas en este territorio.',
-    'La production chimique, pétrochimique ou pharmaceutique recensée dans ce territoire.': 'Producción química, petroquímica o farmacéutica documentada en este territorio.',
-    'Les activités de services, de finance ou d’assurance recensées dans ce territoire.': 'Actividades de servicios, finanzas o seguros documentadas en este territorio.',
-    'Les activités de fabrication et de transformation recensées dans ce territoire.': 'Actividades de fabricación y transformación documentadas en este territorio.',
+    'Activité économique recensée dans ce territoire.':
+      'Actividad económica documentada en este territorio.',
+    'Les activités agricoles et la transformation des produits alimentaires recensées dans ce territoire.':
+      'Actividades agrícolas y transformación de alimentos documentadas en este territorio.',
+    'L’extraction ou le traitement de minerais et de ressources du sous-sol recensés dans ce territoire.':
+      'Extracción o procesamiento de minerales y recursos del subsuelo documentados en este territorio.',
+    'La production, l’extraction ou la transformation de ressources énergétiques recensées dans ce territoire.':
+      'Producción, extracción o procesamiento de recursos energéticos documentados en este territorio.',
+    'La pêche, l’aquaculture ou la transformation de produits de la mer recensées dans ce territoire.':
+      'Pesca, acuicultura o procesamiento de productos del mar documentados en este territorio.',
+    'L’exploitation forestière et la transformation du bois recensées dans ce territoire.':
+      'Explotación forestal y transformación de madera documentadas en este territorio.',
+    'La fabrication ou l’assemblage de véhicules recensés dans ce territoire.':
+      'Fabricación o ensamblaje de vehículos documentados en este territorio.',
+    'La fabrication ou les activités aéronautiques et spatiales recensées dans ce territoire.':
+      'Fabricación o actividades aeronáuticas y espaciales documentadas en este territorio.',
+    'La fabrication de textiles, de vêtements ou d’articles en cuir recensée dans ce territoire.':
+      'Fabricación de textiles, ropa o artículos de cuero documentada en este territorio.',
+    'La fabrication de matériel électronique ou les télécommunications recensées dans ce territoire.':
+      'Fabricación de equipos electrónicos o telecomunicaciones documentadas en este territorio.',
+    'Les activités touristiques recensées dans ce territoire.':
+      'Actividades turísticas documentadas en este territorio.',
+    'Les activités de transport, de navigation ou de construction navale recensées dans ce territoire.':
+      'Actividades de transporte, navegación o construcción naval documentadas en este territorio.',
+    'La construction et la production de matériaux recensées dans ce territoire.':
+      'Construcción y producción de materiales documentadas en este territorio.',
+    'La production chimique, pétrochimique ou pharmaceutique recensée dans ce territoire.':
+      'Producción química, petroquímica o farmacéutica documentada en este territorio.',
+    'Les activités de services, de finance ou d’assurance recensées dans ce territoire.':
+      'Actividades de servicios, finanzas o seguros documentadas en este territorio.',
+    'Les activités de fabrication et de transformation recensées dans ce territoire.':
+      'Actividades de fabricación y transformación documentadas en este territorio.',
     Fermer: 'Cerrar',
     'Intégrer le drapeau dans le contour des pays et territoires':
       'Mostrar cada bandera dentro del contorno del país o territorio',
@@ -1233,7 +1601,8 @@ const translations: Record<Exclude<AppLanguage, 'fr'>, Record<string, string>> =
     'Couleur du drapeau': 'Color de la bandera',
     'Choisir une couleur de drapeau': 'Elegir un color de bandera',
     'Couleurs par nom': 'Filtrar por nombre de color',
-    'Toutes les couleurs sélectionnées sont requises.': 'La bandera debe incluir todos los colores seleccionados.',
+    'Toutes les couleurs sélectionnées sont requises.':
+      'La bandera debe incluir todos los colores seleccionados.',
     Rouge: 'Rojo',
     Orange: 'Naranja',
     Jaune: 'Amarillo',
@@ -1335,7 +1704,6 @@ const translations: Record<Exclude<AppLanguage, 'fr'>, Record<string, string>> =
     'Bien maîtrisés': 'Bien dominados',
     'Les résultats apparaîtront après quelques questions.':
       'Los resultados aparecerán después de algunas preguntas.',
-    'Tous les pays': 'Todos los países',
     'Filtre et trie l’historique de tes réponses.': 'Filtra y ordena tu historial de respuestas.',
     'Chercher un pays dans les statistiques': 'Buscar un país en las estadísticas',
     'Filtrer par continent': 'Filtrar por continente',
@@ -1386,7 +1754,8 @@ const translations: Record<Exclude<AppLanguage, 'fr'>, Record<string, string>> =
       'Las dimensiones describen el territorio principal. La población sigue el alcance de su fuente.',
     'Banque mondiale': 'Banco Mundial',
     'Natural Earth estimate': 'Estimación de Natural Earth',
-    'Natural Earth 10m Admin 0 Map Units': 'Unidades cartográficas administrativas de Natural Earth 1:10m',
+    'Natural Earth 10m Admin 0 Map Units':
+      'Unidades cartográficas administrativas de Natural Earth 1:10m',
     'world-atlas 10m': 'world-atlas 1:10m',
     'Contour géographique approximatif': 'Contorno geográfico aproximado',
     'Aucun chiffre de population n’est fourni pour cette entité dans la réponse de la Banque mondiale sélectionnée.':
@@ -1411,18 +1780,24 @@ const translations: Record<Exclude<AppLanguage, 'fr'>, Record<string, string>> =
       'Territorio principal, sin dependencias ni territorios lejanos.',
     'Contour Natural Earth disponible ; la distinction métropole / territoires associés est incomplète.':
       'Contorno de Natural Earth disponible; la distinción entre territorio principal y territorios asociados es incompleta.',
-    'Mesures géographiques indisponibles pour cette géométrie.': 'Medidas geográficas no disponibles para esta geometría.',
-    'Population indisponible dans la source sélectionnée.': 'Población no disponible en la fuente seleccionada.',
+    'Mesures géographiques indisponibles pour cette géométrie.':
+      'Medidas geográficas no disponibles para esta geometría.',
+    'Population indisponible dans la source sélectionnée.':
+      'Población no disponible en la fuente seleccionada.',
     'Villes et reliefs': 'Ciudades y relieve',
     'Relief majeur et caractère du terrain': 'Relieves principales y carácter del terreno',
     'Grandes villes recensées': 'Grandes ciudades registradas',
-    'Grandes villes indisponibles dans les données locales.': 'Grandes ciudades no disponibles en los datos locales.',
+    'Grandes villes indisponibles dans les données locales.':
+      'Grandes ciudades no disponibles en los datos locales.',
     'Sommets et reliefs majeurs recensés': 'Cumbres y relieves principales registrados',
-    'Relief très montagneux selon les sommets recensés.': 'Relieve muy montañoso según las cumbres registradas.',
-    'Relief montagneux selon les sommets recensés.': 'Relieve montañoso según las cumbres registradas.',
+    'Relief très montagneux selon les sommets recensés.':
+      'Relieve muy montañoso según las cumbres registradas.',
+    'Relief montagneux selon les sommets recensés.':
+      'Relieve montañoso según las cumbres registradas.',
     'Des reliefs sont recensés, mais la fiche ne permet pas de caractériser tout le terrain.':
       'Hay relieves registrados, pero la ficha no permite describir todo el terreno.',
-    'Relief indisponible : aucun sommet vérifié dans les données locales.': 'Relieve no disponible: no hay cumbres verificadas en los datos locales.',
+    'Relief indisponible : aucun sommet vérifié dans les données locales.':
+      'Relieve no disponible: no hay cumbres verificadas en los datos locales.',
     'Autres informations': 'Otra información',
     'Point le plus bas': 'Punto más bajo',
     'Point culminant': 'Punto más alto',
@@ -1450,8 +1825,10 @@ const translations: Record<Exclude<AppLanguage, 'fr'>, Record<string, string>> =
       'Punto más alto indicado; la ficha no permite describir todo el terreno.',
     'Les informations physiques et descriptives ci-dessous concernent le territoire principal. Les territoires éloignés disposent de leur propre fiche.':
       'La información física y descriptiva siguiente corresponde al territorio principal. Los territorios alejados tienen su propia ficha.',
-    'Gouvernorat de l’État de la Cité du Vatican · 2024': 'Gobernación del Estado de la Ciudad del Vaticano · 2024',
-    'État du Vatican · superficie et dimensions maximales officielles': 'Estado de la Ciudad del Vaticano · superficie y dimensiones máximas oficiales',
+    'Gouvernorat de l’État de la Cité du Vatican · 2024':
+      'Gobernación del Estado de la Ciudad del Vaticano · 2024',
+    'État du Vatican · superficie et dimensions maximales officielles':
+      'Estado de la Ciudad del Vaticano · superficie y dimensiones máximas oficiales',
     'Vatican News · périmètre territorial': 'Vatican News · perímetro territorial',
     'Source officielle des dimensions': 'Fuente oficial de las dimensiones',
     'Source du périmètre': 'Fuente del perímetro',
@@ -1527,7 +1904,81 @@ const translations: Record<Exclude<AppLanguage, 'fr'>, Record<string, string>> =
     à: 'a',
     'ratios disponibles · aimantation légère': 'proporciones disponibles · ajuste suave',
     'Le contour filtre quand il est fermé, avec le bon nombre de sommets et une forme proche.':
-      'El contorno filtra cuando está cerrado, tiene el número correcto de vértices y una forma similar.'
+      'El contorno filtra cuando está cerrado, tiene el número correcto de vértices y una forma similar.',
+    'Nom de la vue': 'Nombre de la vista',
+    'Nom de la vue à enregistrer': 'Nombre para esta vista guardada',
+    'Enregistrer la vue': 'Guardar vista',
+    'Enregistrer les calques, masques et la vue caméra':
+      'Guardar capas, máscaras y vista de cámara',
+    'Vues enregistrées': 'Vistas guardadas',
+    Charger: 'Cargar',
+    'Supprimer la vue sélectionnée': 'Eliminar la vista seleccionada',
+    'Vue enregistrée.': 'Vista guardada.',
+    'Vue supprimée.': 'Vista eliminada.',
+    'Impossible d’enregistrer cette vue sur cet appareil.':
+      'No se pudo guardar esta vista en este dispositivo.',
+    Vue: 'Vista',
+    'Vue chargée': 'Vista cargada',
+    'Commandes caméra': 'Controles de cámara',
+    'Glisser à deux doigts : tourner autour du globe':
+      'Arrastra con dos dedos: orbita alrededor del globo',
+    '⌘ + défilement : zoom': '⌘ + desplazamiento: zoom',
+    '⌥ + défilement : lacet · Ctrl + défilement : inclinaison · ⇧ + défilement : roulis':
+      '⌥ + desplazamiento: guiñada · Ctrl + desplazamiento: inclinación · ⇧ + desplazamiento: rotación',
+    '⌘⇧ + défilement : déplacer la carte · D : déplacer · C : curseur de sélection':
+      '⌘⇧ + desplazamiento: mover el mapa · D: herramienta de movimiento · C: cursor de selección',
+    'Comprendre les correspondances': 'Entender las coincidencias',
+    'Aucun pays ne correspond à cette combinaison.': 'Ningún país coincide con esta combinación.',
+    'relation personnalisée': 'relación personalizada',
+    'aucune zone': 'ninguna zona',
+    bandes: 'franjas',
+    horizontales: 'horizontales',
+    verticales: 'verticales',
+    obliques: 'diagonales',
+    'forme dessinée': 'forma dibujada',
+    'proportions sélectionnées': 'proporciones seleccionadas',
+    'critères de drapeau': 'criterios de bandera',
+    'Révision des réponses': 'Revisión de respuestas',
+    'Pays à retrouver': 'País por identificar',
+    'Drapeau à reconnaître': 'Bandera por identificar',
+    'Réponse correcte': 'Respuesta correcta',
+    'Ta réponse': 'Tu respuesta',
+    Réussi: 'Correcto',
+    'Solution consultée': 'Respuesta revelada',
+    'À revoir': 'Para repasar',
+    essai: 'intento',
+    essais: 'intentos',
+    'Replier la fiche': 'Contraer ficha del país',
+    'Déplier la fiche': 'Ampliar ficha del país',
+    'Fermer la fiche': 'Cerrar ficha del país',
+    'Pages de statistiques': 'Páginas de estadísticas',
+    'Progression par pays': 'Progreso por país',
+    'Historique des parties': 'Historial de partidas',
+    'Évolution par preset': 'Progreso por preset',
+    'Retrouve les réglages et les scores de tes parties terminées.':
+      'Consulta los ajustes y puntuaciones de tus partidas terminadas.',
+    'Aucune partie enregistrée': 'Todavía no hay partidas',
+    'Les parties terminées apparaîtront ici avec leurs réglages et leur score.':
+      'Las partidas terminadas aparecerán aquí con sus ajustes y puntuación.',
+    'questions enregistrées': 'preguntas registradas',
+    'Choisir un preset à analyser': 'Elige un preset para analizar',
+    'Compare tes scores successifs sur un même quiz.':
+      'Compara tus puntuaciones en el mismo cuestionario.',
+    'Parties jouées': 'Partidas jugadas',
+    Moyenne: 'Promedio',
+    'Dernier score': 'Última puntuación',
+    'Progression des scores': 'Evolución de puntuaciones',
+    'Graphique de progression des scores': 'Gráfico de evolución de puntuaciones',
+    'Aucune partie pour ce preset': 'Aún no hay partidas con este preset',
+    'Aucun preset enregistré': 'No hay presets guardados',
+    'Les scores apparaîtront ici après une partie lancée avec un preset sauvegardé.':
+      'Las puntuaciones aparecerán después de jugar con un preset guardado.',
+    'Nombre de pays': 'Países',
+    'Pays étudié': 'País estudiado',
+    'Nombre de questions': 'Preguntas',
+    'Mode estimation': 'Modo de estimación',
+    'Dessine les frontières': 'Dibuja las fronteras',
+    Zone: 'Zona'
   }
 }
 
