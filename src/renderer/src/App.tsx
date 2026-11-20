@@ -734,6 +734,14 @@ function App(): React.JSX.Element {
     onCompleted: recordCompletedQuiz
   })
   const currentQuizQuestion = quiz.session.questionOrder[quiz.session.questionIndex]
+  const quizRevealTargetFeatureIds = useMemo(
+    () =>
+      quiz.session.answerRevealed && (currentQuizQuestion?.countryAnswerGroup.length ?? 0) > 1
+        ? (currentQuizQuestion?.countryAnswerGroup.map(({ sourceFeatureId }) => sourceFeatureId) ??
+          [])
+        : [],
+    [currentQuizQuestion, quiz.session.answerRevealed]
+  )
   const revealedQuizPlace = currentQuizQuestion
     ? getExplorationDetails(
         currentQuizQuestion.sourceFeatureId,
@@ -1399,17 +1407,8 @@ function App(): React.JSX.Element {
       return true
     }
 
-    const isCorrect = Number(sourceFeatureId) === question.sourceFeatureId
-    if (!isCorrect) {
-      setSelectedMapCountry(null)
-      quiz.answerItems({ countryOnMap: false }, name)
-      return false
-    }
-
     setMapProximity(null)
     setSelectedMapCountry({ sourceFeatureId, name, entityId, revealed: false })
-    quiz.answerItems({ countryOnMap: true }, name)
-
     return true
   }
 
@@ -1442,6 +1441,11 @@ function App(): React.JSX.Element {
     quiz.revealAnswer()
     setMapProximity(null)
     setFullscreenAnswersOpen(false)
+    setSelectedMapAnswerAlpha2s(
+      question.countryAnswerGroup.length > 1
+        ? question.countryAnswerGroup.map(({ alpha2 }) => alpha2)
+        : []
+    )
     setSelectedMapCountry({
       sourceFeatureId: question.sourceFeatureId,
       name: question.frenchCountryName,
@@ -1456,7 +1460,10 @@ function App(): React.JSX.Element {
     if (!isQuizRunning) return
     if (Object.keys(outcomes).length === 0) return
     quiz.answerItems(outcomes, JSON.stringify(outcomes))
-    if (Object.values(outcomes).every(Boolean)) setFullscreenAnswersOpen(false)
+    const allAnswersCorrect = Object.keys(quiz.session.answerWeights).every(
+      (key) => quiz.session.answerResults[key] === true || outcomes[key] === true
+    )
+    if (isQuizFullscreen && allAnswersCorrect) setFullscreenAnswersOpen(false)
   }
 
   const submitMultiCountryQuizAnswer = (
@@ -1473,6 +1480,10 @@ function App(): React.JSX.Element {
       outcome,
       JSON.stringify({ submittedValues, foundValues })
     )
+    const allAnswersCorrect = Object.keys(quiz.session.answerWeights).every((answerKey) =>
+      answerKey === key ? outcome === 'correct' : quiz.session.answerResults[answerKey] === true
+    )
+    if (isQuizFullscreen && allAnswersCorrect) setFullscreenAnswersOpen(false)
     if (key === 'countryOnMap') {
       setSelectedMapAnswerAlpha2s([])
       setSelectedMapCountry(null)
@@ -1488,7 +1499,7 @@ function App(): React.JSX.Element {
     setMapProximity(null)
     setShowQuizRevealCard(false)
     setShowExpandedQuizCountry(false)
-    setFullscreenAnswersOpen(false)
+    setFullscreenAnswersOpen(isQuizFullscreen)
     quiz.next()
   }
 
@@ -2669,6 +2680,7 @@ function App(): React.JSX.Element {
                       null)
                     : null)
                 }
+                quizTargetFeatureIds={quizRevealTargetFeatureIds}
                 quizBaseRegion={
                   isQuizRunning && !quiz.session.answerRevealed ? activeQuizRegion : null
                 }
@@ -2682,7 +2694,7 @@ function App(): React.JSX.Element {
                 quizTargetViewKey={
                   reviewQuizCountry
                     ? `quiz-review:${reviewQuizCountry.alpha2}`
-                    : `${sessionMode}:${sessionGeneration}:${quiz.session.questionIndex}:${quiz.session.questionOrder[quiz.session.questionIndex]?.sourceFeatureId ?? ''}`
+                    : `${sessionMode}:${sessionGeneration}:${quiz.session.questionIndex}:${quiz.session.questionOrder[quiz.session.questionIndex]?.sourceFeatureId ?? ''}${quizRevealTargetFeatureIds.length > 0 ? `:answers:${quizRevealTargetFeatureIds.join('-')}` : ''}`
                 }
                 interactionResetKey={`${sessionMode}:${sessionGeneration}:${quiz.session.questionIndex}:${quiz.session.questionOrder[quiz.session.questionIndex]?.sourceFeatureId ?? ''}:${quiz.session.answerRevealed}`}
                 showQuizRevealCard={

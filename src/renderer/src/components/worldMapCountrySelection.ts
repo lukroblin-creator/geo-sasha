@@ -173,6 +173,71 @@ function getCountryAnchor(geometry: Geometry): [number, number] | null {
   }
 }
 
+const SMALL_COUNTRY_HIGHLIGHT_AREA_KM2 = 20_000
+
+export const smallCountryHighlightFeatureIds = new Set(
+  (countryExplorationData.countries as CountryHitAreaRecord[]).flatMap((country) => {
+    const sourceId = country.sourceFeatureId
+    const area = country.metrics?.areaKm2
+    return sourceId !== undefined &&
+      area !== undefined &&
+      area !== null &&
+      area <= SMALL_COUNTRY_HIGHLIGHT_AREA_KM2
+      ? [normalizeSourceFeatureId(sourceId)]
+      : []
+  })
+)
+
+const smallCountryHighlightFeatureIdentities = new Set(
+  world10mFlagMap.features.flatMap((feature) => {
+    const identity = getCountryFeatureIdentity(feature as unknown as InteractiveCountryFeature)
+    const area = getCountryAreaKm2(feature as unknown as InteractiveCountryFeature)
+    return identity &&
+      area !== undefined &&
+      area !== null &&
+      area <= SMALL_COUNTRY_HIGHLIGHT_AREA_KM2
+      ? [identity]
+      : []
+  })
+)
+
+/**
+ * Selected microstates need a visible point highlight while their actual
+ * polygon remains the authoritative shape and click target.
+ */
+export const smallCountryHighlightMarkers: FeatureCollection<Point> = {
+  type: 'FeatureCollection',
+  features: world10mFlagMap.features.flatMap((feature) => {
+    const sourceId = feature.properties?.sourceId
+    if (
+      (typeof sourceId !== 'string' && typeof sourceId !== 'number') ||
+      !smallCountryHighlightFeatureIdentities.has(
+        getCountryFeatureIdentity(feature as unknown as InteractiveCountryFeature) ?? ''
+      )
+    )
+      return []
+    const anchor = getCountryAnchor(feature.geometry)
+    if (!anchor) return []
+    const properties = feature.properties ?? {}
+    const entityId = properties.entityId
+    return [
+      {
+        type: 'Feature' as const,
+        id: feature.id,
+        properties: {
+          ...properties,
+          // Several overseas French territories reuse France's Natural Earth
+          // source ID. Keep those markers selectable by entity without making
+          // them react to a selection of metropolitan France.
+          sourceId:
+            typeof entityId === 'string' && entityId.startsWith('territory:') ? null : sourceId
+        },
+        geometry: { type: 'Point' as const, coordinates: anchor }
+      }
+    ]
+  })
+}
+
 export function getDirectionalCountryFeature(
   map: MapLibreMap,
   sourceFeatureId: string | number,
@@ -327,6 +392,38 @@ export const lowZoomMissingCountryMarkers: FeatureCollection<Point> = {
       properties: country.properties ?? {},
       geometry: location.geometry
     }
+  })
+}
+
+const world50mSourceIds = new Set(
+  world50mFlagMap.features
+    .map((feature) => feature.properties?.sourceId)
+    .filter(
+      (sourceId): sourceId is string | number =>
+        typeof sourceId === 'string' || typeof sourceId === 'number'
+    )
+    .map(normalizeSourceFeatureId)
+)
+
+export const mediumZoomMissingCountryMarkers: FeatureCollection<Point> = {
+  type: 'FeatureCollection',
+  features: world10mFlagMap.features.flatMap((country) => {
+    const sourceId = country.properties?.sourceId
+    if (
+      (typeof sourceId !== 'string' && typeof sourceId !== 'number') ||
+      world50mSourceIds.has(normalizeSourceFeatureId(sourceId))
+    )
+      return []
+
+    const location = pointOnFeature(country as unknown as Feature<Geometry>)
+    return [
+      {
+        type: 'Feature' as const,
+        id: country.id,
+        properties: country.properties ?? {},
+        geometry: location.geometry
+      }
+    ]
   })
 }
 

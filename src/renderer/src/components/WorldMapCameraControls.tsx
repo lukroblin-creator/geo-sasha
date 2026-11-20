@@ -13,6 +13,7 @@ type WorldMapCameraControlsProps = {
   onToggleOrbit: () => void
   onToggleControls: () => void
   onTogglePanMode: () => void
+  onResetAnchor: () => void
   onChangeAxis: (axis: keyof CameraRotation, value: number) => void
 }
 
@@ -26,6 +27,7 @@ export function WorldMapCameraControls({
   onToggleOrbit,
   onToggleControls,
   onTogglePanMode,
+  onResetAnchor,
   onChangeAxis
 }: WorldMapCameraControlsProps): JSX.Element | null {
   const { t } = useLanguage()
@@ -94,11 +96,26 @@ export function WorldMapCameraControls({
             </svg>
             <span>{t(cameraPanMode ? 'Curseur du jeu' : 'Déplacer la carte')}</span>
           </button>
+          {cameraOrbitMode && (
+            <button
+              className="map-camera-pan-tool map-camera-reset-anchor"
+              type="button"
+              title={t('Ramener le point d’ancrage au centre de la Terre')}
+              aria-label={t('Ramener le point d’ancrage au centre de la Terre')}
+              onClick={onResetAnchor}
+            >
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <circle cx="12" cy="12" r="8" />
+                <path d="M12 2v6m0 8v6M2 12h6m8 0h6M9 9l6 6m0-6-6 6" />
+              </svg>
+              <span>{t('Recentrer l’ancrage sur le globe')}</span>
+            </button>
+          )}
           <CameraAxisSlider
             label="Pitch"
             value={cameraRotation.pitch}
-            min={cameraFreeMode ? 0 : -90}
-            max={cameraFreeMode ? 180 : 90}
+            min={0}
+            max={180}
             icon={<path d="M5 17a9 9 0 0 1 14-10M5 17v-5m0 5h5" />}
             onChange={(value) => onChangeAxis('pitch', value)}
           />

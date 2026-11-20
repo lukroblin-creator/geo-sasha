@@ -22,6 +22,7 @@ import {
 import { FlagRatioFilter } from './FlagRatioFilter'
 import { SkinSelector } from './AppModeSwitcher'
 import { ExplorationPlaceDetails } from './ExplorationPlaceDetails'
+import { useAdvanceQuestionOnEnter } from './useAdvanceQuestionOnEnter'
 import type { ExplorationDetails } from '../data/geography/exploration'
 import {
   supplementalQuizAnswerMatches,
@@ -95,6 +96,7 @@ function QuizPanelFrame<Question>({
 }: QuizPanelFrameProps<Question>): React.JSX.Element {
   const { language, t } = useLanguage()
   const questionSettled = session.answerCorrect === true || session.answerRevealed
+  useAdvanceQuestionOnEnter(showActions && questionSettled && !session.completed, onNext)
   const answeredCount = session.questionIndex + (questionSettled ? 1 : 0)
   const progress = total > 0 ? (answeredCount / total) * 100 : 0
 
@@ -609,11 +611,14 @@ function CountryQuizAnswerForm({
   onAnswer: CountryQuizPanelProps['onAnswer']
 }): React.JSX.Element {
   const { language, t } = useLanguage()
+  const formRef = useRef<HTMLDivElement>(null)
   const [countryName, setCountryName] = useState('')
   const [countryNameSuggestionsOpen, setCountryNameSuggestionsOpen] = useState(false)
   const [capital, setCapital] = useState('')
   const [multiAnswerRows, setMultiAnswerRows] = useState<Record<string, string[]>>({})
   const [multiAnswerFound, setMultiAnswerFound] = useState<Record<string, string[]>>({})
+  const [showMultiAnswerFeedback, setShowMultiAnswerFeedback] = useState(false)
+  const skipMapSelectionFeedbackResetRef = useRef(false)
   const [flagAlpha2, setFlagAlpha2] = useState<string | null>(null)
   const [flagColorDraft, setFlagColorDraft] = useState('#e53935')
   const [flagColorFilters, setFlagColorFilters] = useState<string[]>([])
@@ -626,6 +631,22 @@ function CountryQuizAnswerForm({
   const [flagPolygonDrawing, setFlagPolygonDrawing] = useState<FlagPolygonDrawing | null>(null)
   const questionDisabled = session.answerCorrect === true || session.answerRevealed
   const multiCountryAnswer = question.countryAnswerGroup.length > 1
+  const focusAfterSubmission = (currentControl: HTMLElement): void => {
+    window.requestAnimationFrame(() => {
+      if (currentControl.isConnected && !currentControl.matches(':disabled')) {
+        currentControl.focus()
+        return
+      }
+      const nextControl = formRef.current?.querySelector<HTMLElement>(
+        '[data-quiz-answer-control]:not(:disabled)'
+      )
+      if (nextControl) {
+        nextControl.focus()
+        return
+      }
+      document.querySelector<HTMLButtonElement>('.quiz-next-button')?.focus()
+    })
+  }
   const localizedCountryNames = new Intl.DisplayNames([language], { type: 'region' })
   const countryAnswerText = multiCountryAnswer
     ? question.countryAnswerGroup.map(({ name }) => name).join(', ')
@@ -654,29 +675,34 @@ function CountryQuizAnswerForm({
       .map((country) => ({
         alpha2: country.alpha2,
         name: names.of(country.alpha2) ?? country.countryName,
-        alternateName: country.countryName
+        alternateName: country.countryName,
+        additionalNames: country.alpha2 === 'CZ' ? ['République tchèque'] : []
       }))
       .sort((first, second) => first.name.localeCompare(second.name, language))
   }, [language])
-  const mapOnly =
-    answers.countryOnMap &&
-    !answers.countryName &&
-    !answers.capital &&
-    !answers.flag &&
-    !multiCountryAnswer &&
-    !supplementalQuizFactOptions.some(({ id }) => supplementalAnswers[id])
+  useEffect(() => {
+    const frame = window.requestAnimationFrame(() => {
+      formRef.current
+        ?.querySelector<HTMLElement>('[data-quiz-answer-control]:not(:disabled)')
+        ?.focus()
+    })
+    return () => window.cancelAnimationFrame(frame)
+  }, [])
 
   const getRows = (key: string): string[] => multiAnswerRows[key] ?? ['']
   const setRowValue = (key: string, index: number, value: string): void => {
+    setShowMultiAnswerFeedback(false)
     setMultiAnswerRows((current) => {
       const rows = current[key] ?? ['']
       return { ...current, [key]: rows.map((row, rowIndex) => (rowIndex === index ? value : row)) }
     })
   }
   const addAnswerRow = (key: string): void => {
+    setShowMultiAnswerFeedback(false)
     setMultiAnswerRows((current) => ({ ...current, [key]: [...(current[key] ?? ['']), ''] }))
   }
   const removeAnswerRow = (key: string, index: number): void => {
+    setShowMultiAnswerFeedback(false)
     setMultiAnswerRows((current) => {
       const rows = current[key] ?? ['']
       return {
@@ -698,6 +724,7 @@ function CountryQuizAnswerForm({
     const resolved = submitted.map(resolveValue)
     if (resolved.some((value) => !value || !normalizedExpected.includes(value))) {
       setMultiAnswerFound((current) => ({ ...current, [key]: [] }))
+      if (key === 'countryOnMap') skipMapSelectionFeedbackResetRef.current = true
       onMultiAnswer(key, 0, 'incorrect', submitted, [])
       return
     }
@@ -711,6 +738,7 @@ function CountryQuizAnswerForm({
     const isComplete = normalizedExpected.every((value) => nextFound.includes(value))
     setMultiAnswerFound((current) => ({ ...current, [key]: nextFound }))
     setMultiAnswerRows((current) => ({ ...current, [key]: [''] }))
+    if (key === 'countryOnMap') skipMapSelectionFeedbackResetRef.current = true
     onMultiAnswer(
       key,
       newlyFoundCount / normalizedExpected.length,
@@ -725,6 +753,7 @@ function CountryQuizAnswerForm({
     expectedValues: readonly string[],
     displayValue: (value: string) => string = (value) => value
   ): React.ReactNode => {
+    if (!showMultiAnswerFeedback && session.answerResults[key] !== true) return null
     const uniqueExpectedValues = [...new Set(expectedValues)]
     const found = multiAnswerFound[key] ?? []
     const incorrect = session.answerResults[key] === false
@@ -864,17 +893,20 @@ function CountryQuizAnswerForm({
     ? countryNameChoices.filter(
         (choice) =>
           normalizeQuizAnswer(choice.name).includes(normalizedCountryNameQuery) ||
-          normalizeQuizAnswer(choice.alternateName).includes(normalizedCountryNameQuery)
+          normalizeQuizAnswer(choice.alternateName).includes(normalizedCountryNameQuery) ||
+          choice.additionalNames.some((name) =>
+            normalizeQuizAnswer(name).includes(normalizedCountryNameQuery)
+          )
       )
     : []
 
-  const countryNameMatches =
-    !answers.countryName ||
+  const countryNameMatchesValue = (value: string): boolean =>
     [
       question.countryName,
       question.frenchCountryName,
-      localizedCountryNames.of(question.alpha2) ?? ''
-    ].some((name) => normalizeQuizAnswer(countryName) === normalizeQuizAnswer(name))
+      localizedCountryNames.of(question.alpha2) ?? '',
+      ...(question.alpha2 === 'CZ' ? ['République tchèque'] : [])
+    ].some((name) => normalizeQuizAnswer(value) === normalizeQuizAnswer(name))
   const capitalCorrectionSuggestion = getCapitalAnswerCorrection(
     capital,
     question.acceptedCapitalNames,
@@ -897,8 +929,7 @@ function CountryQuizAnswerForm({
           session.answerResults.countryName !== true
         : countryName.trim().length > 0 && !countryNameIsCorrect)) ||
     (answers.countryOnMap &&
-      multiCountryAnswer &&
-      selectedMapAnswerAlpha2s.length > 0 &&
+      (multiCountryAnswer ? selectedMapAnswerAlpha2s.length > 0 : selectedMapCountry !== null) &&
       session.answerResults.countryOnMap !== true) ||
     (answers.capital && capital.trim().length > 0 && !capitalIsCorrect) ||
     (answers.flag && flagAlpha2 !== null && !flagIsCorrect) ||
@@ -908,9 +939,21 @@ function CountryQuizAnswerForm({
         getRows(id).some((value) => value.trim().length > 0) &&
         session.answerResults[id] !== true
     )
-  const submitAnswers = (): void => {
+  const submitAnswers = (
+    showFeedback = true,
+    onlyKey?: string,
+    selectedFlagAlpha2 = flagAlpha2,
+    submittedCountryName = countryName
+  ): void => {
+    if (showFeedback) setShowMultiAnswerFeedback(true)
     const outcomes: Record<string, boolean> = {}
-    if (answers.countryName && multiCountryAnswer && session.answerResults.countryName !== true) {
+    const shouldSubmit = (key: string): boolean => onlyKey === undefined || onlyKey === key
+    if (
+      shouldSubmit('countryName') &&
+      answers.countryName &&
+      multiCountryAnswer &&
+      session.answerResults.countryName !== true
+    ) {
       const expected = question.countryAnswerGroup.map(({ alpha2 }) => alpha2)
       submitMultiAnswerGroup(
         'countryName',
@@ -921,7 +964,8 @@ function CountryQuizAnswerForm({
             const alternateName = countryNameChoices.find(
               (choice) => choice.alpha2 === country.alpha2
             )?.alternateName
-            return [country.name, alternateName ?? ''].some(
+            const choice = countryNameChoices.find((item) => item.alpha2 === country.alpha2)
+            return [country.name, alternateName ?? '', ...(choice?.additionalNames ?? [])].some(
               (name) => normalizeQuizAnswer(name) === normalizeQuizAnswer(value)
             )
           })
@@ -930,10 +974,16 @@ function CountryQuizAnswerForm({
         (alpha2) =>
           question.countryAnswerGroup.find((country) => country.alpha2 === alpha2)?.name ?? alpha2
       )
-    } else if (answers.countryName && countryName.trim() && !countryNameIsCorrect) {
-      outcomes.countryName = countryNameMatches
+    } else if (
+      shouldSubmit('countryName') &&
+      answers.countryName &&
+      submittedCountryName.trim() &&
+      !countryNameIsCorrect
+    ) {
+      outcomes.countryName = countryNameMatchesValue(submittedCountryName)
     }
     if (
+      shouldSubmit('countryOnMap') &&
       answers.countryOnMap &&
       multiCountryAnswer &&
       selectedMapAnswerAlpha2s.length > 0 &&
@@ -948,15 +998,30 @@ function CountryQuizAnswerForm({
           question.countryAnswerGroup.find((country) => country.alpha2 === alpha2)?.name ?? alpha2
       )
     }
-    if (answers.capital && capital.trim() && !capitalIsCorrect) {
+    if (
+      shouldSubmit('countryOnMap') &&
+      answers.countryOnMap &&
+      !multiCountryAnswer &&
+      selectedMapCountry &&
+      !mapAnswerIsCorrect
+    ) {
+      outcomes.countryOnMap =
+        Number(selectedMapCountry.sourceFeatureId) === question.sourceFeatureId
+    }
+    if (shouldSubmit('capital') && answers.capital && capital.trim() && !capitalIsCorrect) {
       outcomes.capital = capitalMatches
     }
-    if (answers.flag && flagAlpha2 && !flagIsCorrect) {
-      outcomes.flag = flagAlpha2 === question.alpha2
+    if (shouldSubmit('flag') && answers.flag && selectedFlagAlpha2 && !flagIsCorrect) {
+      outcomes.flag = selectedFlagAlpha2 === question.alpha2
     }
     supplementalQuizFactOptions.forEach(({ id }) => {
       const expected = question.supplementalAnswerValues[id] ?? []
-      if (supplementalAnswers[id] && expected.length > 0 && session.answerResults[id] !== true) {
+      if (
+        shouldSubmit(id) &&
+        supplementalAnswers[id] &&
+        expected.length > 0 &&
+        session.answerResults[id] !== true
+      ) {
         submitMultiAnswerGroup(
           id,
           expected,
@@ -969,83 +1034,46 @@ function CountryQuizAnswerForm({
     if (Object.keys(outcomes).length > 0) onAnswer(outcomes)
   }
   const handleAnswerKeyDown = (event: React.KeyboardEvent<HTMLInputElement>): void => {
-    if (event.key !== 'Enter' || questionDisabled || mapOnly || !hasSubmittableAnswer) return
+    if (event.key !== 'Enter' || questionDisabled || !event.currentTarget.value.trim()) return
+    const key = event.currentTarget.dataset.quizAnswerKey
+    if (!key) return
     event.preventDefault()
-    submitAnswers()
+    if (key === 'countryName') {
+      const selectedSuggestion = countryNameSuggestionsOpen ? countryNameSuggestions[0] : undefined
+      if (selectedSuggestion) {
+        setCountryName(selectedSuggestion.name)
+        setCountryNameSuggestionsOpen(false)
+        submitAnswers(true, key, flagAlpha2, selectedSuggestion.name)
+      } else {
+        submitAnswers(true, key)
+      }
+    } else {
+      submitAnswers(true, key)
+    }
+    focusAfterSubmission(event.currentTarget)
   }
-  const autoAnswerSentRef = useRef<{
-    questionOrder: QuizSession<CountryQuizQuestion>['questionOrder']
-    questionIndex: number
-    answers: Set<string>
-  } | null>(null)
+
+  const handleFlagAnswerKeyDown = (
+    event: React.KeyboardEvent<HTMLButtonElement>,
+    alpha2: string
+  ): void => {
+    if (event.key !== 'Enter' || questionDisabled || flagIsCorrect) return
+    event.preventDefault()
+    setFlagAlpha2(alpha2)
+    submitAnswers(true, 'flag', alpha2)
+    focusAfterSubmission(event.currentTarget)
+  }
 
   useEffect(() => {
-    if (questionDisabled || mapOnly) return
-    if (
-      autoAnswerSentRef.current?.questionOrder !== session.questionOrder ||
-      autoAnswerSentRef.current?.questionIndex !== session.questionIndex
-    ) {
-      autoAnswerSentRef.current = {
-        questionOrder: session.questionOrder,
-        questionIndex: session.questionIndex,
-        answers: new Set()
-      }
+    if (skipMapSelectionFeedbackResetRef.current) {
+      skipMapSelectionFeedbackResetRef.current = false
+      return
     }
-    const autoAnswerState = autoAnswerSentRef.current
-    if (!autoAnswerState) return
-    const outcomes: Record<string, boolean> = {}
-
-    if (
-      answers.countryName &&
-      countryName.trim() &&
-      countryNameMatches &&
-      session.answerResults.countryName !== true &&
-      !autoAnswerState.answers.has('countryName')
-    ) {
-      outcomes.countryName = true
-      autoAnswerState.answers.add('countryName')
-    }
-    if (
-      answers.capital &&
-      capital.trim() &&
-      capitalMatches &&
-      session.answerResults.capital !== true &&
-      !autoAnswerState.answers.has('capital')
-    ) {
-      outcomes.capital = true
-      autoAnswerState.answers.add('capital')
-    }
-    if (
-      answers.flag &&
-      flagAlpha2 === question.alpha2 &&
-      session.answerResults.flag !== true &&
-      !autoAnswerState.answers.has('flag')
-    ) {
-      outcomes.flag = true
-      autoAnswerState.answers.add('flag')
-    }
-
-    if (Object.keys(outcomes).length > 0) onAnswer(outcomes)
-  }, [
-    answers.capital,
-    answers.countryName,
-    answers.flag,
-    capital,
-    capitalMatches,
-    countryName,
-    countryNameMatches,
-    flagAlpha2,
-    question.alpha2,
-    session.questionIndex,
-    session.questionOrder,
-    questionDisabled,
-    mapOnly,
-    onAnswer,
-    session.answerResults
-  ])
+    setShowMultiAnswerFeedback(false)
+  }, [selectedMapAnswerAlpha2s])
 
   return (
-    <div className="country-quiz-answer-form">
+    <div className="country-quiz-answer-form" ref={formRef}>
       {answers.countryOnMap && multiCountryAnswer && (
         <div
           className={`country-answer-map-selection${session.answerResults.countryOnMap === true ? ' is-correct' : session.answerResults.countryOnMap === false ? ' is-incorrect' : ''}`}
@@ -1077,14 +1105,14 @@ function CountryQuizAnswerForm({
       )}
       {answers.countryOnMap && !multiCountryAnswer && (
         <div
-          className={`country-answer-map-selection${mapAnswerIsCorrect ? ' is-correct' : ''}`}
+          className={`country-answer-map-selection${mapAnswerIsCorrect ? ' is-correct' : session.answerResults.countryOnMap === false ? ' is-incorrect' : ''}`}
           aria-live="polite"
         >
           <span className="answer-placeholder-icon">⌖</span>
           <div className="country-answer-map-selection-content">
             <span>
               {selectedMapCountry
-                ? !canRevealAnswerValues('countryOnMap')
+                ? !isAnswerChecked('countryOnMap') || !canRevealAnswerValues('countryOnMap')
                   ? t('Territoire sélectionné')
                   : `${t('Pays sélectionné')} : ${selectedMapCountry.name}`
                 : t('Sélectionne un pays sur la carte.')}
@@ -1109,6 +1137,9 @@ function CountryQuizAnswerForm({
           {mapAnswerIsCorrect && (
             <span className="country-answer-field-status">✓ {t('Bonne réponse !')}</span>
           )}
+          {session.answerResults.countryOnMap === false && (
+            <span className="country-answer-field-error">{t('Essaie encore.')}</span>
+          )}
         </div>
       )}
 
@@ -1120,6 +1151,8 @@ function CountryQuizAnswerForm({
           {getRows('countryName').map((value, index) => (
             <div className="quiz-multi-answer-row" key={`countryName:${index}`}>
               <input
+                data-quiz-answer-control
+                data-quiz-answer-key="countryName"
                 className="country-answer-text-input"
                 type="text"
                 autoComplete="off"
@@ -1174,6 +1207,8 @@ function CountryQuizAnswerForm({
           <div className="country-answer-input-wrap">
             <input
               id="quiz-country-name-answer"
+              data-quiz-answer-control
+              data-quiz-answer-key="countryName"
               className="country-answer-text-input"
               type="text"
               autoComplete="off"
@@ -1239,6 +1274,8 @@ function CountryQuizAnswerForm({
           <label htmlFor="quiz-capital-answer">{t('Capitale')}</label>
           <input
             id="quiz-capital-answer"
+            data-quiz-answer-control
+            data-quiz-answer-key="capital"
             className="country-answer-text-input"
             type="text"
             autoComplete="off"
@@ -1415,9 +1452,12 @@ function CountryQuizAnswerForm({
             {filteredFlagChoices.map((choice) => (
               <button
                 key={choice.alpha2}
+                data-quiz-answer-control
+                data-quiz-answer-key="flag"
                 className={`country-flag-choice${flagAlpha2 === choice.alpha2 ? ' selected' : ''}`}
                 type="button"
                 onClick={() => setFlagAlpha2(choice.alpha2)}
+                onKeyDown={(event) => handleFlagAnswerKeyDown(event, choice.alpha2)}
                 disabled={questionDisabled || flagIsCorrect}
                 aria-label={`${t('Choisir le drapeau')} ${localizedCountryNames.of(choice.alpha2) ?? choice.frenchName}`}
                 aria-pressed={flagAlpha2 === choice.alpha2}
@@ -1449,6 +1489,8 @@ function CountryQuizAnswerForm({
               {getRows(option.id).map((value, index) => (
                 <div className="quiz-multi-answer-row" key={`${option.id}:${index}`}>
                   <input
+                    data-quiz-answer-control
+                    data-quiz-answer-key={option.id}
                     className="country-answer-text-input"
                     type="text"
                     autoComplete="off"
@@ -1483,8 +1525,8 @@ function CountryQuizAnswerForm({
           )
         })}
 
-      {!questionDisabled && !mapOnly && hasSubmittableAnswer && (
-        <button className="quiz-check-answers-button" type="button" onClick={submitAnswers}>
+      {!questionDisabled && hasSubmittableAnswer && (
+        <button className="quiz-check-answers-button" type="button" onClick={() => submitAnswers()}>
           {t('Vérifier mes réponses')}
         </button>
       )}
@@ -1633,9 +1675,15 @@ export function QuizFullscreenBar({
   const total = session.questionOrder.length
   const question = session.questionOrder[session.questionIndex]
   const questionSettled = session.answerCorrect === true || session.answerRevealed
+  useAdvanceQuestionOnEnter(questionSettled && !session.completed, onNext)
   const completedCount = session.questionIndex + (questionSettled ? 1 : 0)
   const progress = total > 0 ? (completedCount / total) * 100 : 0
-  const hasNonMapAnswer = answers.countryName || answers.capital || answers.flag
+  const hasNonMapAnswer =
+    answers.countryName ||
+    answers.capital ||
+    answers.flag ||
+    supplementalQuizFactOptions.some(({ id }) => supplementalAnswers[id])
+  const hasAnswerFields = hasNonMapAnswer || answers.countryOnMap
   const answerLabels = [
     answers.countryOnMap ? t('Territoire sur la carte') : null,
     answers.countryName ? t('Nom du pays') : null,
@@ -1756,7 +1804,7 @@ export function QuizFullscreenBar({
           </button>
         ) : (
           <>
-            {hasNonMapAnswer && (
+            {hasAnswerFields && (
               <button className="quiz-fullscreen-primary" type="button" onClick={onOpenAnswers}>
                 {t('Répondre')}
               </button>

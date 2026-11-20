@@ -13953,72 +13953,95 @@ html[data-skin='matrix'] #root .map-layer-manager-row-description {
 }
 
 .map-opacity-mask-handle {
-  display: grid;
-  width: 34px;
-  height: 34px;
-  place-items: center;
+  position: relative;
+  display: block;
+  width: 28px;
+  height: 28px;
   padding: 0;
-  border: 2px solid #f3f8fc;
+  border: 0;
   border-radius: 50%;
-  background: #176fae;
-  box-shadow:
-    0 1px 5px rgb(0 0 0 / 72%),
-    0 0 0 2px rgb(14 33 48 / 72%);
-  color: #fff;
-  font: 700 20px/1 sans-serif;
+  background: transparent;
+  color: transparent;
   cursor: grab;
   touch-action: none;
   user-select: none;
 }
 
+.map-opacity-mask-handle::before {
+  position: absolute;
+  inset: 50% auto auto 50%;
+  width: 11px;
+  height: 11px;
+  border: 1px solid rgb(255 255 255 / 88%);
+  border-radius: 50%;
+  background: rgb(18 35 49 / 58%);
+  box-shadow: 0 1px 3px rgb(0 0 0 / 65%);
+  content: '';
+  pointer-events: none;
+  transform: translate(-50%, -50%);
+  transition:
+    width 100ms ease,
+    height 100ms ease,
+    background-color 100ms ease;
+}
+
 .map-opacity-mask-handle:hover {
-  border-color: #fff;
-  background: #2689cf;
-  transform: scale(1.08);
+  background: transparent;
+}
+
+.map-opacity-mask-handle:hover::before {
+  width: 14px;
+  height: 14px;
+  background: rgb(38 137 207 / 78%);
 }
 
 .map-opacity-mask-handle:active {
   cursor: grabbing;
 }
+
 .map-opacity-mask-handle:focus-visible {
-  outline: 3px solid #f3c969;
-  outline-offset: 3px;
+  outline: 1px solid #f3c969;
+  outline-offset: 1px;
 }
-.map-opacity-mask-handle.is-center {
-  border-radius: 9px;
-  font-size: 22px;
+
+.map-opacity-mask-handle.is-center::before {
+  width: 13px;
+  height: 13px;
+  background: rgb(243 248 252 / 76%);
 }
-.map-opacity-mask-handle.is-width,
-.map-opacity-mask-handle.is-height {
-  width: 30px;
-  height: 30px;
-  border-radius: 8px;
-  font-size: 22px;
+
+.map-opacity-mask-handle.is-center:hover::before {
+  width: 16px;
+  height: 16px;
+  background: rgb(38 137 207 / 88%);
 }
 
 html[data-skin='minimal'] #root .map-opacity-mask-handle {
-  border-color: #fffdf8;
-  background: #9b6b2f;
-  color: #fffdf8;
-  box-shadow:
-    0 1px 5px rgb(40 37 31 / 55%),
-    0 0 0 2px rgb(255 253 248 / 80%);
+  background: transparent;
 }
 
-html[data-skin='minimal'] #root .map-opacity-mask-handle:hover {
-  background: #b77c35;
+html[data-skin='minimal'] #root .map-opacity-mask-handle::before {
+  border-color: #fffdf8;
+  background: rgb(88 62 32 / 68%);
+}
+
+html[data-skin='minimal'] #root .map-opacity-mask-handle:hover::before {
+  background: rgb(183 124 53 / 88%);
 }
 
 html[data-skin='matrix'] #root .map-opacity-mask-handle {
-  border-color: #aaffbf;
-  border-radius: 0;
-  background: #04150a;
-  box-shadow: 0 0 10px rgb(0 255 86 / 45%);
-  color: #aaffbf;
+  background: transparent;
 }
 
-html[data-skin='matrix'] #root .map-opacity-mask-handle:hover {
-  background: #093718;
+html[data-skin='matrix'] #root .map-opacity-mask-handle::before {
+  border-color: #aaffbf;
+  border-radius: 50%;
+  background: rgb(4 21 10 / 76%);
+  box-shadow: 0 0 7px rgb(0 255 86 / 40%);
+}
+
+html[data-skin='matrix'] #root .map-opacity-mask-handle:hover::before {
+  background: rgb(9 55 24 / 92%);
 }
 
 html[data-skin='matrix']

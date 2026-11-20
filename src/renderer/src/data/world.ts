@@ -8,7 +8,7 @@ import { fixGeoJson } from 'antimeridian-ts'
 
 import type { Topology, GeometryCollection } from 'topojson-specification'
 
-import type { Feature, FeatureCollection, Geometry } from 'geojson'
+import type { Feature, FeatureCollection, Geometry, Position } from 'geojson'
 
 import {
   getGeometryLinkBySourceFeature,
@@ -20,6 +20,68 @@ const worldDatasets = {
   '110m': world110mData,
   '50m': world50mData,
   '10m': world10mData
+}
+
+const vaticanTemplateGeometry = (() => {
+  const topology = world50mData as unknown as Topology
+  const countries = feature(topology, topology.objects.countries as GeometryCollection)
+  return (countries as FeatureCollection<Geometry>).features.find(
+    (country) => Number(country.id) === 336 || country.properties?.name === 'Vatican'
+  )?.geometry
+})()
+
+const VATICAN_MAP_ANCHOR: [number, number] = [12.454324543245434, 41.903446293754]
+const VATICAN_AREA_KM2 = 0.44
+
+function getOuterRing(geometry: Geometry): Position[] | null {
+  if (geometry.type === 'Polygon') return geometry.coordinates[0] ?? null
+  if (geometry.type === 'MultiPolygon') return geometry.coordinates[0]?.[0] ?? null
+  return null
+}
+
+function getRingArea(ring: Position[]): number {
+  let area = 0
+  for (let index = 1; index < ring.length; index += 1) {
+    const previous = ring[index - 1]
+    const current = ring[index]
+    if (!previous || !current) continue
+    area += previous[0] * current[1] - current[0] * previous[1]
+  }
+  return Math.abs(area / 2)
+}
+
+function createRenderableVaticanGeometry(sourceGeometry: Geometry): Geometry {
+  const sourceRing = getOuterRing(sourceGeometry)
+  const templateRing = vaticanTemplateGeometry ? getOuterRing(vaticanTemplateGeometry) : null
+  const ring = sourceRing && getRingArea(sourceRing) > 0 ? sourceRing : templateRing
+  if (!ring?.length) return sourceGeometry
+
+  const longitudes = ring.map(([longitude]) => longitude)
+  const latitudes = ring.map(([, latitude]) => latitude)
+  const centerLongitude = (Math.min(...longitudes) + Math.max(...longitudes)) / 2
+  const centerLatitude = (Math.min(...latitudes) + Math.max(...latitudes)) / 2
+  const latitudeScale = Math.cos((VATICAN_MAP_ANCHOR[1] * Math.PI) / 180)
+  const areaKm2 = getRingArea(ring) * 111.32 * 111.32 * Math.max(0.1, latitudeScale)
+  const scale = areaKm2 > 0 ? Math.sqrt(VATICAN_AREA_KM2 / areaKm2) : 1
+
+  return {
+    type: 'Polygon',
+    coordinates: [
+      ring.map(([longitude, latitude]) => [
+        VATICAN_MAP_ANCHOR[0] + (longitude - centerLongitude) * scale,
+        VATICAN_MAP_ANCHOR[1] + (latitude - centerLatitude) * scale
+      ])
+    ]
+  }
+}
+
+function prepareCountryGeometry(
+  country: Feature<Geometry>,
+  scale: '110m' | '50m' | '10m',
+  name: string
+): Geometry {
+  const geometry = fixAntimeridianGeometry(country, scale, name)
+  return name === 'Vatican' ? createRenderableVaticanGeometry(geometry) : geometry
 }
 
 // Création d'un identifiant interne propre à World Atlas.
@@ -108,7 +170,7 @@ function prepareWorldDataset(
       const name = typeof properties.name === 'string' ? properties.name : 'Unknown'
 
       const sourceId = country.id
-      const correctedGeometry = fixAntimeridianGeometry(country, scale, name)
+      const correctedGeometry = prepareCountryGeometry(country, scale, name)
 
       const geometryLink = getGeometryLinkBySourceFeature(`natural-earth-${scale}`, sourceId)
       const geometryLinks = getGeometryLinksBySourceFeature(`natural-earth-${scale}`, sourceId)

@@ -8,6 +8,7 @@ import {
 import { formatQuizScore, type QuizSession } from '../data/quiz/useQuizSession'
 import { useLanguage } from '../data/i18n'
 import { CorrectAnswerBanner, QuizReview } from './QuizPanels'
+import { useAdvanceQuestionOnEnter } from './useAdvanceQuestionOnEnter'
 import { MapFullscreenBar } from './MapFullscreenBar'
 import { SkinSelector } from './AppModeSwitcher'
 import countryCatalog from '../data/quiz/countryCatalog.json'
@@ -59,6 +60,7 @@ export function CountryKnowledgeQuizView({
     ? getExplorationDetails(reviewCountry.sourceFeatureId, reviewCountry.countryName, null)
     : null
   const questionSettled = session.answerCorrect === true || session.answerRevealed
+  useAdvanceQuestionOnEnter(questionSettled && !session.completed, onNext)
   const completedCount = session.questionIndex + (questionSettled ? 1 : 0)
   const progress = total ? (completedCount / total) * 100 : 0
 

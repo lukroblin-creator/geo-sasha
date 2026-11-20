@@ -10,6 +10,7 @@ import type { MapLayerMouseEvent, MapRef } from 'react-map-gl/maplibre'
 import type {
   Map as MapLibreMap,
   MapMouseEvent,
+  CircleLayerSpecification,
   FillLayerSpecification,
   FilterSpecification,
   LineLayerSpecification,
@@ -61,7 +62,10 @@ import {
   getCountryFeatureAtPoint,
   isCountryFillFeature,
   lowZoomMissingCountryMarkers,
+  mediumZoomMissingCountryMarkers,
   normalizeSourceFeatureId,
+  smallCountryHighlightFeatureIds,
+  smallCountryHighlightMarkers,
   type InteractiveCountryFeature,
   world110mFlagMap,
   world50mFlagMap,
@@ -82,9 +86,12 @@ import {
   applyOpacityMasksToTerritories,
   createMaskedTextureUrl,
   getOpacityMaskFeatureCollection,
+  getOpacityMaskGeometryBounds,
   getOpacityMaskHandlePatch,
   getOpacityMaskHandles,
   getOpacityMaskTarget,
+  isPositionInsideMaskBounds,
+  isPositionInsideMaskGeometry,
   MAX_MASKED_TEXTURE_DIMENSION,
   PREVIEW_MASKED_TEXTURE_DIMENSION,
   type MapTextureAssetKey,
@@ -226,6 +233,7 @@ type WorldMapProps = {
   showWrongAnswerFeedback?: boolean
   concealMapSelectionName?: boolean
   quizTargetFeatureId?: string | number | null
+  quizTargetFeatureIds?: Array<string | number>
   quizBaseRegion?: QuizRegion | null
   quizTargetMaxZoom?: number
   quizTargetViewKey?: string
@@ -334,6 +342,12 @@ const countrySelectionBoundaryLayerIds = [
   'countries-selected-boundary-50m',
   'countries-selected-boundary-10m'
 ] as const
+const countryHoverFillLayerIds = [
+  'countries-hover-fill-110m',
+  'countries-hover-fill-50m',
+  'countries-hover-fill-10m'
+] as const
+const noQuizTargetFeatureIds: Array<string | number> = []
 
 type LabelUpdateRequest = {
   type: 'update'
@@ -712,6 +726,7 @@ function WorldMap({
   showWrongAnswerFeedback = false,
   concealMapSelectionName = false,
   quizTargetFeatureId = null,
+  quizTargetFeatureIds = noQuizTargetFeatureIds,
   quizBaseRegion = null,
   quizTargetMaxZoom,
   quizTargetViewKey,
@@ -783,6 +798,8 @@ function WorldMap({
     maskId: string
     patch: Partial<MapOpacityMask>
   } | null>(null)
+  const [draggedOpacityMaskId, setDraggedOpacityMaskId] = useState<string | null>(null)
+  const [hoveredOpacityMaskHandleId, setHoveredOpacityMaskHandleId] = useState<string | null>(null)
   const [opacityMaskMultiSelection, setOpacityMaskMultiSelection] = useState(() => ({
     placement: opacityMaskPlacement,
     active: false
@@ -798,6 +815,12 @@ function WorldMap({
     maskId: string
     patch: Partial<MapOpacityMask>
     frame: number | null
+  } | null>(null)
+  const opacityMaskHandleDragRef = useRef<{
+    mask: MapOpacityMask
+    handle: ReturnType<typeof getOpacityMaskHandles>[number]
+    pointerId: number
+    patch: Partial<MapOpacityMask>
   } | null>(null)
   const opacityMaskCollections = useMemo(
     () => opacityMasks.map((mask) => ({ mask, data: getOpacityMaskFeatureCollection(mask) })),
@@ -905,6 +928,80 @@ function WorldMap({
   } | null>(null)
   const pointerCoordinates =
     pointerCoordinatesForMap?.map === mapInstance ? pointerCoordinatesForMap.coordinates : null
+  const [optionKeyPressed, setOptionKeyPressed] = useState(false)
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent): void => {
+      if (event.key === 'Alt') setOptionKeyPressed(true)
+    }
+    const handleKeyUp = (event: KeyboardEvent): void => {
+      if (event.key === 'Alt') setOptionKeyPressed(false)
+    }
+    const clearModifier = (): void => setOptionKeyPressed(false)
+    window.addEventListener('keydown', handleKeyDown)
+    window.addEventListener('keyup', handleKeyUp)
+    window.addEventListener('blur', clearModifier)
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown)
+      window.removeEventListener('keyup', handleKeyUp)
+      window.removeEventListener('blur', clearModifier)
+    }
+  }, [])
+  const opacityMaskHoverTargets = useMemo(
+    () =>
+      opacityMaskCollections.map(({ mask, data }) => ({
+        id: mask.id,
+        targetLayerId: getOpacityMaskTarget(mask),
+        features: data.features.map((feature) => ({
+          geometry: feature.geometry,
+          bounds: getOpacityMaskGeometryBounds(feature.geometry)
+        }))
+      })),
+    [opacityMaskCollections]
+  )
+  const optionHoveredOpacityMaskId = useMemo(() => {
+    if (!optionKeyPressed || !pointerCoordinates) return null
+    const position: [number, number] = [pointerCoordinates.longitude, pointerCoordinates.latitude]
+    const masksByTopmost = [...opacityMaskHoverTargets].sort(
+      (first, second) =>
+        layerOrder.indexOf(`mask:${second.id}`) - layerOrder.indexOf(`mask:${first.id}`)
+    )
+    return (
+      masksByTopmost.find(({ targetLayerId, features }) => {
+        return (
+          targetLayerId !== null &&
+          isManagedLayerVisible(targetLayerId) &&
+          features.some(
+            ({ geometry, bounds }) =>
+              bounds.some((featureBounds) => isPositionInsideMaskBounds(position, featureBounds)) &&
+              isPositionInsideMaskGeometry(geometry, position)
+          )
+        )
+      })?.id ?? null
+    )
+  }, [
+    opacityMaskHoverTargets,
+    isManagedLayerVisible,
+    layerOrder,
+    optionKeyPressed,
+    pointerCoordinates
+  ])
+  const visibleOpacityMaskHandleIds = useMemo(
+    () =>
+      new Set(
+        [
+          editingOpacityMaskId,
+          optionHoveredOpacityMaskId,
+          draggedOpacityMaskId,
+          hoveredOpacityMaskHandleId
+        ].filter((id): id is string => id !== null)
+      ),
+    [
+      editingOpacityMaskId,
+      optionHoveredOpacityMaskId,
+      draggedOpacityMaskId,
+      hoveredOpacityMaskHandleId
+    ]
+  )
   const [mapViewRevision, setMapViewRevision] = useState(0)
   const [resourceOverlayRevision, setResourceOverlayRevision] = useState(0)
   const [flagProjectionRevision, setFlagProjectionRevision] = useState(0)
@@ -1007,6 +1104,13 @@ function WorldMap({
     internalComparisonSelectedCountries,
     isComparisonSelectionControlled
   ])
+  const currentQuizTargetViewKey =
+    quizTargetViewKey ??
+    (quizTargetFeatureIds.length > 0
+      ? quizTargetFeatureIds.map(String).join(':')
+      : quizTargetFeatureId === null
+        ? ''
+        : String(quizTargetFeatureId))
   const comparisonSelectedEntityIds = useMemo(
     () =>
       comparisonSelectedCountries.flatMap((country) =>
@@ -1220,7 +1324,11 @@ function WorldMap({
         case 'topography':
           return ['earth-topography-raster']
         case 'territories':
-          return countryFillLayerIds
+          return [
+            ...countryFillLayerIds,
+            'low-zoom-country-boundary-fallbacks',
+            'medium-zoom-country-boundary-fallbacks'
+          ]
         case 'borders':
           return ['countries-borders-110m', 'countries-borders-50m', 'countries-borders-10m']
         case 'labels':
@@ -1251,11 +1359,13 @@ function WorldMap({
       const orderedLayerIds = [...layerOrder].reverse().flatMap(layerIdsForStackItem)
       const desiredLayerIds = [
         ...orderedLayerIds,
+        ...countryHoverFillLayerIds,
         ...wrongAnswerFillLayerIds,
         ...countrySelectionBoundaryLayerIds,
         ...(opacityMaskPlacement
           ? ['opacity-mask-placement-preview-fill', 'opacity-mask-placement-preview-outline']
-          : [])
+          : []),
+        'small-country-selection-highlight'
       ].filter((id, index, ids) => ids.indexOf(id) === index && mapInstance.getLayer(id))
       const desiredIds = new Set(desiredLayerIds)
       const currentLayerIds = styleLayers
@@ -1593,8 +1703,8 @@ function WorldMap({
         cameraFreePositionRef.current = null
         setCameraFreeMode(false)
         setCameraRotation({
-          yaw: normalizeCameraAngle(current.center[0]),
-          pitch: normalizeCameraLatitude(current.center[1]),
+          yaw: normalizeCameraAngle(current.yaw),
+          pitch: current.pitch,
           roll: normalizeCameraAngle(current.roll)
         })
         map.setMaxPitch(180)
@@ -1641,39 +1751,37 @@ function WorldMap({
 
   const changeCameraAxis = (axis: keyof CameraRotation, value: number): void => {
     const map = mapRef.current?.getMap()
-    if (cameraFreeMode) {
-      const next = {
-        ...cameraFreeRotationRef.current,
-        [axis]: value
+    if (!map) return
+    if (!cameraFreeMode) {
+      captureFreeCameraPosition(map)
+      cameraFreeRotationRef.current = {
+        yaw: map.getBearing(),
+        pitch: map.getPitch(),
+        roll: map.getRoll()
       }
-      if (axis === 'pitch') cameraFreePitchRef.current = value
-      if (map) {
-        applyFreeCameraRotation(map, next)
-      }
-      setCameraRotation({
-        yaw: normalizeCameraAngle(next.yaw),
-        pitch: next.pitch,
-        roll: normalizeCameraAngle(next.roll)
-      })
-      return
+      cameraFreePitchRef.current = map.getPitch()
+      setCameraFreeMode(true)
+      setCameraPanMode(false)
     }
-
-    if (axis === 'yaw') cameraUnwrappedYawRef.current = value
-    if (axis === 'pitch') cameraUnwrappedPitchRef.current = value
-    const next: CameraRotation = {
-      yaw: normalizeCameraAngle(cameraUnwrappedYawRef.current),
-      pitch: normalizeCameraLatitude(cameraUnwrappedPitchRef.current),
-      roll: axis === 'roll' ? value : cameraRotation.roll
-    }
-    if (map) {
-      map.jumpTo({
-        center: [next.yaw, next.pitch],
-        bearing: 0,
-        pitch: 0,
-        roll: next.roll
-      })
-    }
+    const next = { ...cameraFreeRotationRef.current, [axis]: value }
+    if (axis === 'pitch') cameraFreePitchRef.current = value
+    applyFreeCameraRotation(map, next)
     setCameraRotation(next)
+  }
+
+  const resetCameraAnchorToEarthCenter = (): void => {
+    const map = mapRef.current?.getMap()
+    if (!map) return
+    const centeredRotation: CameraRotation = { yaw: 0, pitch: 0, roll: 0 }
+    cameraFreePositionRef.current = null
+    cameraFreeRotationRef.current = centeredRotation
+    cameraFreePitchRef.current = 0
+    cameraUnwrappedYawRef.current = 0
+    cameraUnwrappedPitchRef.current = 0
+    setCameraFreeMode(false)
+    setCameraPanMode(false)
+    setCameraRotation(centeredRotation)
+    map.easeTo({ center: [0, 0], bearing: 0, pitch: 0, roll: 0, duration: 450 })
   }
 
   const toggleCameraControls = (): void => {
@@ -1687,8 +1795,8 @@ function WorldMap({
               roll: normalizeCameraAngle(map.getRoll())
             }
           : {
-              yaw: normalizeCameraAngle(cameraUnwrappedYawRef.current),
-              pitch: normalizeCameraLatitude(cameraUnwrappedPitchRef.current),
+              yaw: normalizeCameraAngle(map.getBearing()),
+              pitch: map.getPitch(),
               roll: normalizeCameraAngle(map.getRoll())
             }
       )
@@ -1905,11 +2013,10 @@ function WorldMap({
         }
       }
 
-      if (cameraControlsOpen) {
-        const orbitCenter = mapInstance.getCenter()
+      if (cameraControlsOpen && useFreeCamera) {
         setCameraRotation({
-          yaw: normalizeCameraAngle(useFreeCamera ? mapInstance.getBearing() : orbitCenter.lng),
-          pitch: useFreeCamera ? mapInstance.getPitch() : normalizeCameraLatitude(orbitCenter.lat),
+          yaw: normalizeCameraAngle(mapInstance.getBearing()),
+          pitch: mapInstance.getPitch(),
           roll: normalizeCameraAngle(mapInstance.getRoll())
         })
       }
@@ -2254,21 +2361,57 @@ function WorldMap({
       const map = mapRef.current?.getMap()
       if (!map) return
 
-      if (quizTargetFeatureId === null) return
+      const targetIds = quizTargetFeatureIds.length
+        ? quizTargetFeatureIds
+        : quizTargetFeatureId === null
+          ? []
+          : [quizTargetFeatureId]
+      if (targetIds.length === 0) return
 
-      const target = world10m.features.find((feature) => {
-        const properties = feature.properties as Record<string, unknown> | null
-        const sourceFeatureId = properties?.sourceId
+      const normalizedTargetIds = new Set(targetIds.map(normalizeSourceFeatureId))
+      const targetFeatures = world10m.features.filter((feature) => {
+        const sourceFeatureId = feature.properties?.sourceId
         return (
           (typeof sourceFeatureId === 'string' || typeof sourceFeatureId === 'number') &&
-          normalizeSourceFeatureId(sourceFeatureId) ===
-            normalizeSourceFeatureId(quizTargetFeatureId)
+          normalizedTargetIds.has(normalizeSourceFeatureId(sourceFeatureId))
         )
       })
-      const bounds = target?.geometry ? getGeometryBounds(target.geometry) : null
+      const targetBounds = targetFeatures.flatMap((feature) => {
+        const bounds = feature.geometry ? getGeometryBounds(feature.geometry) : null
+        return bounds ? [bounds] : []
+      })
+      const bounds = targetBounds.length
+        ? targetBounds.reduce<[number, number, number, number]>(
+            (combined, current) => [
+              Math.min(combined[0], current[0]),
+              Math.min(combined[1], current[1]),
+              Math.max(combined[2], current[2]),
+              Math.max(combined[3], current[3])
+            ],
+            [...targetBounds[0]]
+          )
+        : null
 
-      if (bounds && map) {
-        const viewKey = quizTargetViewKey ?? String(quizTargetFeatureId)
+      const focusBounds =
+        bounds &&
+        targetIds.length === 1 &&
+        smallCountryHighlightFeatureIds.has(normalizeSourceFeatureId(targetIds[0]))
+          ? (() => {
+              const centerLongitude = (bounds[0] + bounds[2]) / 2
+              const centerLatitude = (bounds[1] + bounds[3]) / 2
+              const longitudeSpan = Math.max(4.2, bounds[2] - bounds[0])
+              const latitudeSpan = Math.max(3.2, bounds[3] - bounds[1])
+              return [
+                centerLongitude - longitudeSpan / 2,
+                Math.max(-85, centerLatitude - latitudeSpan / 2),
+                centerLongitude + longitudeSpan / 2,
+                Math.min(85, centerLatitude + latitudeSpan / 2)
+              ] as [number, number, number, number]
+            })()
+          : bounds
+
+      if (focusBounds) {
+        const viewKey = currentQuizTargetViewKey || targetIds.map(String).join(':')
         const padding = showQuizRevealCard
           ? {
               top: 56,
@@ -2281,8 +2424,8 @@ function WorldMap({
             : 64
         const maxZoom = quizTargetMaxZoom ?? (showQuizRevealCard ? 9.5 : 10)
         const targetBounds: [[number, number], [number, number]] = [
-          [bounds[0], bounds[1]],
-          [bounds[2], bounds[3]]
+          [focusBounds[0], focusBounds[1]],
+          [focusBounds[2], focusBounds[3]]
         ]
         const targetCamera = map.cameraForBounds(targetBounds, { padding, maxZoom })
         if (targetCamera?.center && typeof targetCamera.zoom === 'number') {
@@ -2302,7 +2445,13 @@ function WorldMap({
         }
       }
     },
-    [quizTargetFeatureId, quizTargetMaxZoom, quizTargetViewKey, showQuizRevealCard]
+    [
+      quizTargetFeatureId,
+      quizTargetFeatureIds,
+      quizTargetMaxZoom,
+      currentQuizTargetViewKey,
+      showQuizRevealCard
+    ]
   )
 
   const focusOnQuizBaseView = useCallback((): void => {
@@ -2313,7 +2462,9 @@ function WorldMap({
     if (regionBounds) {
       // Keep the quick target-view button available while the base view frames
       // the whole continent.
-      if (quizTargetFeatureId !== null) focusOnQuizTarget(false)
+      if (quizTargetFeatureId !== null || quizTargetFeatureIds.length > 0) {
+        focusOnQuizTarget(false)
+      }
       const padding = Math.min(48, map.getCanvas().clientWidth * 0.04)
       map.fitBounds(regionBounds, {
         padding,
@@ -2324,12 +2475,16 @@ function WorldMap({
     }
 
     focusOnQuizTarget()
-  }, [focusOnQuizTarget, quizBaseRegion, quizTargetFeatureId])
+  }, [focusOnQuizTarget, quizBaseRegion, quizTargetFeatureId, quizTargetFeatureIds])
 
   useEffect(() => {
     if (!mapLoaded) return
 
-    if (quizTargetFeatureId !== null || (quizBaseRegion !== null && quizBaseRegion !== 'world')) {
+    if (
+      quizTargetFeatureId !== null ||
+      quizTargetFeatureIds.length > 0 ||
+      (quizBaseRegion !== null && quizBaseRegion !== 'world')
+    ) {
       focusOnQuizBaseView()
       return
     }
@@ -2341,7 +2496,14 @@ function WorldMap({
         duration: 650
       })
     }
-  }, [focusOnQuizBaseView, interactionResetKey, mapLoaded, quizBaseRegion, quizTargetFeatureId])
+  }, [
+    focusOnQuizBaseView,
+    interactionResetKey,
+    mapLoaded,
+    quizBaseRegion,
+    quizTargetFeatureId,
+    quizTargetFeatureIds
+  ])
 
   useEffect(() => {
     const worker = new Worker(new URL('../workers/labelWorker.ts', import.meta.url), {
@@ -2629,6 +2791,86 @@ function WorldMap({
     }
   }
 
+  const updateOpacityMaskHandlePreview = (clientX: number, clientY: number): void => {
+    const drag = opacityMaskHandleDragRef.current
+    if (!drag || !mapInstance) return
+    const canvasBounds = mapInstance.getCanvasContainer().getBoundingClientRect()
+    const location = mapInstance.unproject([
+      clientX - canvasBounds.left,
+      clientY - canvasBounds.top
+    ])
+    const patch = getOpacityMaskHandlePatch(drag.mask, drag.handle, [location.lng, location.lat])
+    if (!patch) return
+
+    drag.patch = patch
+    const currentPreview = opacityMaskPreviewRef.current
+    const frame = currentPreview?.frame ?? null
+    opacityMaskPreviewRef.current = {
+      maskId: drag.mask.id,
+      patch,
+      frame
+    }
+    if (frame === null) {
+      const scheduledFrame = window.requestAnimationFrame(() => {
+        const currentPreview = opacityMaskPreviewRef.current
+        if (!currentPreview) return
+        opacityMaskPreviewRef.current = { ...currentPreview, frame: null }
+        setOpacityMaskPreview({ maskId: currentPreview.maskId, patch: currentPreview.patch })
+      })
+      const previewWithFrame = opacityMaskPreviewRef.current
+      if (previewWithFrame) {
+        opacityMaskPreviewRef.current = { ...previewWithFrame, frame: scheduledFrame }
+      }
+    }
+  }
+
+  const handleOpacityMaskHandlePointerDown = (
+    mask: MapOpacityMask,
+    handle: ReturnType<typeof getOpacityMaskHandles>[number],
+    event: ReactPointerEvent<HTMLButtonElement>
+  ): void => {
+    if (event.button !== 0 || !mapInstance) return
+    event.preventDefault()
+    event.stopPropagation()
+    event.currentTarget.setPointerCapture(event.pointerId)
+    opacityMaskHandleDragRef.current = { mask, handle, pointerId: event.pointerId, patch: {} }
+    opacityMaskPreviewRef.current = { maskId: mask.id, patch: {}, frame: null }
+    setOpacityMaskPreview({ maskId: mask.id, patch: {} })
+    setDraggedOpacityMaskId(mask.id)
+  }
+
+  const handleOpacityMaskHandlePointerMove = (
+    event: ReactPointerEvent<HTMLButtonElement>
+  ): void => {
+    const drag = opacityMaskHandleDragRef.current
+    if (!drag || drag.pointerId !== event.pointerId) return
+    event.preventDefault()
+    event.stopPropagation()
+    updateOpacityMaskHandlePreview(event.clientX, event.clientY)
+  }
+
+  const finishOpacityMaskHandleDrag = (event: ReactPointerEvent<HTMLButtonElement>): void => {
+    const drag = opacityMaskHandleDragRef.current
+    if (!drag || drag.pointerId !== event.pointerId) return
+    event.preventDefault()
+    event.stopPropagation()
+    updateOpacityMaskHandlePreview(event.clientX, event.clientY)
+
+    const finalDrag = opacityMaskHandleDragRef.current
+    const frame = opacityMaskPreviewRef.current?.frame
+    if (frame !== null && frame !== undefined) window.cancelAnimationFrame(frame)
+    opacityMaskPreviewRef.current = null
+    opacityMaskHandleDragRef.current = null
+    setOpacityMaskPreview(null)
+    setDraggedOpacityMaskId(null)
+    if (finalDrag && Object.keys(finalDrag.patch).length > 0) {
+      onOpacityMaskGeometryChange?.(finalDrag.mask.id, finalDrag.patch)
+    }
+    if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+      event.currentTarget.releasePointerCapture(event.pointerId)
+    }
+  }
+
   const handleCountryClick = (event: MapLayerMouseEvent): void => {
     if (perspectiveCorrectionEnabled) return
     if (opacityMaskPlacement) {
@@ -2836,6 +3078,9 @@ function WorldMap({
       Number(quizTargetFeatureId)
     ])
   }
+  for (const featureId of quizTargetFeatureIds) {
+    selectedFeatureExpressions.push(['==', ['to-number', ['get', 'sourceId']], Number(featureId)])
+  }
   if (selectedFeatureExpressions.length === 0) selectedFeatureExpressions.push(false)
 
   const hoveredFeatureExpressions: unknown[] = []
@@ -2851,6 +3096,9 @@ function WorldMap({
       Number(quizTargetFeatureId)
     ])
   }
+  for (const featureId of quizTargetFeatureIds) {
+    hoveredFeatureExpressions.push(['==', ['to-number', ['get', 'sourceId']], Number(featureId)])
+  }
   if (hoveredFeatureExpressions.length === 0) hoveredFeatureExpressions.push(false)
 
   const selectedFeatureFilter = ['any', ...selectedFeatureExpressions] as unknown as NonNullable<
@@ -2865,7 +3113,7 @@ function WorldMap({
 
   useEffect(() => {
     if (!mapLoaded || !mapInstance || !shouldShowSelectedBoundary) return
-    for (const layerId of countrySelectionBoundaryLayerIds) {
+    for (const layerId of [...countrySelectionBoundaryLayerIds, ...countryHoverFillLayerIds]) {
       if (mapInstance.getLayer(layerId)) mapInstance.moveLayer(layerId)
     }
   }, [
@@ -3004,6 +3252,11 @@ function WorldMap({
     'fill-color': fillColor,
     'fill-antialias': showBorders,
     'fill-opacity': getMaskedTerritoryFillOpacity(getFillOpacity(fillOpacity10m))
+  }
+  const hoverFillPaint: FillLayerSpecification['paint'] = {
+    'fill-color': isMinimalSkin ? '#e8b856' : isMatrixSkin ? '#39de6f' : '#7dc9ff',
+    'fill-opacity': 0.42,
+    'fill-antialias': false
   }
   const borderOpacity110m = scaleZoomOpacityExpression(
     ['interpolate', ['linear'], ['zoom'], 2, 1, 3, 0],
@@ -3618,6 +3871,16 @@ function WorldMap({
               paint={selectionBoundaryPaint(0, 3)}
             />
           )}
+          <Layer
+            id="countries-hover-fill-110m"
+            type="fill"
+            minzoom={0}
+            maxzoom={3}
+            filter={
+              ['any', ...hoveredFeatureExpressions] as NonNullable<FillLayerSpecification['filter']>
+            }
+            paint={hoverFillPaint}
+          />
         </Source>
 
         {/* Résolution intermédiaire : 50m */}
@@ -3662,6 +3925,16 @@ function WorldMap({
               paint={selectionBoundaryPaint(2, 5)}
             />
           )}
+          <Layer
+            id="countries-hover-fill-50m"
+            type="fill"
+            minzoom={2}
+            maxzoom={5}
+            filter={
+              ['any', ...hoveredFeatureExpressions] as NonNullable<FillLayerSpecification['filter']>
+            }
+            paint={hoverFillPaint}
+          />
         </Source>
 
         {/* Résolution détaillée : 10m */}
@@ -3698,38 +3971,120 @@ function WorldMap({
               paint={selectionBoundaryPaint(4, 8)}
             />
           )}
+          <Layer
+            id="countries-hover-fill-10m"
+            type="fill"
+            minzoom={4}
+            filter={
+              ['any', ...hoveredFeatureExpressions] as NonNullable<FillLayerSpecification['filter']>
+            }
+            paint={hoverFillPaint}
+          />
         </Source>
 
-        {showLabels && density.labels > 0 && (
+        {(showTerritories || (showLabels && density.labels > 0)) && (
           <Source id="low-zoom-country-markers" type="geojson" data={lowZoomMissingCountryMarkers}>
+            {showTerritories && (
+              <Layer
+                id="low-zoom-country-boundary-fallbacks"
+                type="circle"
+                minzoom={0}
+                maxzoom={3}
+                paint={{
+                  'circle-radius': ['interpolate', ['linear'], ['zoom'], 0, 1.8, 3, 3.1],
+                  'circle-color': [
+                    'case',
+                    ['any', ...selectedFeatureExpressions],
+                    isMinimalSkin ? '#20201d' : isMatrixSkin ? '#00d957' : '#e5a63b',
+                    ['any', ...hoveredFeatureExpressions],
+                    isMinimalSkin ? '#e8b856' : isMatrixSkin ? '#39de6f' : '#7dc9ff',
+                    isMinimalSkin ? '#f6f2e9' : isMatrixSkin ? '#04150a' : '#263746'
+                  ] as NonNullable<CircleLayerSpecification['paint']>['circle-color'],
+                  'circle-stroke-color': [
+                    'case',
+                    ['any', ...selectedFeatureExpressions],
+                    isMinimalSkin ? '#fffdf8' : isMatrixSkin ? '#aaffbf' : '#f8e1a7',
+                    isMinimalSkin ? '#77736b' : isMatrixSkin ? '#176b34' : '#9aafc0'
+                  ] as NonNullable<CircleLayerSpecification['paint']>['circle-stroke-color'],
+                  'circle-stroke-width': [
+                    'case',
+                    ['any', ...selectedFeatureExpressions],
+                    1.5,
+                    0.8
+                  ] as NonNullable<CircleLayerSpecification['paint']>['circle-stroke-width'],
+                  'circle-opacity': territoryAlpha,
+                  'circle-stroke-opacity': territoryAlpha
+                }}
+              />
+            )}
+            {showLabels && density.labels > 0 && (
+              <Layer
+                id="low-zoom-country-marker-symbols"
+                type="symbol"
+                minzoom={0}
+                maxzoom={3}
+                layout={{
+                  'text-field': '◆',
+                  'text-font': ['Open Sans Regular'],
+                  'text-size': ['interpolate', ['linear'], ['zoom'], 0, 9, 2, 12, 3, 0],
+                  'text-anchor': 'center',
+                  'text-allow-overlap': true,
+                  'text-ignore-placement': true
+                }}
+                paint={{
+                  'text-color': [
+                    'case',
+                    ['any', ...selectedFeatureExpressions],
+                    isMinimalSkin ? '#20201d' : isMatrixSkin ? '#00d957' : '#ffd166',
+                    ['any', ...hoveredFeatureExpressions],
+                    isMinimalSkin ? '#20201d' : isMatrixSkin ? '#afffc3' : '#e8f6ff',
+                    isMinimalSkin ? '#486b8c' : isMatrixSkin ? '#00d9db' : '#54bbf4'
+                  ] as NonNullable<SymbolLayerSpecification['paint']>['text-color'],
+                  'text-halo-color': isMinimalSkin
+                    ? '#f6f2e9'
+                    : isMatrixSkin
+                      ? '#010803'
+                      : '#101820',
+                  'text-halo-width': 1.2,
+                  'text-opacity': scaleZoomOpacityExpression(
+                    ['interpolate', ['linear'], ['zoom'], 0, 0.8, 2, 1, 3, 0],
+                    layerAlpha('labels')
+                  ) as NonNullable<SymbolLayerSpecification['paint']>['text-opacity']
+                }}
+              />
+            )}
+          </Source>
+        )}
+
+        {showTerritories && (
+          <Source
+            id="medium-zoom-country-markers"
+            type="geojson"
+            data={mediumZoomMissingCountryMarkers}
+          >
             <Layer
-              id="low-zoom-country-marker-symbols"
-              type="symbol"
-              minzoom={0}
-              maxzoom={3}
-              layout={{
-                'text-field': '◆',
-                'text-font': ['Open Sans Regular'],
-                'text-size': ['interpolate', ['linear'], ['zoom'], 0, 9, 2, 12, 3, 0],
-                'text-anchor': 'center',
-                'text-allow-overlap': true,
-                'text-ignore-placement': true
-              }}
+              id="medium-zoom-country-boundary-fallbacks"
+              type="circle"
+              minzoom={2}
+              maxzoom={5}
               paint={{
-                'text-color': [
+                'circle-radius': ['interpolate', ['linear'], ['zoom'], 2, 2.4, 5, 3.4],
+                'circle-color': [
                   'case',
                   ['any', ...selectedFeatureExpressions],
-                  isMinimalSkin ? '#20201d' : isMatrixSkin ? '#00d957' : '#ffd166',
+                  isMinimalSkin ? '#20201d' : isMatrixSkin ? '#00d957' : '#e5a63b',
                   ['any', ...hoveredFeatureExpressions],
-                  isMinimalSkin ? '#20201d' : isMatrixSkin ? '#afffc3' : '#e8f6ff',
-                  isMinimalSkin ? '#486b8c' : isMatrixSkin ? '#00d9db' : '#54bbf4'
-                ] as NonNullable<SymbolLayerSpecification['paint']>['text-color'],
-                'text-halo-color': isMinimalSkin ? '#f6f2e9' : isMatrixSkin ? '#010803' : '#101820',
-                'text-halo-width': 1.2,
-                'text-opacity': scaleZoomOpacityExpression(
-                  ['interpolate', ['linear'], ['zoom'], 0, 0.8, 2, 1, 3, 0],
-                  layerAlpha('labels')
-                ) as NonNullable<SymbolLayerSpecification['paint']>['text-opacity']
+                  isMinimalSkin ? '#e8b856' : isMatrixSkin ? '#39de6f' : '#7dc9ff',
+                  isMinimalSkin ? '#f6f2e9' : isMatrixSkin ? '#04150a' : '#263746'
+                ] as NonNullable<CircleLayerSpecification['paint']>['circle-color'],
+                'circle-stroke-color': isMinimalSkin
+                  ? '#77736b'
+                  : isMatrixSkin
+                    ? '#176b34'
+                    : '#9aafc0',
+                'circle-stroke-width': 1,
+                'circle-opacity': territoryAlpha,
+                'circle-stroke-opacity': territoryAlpha
               }}
             />
           </Source>
@@ -4100,7 +4455,9 @@ function WorldMap({
                 type="line"
                 layout={{
                   visibility:
-                    editingOpacityMaskId === mask.id && targetLayerVisible ? 'visible' : 'none'
+                    visibleOpacityMaskHandleIds.has(mask.id) && targetLayerVisible
+                      ? 'visible'
+                      : 'none'
                 }}
                 paint={{
                   'line-color': isMinimalSkin ? '#9b6b2f' : '#f0c674',
@@ -4139,12 +4496,54 @@ function WorldMap({
           </Source>
         )}
 
-        {editingOpacityMaskId &&
+        <Source
+          id="small-country-selection-markers"
+          type="geojson"
+          data={smallCountryHighlightMarkers}
+        >
+          <Layer
+            id="small-country-selection-highlight"
+            type="circle"
+            filter={
+              [
+                'any',
+                ...selectedFeatureExpressions,
+                ...hoveredFeatureExpressions
+              ] as unknown as FilterSpecification
+            }
+            paint={{
+              'circle-radius': [
+                'case',
+                ['any', ...selectedFeatureExpressions],
+                9,
+                ['any', ...hoveredFeatureExpressions],
+                7,
+                0
+              ] as NonNullable<CircleLayerSpecification['paint']>['circle-radius'],
+              'circle-color': [
+                'case',
+                ['any', ...selectedFeatureExpressions],
+                isMinimalSkin ? '#20201d' : isMatrixSkin ? '#00d957' : '#e5a63b',
+                isMinimalSkin ? '#e8b856' : isMatrixSkin ? '#39de6f' : '#7dc9ff'
+              ] as NonNullable<CircleLayerSpecification['paint']>['circle-color'],
+              'circle-stroke-color': isMinimalSkin
+                ? '#fffdf8'
+                : isMatrixSkin
+                  ? '#010803'
+                  : '#101820',
+              'circle-stroke-width': 2,
+              'circle-opacity': 1,
+              'circle-stroke-opacity': 1
+            }}
+          />
+        </Source>
+
+        {visibleOpacityMaskHandleIds.size > 0 &&
           opacityMasks
             .filter((mask) => {
               const targetLayerId = getOpacityMaskTarget(mask)
               return (
-                mask.id === editingOpacityMaskId &&
+                visibleOpacityMaskHandleIds.has(mask.id) &&
                 targetLayerId !== null &&
                 isManagedLayerVisible(targetLayerId)
               )
@@ -4160,44 +4559,7 @@ function WorldMap({
                   longitude={handle.longitude}
                   latitude={handle.latitude}
                   anchor="center"
-                  draggable
                   style={{ zIndex: 30000 }}
-                  onDrag={(event) => {
-                    const patch = getOpacityMaskHandlePatch(baseMask, handle, [
-                      event.lngLat.lng,
-                      event.lngLat.lat
-                    ])
-                    if (!patch) return
-                    const preview = opacityMaskPreviewRef.current ?? {
-                      maskId: baseMask.id,
-                      patch,
-                      frame: null
-                    }
-                    preview.patch = patch
-                    opacityMaskPreviewRef.current = preview
-                    if (preview.frame === null) {
-                      preview.frame = window.requestAnimationFrame(() => {
-                        const currentPreview = opacityMaskPreviewRef.current
-                        if (!currentPreview) return
-                        currentPreview.frame = null
-                        setOpacityMaskPreview({
-                          maskId: currentPreview.maskId,
-                          patch: currentPreview.patch
-                        })
-                      })
-                    }
-                  }}
-                  onDragEnd={(event) => {
-                    const patch = getOpacityMaskHandlePatch(baseMask, handle, [
-                      event.lngLat.lng,
-                      event.lngLat.lat
-                    ])
-                    const frame = opacityMaskPreviewRef.current?.frame
-                    if (frame !== null && frame !== undefined) window.cancelAnimationFrame(frame)
-                    opacityMaskPreviewRef.current = null
-                    setOpacityMaskPreview(null)
-                    if (patch) onOpacityMaskGeometryChange?.(baseMask.id, patch)
-                  }}
                 >
                   <button
                     type="button"
@@ -4221,9 +4583,15 @@ function WorldMap({
                             : 'Modifier la hauteur'
                     )}
                     onClick={(event) => event.stopPropagation()}
-                  >
-                    {handle.kind === 'center' ? '✥' : '•'}
-                  </button>
+                    onPointerDown={(event) =>
+                      handleOpacityMaskHandlePointerDown(baseMask, handle, event)
+                    }
+                    onPointerMove={handleOpacityMaskHandlePointerMove}
+                    onPointerUp={finishOpacityMaskHandleDrag}
+                    onPointerCancel={finishOpacityMaskHandleDrag}
+                    onPointerEnter={() => setHoveredOpacityMaskHandleId(mask.id)}
+                    onPointerLeave={() => setHoveredOpacityMaskHandleId(null)}
+                  ></button>
                 </Marker>
               ))
             })}
@@ -4436,6 +4804,7 @@ function WorldMap({
           onToggleOrbit={toggleCameraOrbitMode}
           onToggleControls={toggleCameraControls}
           onTogglePanMode={() => setCameraPanMode((active) => !active)}
+          onResetAnchor={resetCameraAnchorToEarthCenter}
           onChangeAxis={changeCameraAxis}
         />
         {!globeMode && !cameraOrbitMode && (
@@ -4471,8 +4840,8 @@ function WorldMap({
         >
           ◎
         </button>
-        {quizTargetFeatureId !== null &&
-          savedQuizTargetView?.key === (quizTargetViewKey ?? String(quizTargetFeatureId)) && (
+        {(quizTargetFeatureId !== null || quizTargetFeatureIds.length > 0) &&
+          savedQuizTargetView?.key === currentQuizTargetViewKey && (
             <button
               className="map-control-button map-projection-control"
               type="button"
@@ -4480,7 +4849,7 @@ function WorldMap({
               aria-label={t('Revenir à la vue de la question')}
               onClick={() => {
                 const view = savedQuizTargetViewRef.current
-                if (!view || view.key !== (quizTargetViewKey ?? String(quizTargetFeatureId))) return
+                if (!view || view.key !== currentQuizTargetViewKey) return
                 mapRef.current?.getMap().easeTo({
                   center: view.center,
                   zoom: view.zoom,

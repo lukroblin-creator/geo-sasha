@@ -17,6 +17,12 @@ import {
   getOpacityMaskTarget,
   type ResolvedTerritoryOpacityMask
 } from '../src/renderer/src/data/geography/opacityMaskLogic.ts'
+import {
+  createCircleMaskGeometry,
+  createRectangleMaskGeometry,
+  getOpacityMaskHandlePatch,
+  getOpacityMaskHandles
+} from '../src/renderer/src/components/worldMapMaskGeometry.ts'
 
 const screenMap = {
   getZoom: () => 0,
@@ -90,6 +96,23 @@ function geometryContainsPoint(geometry: Geometry, point: [number, number]): boo
     if (!outerRing || !pointInRing(point, outerRing)) return false
     return !polygon.slice(1).some((hole) => pointInRing(point, hole))
   })
+}
+
+function projectedGeometrySize(geometry: Geometry): [number, number] {
+  const polygons =
+    geometry.type === 'Polygon'
+      ? [geometry.coordinates]
+      : geometry.type === 'MultiPolygon'
+        ? geometry.coordinates
+        : []
+  const positions = polygons.flatMap((polygon) => polygon.flat())
+  const projected = positions.map(([longitude, latitude]) => [
+    (longitude * Math.PI * 6371) / 180,
+    6371 * Math.log(Math.tan(Math.PI / 4 + (latitude * Math.PI) / 360))
+  ])
+  const xs = projected.map(([x]) => x)
+  const ys = projected.map(([, y]) => y)
+  return [Math.max(...xs) - Math.min(...xs), Math.max(...ys) - Math.min(...ys)]
 }
 
 test('la sélection exacte d’un petit territoire passe avant le pays affiché dessous', (): void => {
@@ -250,4 +273,38 @@ test('un masque géométrique à zéro ouvre bien un trou vers le calque inféri
     result.features.some((feature) => geometryContainsPoint(feature.geometry, [1, 1])),
     true
   )
+})
+
+test('les masques cercle et rectangle gardent leur forme quand ils sont déplacés en latitude', (): void => {
+  const circleAtEquator = createCircleMaskGeometry([15, 0], 700)
+  const circleNorth = createCircleMaskGeometry([15, 68], 700)
+  const rectangleAtEquator = createRectangleMaskGeometry([15, 0], 1200, 800)
+  const rectangleNorth = createRectangleMaskGeometry([15, 68], 1200, 800)
+
+  const circleSize = projectedGeometrySize(circleAtEquator)
+  const northernCircleSize = projectedGeometrySize(circleNorth)
+  const rectangleSize = projectedGeometrySize(rectangleAtEquator)
+  const northernRectangleSize = projectedGeometrySize(rectangleNorth)
+  assert.ok(Math.abs(circleSize[0] - northernCircleSize[0]) < 1)
+  assert.ok(Math.abs(circleSize[1] - northernCircleSize[1]) < 1)
+  assert.ok(Math.abs(rectangleSize[0] - northernRectangleSize[0]) < 1)
+  assert.ok(Math.abs(rectangleSize[1] - northernRectangleSize[1]) < 1)
+})
+
+test('les poignées redimensionnent les masques dans le même espace que leur tracé', (): void => {
+  const mask = {
+    id: 'handle-check',
+    name: 'Cercle',
+    kind: 'circle' as const,
+    opacity: 0,
+    center: [15, 68] as [number, number],
+    radiusKm: 700
+  }
+  const radiusHandle = getOpacityMaskHandles(mask).find(({ kind }) => kind === 'radius')
+  assert.ok(radiusHandle)
+  const patch = getOpacityMaskHandlePatch(mask, radiusHandle, [
+    radiusHandle.longitude,
+    radiusHandle.latitude
+  ])
+  assert.equal(patch?.radiusKm, 700)
 })

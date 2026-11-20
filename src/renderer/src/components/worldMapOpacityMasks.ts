@@ -3,6 +3,15 @@ import type { Feature, FeatureCollection, Geometry, MultiPolygon, Polygon, Posit
 import countryCatalog from '../data/quiz/countryCatalog.json'
 import { getContinentIdForCountry } from '../data/quiz/countryContinents'
 import type { MapOpacityMask } from '../data/geography/mapLayerManager'
+import {
+  createCircleMaskGeometry,
+  createRectangleMaskGeometry,
+  getOpacityMaskHandlePatch,
+  getOpacityMaskHandles,
+  type OpacityMaskHandle
+} from './worldMapMaskGeometry'
+export { getOpacityMaskHandlePatch, getOpacityMaskHandles }
+export type { OpacityMaskHandle }
 import { normalizeSourceFeatureId, world10mFlagMap } from './worldMapCountrySelection'
 import {
   applyResolvedTerritoryOpacityMasks,
@@ -59,88 +68,6 @@ export function applyOpacityMasksToTerritories(
         : []
   }))
   return applyResolvedTerritoryOpacityMasks(source, resolvedMasks)
-}
-
-function wrapLongitude(longitude: number): number {
-  return ((((longitude + 180) % 360) + 360) % 360) - 180
-}
-
-function createCircleMaskGeometry(center: [number, number], radiusKm: number): Geometry {
-  const steps = 72
-  const angularDistance = Math.max(1, radiusKm) / 6371
-  const centerLatitude = (center[1] * Math.PI) / 180
-  const centerLongitude = (center[0] * Math.PI) / 180
-  const ring: Position[] = []
-
-  for (let index = 0; index <= steps; index += 1) {
-    const bearing = (index / steps) * Math.PI * 2
-    const latitude = Math.asin(
-      Math.sin(centerLatitude) * Math.cos(angularDistance) +
-        Math.cos(centerLatitude) * Math.sin(angularDistance) * Math.cos(bearing)
-    )
-    const longitude =
-      centerLongitude +
-      Math.atan2(
-        Math.sin(bearing) * Math.sin(angularDistance) * Math.cos(centerLatitude),
-        Math.cos(angularDistance) - Math.sin(centerLatitude) * Math.sin(latitude)
-      )
-    ring.push([wrapLongitude((longitude * 180) / Math.PI), (latitude * 180) / Math.PI])
-  }
-
-  return { type: 'Polygon', coordinates: [ring] }
-}
-
-function createRectangleMaskGeometry(
-  center: [number, number],
-  widthKm: number,
-  heightKm: number
-): Geometry {
-  const latitudeScale = Math.max(0.05, Math.cos((center[1] * Math.PI) / 180))
-  const halfWidth = widthKm / (2 * 111.32 * latitudeScale)
-  const halfHeight = heightKm / (2 * 110.574)
-  const west = wrapLongitude(center[0] - halfWidth)
-  const east = wrapLongitude(center[0] + halfWidth)
-  const south = Math.max(-85, center[1] - halfHeight)
-  const north = Math.min(85, center[1] + halfHeight)
-
-  if (west <= east) {
-    return {
-      type: 'Polygon',
-      coordinates: [
-        [
-          [west, south],
-          [east, south],
-          [east, north],
-          [west, north],
-          [west, south]
-        ]
-      ]
-    }
-  }
-
-  return {
-    type: 'MultiPolygon',
-    coordinates: [
-      [
-        [
-          [west, south],
-          [180, south],
-          [180, north],
-          [west, north],
-          [west, south]
-        ]
-      ],
-      [
-        [
-          [-180, south],
-          [east, south],
-          [east, north],
-          [-180, north],
-          [-180, south]
-        ]
-      ]
-    ]
-  }
 }
 
 export function getOpacityMaskFeatureCollection(mask: MapOpacityMask): FeatureCollection<Geometry> {
@@ -206,6 +133,114 @@ export function getOpacityMaskFeatureCollection(mask: MapOpacityMask): FeatureCo
       geometry: feature.geometry
     }))
   }
+}
+
+export type OpacityMaskGeometryBounds = [west: number, south: number, east: number, north: number]
+const opacityMaskGeometryBoundsCache = new WeakMap<Geometry, OpacityMaskGeometryBounds[]>()
+
+export function getOpacityMaskGeometryBounds(geometry: Geometry): OpacityMaskGeometryBounds[] {
+  const cachedBounds = opacityMaskGeometryBoundsCache.get(geometry)
+  if (cachedBounds) return cachedBounds
+
+  let bounds: OpacityMaskGeometryBounds[]
+  if (geometry.type === 'Polygon') {
+    const ring = geometry.coordinates[0]
+    if (!ring?.length) bounds = []
+    else {
+      const polygonBounds = ring.reduce<OpacityMaskGeometryBounds>(
+        ([west, south, east, north], [longitude, latitude]) => [
+          Math.min(west, longitude),
+          Math.min(south, latitude),
+          Math.max(east, longitude),
+          Math.max(north, latitude)
+        ],
+        [Infinity, Infinity, -Infinity, -Infinity]
+      )
+      bounds = polygonBounds.every(Number.isFinite) ? [polygonBounds] : []
+    }
+  } else if (geometry.type === 'MultiPolygon') {
+    bounds = geometry.coordinates.flatMap((coordinates) => {
+      const polygon = { type: 'Polygon', coordinates } as const
+      return getOpacityMaskGeometryBounds(polygon)
+    })
+  } else if (geometry.type === 'GeometryCollection') {
+    bounds = geometry.geometries.flatMap(getOpacityMaskGeometryBounds)
+  } else bounds = []
+
+  opacityMaskGeometryBoundsCache.set(geometry, bounds)
+  return bounds
+}
+
+export function isPositionInsideMaskBounds(
+  position: [number, number],
+  bounds: OpacityMaskGeometryBounds
+): boolean {
+  const [rawLongitude, latitude] = position
+  const longitude = ((((rawLongitude + 180) % 360) + 360) % 360) - 180
+  const [west, south, east, north] = bounds
+  if (latitude < south || latitude > north) return false
+  if (east - west >= 350) return true
+  return longitude >= west && longitude <= east
+}
+
+function isPositionInRing(position: [number, number], ring: Position[]): boolean {
+  if (ring.length < 3) return false
+  const [positionLongitude, latitude] = position
+  const unwrappedLongitudes: number[] = []
+  ring.forEach(([rawLongitude], index) => {
+    let longitude = rawLongitude
+    const previousLongitude = unwrappedLongitudes[index - 1]
+    if (previousLongitude !== undefined) {
+      while (longitude - previousLongitude > 180) longitude -= 360
+      while (longitude - previousLongitude < -180) longitude += 360
+    }
+    unwrappedLongitudes.push(longitude)
+  })
+  const referenceLongitude = unwrappedLongitudes[0]
+  let longitude = positionLongitude
+  while (longitude - referenceLongitude > 180) longitude -= 360
+  while (longitude - referenceLongitude < -180) longitude += 360
+  let inside = false
+
+  for (let index = 0, previous = ring.length - 1; index < ring.length; previous = index++) {
+    const [, ringLatitude] = ring[index]
+    const [, previousLatitude] = ring[previous]
+    const currentLongitude = unwrappedLongitudes[index]
+    let previousLongitude = unwrappedLongitudes[previous]
+    while (previousLongitude - currentLongitude > 180) previousLongitude -= 360
+    while (previousLongitude - currentLongitude < -180) previousLongitude += 360
+
+    const crossesLatitude = ringLatitude > latitude !== previousLatitude > latitude
+    const intersectionLongitude =
+      ((previousLongitude - currentLongitude) * (latitude - ringLatitude)) /
+        (previousLatitude - ringLatitude) +
+      currentLongitude
+    if (crossesLatitude && longitude < intersectionLongitude) inside = !inside
+  }
+
+  return inside
+}
+
+function isPositionInPolygon(position: [number, number], rings: Position[][]): boolean {
+  return (
+    rings.length > 0 &&
+    isPositionInRing(position, rings[0]) &&
+    !rings.slice(1).some((ring) => isPositionInRing(position, ring))
+  )
+}
+
+export function isPositionInsideMaskGeometry(
+  geometry: Geometry,
+  position: [number, number]
+): boolean {
+  if (geometry.type === 'Polygon') return isPositionInPolygon(position, geometry.coordinates)
+  if (geometry.type === 'MultiPolygon') {
+    return geometry.coordinates.some((polygon) => isPositionInPolygon(position, polygon))
+  }
+  if (geometry.type === 'GeometryCollection') {
+    return geometry.geometries.some((item) => isPositionInsideMaskGeometry(item, position))
+  }
+  return false
 }
 
 export type RasterOpacityMask = {
@@ -355,77 +390,4 @@ export async function createMaskedTextureUrl(
       quality
     )
   })
-}
-
-export type OpacityMaskHandle = {
-  kind: 'center' | 'radius' | 'width' | 'height'
-  longitude: number
-  latitude: number
-}
-
-export function getOpacityMaskHandles(mask: MapOpacityMask): OpacityMaskHandle[] {
-  if (!mask.center || (mask.kind !== 'circle' && mask.kind !== 'rectangle')) return []
-  const [longitude, latitude] = mask.center
-  const longitudeScale = 111.32 * Math.max(0.15, Math.cos((latitude * Math.PI) / 180))
-  if (mask.kind === 'circle') {
-    return [
-      { kind: 'center', longitude, latitude },
-      {
-        kind: 'radius',
-        longitude: longitude + (mask.radiusKm ?? 500) / longitudeScale,
-        latitude
-      }
-    ]
-  }
-  return [
-    { kind: 'center', longitude, latitude },
-    {
-      kind: 'width',
-      longitude: longitude + (mask.widthKm ?? 1000) / 2 / longitudeScale,
-      latitude
-    },
-    {
-      kind: 'height',
-      longitude,
-      latitude: Math.min(85, latitude + (mask.heightKm ?? 700) / 2 / 111.32)
-    }
-  ]
-}
-
-function getApproximateDistanceKm(first: [number, number], second: [number, number]): number {
-  const latitude = (first[1] + second[1]) / 2
-  const deltaLatitude = (second[1] - first[1]) * 111.32
-  const deltaLongitude = (second[0] - first[0]) * 111.32 * Math.cos((latitude * Math.PI) / 180)
-  return Math.hypot(deltaLatitude, deltaLongitude)
-}
-
-export function getOpacityMaskHandlePatch(
-  mask: MapOpacityMask,
-  handle: OpacityMaskHandle,
-  position: [number, number]
-): Partial<MapOpacityMask> | null {
-  const [longitude, latitude] = position
-  if (handle.kind === 'center') return { center: position }
-  if (!mask.center) return null
-
-  if (handle.kind === 'radius') {
-    const radiusKm = Math.max(
-      50,
-      Math.round(getApproximateDistanceKm(mask.center, position) / 25) * 25
-    )
-    return { radiusKm }
-  }
-  if (handle.kind === 'width') {
-    const longitudeScale = 111.32 * Math.max(0.15, Math.cos((mask.center[1] * Math.PI) / 180))
-    const widthKm = Math.max(
-      100,
-      Math.round((Math.abs(longitude - mask.center[0]) * longitudeScale * 2) / 100) * 100
-    )
-    return { widthKm }
-  }
-  const heightKm = Math.max(
-    100,
-    Math.round((Math.abs(latitude - mask.center[1]) * 111.32 * 2) / 100) * 100
-  )
-  return { heightKm }
 }

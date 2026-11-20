@@ -4,6 +4,7 @@ import { SkinSelector } from './AppModeSwitcher'
 import { useLanguage } from '../data/i18n'
 import { formatQuizScore } from '../data/quiz/useQuizSession'
 import { getEstimationPrecision, type EstimationQuestion } from '../data/quiz/estimationQuiz'
+import { useAdvanceQuestionOnEnter } from './useAdvanceQuestionOnEnter'
 
 type EstimationQuizViewProps = {
   questions: EstimationQuestion[]
@@ -52,6 +53,11 @@ export function EstimationQuizView({
     setInput('')
     setPrecision(null)
   }
+
+  useAdvanceQuestionOnEnter(
+    precision !== null && completedScore === null && index < questions.length - 1,
+    nextQuestion
+  )
 
   return (
     <main className="special-quiz-screen estimation-quiz-screen">
