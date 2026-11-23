@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState, type KeyboardEvent as ReactKeyboardEvent } from 'react'
 import WorldMap from './WorldMapLoader'
 import {
   getExplorationDetails,
@@ -7,6 +7,7 @@ import {
 } from '../data/geography/exploration'
 import { ExplorationPlaceDetails } from './ExplorationPlaceDetails'
 import { useLanguage } from '../data/i18n'
+import { useKeyboardShortcut } from '../data/keyboardShortcuts'
 import { AppModeSwitcher, type AppPrimaryMode } from './AppModeSwitcher'
 import { SettingsMenu } from './SettingsMenu'
 import { MapFullscreenBar } from './MapFullscreenBar'
@@ -127,6 +128,16 @@ function readSavedExplorationViews(): SavedExplorationView[] {
   }
 }
 
+function createSavedViewMetadata(): Pick<SavedExplorationView, 'id' | 'createdAt'> {
+  return {
+    id:
+      typeof crypto !== 'undefined' && 'randomUUID' in crypto
+        ? crypto.randomUUID()
+        : `view-${Date.now()}`,
+    createdAt: new Date().toISOString()
+  }
+}
+
 export function ExplorationView({
   globeMode,
   onToggleGlobeMode,
@@ -149,6 +160,9 @@ export function ExplorationView({
   const [chromeCollapsed, setChromeCollapsed] = useState(false)
   const [mapIntroCollapsed, setMapIntroCollapsed] = useState(false)
   const [layerControlsCollapsed, setLayerControlsCollapsed] = useState(false)
+  useKeyboardShortcut('map.toggleLayerControls', () =>
+    setLayerControlsCollapsed((collapsed) => !collapsed)
+  )
   const [detailsCollapsed, setDetailsCollapsed] = useState(false)
   const [perspectiveComparisonPortal, setPerspectiveComparisonPortal] =
     useState<HTMLDivElement | null>(null)
@@ -166,10 +180,24 @@ export function ExplorationView({
   const [selectedPlaceIdentity, setSelectedPlaceIdentity] =
     useState<SavedExplorationView['selectedPlace']>(null)
   const [savedViews, setSavedViews] = useState<SavedExplorationView[]>(readSavedExplorationViews)
-  const [selectedSavedViewId, setSelectedSavedViewId] = useState('')
   const [savedViewName, setSavedViewName] = useState('')
+  const [savedViewSuggestionsOpen, setSavedViewSuggestionsOpen] = useState(false)
+  const [activeSavedViewSuggestionIndex, setActiveSavedViewSuggestionIndex] = useState(-1)
   const [savedViewMessage, setSavedViewMessage] = useState('')
   const [comparedCountries, setComparedCountries] = useState<string[]>([])
+  const normalizedSavedViewName = savedViewName.trim().toLocaleLowerCase()
+  const selectedSavedView =
+    savedViews.find((view) => view.name.trim().toLocaleLowerCase() === normalizedSavedViewName) ??
+    null
+  const matchingSavedViews = savedViews.filter((view) =>
+    view.name.toLocaleLowerCase().includes(normalizedSavedViewName)
+  )
+
+  const chooseSavedView = (view: SavedExplorationView): void => {
+    setSavedViewName(view.name)
+    setSavedViewSuggestionsOpen(false)
+    setActiveSavedViewSuggestionIndex(-1)
+  }
 
   useEffect(() => {
     if (!pendingMaskDraft) return
@@ -213,12 +241,8 @@ export function ExplorationView({
   const saveCurrentView = (): void => {
     const name = savedViewName.trim() || `${t('Vue')} ${new Date().toLocaleDateString()}`
     const view: SavedExplorationView = {
-      id:
-        typeof crypto !== 'undefined' && 'randomUUID' in crypto
-          ? crypto.randomUUID()
-          : `view-${Date.now()}`,
+      ...createSavedViewMetadata(),
       name,
-      createdAt: new Date().toISOString(),
       showBorders,
       showTerritories,
       showLabels,
@@ -242,11 +266,12 @@ export function ExplorationView({
     const nextViews = [view, ...savedViews]
     persistSavedViews(nextViews, t('Vue enregistrée.'))
     setSavedViewName('')
-    setSelectedSavedViewId(view.id)
+    setSavedViewSuggestionsOpen(false)
+    setActiveSavedViewSuggestionIndex(-1)
   }
 
   const loadSavedView = (): void => {
-    const view = savedViews.find((item) => item.id === selectedSavedViewId)
+    const view = selectedSavedView
     if (!view) return
     setShowBorders(view.showBorders)
     setShowTerritories(view.showTerritories)
@@ -285,11 +310,53 @@ export function ExplorationView({
     setSavedViewMessage(`${t('Vue chargée')} : ${view.name}`)
   }
 
-  const deleteSavedView = (): void => {
-    if (!selectedSavedViewId) return
-    const nextViews = savedViews.filter((view) => view.id !== selectedSavedViewId)
-    setSelectedSavedViewId('')
+  const deleteSavedView = (viewId: string): void => {
+    const view = savedViews.find((item) => item.id === viewId)
+    if (!view) return
+    const nextViews = savedViews.filter((item) => item.id !== viewId)
+    if (selectedSavedView?.id === viewId) setSavedViewName('')
+    setActiveSavedViewSuggestionIndex(-1)
     persistSavedViews(nextViews, t('Vue supprimée.'))
+  }
+
+  const handleSavedViewPickerKeyDown = (event: ReactKeyboardEvent<HTMLDivElement>): void => {
+    if (
+      event.target instanceof HTMLButtonElement &&
+      event.key !== 'ArrowDown' &&
+      event.key !== 'ArrowUp'
+    ) {
+      return
+    }
+    if (event.key === 'ArrowDown' && savedViews.length > 0) {
+      event.preventDefault()
+      setSavedViewSuggestionsOpen(true)
+      setActiveSavedViewSuggestionIndex((index) =>
+        matchingSavedViews.length === 0 ? -1 : Math.min(index + 1, matchingSavedViews.length - 1)
+      )
+    } else if (event.key === 'ArrowUp' && savedViews.length > 0) {
+      event.preventDefault()
+      setSavedViewSuggestionsOpen(true)
+      setActiveSavedViewSuggestionIndex((index) =>
+        matchingSavedViews.length === 0
+          ? -1
+          : index <= 0
+            ? matchingSavedViews.length - 1
+            : index - 1
+      )
+    } else if (event.key === 'Escape') {
+      setSavedViewSuggestionsOpen(false)
+      setActiveSavedViewSuggestionIndex(-1)
+    } else if (event.key === 'Enter') {
+      event.preventDefault()
+      const activeSuggestion = matchingSavedViews[activeSavedViewSuggestionIndex]
+      if (savedViewSuggestionsOpen && activeSuggestion) {
+        chooseSavedView(activeSuggestion)
+      } else if (selectedSavedView) {
+        loadSavedView()
+      } else {
+        saveCurrentView()
+      }
+    }
   }
 
   const handlePlaceSelected = (
@@ -601,6 +668,8 @@ export function ExplorationView({
       <MapLayerManager
         layers={managerLayers}
         masks={opacityMasks}
+        controlsCollapsed={layerControlsCollapsed}
+        onRevealControls={() => setLayerControlsCollapsed(false)}
         order={managerOrder}
         isPlacingMask={pendingMaskDraft !== null}
         editingMaskId={editingMaskId}
@@ -671,7 +740,12 @@ export function ExplorationView({
             </div>
 
             <div className="exploration-header-actions">
-              <button className="home-back-button" type="button" onClick={onOpenStatistics}>
+              <button
+                className="home-back-button"
+                type="button"
+                data-shortcut-action="app.mode.statistics"
+                onClick={onOpenStatistics}
+              >
                 {t('Statistiques')}
               </button>
               <button className="home-back-button" type="button" onClick={onToggleFullscreen}>
@@ -708,50 +782,108 @@ export function ExplorationView({
             {!mapIntroCollapsed && (
               <div className="exploration-saved-views">
                 <div className="exploration-saved-views-actions">
-                  <input
-                    value={savedViewName}
-                    onChange={(event) => setSavedViewName(event.target.value)}
-                    placeholder={t('Nom de la vue')}
-                    aria-label={t('Nom de la vue à enregistrer')}
-                    onKeyDown={(event) => {
-                      if (event.key === 'Enter') saveCurrentView()
+                  <div
+                    className="exploration-saved-view-combobox"
+                    onKeyDown={handleSavedViewPickerKeyDown}
+                    onBlur={(event) => {
+                      if (!event.currentTarget.contains(event.relatedTarget as Node | null)) {
+                        setSavedViewSuggestionsOpen(false)
+                        setActiveSavedViewSuggestionIndex(-1)
+                      }
                     }}
-                  />
-                  <button
-                    type="button"
-                    onClick={saveCurrentView}
-                    title={t('Enregistrer les calques, masques et la vue caméra')}
                   >
-                    {t('Enregistrer la vue')}
-                  </button>
-                  {savedViews.length > 0 && (
-                    <>
-                      <select
-                        value={selectedSavedViewId}
-                        onChange={(event) => setSelectedSavedViewId(event.target.value)}
-                        aria-label={t('Vues enregistrées')}
-                      >
-                        <option value="">{t('Vues enregistrées')}</option>
-                        {savedViews.map((view) => (
-                          <option key={view.id} value={view.id}>
-                            {view.name}
-                          </option>
-                        ))}
-                      </select>
-                      <button type="button" disabled={!selectedSavedViewId} onClick={loadSavedView}>
-                        {t('Charger')}
-                      </button>
+                    <input
+                      value={savedViewName}
+                      onChange={(event) => {
+                        setSavedViewName(event.target.value)
+                        setSavedViewSuggestionsOpen(true)
+                        setActiveSavedViewSuggestionIndex(-1)
+                      }}
+                      onFocus={() => {
+                        if (savedViews.length > 0) setSavedViewSuggestionsOpen(true)
+                      }}
+                      placeholder={t('Nom de la vue')}
+                      aria-label={t('Nom de la vue à enregistrer')}
+                      role="combobox"
+                      aria-autocomplete="list"
+                      aria-expanded={savedViewSuggestionsOpen && savedViews.length > 0}
+                      aria-controls="exploration-saved-view-list"
+                      aria-activedescendant={
+                        activeSavedViewSuggestionIndex >= 0
+                          ? `exploration-saved-view-option-${matchingSavedViews[activeSavedViewSuggestionIndex]?.id}`
+                          : undefined
+                      }
+                      autoComplete="off"
+                    />
+                    {savedViews.length > 0 && (
                       <button
                         type="button"
-                        className="exploration-saved-view-delete"
-                        disabled={!selectedSavedViewId}
-                        onClick={deleteSavedView}
-                        aria-label={t('Supprimer la vue sélectionnée')}
+                        className="exploration-saved-view-toggle"
+                        aria-label={t('Vues enregistrées')}
+                        title={t('Vues enregistrées')}
+                        aria-expanded={savedViewSuggestionsOpen}
+                        aria-controls="exploration-saved-view-list"
+                        onClick={() => {
+                          setSavedViewSuggestionsOpen((open) => !open)
+                          setActiveSavedViewSuggestionIndex(-1)
+                        }}
                       >
-                        ×
+                        <span aria-hidden="true">⌄</span>
                       </button>
-                    </>
-                  )}
+                    )}
+                    {savedViewSuggestionsOpen && savedViews.length > 0 && (
+                      <ul
+                        className="exploration-saved-view-suggestions"
+                        id="exploration-saved-view-list"
+                        role="listbox"
+                        aria-label={t('Vues enregistrées')}
+                      >
+                        {matchingSavedViews.length > 0 ? (
+                          matchingSavedViews.map((view, index) => (
+                            <li className="exploration-saved-view-suggestion" key={view.id}>
+                              <button
+                                type="button"
+                                role="option"
+                                id={`exploration-saved-view-option-${view.id}`}
+                                aria-selected={selectedSavedView?.id === view.id}
+                                className={`exploration-saved-view-option${index === activeSavedViewSuggestionIndex ? ' is-active' : ''}`}
+                                onMouseDown={(event) => event.preventDefault()}
+                                onMouseEnter={() => setActiveSavedViewSuggestionIndex(index)}
+                                onClick={() => chooseSavedView(view)}
+                              >
+                                {view.name}
+                              </button>
+                              <button
+                                type="button"
+                                className="exploration-saved-view-delete"
+                                aria-label={`${t('Supprimer la vue sélectionnée')} : ${view.name}`}
+                                title={`${t('Supprimer la vue sélectionnée')} : ${view.name}`}
+                                onMouseDown={(event) => event.preventDefault()}
+                                onClick={() => deleteSavedView(view.id)}
+                              >
+                                ×
+                              </button>
+                            </li>
+                          ))
+                        ) : (
+                          <li className="exploration-saved-view-empty">
+                            {t('Aucune vue correspondante.')}
+                          </li>
+                        )}
+                      </ul>
+                    )}
+                  </div>
+                  <button
+                    type="button"
+                    onClick={selectedSavedView ? loadSavedView : saveCurrentView}
+                    title={
+                      selectedSavedView
+                        ? t('Charger')
+                        : t('Enregistrer les calques, masques et la vue caméra')
+                    }
+                  >
+                    {selectedSavedView ? t('Charger') : t('Enregistrer la vue')}
+                  </button>
                 </div>
                 {savedViewMessage && (
                   <span className="exploration-saved-view-status" role="status">
@@ -887,6 +1019,7 @@ export function ExplorationView({
             <button
               className={`exploration-panel-toggle exploration-zone-collapse${layerControlsCollapsed ? ' exploration-hover-reveal' : ''}`}
               type="button"
+              data-shortcut-action="map.toggleLayerControls"
               aria-label={t(
                 layerControlsCollapsed
                   ? 'Afficher les options cartographiques'
@@ -902,21 +1035,25 @@ export function ExplorationView({
             >
               <span aria-hidden="true">{layerControlsCollapsed ? '⌃' : '⌄'}</span>
             </button>
-            {!layerControlsCollapsed &&
-              (skin === 'minimal' ? (
-                <details
-                  className="exploration-layer-controls minimal-layer-disclosure"
-                  aria-label={t('Affichage de la carte')}
-                >
-                  <summary>{t('AFFICHAGE CARTOGRAPHIQUE')}</summary>
-                  <div className="minimal-layer-options">{layerOptions}</div>
-                </details>
-              ) : (
-                <div className="exploration-layer-controls" aria-label={t('Affichage de la carte')}>
-                  <span className="settings-heading">{t('AFFICHAGE CARTOGRAPHIQUE')}</span>
-                  {layerOptions}
-                </div>
-              ))}
+            {skin === 'minimal' ? (
+              <details
+                className="exploration-layer-controls minimal-layer-disclosure"
+                style={layerControlsCollapsed ? { display: 'none' } : undefined}
+                aria-label={t('Affichage de la carte')}
+              >
+                <summary>{t('AFFICHAGE CARTOGRAPHIQUE')}</summary>
+                <div className="minimal-layer-options">{layerOptions}</div>
+              </details>
+            ) : (
+              <div
+                className="exploration-layer-controls"
+                style={layerControlsCollapsed ? { display: 'none' } : undefined}
+                aria-label={t('Affichage de la carte')}
+              >
+                <span className="settings-heading">{t('AFFICHAGE CARTOGRAPHIQUE')}</span>
+                {layerOptions}
+              </div>
+            )}
           </div>
         </section>
 

@@ -1,6 +1,7 @@
 import { useCallback, useMemo, useRef, useState } from 'react'
 import { AppModeSwitcher, type AppPrimaryMode } from './AppModeSwitcher'
 import { useLanguage } from '../data/i18n'
+import { useKeyboardShortcut } from '../data/keyboardShortcuts'
 import {
   flagHasAllColorFilters,
   flagNamedColorOptions,
@@ -296,7 +297,10 @@ export function CountryComparatorView({
   const nextFilterId = useRef(0)
   const nextFilterGroupId = useRef(0)
   const [search, setSearch] = useState('')
+  const [activeSuggestionIndex, setActiveSuggestionIndex] = useState(0)
+  const [pendingCompareAlpha2, setPendingCompareAlpha2] = useState<string[]>([])
   const [fieldSearch, setFieldSearch] = useState('')
+  const [activeFieldSuggestionIndex, setActiveFieldSuggestionIndex] = useState(0)
   const [fieldSearchIsOpen, setFieldSearchIsOpen] = useState(false)
   const [selectedFields, setSelectedFields] = useState<CompareFieldId[]>([
     'area',
@@ -329,6 +333,10 @@ export function CountryComparatorView({
         )
         .slice(0, 8)
     : []
+  const highlightedFieldSuggestion =
+    fieldSuggestions.length > 0
+      ? fieldSuggestions[Math.min(activeFieldSuggestionIndex, fieldSuggestions.length - 1)]
+      : undefined
 
   const toggleField = (field: CompareFieldId): void => {
     setSelectedFields((current) =>
@@ -345,7 +353,26 @@ export function CountryComparatorView({
   const addCountry = (alpha2: string): void => {
     setSelectedAlpha2((current) => (current.includes(alpha2) ? current : [...current, alpha2]))
     setExcludedFilteredAlpha2((current) => current.filter((code) => code !== alpha2))
+    setPendingCompareAlpha2((current) => current.filter((code) => code !== alpha2))
     setSearch('')
+    setActiveSuggestionIndex(0)
+  }
+
+  const togglePendingCountry = (alpha2: string): void => {
+    setPendingCompareAlpha2((current) =>
+      current.includes(alpha2) ? current.filter((code) => code !== alpha2) : [...current, alpha2]
+    )
+  }
+
+  const commitPendingCountries = (): void => {
+    if (pendingCompareAlpha2.length === 0) return
+    setSelectedAlpha2((current) => [...new Set([...current, ...pendingCompareAlpha2])])
+    setExcludedFilteredAlpha2((current) =>
+      current.filter((code) => !pendingCompareAlpha2.includes(code))
+    )
+    setPendingCompareAlpha2([])
+    setSearch('')
+    setActiveSuggestionIndex(0)
   }
 
   const locale = language === 'fr' ? 'fr-FR' : language === 'es' ? 'es-ES' : 'en-US'
@@ -938,6 +965,22 @@ export function CountryComparatorView({
         })
         .slice(0, 8)
     : []
+  const highlightedSuggestion =
+    suggestions.length > 0
+      ? suggestions[Math.min(activeSuggestionIndex, suggestions.length - 1)]
+      : undefined
+
+  useKeyboardShortcut(
+    'comparator.addSuggestion',
+    () => {
+      if (highlightedSuggestion) togglePendingCountry(highlightedSuggestion.alpha2)
+    },
+    suggestions.length > 0
+  )
+  useKeyboardShortcut('navigation.focusSearch', () => {
+    const searchInput = document.getElementById('country-comparator-search')
+    if (searchInput?.getClientRects().length) searchInput.focus()
+  })
 
   const updateFilter = (
     id: string,
@@ -1586,7 +1629,12 @@ export function CountryComparatorView({
           <p>{t('Choisis les pays et les informations à comparer.')}</p>
         </div>
         <div className="statistics-actions">
-          <button className="home-back-button" type="button" onClick={onOpenStatistics}>
+          <button
+            className="home-back-button"
+            type="button"
+            data-shortcut-action="app.mode.statistics"
+            onClick={onOpenStatistics}
+          >
             {t('Statistiques')}
           </button>
         </div>
@@ -1612,11 +1660,23 @@ export function CountryComparatorView({
               id="country-comparator-search"
               type="search"
               value={search}
-              onChange={(event) => setSearch(event.target.value)}
               onKeyDown={(event) => {
-                if (event.key === 'Enter' && suggestions[0]) {
+                if (event.key === 'ArrowDown' && suggestions.length > 0) {
                   event.preventDefault()
-                  addCountry(suggestions[0].alpha2)
+                  setActiveSuggestionIndex((index) => (index + 1) % suggestions.length)
+                } else if (event.key === 'ArrowUp' && suggestions.length > 0) {
+                  event.preventDefault()
+                  setActiveSuggestionIndex(
+                    (index) => (index - 1 + suggestions.length) % suggestions.length
+                  )
+                } else if (event.key === 'Enter' && !event.metaKey && !event.ctrlKey) {
+                  if (pendingCompareAlpha2.length > 0) {
+                    event.preventDefault()
+                    commitPendingCountries()
+                  } else if (highlightedSuggestion) {
+                    event.preventDefault()
+                    addCountry(highlightedSuggestion.alpha2)
+                  }
                 }
               }}
               placeholder={t('Rechercher un pays…')}
@@ -1625,22 +1685,65 @@ export function CountryComparatorView({
               aria-autocomplete="list"
               aria-expanded={suggestions.length > 0}
               aria-controls="country-comparator-suggestions"
+              aria-activedescendant={
+                highlightedSuggestion
+                  ? `country-comparator-suggestion-${highlightedSuggestion.alpha2}`
+                  : undefined
+              }
+              aria-describedby="country-comparator-keyboard-help"
+              onChange={(event) => {
+                setSearch(event.target.value)
+                setActiveSuggestionIndex(0)
+              }}
             />
+            <p className="country-comparator-keyboard-help" id="country-comparator-keyboard-help">
+              {pendingCompareAlpha2.length > 0
+                ? t(
+                    'Cmd + Entrée ajoute un pays à la sélection temporaire ; Entrée valide la sélection.'
+                  )
+                : t(
+                    'Flèches pour parcourir les pays ; Entrée pour ajouter. Cmd + Entrée permet une sélection multiple.'
+                  )}
+              {pendingCompareAlpha2.length > 0 &&
+                ` · ${pendingCompareAlpha2.length} ${t('pays prêts à ajouter')}`}
+            </p>
+            {pendingCompareAlpha2.length > 0 && (
+              <button
+                className="country-comparator-pending-commit"
+                type="button"
+                onClick={commitPendingCountries}
+              >
+                ✓ {t('Valider la sélection')} ({pendingCompareAlpha2.length})
+              </button>
+            )}
             {suggestions.length > 0 && (
               <ul
                 id="country-comparator-suggestions"
                 className="country-comparator-suggestions"
                 role="listbox"
               >
-                {suggestions.map((country) => (
-                  <li key={country.alpha2}>
-                    <button type="button" role="option" onClick={() => addCountry(country.alpha2)}>
-                      <img src={getFlagImageSource(country.alpha2)} alt="" aria-hidden="true" />
-                      <span>{country.name}</span>
-                      <span aria-hidden="true">+</span>
-                    </button>
-                  </li>
-                ))}
+                {suggestions.map((country, index) => {
+                  const isPending = pendingCompareAlpha2.includes(country.alpha2)
+                  const isActive = index === Math.min(activeSuggestionIndex, suggestions.length - 1)
+                  return (
+                    <li key={country.alpha2}>
+                      <button
+                        id={`country-comparator-suggestion-${country.alpha2}`}
+                        className={`${isActive ? 'is-active' : ''}${isPending ? ' is-pending' : ''}`}
+                        type="button"
+                        data-shortcut-action="comparator.addSuggestion"
+                        role="option"
+                        aria-selected={isPending}
+                        onMouseEnter={() => setActiveSuggestionIndex(index)}
+                        onClick={() => addCountry(country.alpha2)}
+                      >
+                        <img src={getFlagImageSource(country.alpha2)} alt="" aria-hidden="true" />
+                        <span>{country.name}</span>
+                        <span aria-hidden="true">{isPending ? '✓' : '+'}</span>
+                      </button>
+                    </li>
+                  )
+                })}
               </ul>
             )}
           </div>
@@ -2317,17 +2420,32 @@ export function CountryComparatorView({
                 aria-autocomplete="list"
                 aria-expanded={fieldSearchIsOpen && fieldSearchQuery.length > 0}
                 aria-controls="country-comparator-field-suggestions"
+                aria-activedescendant={
+                  highlightedFieldSuggestion
+                    ? `country-comparator-field-${highlightedFieldSuggestion.id}`
+                    : undefined
+                }
                 onFocus={() => setFieldSearchIsOpen(true)}
                 onChange={(event) => {
                   setFieldSearch(event.target.value)
+                  setActiveFieldSuggestionIndex(0)
                   setFieldSearchIsOpen(true)
                 }}
                 onBlur={() => setFieldSearchIsOpen(false)}
                 onKeyDown={(event) => {
-                  if (event.key === 'Escape') setFieldSearchIsOpen(false)
-                  if (event.key === 'Enter' && fieldSuggestions[0]) {
+                  if (event.key === 'Escape') {
+                    setFieldSearchIsOpen(false)
+                  } else if (event.key === 'ArrowDown' && fieldSuggestions.length > 0) {
                     event.preventDefault()
-                    addCompareField(fieldSuggestions[0].id)
+                    setActiveFieldSuggestionIndex((index) => (index + 1) % fieldSuggestions.length)
+                  } else if (event.key === 'ArrowUp' && fieldSuggestions.length > 0) {
+                    event.preventDefault()
+                    setActiveFieldSuggestionIndex(
+                      (index) => (index - 1 + fieldSuggestions.length) % fieldSuggestions.length
+                    )
+                  } else if (event.key === 'Enter' && highlightedFieldSuggestion) {
+                    event.preventDefault()
+                    addCompareField(highlightedFieldSuggestion.id)
                   }
                 }}
               />
@@ -2338,12 +2456,20 @@ export function CountryComparatorView({
                   role="listbox"
                 >
                   {fieldSuggestions.length > 0 ? (
-                    fieldSuggestions.map((field) => (
+                    fieldSuggestions.map((field, index) => (
                       <li key={field.id}>
                         <button
+                          id={`country-comparator-field-${field.id}`}
+                          className={
+                            index ===
+                            Math.min(activeFieldSuggestionIndex, fieldSuggestions.length - 1)
+                              ? 'is-active'
+                              : undefined
+                          }
                           type="button"
                           role="option"
                           aria-selected={false}
+                          onMouseEnter={() => setActiveFieldSuggestionIndex(index)}
                           onPointerDown={(event) => event.preventDefault()}
                           onClick={() => addCompareField(field.id)}
                         >

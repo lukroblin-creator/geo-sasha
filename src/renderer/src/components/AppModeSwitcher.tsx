@@ -1,4 +1,5 @@
 import { useLanguage } from '../data/i18n'
+import type { KeyboardShortcutActionId } from '../data/keyboardShortcuts'
 import { useSkin } from '../data/skin'
 import { SettingsMenu } from './SettingsMenu'
 
@@ -9,11 +10,15 @@ type AppModeSwitcherProps = {
   onChange: (mode: AppPrimaryMode) => void
 }
 
-const modes: { id: AppPrimaryMode; label: string }[] = [
-  { id: 'quiz', label: 'Quizz monde' },
-  { id: 'exploration', label: 'Exploration' },
-  { id: 'country-select', label: 'Quiz pays' },
-  { id: 'comparator', label: 'Comparateur' }
+const modes: {
+  id: AppPrimaryMode
+  label: string
+  shortcutAction: KeyboardShortcutActionId
+}[] = [
+  { id: 'quiz', label: 'Quizz monde', shortcutAction: 'app.mode.quiz' },
+  { id: 'exploration', label: 'Exploration', shortcutAction: 'app.mode.exploration' },
+  { id: 'country-select', label: 'Quiz pays', shortcutAction: 'app.mode.countryQuiz' },
+  { id: 'comparator', label: 'Comparateur', shortcutAction: 'app.mode.comparator' }
 ]
 
 export function SkinSelector({ compact = false }: { compact?: boolean }): React.JSX.Element {
@@ -50,6 +55,7 @@ export function AppModeSwitcher({ active, onChange }: AppModeSwitcherProps): Rea
           key={mode.id}
           className={active === mode.id ? 'active' : undefined}
           type="button"
+          data-shortcut-action={mode.shortcutAction}
           aria-current={active === mode.id ? 'page' : undefined}
           onClick={() => onChange(mode.id)}
         >

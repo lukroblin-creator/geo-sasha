@@ -38,6 +38,7 @@ export function WorldMapCameraControls({
       <button
         className={`map-control-button map-camera-mode-control${cameraOrbitMode ? ' is-active' : ''}${cameraFreeMode ? ' is-free-camera' : ''}`}
         type="button"
+        data-shortcut-action="map.toggleCameraOrbit"
         title={t(
           cameraFreeMode
             ? 'Caméra libre : ancrage détaché'
@@ -60,6 +61,7 @@ export function WorldMapCameraControls({
       <button
         className="map-control-button map-camera-menu-toggle"
         type="button"
+        data-shortcut-action="map.toggleCameraControls"
         title={t(
           cameraControlsOpen ? 'Masquer les réglages caméra' : 'Afficher les réglages caméra'
         )}
@@ -82,6 +84,7 @@ export function WorldMapCameraControls({
           <button
             className={`map-camera-pan-tool${cameraPanMode ? ' is-active' : ''}`}
             type="button"
+            data-shortcut-action={cameraPanMode ? 'map.selectionCursor' : 'map.panTool'}
             title={t(cameraPanMode ? 'Curseur du jeu (C)' : 'Déplacer la carte (D)')}
             aria-label={t(cameraPanMode ? 'Curseur du jeu (C)' : 'Déplacer la carte (D)')}
             aria-pressed={cameraPanMode}
@@ -100,6 +103,7 @@ export function WorldMapCameraControls({
             <button
               className="map-camera-pan-tool map-camera-reset-anchor"
               type="button"
+              data-shortcut-action="map.recenterCameraAnchor"
               title={t('Ramener le point d’ancrage au centre de la Terre')}
               aria-label={t('Ramener le point d’ancrage au centre de la Terre')}
               onClick={onResetAnchor}

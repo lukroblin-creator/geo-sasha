@@ -1,6 +1,10 @@
-# world-atlas
+# World Atlas
 
-An Electron application with React and TypeScript
+Atlas géographique interactif hors ligne et plateforme de quiz, développé avec Electron, React, TypeScript et MapLibre.
+
+## Avant toute modification
+
+Lire d’abord [AGENTS.md](AGENTS.md). Ce fichier impose la lecture de la direction produit, des décisions fonctionnelles et de l’architecture, ainsi que l’examen de l’état Git avant toute intervention.
 
 ## Recommended IDE Setup
 
@@ -57,3 +61,6 @@ GitHub Actions runs both commands on pushes and pull requests.
 - [Project direction and working rules](docs/GUIDE-DU-PROJET.md)
 - [Architecture overview](docs/ARCHITECTURE.md)
 - [Functional rules to preserve](docs/DECISIONS.md)
+- [Exploratory backlog](IDEES-POUR-PLUS-TARD.txt)
+
+Le backlog conserve des idées futures ; il ne constitue pas une liste de fonctionnalités décidées.

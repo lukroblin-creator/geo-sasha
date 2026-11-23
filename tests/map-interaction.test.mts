@@ -7,6 +7,7 @@ import {
   chooseDirectionalCountryFeature,
   getCountryFeatureHit,
   getCountryFeatureIdentity,
+  hasOnlyLargeLandNeighbors,
   getKeyboardActivationFeature,
   getNextCountryFeature,
   getTinyTerritoryHitRadius,
@@ -23,6 +24,7 @@ import {
   getOpacityMaskHandlePatch,
   getOpacityMaskHandles
 } from '../src/renderer/src/components/worldMapMaskGeometry.ts'
+import { createPolarBlendPixels } from '../src/renderer/src/components/polarTextureBlend.ts'
 
 const screenMap = {
   getZoom: () => 0,
@@ -149,6 +151,30 @@ test('la hitzone des petits pays s’élargit au dézoom et suit la distance au 
     ),
     null
   )
+})
+
+test('les très petits pays bordés uniquement par de grands pays ont une hitzone élargie', (): void => {
+  const largeNeighbor = squareFeature(380, [0, 0, 20, 20])
+  const enclave = squareFeature(674, [5, 5, 6, 6])
+  const candidates = [largeNeighbor, enclave]
+
+  assert.equal(getTinyTerritoryHitRadius(0, true), 24)
+  assert.equal(getTinyTerritoryHitRadius(6, true), 12)
+  assert.equal(hasOnlyLargeLandNeighbors([1_000_000, 41_000]), true)
+  assert.equal(hasOnlyLargeLandNeighbors([1_000_000, 12_000]), false)
+  assert.equal(hasOnlyLargeLandNeighbors([]), false)
+
+  const selected = chooseCountryFeatureAtPoint(
+    screenMap,
+    { x: 4, y: 5.5 },
+    candidates,
+    largeNeighbor,
+    (feature) => (feature === largeNeighbor ? 1_000_000 : 1_000),
+    (feature) => getTinyTerritoryHitRadius(0, feature === enclave),
+    (feature) => feature === enclave
+  )
+
+  assert.equal(selected, enclave)
 })
 
 test('Maj parcourt les petits territoires et reboucle sur le premier', (): void => {
@@ -307,4 +333,16 @@ test('les poignées redimensionnent les masques dans le même espace que leur tr
     radiusHandle.latitude
   ])
   assert.equal(patch?.radiusKm, 700)
+})
+
+test('la texture polaire conserve son bord et se fond vers une couleur commune au pôle', (): void => {
+  const edge = new Uint8ClampedArray([200, 20, 40, 255, 20, 60, 220, 255])
+  const north = createPolarBlendPixels(edge, 3, true)
+  const south = createPolarBlendPixels(edge, 3, false)
+
+  assert.deepEqual([...north.slice(-8)], [...edge])
+  assert.deepEqual([...south.slice(0, 8)], [...edge])
+  assert.deepEqual([...north.slice(0, 4)], [...north.slice(4, 8)])
+  assert.deepEqual([...south.slice(-8, -4)], [...south.slice(-4)])
+  assert.notDeepEqual([...north.slice(8, 16)], [...edge])
 })

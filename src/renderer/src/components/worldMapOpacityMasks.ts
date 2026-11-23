@@ -301,18 +301,20 @@ const MAX_CACHED_MASK_TEXTURES = 2
 export const PREVIEW_MASKED_TEXTURE_DIMENSION = 1024
 export const MAX_MASKED_TEXTURE_DIMENSION = 4096
 
-async function loadMaskedTextureSource(
+export async function loadMapTextureSource(
   sourceUrl: string,
   assetKey: MapTextureAssetKey
 ): Promise<HTMLImageElement> {
-  const cacheKey = window.location.protocol === 'file:' ? assetKey : sourceUrl
+  const packagedTextureNeedsBridge =
+    window.location.protocol === 'file:' && !sourceUrl.startsWith('blob:')
+  const cacheKey = packagedTextureNeedsBridge ? assetKey : sourceUrl
   const cached = maskedTextureSourceCache.get(cacheKey)
   if (cached) return cached
 
   const imagePromise = (async (): Promise<HTMLImageElement> => {
     let imageUrl = sourceUrl
     let objectUrl: string | null = null
-    if (window.location.protocol === 'file:') {
+    if (packagedTextureNeedsBridge) {
       const bytes = await window.api.readMapTexture(assetKey)
       const arrayBuffer = bytes.buffer.slice(
         bytes.byteOffset,
@@ -359,7 +361,7 @@ export async function createMaskedTextureUrl(
   maxDimension = MAX_MASKED_TEXTURE_DIMENSION,
   quality = 0.84
 ): Promise<string> {
-  const image = await loadMaskedTextureSource(sourceUrl, assetKey)
+  const image = await loadMapTextureSource(sourceUrl, assetKey)
   const scale = Math.min(1, maxDimension / Math.max(image.naturalWidth, image.naturalHeight))
   const canvas = document.createElement('canvas')
   canvas.width = Math.max(1, Math.round(image.naturalWidth * scale))

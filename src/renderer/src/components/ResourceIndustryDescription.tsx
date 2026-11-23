@@ -1,5 +1,6 @@
 import {
   getResourceIndustryDescription,
+  getResourceIndustryOverview,
   type LocalizedResourceText,
   type ResourceIndustryFact
 } from '../data/geography/resources'
@@ -24,6 +25,7 @@ export function ResourceIndustryDescription({
       url: 'https://github.com/factbook/factbook.json'
     },
     ...(context?.source ? [context.source] : []),
+    ...(industry.sources ?? []),
     ...researchSources
   ].filter(
     (source, index, all) => all.findIndex((candidate) => candidate.url === source.url) === index
@@ -31,7 +33,10 @@ export function ResourceIndustryDescription({
 
   return (
     <div className="resource-industry-description">
-      <p>{t(getResourceIndustryDescription(industry.id))}</p>
+      <p>
+        {getResourceIndustryOverview(industry, language) ??
+          t(getResourceIndustryDescription(industry.id))}
+      </p>
 
       <section className="resource-industry-research-section">
         <h4>{t('Classement mondial vérifié')}</h4>

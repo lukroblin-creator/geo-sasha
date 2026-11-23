@@ -1,3 +1,4 @@
+import { useKeyboardShortcut } from '../data/keyboardShortcuts'
 import { useState } from 'react'
 import WorldMap from './WorldMapLoader'
 import { SkinSelector } from './AppModeSwitcher'
@@ -36,6 +37,10 @@ export function DrawBordersQuizView({
     onCompleted(nextScore)
   }
 
+  useKeyboardShortcut('quiz.stop', onStop)
+  useKeyboardShortcut('quiz.restart', onRestart, score !== null)
+  useKeyboardShortcut('quiz.verify', finish, score === null)
+
   return (
     <main className="special-quiz-screen draw-borders-quiz-screen">
       <header className="special-quiz-header">
@@ -55,7 +60,7 @@ export function DrawBordersQuizView({
         </div>
         <div className="special-quiz-header-actions">
           <SkinSelector compact />
-          <button type="button" onClick={onStop}>
+          <button type="button" data-shortcut-action="quiz.stop" onClick={onStop}>
             {t('Quitter la partie')}
           </button>
         </div>
@@ -100,7 +105,12 @@ export function DrawBordersQuizView({
             </button>
           </div>
           {score === null ? (
-            <button className="quiz-start-button" type="button" onClick={finish}>
+            <button
+              className="quiz-start-button"
+              type="button"
+              data-shortcut-action="quiz.verify"
+              onClick={finish}
+            >
               {t('Terminer et calculer le score')}
             </button>
           ) : (
@@ -108,7 +118,12 @@ export function DrawBordersQuizView({
               <strong>
                 {t('Précision')} : {score.toLocaleString(language)} %
               </strong>
-              <button className="quiz-start-button" type="button" onClick={onRestart}>
+              <button
+                className="quiz-start-button"
+                type="button"
+                data-shortcut-action="quiz.restart"
+                onClick={onRestart}
+              >
                 {t('Rejouer')}
               </button>
               <button type="button" onClick={onStop}>

@@ -23,7 +23,12 @@ export function MapFullscreenBar({
       <div className="map-fullscreen-bar-actions">
         <SkinSelector compact />
         {showSettings && <SettingsMenu />}
-        <button className="map-fullscreen-action" type="button" onClick={onOpenStatistics}>
+        <button
+          className="map-fullscreen-action"
+          type="button"
+          data-shortcut-action="app.mode.statistics"
+          onClick={onOpenStatistics}
+        >
           {t('Statistiques')}
         </button>
         <button className="map-fullscreen-exit" type="button" onClick={onExit}>

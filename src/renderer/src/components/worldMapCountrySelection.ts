@@ -5,11 +5,12 @@ import type { MapLayerMouseEvent } from 'react-map-gl/maplibre'
 
 import countryExplorationData from '../data/quiz/countryExplorationData.json'
 import { addFlagTerritoryProperties } from '../data/quiz/mapFlagTerritories'
-import { world110mMap, world50mMap, world10mMap } from '../data/world'
+import { world110mMap, world50mMap, world10mMap, world10mCountryNeighbors } from '../data/world'
 import { normalizeSourceFeatureId } from '../data/geography/sourceFeatureIds'
 import {
   chooseDirectionalCountryFeature,
   chooseCountryFeatureAtPoint,
+  hasOnlyLargeLandNeighbors,
   getCountryFeatureHit,
   getCountryFeatureIdentity,
   getTinyTerritoryHitRadius,
@@ -33,6 +34,8 @@ export const countryFillLayerIds = [
 ]
 
 export type InteractiveCountryFeature = NonNullable<MapLayerMouseEvent['features']>[number]
+
+const EXPANDED_HIT_AREA_MAX_KM2 = 20_000
 
 type CountryHitAreaRecord = {
   id?: string
@@ -68,6 +71,31 @@ const countryAreaBySourceFeatureId = new globalThis.Map<string, number>(
   })
 )
 
+const countriesWithExpandedHitAreas = new Set(
+  [...world10mCountryNeighbors.entries()].flatMap(([sourceId, neighborIds]) => {
+    const sourceIdentity = normalizeSourceFeatureId(sourceId)
+    const area = countryAreaBySourceFeatureId.get(sourceIdentity)
+    if (area === undefined || area > EXPANDED_HIT_AREA_MAX_KM2) return []
+
+    const neighborAreas = neighborIds.map(
+      (neighborId) => countryAreaBySourceFeatureId.get(normalizeSourceFeatureId(neighborId)) ?? null
+    )
+    return hasOnlyLargeLandNeighbors(neighborAreas) ? [sourceIdentity] : []
+  })
+)
+
+function isExpandedCountryHitTarget(feature: InteractiveCountryFeature): boolean {
+  const sourceId = feature.properties?.sourceId
+  return (
+    (typeof sourceId === 'string' || typeof sourceId === 'number') &&
+    countriesWithExpandedHitAreas.has(normalizeSourceFeatureId(sourceId))
+  )
+}
+
+function getCountryHitRadius(feature: InteractiveCountryFeature, zoom: number): number {
+  return getTinyTerritoryHitRadius(zoom, isExpandedCountryHitTarget(feature))
+}
+
 function getCountryAreaKm2(feature: InteractiveCountryFeature): number | null {
   const identity = getCountryFeatureIdentity(feature)
   const entityArea = identity ? countryAreaByFeatureIdentity.get(identity) : undefined
@@ -95,7 +123,7 @@ export function getCountryFeatureAtPoint(
       isCountryFillFeature(feature as InteractiveCountryFeature)
     )
   const directFeature = eventCountryFeatures[0] ?? exactPointFeatures[0]
-  const searchRadius = getTinyTerritoryHitRadius(map.getZoom())
+  const searchRadius = getTinyTerritoryHitRadius(map.getZoom(), true)
   const candidates = [
     ...eventCountryFeatures,
     ...exactPointFeatures,
@@ -113,7 +141,9 @@ export function getCountryFeatureAtPoint(
     point,
     candidates as InteractiveCountryFeature[],
     directFeature,
-    getCountryAreaKm2
+    getCountryAreaKm2,
+    (feature) => getCountryHitRadius(feature, map.getZoom()),
+    isExpandedCountryHitTarget
   )
 }
 

@@ -1,6 +1,7 @@
 IDÉES POUR PLUS TARD
 
 Ajoute ici les idées que tu souhaites garder pour le projet.
+Ce fichier est un backlog exploratoire : son contenu n’est pas une exigence et ne doit être implémenté qu’après une demande explicite de Lucas. La direction actuelle du produit se trouve dans docs/GUIDE-DU-PROJET.md.
 
 Modes d’affichage
 - Créer un long menu déroulant qui regroupe les modes d’affichage du logiciel.
@@ -10,4 +11,34 @@ Aide à l’utilisation
 - Si la page Exploration devient trop complexe, expliquer les outils avec de courtes vidéos d’écran enregistrées ou du motion design, à la manière de Lightroom.
 - Au survol d’un bouton, afficher une brève explication avec un bouton « ? ». Cliquer sur « ? » ouvre la vidéo correspondante dans un encadré.
 - faire un motion design directement sur le logiciel pour l'utiliser comme animation de lancement de world atlas, donner la possibilité aux joueurs de faire le leur en faisant un systeme de keyframe ou on choisit son lissage comme dans cap cut, et faire un petit systeme de timeline qui permet de faire des cut.
+
+Exploration historique
+- Créer une frise chronologique sous forme de slider couvrant toutes les années documentées, jusqu’à l’apparition de l’écriture.
+- Le joueur choisit précisément l’année ou la période qui l’intéresse afin d’afficher le monde tel qu’il était alors : frontières, territoires, États et pouvoirs politiques, situation géopolitique et période historique.
+- Adapter les informations de la carte à la date sélectionnée et fournir le contexte nécessaire pour comprendre les changements visibles.
+
+Skin Sacha et quiz surprise
+- Ajouter discrètement un skin « Sacha » dans le menu des skins.
+- Lorsqu’on le sélectionne, transformer complètement l’écran et lancer une séquence vidéo : flash ou explosion vers un écran blanc, apparition du visage de Sacha découpé volontairement de manière artisanale, puis apparition de son corps.
+- Sacha part en sprint, effectue un tour, rebondit contre un mur, réalise un « 36 » suivi d’un salto arrière, puis atterrit.
+- Animer sa bouche avec un rig simple qui sépare son visage en deux. Il dit d’abord « Hola ! » avec un air joyeux, puis prend une voix de gamin capricieux et déclare : « Gne gne gne, je connais tous les pays, capitales et drapeaux du monde. »
+- Faire ensuite apparaître Lucas en très grand, comme un antagoniste, qui répond : « Ah ouais ? Ben, c’est ce qu’on va voir. »
+- Enchaîner immédiatement avec un quiz très rythmé : un pays apparaît et le joueur dispose de six secondes pour donner sa capitale.
+- Pousser au maximum l’animation, les visuels et le son afin que cette séquence ressemble à un événement surprise complet dans l’application.
+
+Recherche et filtres
+- Ajouter des filtres avec autocomplétion.
+
+Chronomètre et récompenses
+- Créer un mode chronométré complet, avec des variantes comme un temps limité par question, un temps total pour toute la partie et des réglages adaptés aux différents types de quiz.
+- Mettre en place un système de récompenses lié aux performances du joueur : score, rapidité, précision, séries de bonnes réponses, progression et difficulté choisie.
+- Utiliser les récompenses pour valoriser la progression et permettre, à terme, de débloquer des éléments comme des badges, des défis, des apparences ou d’autres contenus à définir.
+
+De la Terre au système solaire
+- Créer un slider qui retire progressivement les couches extérieures de la Terre pour révéler des niveaux de plus en plus profonds, jusqu’à ce qu’il ne reste plus qu’un point au centre.
+- Étendre l’exploration au système solaire et proposer des informations sur les autres planètes et corps célestes.
+- Permettre un zoom continu allant du centre de la Terre jusqu’à une vue complète du système solaire.
+- Concevoir un mode de déplacement 3D pratique qui permette de rejoindre librement n’importe quel endroit sans devoir rechercher chaque élément au préalable.
+- Présenter le déplacement comme le pilotage d’un vaisseau : mouvement libre dans toutes les directions et contrôle de la vitesse, plutôt qu’une caméra 3D orbitale semblable à celle de DaVinci.
+- Pouvoir observer le système solaire en mouvement, avec les orbites et les corps animés ; cette vue pourrait accueillir l’animation réalisée dans Fusion.
 

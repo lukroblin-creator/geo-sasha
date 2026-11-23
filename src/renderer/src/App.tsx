@@ -79,6 +79,12 @@ import {
   type QuizPreset
 } from './data/quiz/presets'
 import { useLanguage } from './data/i18n'
+import {
+  formatShortcutBinding,
+  useKeyboardShortcut,
+  useKeyboardShortcuts,
+  type KeyboardShortcutActionId
+} from './data/keyboardShortcuts'
 import { useSkin } from './data/skin'
 import {
   loadQuizHistory,
@@ -169,6 +175,7 @@ function isTextEditingTarget(target: EventTarget | null): boolean {
 
 function App(): React.JSX.Element {
   const { language, t } = useLanguage()
+  const { bindings } = useKeyboardShortcuts()
   const { skin } = useSkin()
   const drawCountryOptions = useMemo(() => {
     const displayNames = new Intl.DisplayNames([language], { type: 'region' })
@@ -396,6 +403,12 @@ function App(): React.JSX.Element {
     setAppView(mode)
   }
 
+  useKeyboardShortcut('app.mode.quiz', () => openPrimaryMode('quiz'))
+  useKeyboardShortcut('app.mode.exploration', () => openPrimaryMode('exploration'))
+  useKeyboardShortcut('app.mode.countryQuiz', () => openPrimaryMode('country-select'))
+  useKeyboardShortcut('app.mode.comparator', () => openPrimaryMode('comparator'))
+  useKeyboardShortcut('app.mode.statistics', openStatistics)
+
   useEffect(() => {
     if (!selectedQuizPresetId) return
     const selectedPreset = savedQuizPresets.find((preset) => preset.id === selectedQuizPresetId)
@@ -487,7 +500,8 @@ function App(): React.JSX.Element {
         (!event.metaKey && !event.ctrlKey) ||
         event.key.toLowerCase() !== 'z' ||
         event.shiftKey ||
-        isTextEditingTarget(event.target)
+        isTextEditingTarget(event.target) ||
+        (event.target instanceof Element && event.target.closest('dialog[open], [role="dialog"]'))
       ) {
         return
       }
@@ -548,7 +562,7 @@ function App(): React.JSX.Element {
     tooltip.hidden = true
     document.body.appendChild(tooltip)
 
-    let activeButton: HTMLButtonElement | null = null
+    let activeButton: HTMLElement | null = null
     let timer: number | null = null
     let originalTitle: string | null = null
     let originalDescription: string | null = null
@@ -574,7 +588,7 @@ function App(): React.JSX.Element {
       restoreActiveButton()
     }
 
-    const showTooltip = (button: HTMLButtonElement): void => {
+    const showTooltip = (button: HTMLElement): void => {
       if (activeButton === button) return
       hideTooltip()
       const label = (
@@ -597,7 +611,16 @@ function App(): React.JSX.Element {
           return
         }
 
-        tooltip.textContent = label
+        const shortcutAction = button.dataset.shortcutAction as KeyboardShortcutActionId | undefined
+        const shortcut = shortcutAction ? formatShortcutBinding(bindings[shortcutAction], '') : ''
+        const labelNode = document.createElement('span')
+        labelNode.textContent = label
+        tooltip.replaceChildren(labelNode)
+        if (shortcut) {
+          const shortcutNode = document.createElement('kbd')
+          shortcutNode.textContent = shortcut
+          tooltip.appendChild(shortcutNode)
+        }
         tooltip.hidden = false
         const buttonBounds = activeButton.getBoundingClientRect()
         const tooltipBounds = tooltip.getBoundingClientRect()
@@ -624,10 +647,10 @@ function App(): React.JSX.Element {
       }, 500)
     }
 
-    const getButton = (target: EventTarget | null): HTMLButtonElement | null => {
+    const getButton = (target: EventTarget | null): HTMLElement | null => {
       if (!(target instanceof Element)) return null
-      const button = target.closest('button')
-      if (!(button instanceof HTMLButtonElement)) return null
+      const button = target.closest('button, summary')
+      if (!(button instanceof HTMLElement)) return null
       if (button.matches('.country-flag-choices .country-flag-choice')) return null
       return button
     }
@@ -689,7 +712,7 @@ function App(): React.JSX.Element {
       window.removeEventListener('resize', hideTooltip)
       tooltip.remove()
     }
-  }, [])
+  }, [bindings])
 
   const maxQuizQuestionCount = selectedQuizCountry ? 1 : getAvailableQuizQuestionCount(quizRegion)
   const quizCountProgress =
@@ -1204,7 +1227,7 @@ function App(): React.JSX.Element {
     setDrawCountrySearchOpen(false)
   }
 
-  const applyDefaultQuizPreset = (): void => {
+  function applyDefaultQuizPreset(): void {
     const preset = savedQuizPresets.find((item) => item.id === defaultQuizPresetId)
     if (preset) applyQuizPreset(preset.id)
   }
@@ -1409,6 +1432,11 @@ function App(): React.JSX.Element {
 
     setMapProximity(null)
     setSelectedMapCountry({ sourceFeatureId, name, entityId, revealed: false })
+    const mapAnswerIsCorrect = Number(sourceFeatureId) === question.sourceFeatureId
+    quiz.answerItems(
+      { countryOnMap: mapAnswerIsCorrect },
+      JSON.stringify({ countryOnMap: sourceFeatureId })
+    )
     return true
   }
 
@@ -1549,6 +1577,12 @@ function App(): React.JSX.Element {
     exitQuizFullscreen()
     setAppView('quiz')
   }
+
+  useKeyboardShortcut(
+    'quiz.stop',
+    stopQuiz,
+    appView === 'quiz' && isQuizRunning && quizGameMode === 'base'
+  )
 
   if (appView === 'exploration') {
     return (
@@ -1840,7 +1874,12 @@ function App(): React.JSX.Element {
                 <button type="button" onClick={enterQuizFullscreen}>
                   {t('Plein écran')}
                 </button>
-                <button type="button" className="stop" onClick={stopQuiz}>
+                <button
+                  type="button"
+                  className="stop"
+                  data-shortcut-action="quiz.stop"
+                  onClick={stopQuiz}
+                >
                   {t('Arrêter')}
                 </button>
               </div>
@@ -1853,7 +1892,12 @@ function App(): React.JSX.Element {
               </div>
 
               <div className="topbar-right">
-                <button className="home-back-button" type="button" onClick={openStatistics}>
+                <button
+                  className="home-back-button"
+                  type="button"
+                  data-shortcut-action="app.mode.statistics"
+                  onClick={openStatistics}
+                >
                   {t('Statistiques')}
                 </button>
               </div>

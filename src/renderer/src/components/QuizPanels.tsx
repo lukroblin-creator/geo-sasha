@@ -23,6 +23,7 @@ import { FlagRatioFilter } from './FlagRatioFilter'
 import { SkinSelector } from './AppModeSwitcher'
 import { ExplorationPlaceDetails } from './ExplorationPlaceDetails'
 import { useAdvanceQuestionOnEnter } from './useAdvanceQuestionOnEnter'
+import { useKeyboardShortcut } from '../data/keyboardShortcuts'
 import type { ExplorationDetails } from '../data/geography/exploration'
 import {
   supplementalQuizAnswerMatches,
@@ -97,6 +98,17 @@ function QuizPanelFrame<Question>({
   const { language, t } = useLanguage()
   const questionSettled = session.answerCorrect === true || session.answerRevealed
   useAdvanceQuestionOnEnter(showActions && questionSettled && !session.completed, onNext)
+  useKeyboardShortcut(
+    'quiz.stop',
+    () => onStop?.(),
+    showStop && Boolean(onStop) && !session.completed
+  )
+  useKeyboardShortcut('quiz.restart', onRestart, showActions && session.completed)
+  useKeyboardShortcut(
+    'quiz.revealAnswer',
+    onRevealAnswer,
+    showActions && !questionSettled && !session.completed
+  )
   const answeredCount = session.questionIndex + (questionSettled ? 1 : 0)
   const progress = total > 0 ? (answeredCount / total) * 100 : 0
 
@@ -109,6 +121,7 @@ function QuizPanelFrame<Question>({
             <button
               className="quiz-stop-button"
               type="button"
+              data-shortcut-action="quiz.stop"
               onClick={onStop}
               aria-label={t('Arrêter la partie et revenir à l’accueil')}
             >
@@ -152,7 +165,11 @@ function QuizPanelFrame<Question>({
             </div>
             <QuizReview session={session} onSelectCountry={onSelectReviewCountry} />
             {showActions && (
-              <button className="quiz-next-button" onClick={onRestart}>
+              <button
+                className="quiz-next-button"
+                data-shortcut-action="quiz.restart"
+                onClick={onRestart}
+              >
                 {t('Rejouer le quiz')}
               </button>
             )}
@@ -163,12 +180,20 @@ function QuizPanelFrame<Question>({
             {showActions && (
               <div className="quiz-panel-actions">
                 {session.answerCorrect !== true && !session.answerRevealed && (
-                  <button className="quiz-reveal-button" onClick={onRevealAnswer}>
+                  <button
+                    className="quiz-reveal-button"
+                    data-shortcut-action="quiz.revealAnswer"
+                    onClick={onRevealAnswer}
+                  >
                     {t('Voir la réponse')}
                   </button>
                 )}
                 {questionSettled && (
-                  <button className="quiz-next-button" onClick={onNext}>
+                  <button
+                    className="quiz-next-button"
+                    data-shortcut-action="quiz.nextQuestion"
+                    onClick={onNext}
+                  >
                     {session.questionIndex === total - 1
                       ? t('Voir le résultat')
                       : t('Question suivante')}
@@ -687,7 +712,7 @@ function CountryQuizAnswerForm({
         ?.focus()
     })
     return () => window.cancelAnimationFrame(frame)
-  }, [])
+  }, [question.alpha2, session.questionIndex])
 
   const getRows = (key: string): string[] => multiAnswerRows[key] ?? ['']
   const setRowValue = (key: string, index: number, value: string): void => {
@@ -929,7 +954,8 @@ function CountryQuizAnswerForm({
           session.answerResults.countryName !== true
         : countryName.trim().length > 0 && !countryNameIsCorrect)) ||
     (answers.countryOnMap &&
-      (multiCountryAnswer ? selectedMapAnswerAlpha2s.length > 0 : selectedMapCountry !== null) &&
+      multiCountryAnswer &&
+      selectedMapAnswerAlpha2s.length > 0 &&
       session.answerResults.countryOnMap !== true) ||
     (answers.capital && capital.trim().length > 0 && !capitalIsCorrect) ||
     (answers.flag && flagAlpha2 !== null && !flagIsCorrect) ||
@@ -998,16 +1024,6 @@ function CountryQuizAnswerForm({
           question.countryAnswerGroup.find((country) => country.alpha2 === alpha2)?.name ?? alpha2
       )
     }
-    if (
-      shouldSubmit('countryOnMap') &&
-      answers.countryOnMap &&
-      !multiCountryAnswer &&
-      selectedMapCountry &&
-      !mapAnswerIsCorrect
-    ) {
-      outcomes.countryOnMap =
-        Number(selectedMapCountry.sourceFeatureId) === question.sourceFeatureId
-    }
     if (shouldSubmit('capital') && answers.capital && capital.trim() && !capitalIsCorrect) {
       outcomes.capital = capitalMatches
     }
@@ -1033,6 +1049,21 @@ function CountryQuizAnswerForm({
     })
     if (Object.keys(outcomes).length > 0) onAnswer(outcomes)
   }
+  useKeyboardShortcut(
+    'quiz.verify',
+    () => submitAnswers(),
+    !questionDisabled && hasSubmittableAnswer
+  )
+  useKeyboardShortcut(
+    'quiz.focusAnswer',
+    () => {
+      formRef.current
+        ?.querySelector<HTMLElement>('[data-quiz-answer-control]:not(:disabled)')
+        ?.focus()
+    },
+    !questionDisabled
+  )
+
   const handleAnswerKeyDown = (event: React.KeyboardEvent<HTMLInputElement>): void => {
     if (event.key !== 'Enter' || questionDisabled || !event.currentTarget.value.trim()) return
     const key = event.currentTarget.dataset.quizAnswerKey
@@ -1526,7 +1557,12 @@ function CountryQuizAnswerForm({
         })}
 
       {!questionDisabled && hasSubmittableAnswer && (
-        <button className="quiz-check-answers-button" type="button" onClick={() => submitAnswers()}>
+        <button
+          className="quiz-check-answers-button"
+          type="button"
+          data-shortcut-action="quiz.verify"
+          onClick={() => submitAnswers()}
+        >
           {t('Vérifier mes réponses')}
         </button>
       )}
@@ -1676,6 +1712,8 @@ export function QuizFullscreenBar({
   const question = session.questionOrder[session.questionIndex]
   const questionSettled = session.answerCorrect === true || session.answerRevealed
   useAdvanceQuestionOnEnter(questionSettled && !session.completed, onNext)
+  useKeyboardShortcut('quiz.restart', onRestart, session.completed)
+  useKeyboardShortcut('quiz.revealAnswer', onRevealAnswer, !questionSettled && !session.completed)
   const completedCount = session.questionIndex + (questionSettled ? 1 : 0)
   const progress = total > 0 ? (completedCount / total) * 100 : 0
   const hasNonMapAnswer =
@@ -1799,7 +1837,12 @@ export function QuizFullscreenBar({
       <div className="quiz-fullscreen-actions">
         <SkinSelector compact />
         {session.completed ? (
-          <button className="quiz-fullscreen-primary" type="button" onClick={onRestart}>
+          <button
+            className="quiz-fullscreen-primary"
+            type="button"
+            data-shortcut-action="quiz.restart"
+            onClick={onRestart}
+          >
             {t('Rejouer')}
           </button>
         ) : (
@@ -1815,15 +1858,30 @@ export function QuizFullscreenBar({
               </span>
             )}
             {answerIsShown ? (
-              <button className="quiz-fullscreen-primary" type="button" onClick={onNext}>
+              <button
+                className="quiz-fullscreen-primary"
+                type="button"
+                data-shortcut-action="quiz.nextQuestion"
+                onClick={onNext}
+              >
                 {t(session.questionIndex === total - 1 ? 'Voir le résultat' : 'Question suivante')}
               </button>
             ) : (
-              <button className="quiz-fullscreen-secondary" type="button" onClick={onRevealAnswer}>
+              <button
+                className="quiz-fullscreen-secondary"
+                type="button"
+                data-shortcut-action="quiz.revealAnswer"
+                onClick={onRevealAnswer}
+              >
                 {t('Voir la réponse')}
               </button>
             )}
-            <button className="quiz-fullscreen-stop" type="button" onClick={onStop}>
+            <button
+              className="quiz-fullscreen-stop"
+              type="button"
+              data-shortcut-action="quiz.stop"
+              onClick={onStop}
+            >
               {t('Arrêter')}
             </button>
           </>

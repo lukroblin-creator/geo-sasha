@@ -30,5 +30,8 @@ jobs:
       - name: Run type checks, tests, and lint
         run: npm run verify
 
+      - name: Measure global test coverage
+        run: npm run coverage
+
       - name: Build production app
         run: npm run build

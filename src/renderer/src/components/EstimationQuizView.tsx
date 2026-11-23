@@ -1,3 +1,4 @@
+import { useKeyboardShortcut } from '../data/keyboardShortcuts'
 import { useState } from 'react'
 import WorldMap from './WorldMapLoader'
 import { SkinSelector } from './AppModeSwitcher'
@@ -54,6 +55,13 @@ export function EstimationQuizView({
     setPrecision(null)
   }
 
+  useKeyboardShortcut('quiz.stop', onStop)
+  useKeyboardShortcut('quiz.restart', onRestart, completedScore !== null)
+  useKeyboardShortcut(
+    'quiz.verify',
+    submit,
+    Boolean(question) && precision === null && Number(input.replace(',', '.')) > 0
+  )
   useAdvanceQuestionOnEnter(
     precision !== null && completedScore === null && index < questions.length - 1,
     nextQuestion
@@ -73,7 +81,7 @@ export function EstimationQuizView({
         </div>
         <div className="special-quiz-header-actions">
           <SkinSelector compact />
-          <button type="button" onClick={onStop}>
+          <button type="button" data-shortcut-action="quiz.stop" onClick={onStop}>
             {t('Quitter la partie')}
           </button>
         </div>
@@ -120,6 +128,7 @@ export function EstimationQuizView({
                   <button
                     className="quiz-start-button"
                     type="submit"
+                    data-shortcut-action="quiz.verify"
                     disabled={!input || Number(input) <= 0}
                   >
                     {t('Valider mon estimation')}
@@ -134,7 +143,12 @@ export function EstimationQuizView({
                       {question.unit}
                     </span>
                     {index < questions.length - 1 ? (
-                      <button className="quiz-start-button" type="button" onClick={nextQuestion}>
+                      <button
+                        className="quiz-start-button"
+                        type="button"
+                        data-shortcut-action="quiz.nextQuestion"
+                        onClick={nextQuestion}
+                      >
                         {t('Question suivante')}
                       </button>
                     ) : (
@@ -151,7 +165,12 @@ export function EstimationQuizView({
               <span className="special-quiz-kicker">{t('Score moyen')}</span>
               <strong>{formatQuizScore(completedScore, language)} %</strong>
               <p>{t('Ta précision moyenne sur les estimations de cette partie.')}</p>
-              <button className="quiz-start-button" type="button" onClick={onRestart}>
+              <button
+                className="quiz-start-button"
+                type="button"
+                data-shortcut-action="quiz.restart"
+                onClick={onRestart}
+              >
                 {t('Rejouer')}
               </button>
               <button type="button" onClick={onStop}>

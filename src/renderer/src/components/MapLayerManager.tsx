@@ -18,6 +18,7 @@ import {
 } from '../data/quiz/countryContinents'
 import { world110mMap } from '../data/world'
 import { useLanguage } from '../data/i18n'
+import { useKeyboardShortcut } from '../data/keyboardShortcuts'
 import type {
   MapLayerStackId,
   MapOpacityMask,
@@ -43,6 +44,8 @@ type MapLayerManagerProps = {
   masks: MapOpacityMask[]
   order: MapLayerStackId[]
   isPlacingMask: boolean
+  controlsCollapsed: boolean
+  onRevealControls: () => void
   editingMaskId: string | null
   onToggleLayer: (id: ManagedMapLayerId, enabled: boolean) => void
   onLayerOpacityChange: (id: ManagedMapLayerId, opacity: number) => void
@@ -75,6 +78,8 @@ export function MapLayerManager({
   order,
   isPlacingMask,
   editingMaskId,
+  controlsCollapsed,
+  onRevealControls,
   onToggleLayer,
   onLayerOpacityChange,
   onLayerDensityChange,
@@ -120,9 +125,26 @@ export function MapLayerManager({
   const triggerRef = useRef<HTMLButtonElement | null>(null)
   const popoverRef = useRef<HTMLElement | null>(null)
   const [popoverPosition, setPopoverPosition] = useState<{ left: number; top: number } | null>(null)
-  const isOpen = open && !isPlacingMask
+  const isOpen = open && !isPlacingMask && !controlsCollapsed
+  const [shortcutEditor, setShortcutEditor] = useState<{ maskId: string | null } | null>(null)
+  const createEditorRef = useRef<HTMLDetailsElement>(null)
+  const lastFocusedMaskRef = useRef<string | null>(null)
+  const popoverVisible = isOpen && popoverPosition !== null
+  useLayoutEffect(() => {
+    if (!popoverVisible || !shortcutEditor) return
+    const editor =
+      shortcutEditor.maskId === null
+        ? createEditorRef.current
+        : popoverRef.current?.querySelector<HTMLDetailsElement>(
+            `[data-mask-id="${CSS.escape(shortcutEditor.maskId)}"] .map-layer-manager-mask-editor`
+          )
+    if (!editor) return
+    editor.open = true
+    editor.querySelector<HTMLElement>('select, input, button')?.focus()
+  }, [shortcutEditor, popoverVisible])
   const closePopover = useCallback((): void => {
     setOpen(false)
+    setShortcutEditor(null)
     setPopoverPosition(null)
   }, [])
 
@@ -614,6 +636,13 @@ export function MapLayerManager({
       <div
         className={`map-layer-manager-row is-mask${maskEnabled ? '' : ' is-disabled'}${draggedRowId === `mask:${mask.id}` ? ' is-dragging' : ''}`}
         key={mask.id}
+        data-mask-id={mask.id}
+        onFocusCapture={() => {
+          lastFocusedMaskRef.current = mask.id
+        }}
+        onPointerDownCapture={() => {
+          lastFocusedMaskRef.current = mask.id
+        }}
       >
         <button
           className="map-layer-manager-drag-handle"
@@ -693,7 +722,7 @@ export function MapLayerManager({
             </select>
           </label>
           <details className="map-layer-manager-mask-editor">
-            <summary>{t('Modifier le masque')}</summary>
+            <summary data-shortcut-action="map.editMask">{t('Modifier le masque')}</summary>
             {mask.kind === 'circle' && (
               <label>
                 <span>
@@ -885,10 +914,54 @@ export function MapLayerManager({
   const searchMaskOnMap = (): void => {
     const draft = buildMaskDraft()
     if (draft) {
+      setShortcutEditor(null)
       setPopoverPosition(null)
       onCreateMask(draft)
     }
   }
+
+  const openMaskEditor = (maskId: string | null): void => {
+    onRevealControls()
+    const disclosure = triggerRef.current?.closest('details')
+    if (disclosure) disclosure.open = true
+    setOpen(true)
+    setShortcutEditor({ maskId })
+  }
+
+  useKeyboardShortcut(
+    'map.addMask',
+    () => {
+      const editor = createEditorRef.current
+      if (!isOpen || !editor?.open || !editor.contains(document.activeElement)) {
+        openMaskEditor(null)
+        return
+      }
+      const hasListSelection =
+        (maskKind === 'country' && countrySourceFeatureIds.length > 0) ||
+        (maskKind === 'continent' && selectedContinentIds.length > 0)
+      if (hasListSelection) addMaskFromList()
+      else searchMaskOnMap()
+    },
+    !isPlacingMask
+  )
+
+  useKeyboardShortcut(
+    'map.editMask',
+    (event) => {
+      const targetId =
+        event.target instanceof Element
+          ? event.target.closest<HTMLElement>('[data-mask-id]')?.dataset.maskId
+          : undefined
+      const mask =
+        [targetId, lastFocusedMaskRef.current, editingMaskId]
+          .map((id) => masks.find((item) => item.id === id))
+          .find(Boolean) ?? masks[masks.length - 1]
+      if (!mask) return
+      if (mask.kind === 'circle' || mask.kind === 'rectangle') onEditMask(mask.id)
+      openMaskEditor(mask.id)
+    },
+    !isPlacingMask && masks.length > 0
+  )
 
   return (
     <div className={`map-layer-manager${isOpen ? ' is-open' : ''}`}>
@@ -901,6 +974,7 @@ export function MapLayerManager({
         aria-controls="map-layer-manager-popover"
         title={t('Gérer l’ordre et l’opacité des calques')}
         onClick={() => {
+          setShortcutEditor(null)
           setPopoverPosition(null)
           setOpen((current) => !current)
         }}
@@ -1005,8 +1079,10 @@ export function MapLayerManager({
               })}
             </ol>
 
-            <details className="map-layer-manager-create-mask">
-              <summary>{t('Ajouter un masque d’opacité')}</summary>
+            <details ref={createEditorRef} className="map-layer-manager-create-mask">
+              <summary data-shortcut-action="map.addMask">
+                {t('Ajouter un masque d’opacité')}
+              </summary>
               <label>
                 <span>{t('Type de masque')}</span>
                 <select

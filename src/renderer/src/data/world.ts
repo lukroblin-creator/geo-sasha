@@ -261,6 +261,52 @@ export const world50m = prepareWorldDataset('50m', worldDatasets['50m'])
 
 export const world10m = prepareWorldDataset('10m', worldDatasets['10m'])
 
+export const world10mCountryNeighbors: ReadonlyMap<number, readonly number[]> = (() => {
+  const topology = world10mData as unknown as Topology
+  const countries = topology.objects.countries as GeometryCollection
+  const arcOwners = new Map<number, Set<number>>()
+
+  for (const country of countries.geometries) {
+    const countryId = Number(country.id)
+    if (!Number.isFinite(countryId)) continue
+    const arcs = (country as typeof country & { arcs?: unknown }).arcs
+    const arcIndexes: number[] = []
+    const collectArcIndexes = (value: unknown): void => {
+      if (Array.isArray(value)) {
+        value.forEach(collectArcIndexes)
+      } else if (typeof value === 'number' && Number.isInteger(value)) {
+        arcIndexes.push(value < 0 ? ~value : value)
+      }
+    }
+    collectArcIndexes(arcs)
+
+    for (const arcIndex of new Set(arcIndexes)) {
+      const owners = arcOwners.get(arcIndex) ?? new Set<number>()
+      owners.add(countryId)
+      arcOwners.set(arcIndex, owners)
+    }
+  }
+
+  const neighbors = new Map<number, Set<number>>()
+  for (const owners of arcOwners.values()) {
+    if (owners.size < 2) continue
+    for (const countryId of owners) {
+      const countryNeighbors = neighbors.get(countryId) ?? new Set<number>()
+      for (const neighborId of owners) {
+        if (neighborId !== countryId) countryNeighbors.add(neighborId)
+      }
+      neighbors.set(countryId, countryNeighbors)
+    }
+  }
+
+  return new Map(
+    [...neighbors.entries()].map(([countryId, countryNeighbors]) => [
+      countryId,
+      [...countryNeighbors]
+    ])
+  )
+})()
+
 // The map gets separate features for linked entities so each territory can be
 // selected and highlighted independently. Labels continue using the originals.
 export const world110mMap = createEntityAwareMapDataset(world110m)

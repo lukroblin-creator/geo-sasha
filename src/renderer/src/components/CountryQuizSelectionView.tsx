@@ -57,7 +57,12 @@ export function CountryQuizSelectionView({
           <p>{t('Utilise la recherche ou sélectionne un pays sur la carte.')}</p>
         </div>
         <div className="statistics-actions">
-          <button className="home-back-button" type="button" onClick={onOpenStatistics}>
+          <button
+            className="home-back-button"
+            type="button"
+            data-shortcut-action="app.mode.statistics"
+            onClick={onOpenStatistics}
+          >
             {t('Statistiques')}
           </button>
           <button className="home-back-button" type="button" onClick={onToggleFullscreen}>

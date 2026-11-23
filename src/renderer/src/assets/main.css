@@ -5635,11 +5635,157 @@ select:focus-visible {
   pointer-events: auto;
 }
 
+.settings-menu-popover.is-shortcuts {
+  width: min(620px, calc(100vw - 32px));
+  max-height: min(82vh, 760px);
+  overflow-y: auto;
+}
+
 .settings-menu-popover h2 {
   margin: 0 0 14px;
   color: #f0f5fa;
   font-size: 14px;
   font-weight: 650;
+}
+
+.settings-menu-tabs {
+  display: flex;
+  gap: 5px;
+  margin-bottom: 14px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #40566c;
+}
+
+.settings-menu-tabs button,
+.settings-shortcut-row button,
+.settings-shortcuts-footer button {
+  min-height: 32px;
+  padding: 5px 9px;
+  border: 1px solid #40566c;
+  border-radius: 7px;
+  background: #1b2937;
+  color: #dce8f2;
+  font: inherit;
+  font-size: 11px;
+  cursor: pointer;
+}
+
+.settings-menu-tabs button[aria-selected='true'] {
+  border-color: #83b7df;
+  background: #263b50;
+}
+
+.settings-shortcuts-panel {
+  display: grid;
+  gap: 10px;
+}
+
+.settings-shortcuts-help {
+  margin: 0;
+  color: #a9b9c9;
+  font-size: 10px;
+  line-height: 1.5;
+}
+
+.settings-shortcuts-search {
+  min-height: 34px;
+  padding: 0 9px;
+  border: 1px solid #40566c;
+  border-radius: 7px;
+  background: #1b2937;
+  color: #e1eaf2;
+  font: inherit;
+  font-size: 11px;
+}
+
+.settings-shortcut-list {
+  display: grid;
+  gap: 5px;
+  max-height: min(46vh, 420px);
+  overflow-y: auto;
+  padding-right: 3px;
+}
+
+.settings-shortcut-entry h3 {
+  margin: 8px 0 4px;
+  color: #8ea9c2;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.settings-shortcut-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(130px, auto) 84px;
+  align-items: center;
+  gap: 10px;
+  min-height: 36px;
+  padding: 3px 0;
+  border-bottom: 1px solid rgb(64 86 108 / 45%);
+  color: #dce8f2;
+  font-size: 11px;
+}
+
+.settings-shortcut-row button {
+  min-width: 116px;
+  text-align: center;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+
+.settings-shortcut-row button.is-recording {
+  border-color: #83b7df;
+  background: #263b50;
+  color: #fff;
+  box-shadow: 0 0 0 2px rgb(131 183 223 / 22%);
+}
+
+.settings-shortcut-row button.settings-shortcut-action {
+  min-width: 0;
+  justify-self: end;
+  padding-inline: 6px;
+}
+
+.settings-shortcut-row button.is-clear {
+  width: 32px;
+  font-size: 16px;
+}
+
+.settings-shortcut-row button.is-cancel {
+  width: 72px;
+  font-family: inherit;
+}
+
+.settings-shortcuts-empty {
+  margin: 8px 0;
+  color: #a9b9c9;
+  font-size: 11px;
+}
+
+.settings-shortcuts-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding-top: 8px;
+  border-top: 1px solid #40566c;
+}
+
+.settings-shortcuts-footer span {
+  color: #8eabc4;
+  font-size: 10px;
+}
+
+.settings-shortcuts-footer button {
+  flex: 0 0 auto;
+}
+
+.settings-menu-tabs button:focus-visible,
+.settings-shortcut-row button:focus-visible,
+.settings-shortcuts-footer button:focus-visible,
+.settings-shortcuts-search:focus-visible {
+  outline: 2px solid #9bc9ee;
+  outline-offset: 2px;
 }
 
 .settings-language-field {
@@ -5684,6 +5830,44 @@ html[data-skin='minimal'] .settings-menu-popover h2 {
   color: #24231f;
 }
 
+html[data-skin='minimal'] .settings-menu-tabs {
+  border-color: #d5ccbd;
+}
+
+html[data-skin='minimal'] .settings-menu-tabs button,
+html[data-skin='minimal'] .settings-shortcut-row button,
+html[data-skin='minimal'] .settings-shortcuts-footer button,
+html[data-skin='minimal'] .settings-shortcuts-search {
+  border-color: #d5ccbd;
+  background: #fff;
+  color: #24231f;
+}
+
+html[data-skin='minimal'] .settings-menu-tabs button[aria-selected='true'],
+html[data-skin='minimal'] .settings-shortcut-row button.is-recording {
+  border-color: #827a6c;
+  background: #f1ece3;
+}
+
+html[data-skin='minimal'] .settings-shortcuts-help,
+html[data-skin='minimal'] .settings-shortcuts-empty,
+html[data-skin='minimal'] .settings-shortcut-row {
+  color: #625d54;
+}
+
+html[data-skin='minimal'] .settings-shortcut-entry h3,
+html[data-skin='minimal'] .settings-shortcuts-footer span {
+  color: #706657;
+}
+
+html[data-skin='minimal'] .settings-shortcut-row {
+  border-color: rgb(213 204 189 / 70%);
+}
+
+html[data-skin='minimal'] .settings-shortcuts-footer {
+  border-color: #d5ccbd;
+}
+
 html[data-skin='minimal'] .settings-menu-status .status-text {
   color: #625d54;
 }
@@ -5717,6 +5901,39 @@ html[data-skin='matrix'] .settings-menu-popover h2,
 html[data-skin='matrix'] .settings-language-field,
 html[data-skin='matrix'] .settings-menu-status .status-text {
   color: #aaffbf;
+}
+
+html[data-skin='matrix'] .settings-menu-tabs {
+  border-color: #176b34;
+}
+
+html[data-skin='matrix'] .settings-menu-tabs button,
+html[data-skin='matrix'] .settings-shortcut-row button,
+html[data-skin='matrix'] .settings-shortcuts-footer button,
+html[data-skin='matrix'] .settings-shortcuts-search {
+  border-color: #176b34;
+  border-radius: 0;
+  background: #010803;
+  color: #aaffbf;
+}
+
+html[data-skin='matrix'] .settings-menu-tabs button[aria-selected='true'],
+html[data-skin='matrix'] .settings-shortcut-row button.is-recording {
+  border-color: #39ff70;
+  background: #0a2a14;
+}
+
+html[data-skin='matrix'] .settings-shortcut-entry h3,
+html[data-skin='matrix'] .settings-shortcuts-footer span {
+  color: #aaffbf;
+}
+
+html[data-skin='matrix'] .settings-shortcut-row {
+  border-color: rgb(23 107 52 / 70%);
+}
+
+html[data-skin='matrix'] .settings-shortcuts-footer {
+  border-color: #176b34;
 }
 
 html[data-skin='matrix'] .settings-language-field select {
@@ -5914,7 +6131,6 @@ html[data-skin='matrix'] .settings-language-field select {
 }
 
 .exploration-saved-views input,
-.exploration-saved-views select,
 .exploration-saved-views button {
   min-height: 30px;
   border: 1px solid #3b5368;
@@ -5925,14 +6141,86 @@ html[data-skin='matrix'] .settings-language-field select {
   font-size: 11px;
 }
 
-.exploration-saved-views input {
-  width: min(180px, 28vw);
-  padding: 0 8px;
+.exploration-saved-view-combobox {
+  position: relative;
+  flex: 0 1 min(180px, 28vw);
+  min-width: 150px;
 }
 
-.exploration-saved-views select {
-  max-width: 180px;
-  padding: 0 24px 0 8px;
+.exploration-saved-views input {
+  width: 100%;
+  min-width: 0;
+  padding: 0 32px 0 8px;
+}
+
+.exploration-saved-view-toggle {
+  position: absolute;
+  top: 3px;
+  right: 3px;
+  width: 24px;
+  min-height: 22px !important;
+  padding: 0 !important;
+  border: 0 !important;
+  background: transparent !important;
+  line-height: 1;
+}
+
+.exploration-saved-view-suggestions {
+  position: absolute;
+  z-index: 40;
+  top: calc(100% + 4px);
+  left: 0;
+  display: grid;
+  gap: 3px;
+  width: max(100%, 220px);
+  max-width: min(360px, calc(100vw - 32px));
+  max-height: min(260px, 45vh);
+  overflow-y: auto;
+  margin: 0;
+  padding: 4px;
+  border: 1px solid #3b5368;
+  border-radius: 7px;
+  background: #152230;
+  box-shadow: 0 10px 24px rgb(0 0 0 / 28%);
+  list-style: none;
+}
+
+.exploration-saved-view-suggestion {
+  display: flex;
+  gap: 3px;
+  min-width: 0;
+}
+
+.exploration-saved-views .exploration-saved-view-option {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  padding: 5px 8px;
+  border-color: transparent;
+  background: transparent;
+  text-align: left;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.exploration-saved-views .exploration-saved-view-option:hover,
+.exploration-saved-views .exploration-saved-view-option.is-active {
+  border-color: #83b7df;
+  background: #263c4e;
+}
+
+.exploration-saved-views .exploration-saved-view-delete {
+  flex: 0 0 28px;
+  width: 28px;
+  min-height: 28px;
+  padding: 0;
+  font-size: 16px;
+}
+
+.exploration-saved-view-empty {
+  padding: 7px 8px;
+  color: #9fb3c6;
+  font-size: 11px;
 }
 
 .exploration-saved-views button {
@@ -5950,10 +6238,10 @@ html[data-skin='matrix'] .settings-language-field select {
   cursor: default;
 }
 
-.exploration-saved-views .exploration-saved-view-delete {
-  width: 30px;
-  padding: 0;
-  font-size: 17px;
+.exploration-saved-views button:focus-visible,
+.exploration-saved-views input:focus-visible {
+  outline: 2px solid #83b7df;
+  outline-offset: 1px;
 }
 
 .exploration-saved-view-status {
@@ -5997,7 +6285,6 @@ html[data-skin='minimal']
   #root
   :is(
     .exploration-saved-views input,
-    .exploration-saved-views select,
     .exploration-saved-views button,
     .exploration-map-help summary
   ) {
@@ -6007,6 +6294,24 @@ html[data-skin='minimal']
 }
 
 html[data-skin='minimal'] #root .exploration-saved-view-status {
+  color: #706657;
+}
+
+html[data-skin='minimal'] #root .exploration-saved-view-suggestions {
+  border-color: #d5ccbd;
+  background: #fffdf8;
+}
+
+html[data-skin='minimal'] #root .exploration-saved-view-option {
+  background: transparent;
+}
+
+html[data-skin='minimal'] #root .exploration-saved-view-option:hover,
+html[data-skin='minimal'] #root .exploration-saved-view-option.is-active {
+  background: #eee8dc;
+}
+
+html[data-skin='minimal'] #root .exploration-saved-view-empty {
   color: #706657;
 }
 
@@ -6020,7 +6325,6 @@ html[data-skin='matrix']
   #root
   :is(
     .exploration-saved-views input,
-    .exploration-saved-views select,
     .exploration-saved-views button,
     .exploration-map-help summary,
     .exploration-map-help > div
@@ -6028,6 +6332,26 @@ html[data-skin='matrix']
   border-color: #176b34;
   border-radius: 0;
   background: rgb(1 8 3 / 96%);
+  color: #aaffbf;
+}
+
+html[data-skin='matrix'] #root .exploration-saved-view-suggestions {
+  border-color: #176b34;
+  border-radius: 0;
+  background: rgb(1 8 3 / 96%);
+}
+
+html[data-skin='matrix'] #root .exploration-saved-view-option {
+  background: transparent;
+}
+
+html[data-skin='matrix'] #root .exploration-saved-view-option:hover,
+html[data-skin='matrix'] #root .exploration-saved-view-option.is-active {
+  border-color: #176b34;
+  background: rgb(0 46 16 / 96%);
+}
+
+html[data-skin='matrix'] #root .exploration-saved-view-empty {
   color: #aaffbf;
 }
 
@@ -7187,6 +7511,19 @@ html[data-skin='matrix']
   transition:
     opacity 100ms ease,
     transform 100ms ease;
+}
+
+.app-button-tooltip kbd {
+  display: inline-block;
+  margin-left: 9px;
+  padding: 2px 6px;
+  border: 1px solid rgb(150 181 211 / 55%);
+  border-radius: 4px;
+  background: rgb(126 178 218 / 13%);
+  color: #a9d6f7;
+  font: inherit;
+  font-weight: 700;
+  white-space: nowrap;
 }
 
 .app-button-tooltip.visible {
@@ -8405,7 +8742,10 @@ html[data-skin='minimal']
   cursor: pointer;
 }
 
-.country-comparator-field-suggestions button:hover {
+.country-comparator-field-suggestions button:hover,
+.country-comparator-field-suggestions button.is-active {
+  outline: 2px solid #80b7df;
+  outline-offset: -2px;
   background: #263b50;
 }
 
@@ -8481,6 +8821,36 @@ html[data-skin='minimal']
 
 .country-comparator-suggestions button:hover {
   background: #263b50;
+}
+
+.country-comparator-suggestions button.is-active {
+  outline: 2px solid #80b7df;
+  outline-offset: -2px;
+  background: #263b50;
+}
+
+.country-comparator-suggestions button.is-pending {
+  background: #26483f;
+}
+
+.country-comparator-keyboard-help {
+  grid-column: 2;
+  margin: -4px 0 0;
+  color: #8298ad;
+  font-size: 11px;
+  line-height: 1.5;
+}
+
+.country-comparator-pending-commit {
+  grid-column: 2;
+  justify-self: start;
+  min-height: 34px;
+  padding: 6px 10px;
+  border: 1px solid #568c76;
+  border-radius: 6px;
+  background: #203b35;
+  color: #d5eee3;
+  cursor: pointer;
 }
 
 .country-comparator-suggestions button span:nth-of-type(1) {
@@ -9847,7 +10217,7 @@ html[data-skin='matrix']
   bottom: 12px;
   left: 12px;
   display: grid;
-  grid-template-columns: auto auto;
+  grid-template-columns: repeat(3, auto);
   gap: 3px 14px;
   min-width: 190px;
   padding: 8px 10px;
@@ -9864,6 +10234,10 @@ html[data-skin='matrix']
 
 .map-coordinate-readout span {
   color: #e0eaf3;
+}
+
+.map-coordinate-readout .map-zoom-readout {
+  white-space: nowrap;
 }
 
 .map-coordinate-readout i {
@@ -9921,6 +10295,11 @@ html[data-skin='matrix']
     min-width: 180px;
     padding: 6px 8px;
     font-size: 9px;
+    grid-template-columns: repeat(2, auto);
+  }
+
+  .map-coordinate-readout .map-zoom-readout {
+    grid-column: 1 / -1;
   }
 }
 

@@ -77,7 +77,12 @@ export function QuizCountryStudyView({
 
         <div className="exploration-header-actions">
           <SkinSelector compact />
-          <button className="home-back-button" type="button" onClick={onOpenStatistics}>
+          <button
+            className="home-back-button"
+            type="button"
+            data-shortcut-action="app.mode.statistics"
+            onClick={onOpenStatistics}
+          >
             {t('Statistiques')}
           </button>
           <button className="quiz-study-return-button" type="button" onClick={onReturnToQuiz}>

@@ -919,7 +919,18 @@
         {
           "id": "textiles",
           "label": "Textile et habillement",
-          "icon": "🧵"
+          "icon": "🧵",
+          "overview": {
+            "fr": "Au Maroc, cette filière associe notamment les tanneries, la maroquinerie, les vêtements en cuir et la fabrication de chaussures.",
+            "en": "In Morocco, this industry notably combines tanneries, leather goods, leather clothing, and footwear manufacturing.",
+            "es": "En Marruecos, este sector reúne especialmente curtidurías, marroquinería, prendas de cuero y fabricación de calzado."
+          },
+          "sources": [
+            {
+              "name": "Ministère marocain de l’Industrie et du Commerce — secteur du cuir",
+              "url": "https://mcinet.gov.ma/fr/content/industrie/secteurs-industriels/cuir"
+            }
+          ]
         },
         {
           "id": "construction",

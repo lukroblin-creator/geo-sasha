@@ -1,0 +1,342 @@
+.settings-shortcut-board-trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5em;
+  justify-self: start;
+  border: 1px solid currentColor;
+  border-radius: 6px;
+  padding: 5px 10px;
+  background: transparent;
+  font: inherit;
+  font-size: 12px;
+  color: inherit;
+  cursor: pointer;
+}
+.settings-shortcut-board-trigger span {
+  font-size: 1.45em;
+  line-height: 1;
+}
+.shortcut-board {
+  --board-bg: #15212d;
+  --board-panel: #101b26;
+  --board-text: #e2edf5;
+  --board-muted: #aec0ce;
+  --board-line: #41556a;
+  --board-button: #202f3e;
+  --board-bound: #294a61;
+  --board-accent: #96ceee;
+  width: min(1280px, calc(100vw - 32px));
+  max-width: none;
+  max-height: calc(100dvh - 40px);
+  height: fit-content;
+  margin: auto;
+  padding: 0;
+  overflow: auto;
+  overscroll-behavior: contain;
+  box-sizing: border-box;
+  border: 1px solid var(--board-line);
+  border-radius: 14px;
+  background: var(--board-bg);
+  color: var(--board-text);
+  font: inherit;
+  text-align: start;
+  box-shadow: 0 24px 90px rgb(0 0 0 / 47%);
+}
+.shortcut-board::backdrop {
+  background: rgb(4 9 15 / 69%);
+}
+.shortcut-board-body {
+  padding: clamp(12px, 2vw, 26px);
+}
+.shortcut-board-header,
+.shortcut-board-toolbar,
+.shortcut-board-modifiers,
+.shortcut-board-legend,
+.shortcut-board-legend span,
+.shortcut-board-commands li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.shortcut-board-header,
+.shortcut-board-toolbar,
+.shortcut-board-commands li {
+  justify-content: space-between;
+}
+.shortcut-board-header,
+.shortcut-board-toolbar {
+  flex-wrap: wrap;
+}
+.shortcut-board-dialog[open] {
+  display: block;
+}
+.shortcut-board h2,
+.shortcut-board h3,
+.shortcut-board p,
+.shortcut-board ul {
+  margin: 0;
+}
+.shortcut-board-header h2 {
+  font-size: clamp(18px, 2.3vw, 24px);
+  font-weight: 650;
+}
+.shortcut-board h3 {
+  color: var(--board-muted);
+  font-size: 13px;
+  font-weight: 600;
+  margin-bottom: 12px;
+}
+.shortcut-board ul {
+  list-style: none;
+  padding: 0;
+}
+.shortcut-board button,
+.shortcut-board select {
+  font: inherit;
+  font-size: 12px;
+  color: var(--board-text);
+  background: var(--board-button);
+  border: 1px solid var(--board-line);
+  border-radius: 6px;
+  cursor: pointer;
+}
+.shortcut-board button:focus-visible,
+.shortcut-board select:focus-visible {
+  outline: 2px solid var(--board-accent);
+  outline-offset: 2px;
+}
+.shortcut-board-header button {
+  font-size: 22px;
+  width: 34px;
+  height: 34px;
+  line-height: 1;
+}
+.shortcut-board-toolbar {
+  gap: 12px;
+  margin-top: 20px;
+}
+.shortcut-board-modifiers {
+  flex-wrap: wrap;
+}
+.shortcut-board-modifiers button,
+.shortcut-board select {
+  padding: 6px 10px;
+  min-height: 34px;
+}
+.shortcut-board-modifiers button[aria-pressed='true'] {
+  color: var(--board-accent);
+  border-color: var(--board-accent);
+  background: var(--board-bound);
+}
+.shortcut-board .shortcut-board-help {
+  color: var(--board-muted);
+  font-size: 12px;
+  margin: 12px 0;
+}
+.shortcut-board-scroll {
+  overflow-x: auto;
+  overscroll-behavior-inline: contain;
+  border-radius: 8px;
+  background: var(--board-panel);
+  border: 1px solid var(--board-line);
+  padding: 12px;
+}
+.shortcut-board-geometry {
+  display: grid;
+  grid-template-columns: minmax(0, 15fr) minmax(0, 3fr) minmax(0, 4fr);
+  gap: clamp(8px, 1.1vw, 16px);
+  min-width: 750px;
+}
+.shortcut-board-main,
+.shortcut-board-navigation,
+.shortcut-board-keypad {
+  display: grid;
+  grid-template-rows: repeat(6, clamp(32px, 3.35vw, 47px));
+  gap: 5px;
+}
+.shortcut-board-row {
+  display: flex;
+  gap: 4px;
+  min-width: 0;
+}
+.shortcut-board .shortcut-board-key {
+  position: relative;
+  display: grid;
+  align-content: start;
+  text-align: left;
+  padding: 4px;
+  min-width: 0;
+  flex: 1 1 0;
+  font-size: clamp(10px, 0.95vw, 14px);
+  line-height: 1.1;
+  font-family: ui-monospace, monospace;
+  border-radius: 4px;
+  box-shadow: inset 0 -2px 0 rgb(0 0 0 / 14%);
+}
+.shortcut-board-key small {
+  position: absolute;
+  right: 4px;
+  bottom: 3px;
+  font-size: 9px;
+  color: var(--board-muted);
+}
+.shortcut-board-key i,
+.shortcut-board-legend i.assigned::after {
+  display: block;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--board-accent);
+}
+.shortcut-board-key i {
+  position: absolute;
+  bottom: 4px;
+  left: 4px;
+}
+.shortcut-board .shortcut-board-key[data-assigned='true'],
+.shortcut-board-legend i.assigned {
+  background: var(--board-bound);
+  border-color: var(--board-accent);
+}
+.shortcut-board .shortcut-board-key[aria-pressed='true'] {
+  outline: 2px solid var(--board-text);
+  outline-offset: -2px;
+}
+.shortcut-board .shortcut-board-key:hover {
+  border-color: var(--board-text);
+}
+.shortcut-board .shortcut-board-key[data-key-code='Space'] {
+  flex: 6;
+}
+.shortcut-board
+  .shortcut-board-key:is(
+    [data-key-code='Backspace'],
+    [data-key-code='Enter'],
+    [data-key-code='ShiftLeft'],
+    [data-key-code='ShiftRight']
+  ) {
+  flex: 1.8;
+}
+.shortcut-board .shortcut-board-key:is([data-key-code='CapsLock'], [data-key-code='Tab']) {
+  flex: 1.45;
+}
+.shortcut-board-navigation .shortcut-board-row:nth-child(4) {
+  grid-row: 5;
+  justify-content: center;
+}
+.shortcut-board-navigation .shortcut-board-row:nth-child(4) button {
+  flex: 0 1 calc((100% - 8px) / 3);
+}
+.shortcut-board-navigation .shortcut-board-row:last-child {
+  grid-row: 6;
+}
+.shortcut-board-keypad .shortcut-board-row:last-child {
+  width: 75%;
+}
+.shortcut-board-keypad [data-key-code='Numpad0'] {
+  flex: 2;
+}
+.shortcut-board-legend {
+  flex-wrap: wrap;
+  gap: 16px;
+  color: var(--board-muted);
+  font-size: 12px;
+  margin: 9px 0 18px;
+}
+.shortcut-board-legend i {
+  position: relative;
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  background: var(--board-button);
+  border: 1px solid var(--board-line);
+  border-radius: 3px;
+}
+.shortcut-board-legend i.assigned::after {
+  content: '';
+  position: absolute;
+  top: 3px;
+  left: 3px;
+}
+.shortcut-board-details {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 2fr);
+  gap: 12px;
+}
+.shortcut-board-details section {
+  border: 1px solid var(--board-line);
+  background: var(--board-panel);
+  border-radius: 8px;
+  padding: 14px;
+}
+.shortcut-board-details section:first-child li,
+.shortcut-board-details section:first-child p {
+  margin-top: 10px;
+  font-size: 14px;
+}
+.shortcut-board-details small {
+  display: block;
+  font-size: 11px;
+  color: var(--board-muted);
+}
+.shortcut-board-details kbd {
+  display: inline-block;
+  padding: 3px 7px;
+  border: 1px solid var(--board-line);
+  background: var(--board-button);
+  border-radius: 4px;
+  color: var(--board-text);
+  font-size: 12px;
+  line-height: 1.35;
+}
+.shortcut-board-details h3 span {
+  font-size: 11px;
+  margin-left: 4px;
+  color: var(--board-accent);
+}
+.shortcut-board-commands {
+  max-height: 150px;
+  overflow: auto;
+}
+.shortcut-board-commands li {
+  gap: 12px;
+  padding: 5px 0;
+  border-top: 1px solid var(--board-line);
+  font-size: 13px;
+}
+.shortcut-board-commands kbd {
+  flex: none;
+}
+html[data-skin='minimal'] .shortcut-board {
+  --board-bg: #f9f8f4;
+  --board-panel: #fff;
+  --board-text: #22221e;
+  --board-muted: #55564e;
+  --board-line: #c1c1b7;
+  --board-button: #efece6;
+  --board-bound: #ded7bd;
+  --board-accent: #615328;
+  color-scheme: light;
+}
+html[data-skin='matrix'] .shortcut-board {
+  --board-bg: #051109;
+  --board-panel: #020b05;
+  --board-text: #bdf8c9;
+  --board-muted: #84b991;
+  --board-line: #315b3b;
+  --board-button: #112619;
+  --board-bound: #124c29;
+  --board-accent: #59ec89;
+}
+@media (max-width: 720px) {
+  .shortcut-board {
+    width: calc(100vw - 12px);
+    max-height: calc(100dvh - 16px);
+  }
+  .shortcut-board-details {
+    grid-template-columns: 1fr;
+  }
+  .shortcut-board-modifiers {
+    gap: 4px;
+  }
+}

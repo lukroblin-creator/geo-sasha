@@ -135,12 +135,34 @@ export function isPointInsideScreenRing(point: ScreenPoint, ring: ScreenPoint[])
   return inside
 }
 
-export function getTinyTerritoryHitRadius(zoom: number): number {
+export function getTinyTerritoryHitRadius(
+  zoom: number,
+  surroundedByLargeCountries = false
+): number {
   // Tiny territories need a larger target at world scale. Exact geographic
   // containment is resolved first, so this halo only helps where the map
   // renderer has reduced or omitted the small polygon.
   const zoomProgress = Math.max(0, Math.min(1, zoom / 6))
-  return 14 - zoomProgress * 10
+  const standardRadius = 14 - zoomProgress * 10
+  if (!surroundedByLargeCountries) return standardRadius
+
+  // Enclaves and other small territories with only large land neighbors can
+  // safely use a wider target: large countries are never selected outside
+  // their actual geometry.
+  const expandedZoomProgress = Math.max(0, Math.min(1, zoom / 8))
+  return Math.max(standardRadius, 24 - expandedZoomProgress * 16)
+}
+
+export function hasOnlyLargeLandNeighbors(
+  neighborAreasKm2: readonly (number | null)[],
+  largeCountryAreaKm2 = 20_000
+): boolean {
+  return (
+    neighborAreasKm2.length > 0 &&
+    neighborAreasKm2.every(
+      (areaKm2) => areaKm2 !== null && Number.isFinite(areaKm2) && areaKm2 > largeCountryAreaKm2
+    )
+  )
 }
 
 export function getCountryFeatureHit(
@@ -238,30 +260,61 @@ export function chooseCountryFeatureAtPoint<T extends CountryHitFeature>(
   point: ScreenPoint,
   candidates: T[],
   directFeature: T | undefined,
-  getAreaKm2: (feature: T) => number | null
+  getAreaKm2: (feature: T) => number | null,
+  getHitRadius?: (feature: T) => number,
+  isExpandedHitTarget?: (feature: T) => boolean
 ): T | undefined {
   let nearest: { feature: T; distance: number } | null = null
   let nearestTinyTerritory: { feature: T; distance: number } | null = null
   let nearestExact: { feature: T; effectiveSize: number } | null = null
+  let nearestExactTinyTerritory: { feature: T; effectiveSize: number } | null = null
+  let nearestExpandedTinyTerritory: { feature: T; distance: number } | null = null
 
   for (const feature of candidates) {
     if (!isCountryFillFeature(feature)) continue
-    const hit = getCountryFeatureHit(map, feature, point, getAreaKm2(feature))
+    const hit = getCountryFeatureHit(
+      map,
+      feature,
+      point,
+      getAreaKm2(feature),
+      getHitRadius?.(feature)
+    )
     if (!hit) continue
     if (hit.distance === 0 && (!nearestExact || hit.effectiveSize < nearestExact.effectiveSize)) {
       nearestExact = { feature, effectiveSize: hit.effectiveSize }
     }
+    if (
+      hit.distance === 0 &&
+      hit.isTinyTerritory &&
+      (!nearestExactTinyTerritory || hit.effectiveSize < nearestExactTinyTerritory.effectiveSize)
+    ) {
+      nearestExactTinyTerritory = { feature, effectiveSize: hit.effectiveSize }
+    }
     if (hit.isTinyTerritory) {
       if (!nearestTinyTerritory || hit.distance < nearestTinyTerritory.distance) {
         nearestTinyTerritory = { feature, distance: hit.distance }
+      }
+      if (
+        hit.distance > 0 &&
+        isExpandedHitTarget?.(feature) &&
+        (!nearestExpandedTinyTerritory || hit.distance < nearestExpandedTinyTerritory.distance)
+      ) {
+        nearestExpandedTinyTerritory = { feature, distance: hit.distance }
       }
     } else if (!nearest || hit.distance < nearest.distance) {
       nearest = { feature, distance: hit.distance }
     }
   }
 
-  // Real containment wins over the expanded halo. If the low-resolution
-  // rendered country covers a detailed neighbor, use the smallest exact
-  // geographic polygon under the cursor.
-  return nearestExact?.feature ?? directFeature ?? nearestTinyTerritory?.feature ?? nearest?.feature
+  // Exact small-country containment always wins. A safe expanded target can
+  // overlap only a narrow edge of a large neighbor; all other exact land hits
+  // keep priority over the ordinary small-country halo.
+  return (
+    nearestExactTinyTerritory?.feature ??
+    nearestExpandedTinyTerritory?.feature ??
+    nearestExact?.feature ??
+    directFeature ??
+    nearestTinyTerritory?.feature ??
+    nearest?.feature
+  )
 }

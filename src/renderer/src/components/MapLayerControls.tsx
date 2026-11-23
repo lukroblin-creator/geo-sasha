@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useLanguage } from '../data/i18n'
 
 export type MapLayerControlItem = {
@@ -34,11 +34,34 @@ export function MapLayerControls({
   const { t } = useLanguage()
   const [openLayerId, setOpenLayerId] = useState<string | null>(null)
 
+  useEffect(() => {
+    if (!openLayerId) return
+
+    const closeWhenClickingElsewhere = (event: PointerEvent): void => {
+      const target = event.target
+      if (!(target instanceof Element)) return
+      const clickedControl = target.closest<HTMLElement>('[data-map-layer-control-id]')
+      if (clickedControl?.dataset.mapLayerControlId !== openLayerId) setOpenLayerId(null)
+    }
+
+    const closeWithEscape = (event: KeyboardEvent): void => {
+      if (event.key === 'Escape') setOpenLayerId(null)
+    }
+
+    document.addEventListener('pointerdown', closeWhenClickingElsewhere, true)
+    document.addEventListener('keydown', closeWithEscape, true)
+    return () => {
+      document.removeEventListener('pointerdown', closeWhenClickingElsewhere, true)
+      document.removeEventListener('keydown', closeWithEscape, true)
+    }
+  }, [openLayerId])
+
   return (
     <div className="map-layer-controls-list">
       {layers.map((layer) => (
         <div
           key={layer.id}
+          data-map-layer-control-id={layer.id}
           className={`map-layer-control${layer.enabled ? ' is-enabled' : ''}${layer.disabled ? ' is-disabled' : ''}`}
           title={layer.title ? t(layer.title) : undefined}
         >

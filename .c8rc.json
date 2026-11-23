@@ -1,0 +1,7 @@
+{
+  "all": true,
+  "include": ["src/renderer/src/**/*.{ts,tsx}"],
+  "exclude": ["src/renderer/src/**/*.d.ts"],
+  "reporter": ["text", "json-summary", "html"],
+  "reports-dir": "coverage"
+}

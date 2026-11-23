@@ -1,3 +1,4 @@
+import { useKeyboardShortcut } from '../data/keyboardShortcuts'
 import { useState } from 'react'
 import WorldMap from './WorldMapLoader'
 import { getFlagImageSource } from '../data/quiz/flagAssets'
@@ -61,6 +62,13 @@ export function CountryKnowledgeQuizView({
     : null
   const questionSettled = session.answerCorrect === true || session.answerRevealed
   useAdvanceQuestionOnEnter(questionSettled && !session.completed, onNext)
+  useKeyboardShortcut('quiz.stop', onStop)
+  useKeyboardShortcut('quiz.restart', onRestart, session.completed)
+  useKeyboardShortcut(
+    'quiz.revealAnswer',
+    onRevealAnswer,
+    Boolean(question) && !questionSettled && !session.completed
+  )
   const completedCount = session.questionIndex + (questionSettled ? 1 : 0)
   const progress = total ? (completedCount / total) * 100 : 0
 
@@ -90,10 +98,20 @@ export function CountryKnowledgeQuizView({
         </div>
         <div className="statistics-actions">
           <SkinSelector compact />
-          <button className="home-back-button" type="button" onClick={onOpenStatistics}>
+          <button
+            className="home-back-button"
+            type="button"
+            data-shortcut-action="app.mode.statistics"
+            onClick={onOpenStatistics}
+          >
             {t('Statistiques')}
           </button>
-          <button className="home-back-button" type="button" onClick={onStop}>
+          <button
+            className="home-back-button"
+            type="button"
+            data-shortcut-action="quiz.stop"
+            onClick={onStop}
+          >
             {t('Arrêter le quiz')}
           </button>
           <button className="home-back-button" type="button" onClick={onToggleFullscreen}>
@@ -145,7 +163,12 @@ export function CountryKnowledgeQuizView({
               </p>
               <QuizReview session={session} onSelectCountry={setReviewAlpha2} />
               <div className="country-knowledge-complete-actions">
-                <button className="quiz-start-button" type="button" onClick={onRestart}>
+                <button
+                  className="quiz-start-button"
+                  type="button"
+                  data-shortcut-action="quiz.restart"
+                  onClick={onRestart}
+                >
                   {t('Rejouer ce pays')}
                 </button>
                 <button className="home-back-button" type="button" onClick={onStop}>
@@ -236,12 +259,22 @@ export function CountryKnowledgeQuizView({
 
               <div className="country-knowledge-actions">
                 {!session.answerCorrect && !session.answerRevealed && (
-                  <button className="quiz-reveal-button" type="button" onClick={onRevealAnswer}>
+                  <button
+                    className="quiz-reveal-button"
+                    type="button"
+                    data-shortcut-action="quiz.revealAnswer"
+                    onClick={onRevealAnswer}
+                  >
                     {t('Voir la réponse')}
                   </button>
                 )}
                 {questionSettled && (
-                  <button className="quiz-next-button" type="button" onClick={onNext}>
+                  <button
+                    className="quiz-next-button"
+                    type="button"
+                    data-shortcut-action="quiz.nextQuestion"
+                    onClick={onNext}
+                  >
                     {t(
                       session.questionIndex === total - 1 ? 'Voir le résultat' : 'Question suivante'
                     )}

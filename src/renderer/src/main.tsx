@@ -7,13 +7,16 @@ import App from './App'
 import { LanguageProvider } from './data/i18n'
 import { SkinProvider } from './data/skin'
 import { MatrixAmbientLayer } from './components/MatrixAmbientLayer'
+import { KeyboardShortcutProvider } from './data/keyboardShortcuts'
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <LanguageProvider>
       <SkinProvider>
-        <MatrixAmbientLayer />
-        <App />
+        <KeyboardShortcutProvider>
+          <MatrixAmbientLayer />
+          <App />
+        </KeyboardShortcutProvider>
       </SkinProvider>
     </LanguageProvider>
   </StrictMode>

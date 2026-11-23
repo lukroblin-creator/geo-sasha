@@ -7,6 +7,7 @@ import {
   getKeyboardActivationFeature,
   getNextCountryFeature
 } from '../data/geography/countryHitTesting'
+import { useKeyboardShortcuts } from '../data/keyboardShortcuts'
 import { normalizeSourceFeatureId } from '../data/geography/sourceFeatureIds'
 import {
   getCountryFeatureAtPoint,
@@ -52,6 +53,7 @@ export function useWorldMapCountrySelection({
   countryClickHandlerRef,
   setHoveredCountry
 }: UseWorldMapCountrySelectionOptions): WorldMapCountrySelectionController {
+  const { hasActiveBinding } = useKeyboardShortcuts()
   const hoverPointerRef = useRef<{ x: number; y: number } | null>(null)
   const keyboardPreselectionRef = useRef<{
     entityId: string | null
@@ -143,10 +145,18 @@ export function useWorldMapCountrySelection({
     const handleCountryKeyboardNavigation = (event: KeyboardEvent): void => {
       if (perspectiveCorrectionEnabled || opacityMaskPlacement) return
       const pointer = hoverPointerRef.current
-      if (!pointer) return
+      if (!pointer || event.defaultPrevented || event.isComposing) return
+      const target = event.target instanceof Element ? event.target : null
+      if (
+        target?.closest('dialog[open], [role="dialog"], .settings-menu-root') ||
+        (target?.closest('button, input, textarea, select, [contenteditable="true"]') &&
+          !target.matches('.map-search-input')) ||
+        hasActiveBinding(event)
+      )
+        return
 
       if (event.key === 'Enter') {
-        const target = event.target instanceof HTMLElement ? event.target : null
+        if (event.altKey || event.ctrlKey || event.shiftKey) return
         const isSubmittingSearch =
           target?.matches('.map-search-input') && searchIsOpen && searchQuery.trim().length > 0
         const preselectedFeature = keyboardPreselectionFeatureRef.current
@@ -167,6 +177,8 @@ export function useWorldMapCountrySelection({
         countryClickHandlerRef.current(syntheticClick)
         return
       }
+
+      if (target?.matches('.map-search-input')) return
 
       if (
         event.key === 'Shift' &&
@@ -272,6 +284,7 @@ export function useWorldMapCountrySelection({
     countryClickHandlerRef,
     clearKeyboardPreselection,
     handleCountryLeave,
+    hasActiveBinding,
     map,
     opacityMaskPlacement,
     perspectiveCorrectionEnabled,

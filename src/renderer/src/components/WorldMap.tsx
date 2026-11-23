@@ -43,6 +43,11 @@ import { MapFlagOverlay } from './MapFlagOverlay'
 import { MapResourceOverlay } from './MapResourceOverlay'
 import { WorldMapCameraControls } from './WorldMapCameraControls'
 import { getResourceIndustryFactsForMapFeature } from '../data/geography/resources'
+import {
+  formatShortcutBinding,
+  useKeyboardShortcut,
+  useKeyboardShortcuts
+} from '../data/keyboardShortcuts'
 import { getExplorationDetails } from '../data/geography/exploration'
 import { fullMapLayerDensities, type MapLayerDensities } from '../data/geography/mapLayerDensity'
 import earthDayTexture from '../assets/map-layers/earth-day-mercator.jpg'
@@ -54,7 +59,7 @@ import {
   GLOBE_TRANSITION_START_ZOOM,
   isGlobeLabelVisible
 } from './mapProjectionUtils'
-import { useLanguage } from '../data/i18n'
+import { useLanguage, type AppLanguage } from '../data/i18n'
 import { useSkin } from '../data/skin'
 import {
   countryFillLayerIds,
@@ -97,6 +102,8 @@ import {
   type MapTextureAssetKey,
   type RasterOpacityMask
 } from './worldMapOpacityMasks'
+import { globeEarthTextureCoordinates } from './worldMapPolarTexture'
+import { useWorldMapGlobeTexture } from './useWorldMapGlobeTexture'
 
 import {
   getEntityDisplayName,
@@ -309,6 +316,7 @@ const earthTextureCoordinates: [
 ]
 const transparentMapLayerImage =
   'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+jUw8AAAAASUVORK5CYII='
+const worldMapBaseZoom = 1.5
 
 type LabelProperties = {
   name: string
@@ -744,6 +752,7 @@ function WorldMap({
   onCountrySelected
 }: WorldMapProps): JSX.Element {
   const { language, t } = useLanguage()
+  const { bindings } = useKeyboardShortcuts()
   const { skin } = useSkin()
   const isMinimalSkin = skin === 'minimal'
   const isMatrixSkin = skin === 'matrix'
@@ -892,6 +901,27 @@ function WorldMap({
   const [cameraFreeMode, setCameraFreeMode] = useState(false)
   const [cameraPanMode, setCameraPanMode] = useState(false)
   const [cameraControlsOpen, setCameraControlsOpen] = useState(false)
+  const topographyRasterSourceUrl = showTopography
+    ? maskedRasterUrls.topography?.sourceUrl === earthTopographyTexture
+      ? maskedRasterUrls.topography.url
+      : earthTopographyTexture
+    : null
+  const satelliteRasterSourceUrl = realLayer
+    ? maskedRasterUrls.texture?.sourceUrl === satelliteTexture
+      ? maskedRasterUrls.texture.url
+      : satelliteTexture
+    : null
+  const globeTextureActive = globeMode || cameraOrbitMode
+  const globeTopographyTexture = useWorldMapGlobeTexture(
+    topographyRasterSourceUrl,
+    'earth-topography-mercator',
+    globeTextureActive
+  )
+  const globeSatelliteTexture = useWorldMapGlobeTexture(
+    satelliteRasterSourceUrl,
+    satelliteTextureAssetKey ?? 'earth-day-mercator',
+    globeTextureActive
+  )
   const [cameraRotation, setCameraRotation] = useState<CameraRotation>({
     yaw: 0,
     pitch: 0,
@@ -2034,33 +2064,52 @@ function WorldMap({
     mapInstance
   ])
 
-  useEffect(() => {
-    if (!cameraOrbitMode) return
-
-    const handleCameraShortcut = (event: KeyboardEvent): void => {
-      if (event.metaKey || event.ctrlKey || event.altKey || event.repeat) return
-      const target = event.target as HTMLElement | null
-      if (
-        target?.isContentEditable ||
-        target?.closest('input, textarea, select, [contenteditable="true"]')
-      )
-        return
-
-      const key = event.key.toLowerCase()
-      if (key === 'd') {
-        event.preventDefault()
-        event.stopPropagation()
-        setCameraPanMode(true)
-      } else if (key === 'c') {
-        event.preventDefault()
-        event.stopPropagation()
-        setCameraPanMode(false)
+  useKeyboardShortcut('map.panTool', () => setCameraPanMode(true), cameraOrbitMode)
+  useKeyboardShortcut('map.selectionCursor', () => setCameraPanMode(false), cameraOrbitMode)
+  useKeyboardShortcut('map.toggleCameraOrbit', toggleCameraOrbitMode, allowCameraOrbit)
+  useKeyboardShortcut('map.toggleCameraControls', toggleCameraControls, allowCameraOrbit)
+  useKeyboardShortcut('map.recenterCameraAnchor', resetCameraAnchorToEarthCenter, cameraOrbitMode)
+  useKeyboardShortcut(
+    'map.zoomIn',
+    () => mapRef.current?.getMap().zoomIn({ duration: 250 }),
+    mapInstance !== null
+  )
+  useKeyboardShortcut(
+    'map.zoomOut',
+    () => mapRef.current?.getMap().zoomOut({ duration: 250 }),
+    mapInstance !== null
+  )
+  useKeyboardShortcut(
+    'map.placeMaskAtCenter',
+    () => {
+      if (!opacityMaskPlacement || !mapInstance) return
+      const center = mapInstance.getCenter()
+      const supportsMultiSelection =
+        opacityMaskPlacementKind === 'country' || opacityMaskPlacementKind === 'continent'
+      if (supportsMultiSelection) {
+        const country = getCountryFeatureAtPoint(mapInstance, mapInstance.project(center))
+        const id = country?.properties?.sourceId
+        if (typeof id !== 'string' && typeof id !== 'number') return
+        setOpacityMaskMultiSelectionActive(true)
+        onOpacityMaskPlace?.([center.lng, center.lat], id, true)
+      } else {
+        onOpacityMaskPlace?.([center.lng, center.lat], undefined, false)
       }
-    }
-
-    window.addEventListener('keydown', handleCameraShortcut, true)
-    return () => window.removeEventListener('keydown', handleCameraShortcut, true)
-  }, [cameraOrbitMode])
+      mapInstance.getCanvas().focus()
+    },
+    opacityMaskPlacement && Boolean(onOpacityMaskPlace) && mapInstance !== null
+  )
+  useKeyboardShortcut(
+    'map.confirmMaskSelection',
+    () => onOpacityMaskSelectionConfirm?.(),
+    opacityMaskPlacement &&
+      (opacityMaskPlacementKind === 'country' || opacityMaskPlacementKind === 'continent') &&
+      opacityMaskSelectionCount > 0
+  )
+  useKeyboardShortcut('navigation.focusSearch', () => {
+    const searchInput = document.querySelector<HTMLInputElement>('.map-search-input')
+    if (searchInput?.getClientRects().length) searchInput.focus()
+  })
 
   useEffect(
     () => () => {
@@ -2685,6 +2734,17 @@ function WorldMap({
     setPerspectiveAdjusting(false)
     setPerspectiveCorrectionEnabled(false)
   }
+
+  const toggleMapProjection = (): void => {
+    if (cameraOrbitMode) {
+      toggleCameraOrbitMode()
+      if (globeMode) onToggleGlobeMode()
+    } else {
+      if (!globeMode) resetPerspectiveCorrection()
+      onToggleGlobeMode()
+    }
+  }
+  useKeyboardShortcut('map.toggleGlobe', toggleMapProjection)
 
   const handlePerspectiveMouseDown = (event: MapLayerMouseEvent): void => {
     if (!perspectiveCorrectionEnabled || !mapInstance || globeMode) return
@@ -3764,21 +3824,13 @@ function WorldMap({
       >
         {/* Recréer la source raster garantit que la texture WebGL reçoit aussi son alpha masqué. */}
         <Source
-          key={`earth-topography:${
-            maskedRasterUrls.topography?.sourceUrl === earthTopographyTexture
-              ? maskedRasterUrls.topography.url
-              : 'base'
-          }`}
+          key={`earth-topography:${globeTopographyTexture ?? topographyRasterSourceUrl ?? 'base'}`}
           id="earth-topography"
           type="image"
-          url={
-            showTopography
-              ? maskedRasterUrls.topography?.sourceUrl === earthTopographyTexture
-                ? maskedRasterUrls.topography.url
-                : earthTopographyTexture
-              : transparentMapLayerImage
+          url={globeTopographyTexture ?? topographyRasterSourceUrl ?? transparentMapLayerImage}
+          coordinates={
+            globeTopographyTexture ? globeEarthTextureCoordinates : earthTextureCoordinates
           }
-          coordinates={earthTextureCoordinates}
         >
           <Layer
             id="earth-topography-raster"
@@ -3795,18 +3847,14 @@ function WorldMap({
 
         <Source
           key={`real-earth-imagery:${
-            maskedRasterUrls.texture?.sourceUrl === satelliteTexture
-              ? maskedRasterUrls.texture.url
-              : satelliteTexture
+            globeSatelliteTexture ?? satelliteRasterSourceUrl ?? satelliteTexture
           }`}
           id="real-earth-imagery"
           type="image"
-          url={
-            maskedRasterUrls.texture?.sourceUrl === satelliteTexture
-              ? maskedRasterUrls.texture.url
-              : satelliteTexture
+          url={globeSatelliteTexture ?? satelliteRasterSourceUrl ?? satelliteTexture}
+          coordinates={
+            globeSatelliteTexture ? globeEarthTextureCoordinates : earthTextureCoordinates
           }
-          coordinates={earthTextureCoordinates}
         >
           <Layer
             id="real-earth-imagery-raster"
@@ -4513,12 +4561,45 @@ function WorldMap({
             }
             paint={{
               'circle-radius': [
-                'case',
-                ['any', ...selectedFeatureExpressions],
-                9,
-                ['any', ...hoveredFeatureExpressions],
-                7,
-                0
+                'interpolate',
+                ['linear'],
+                ['zoom'],
+                0,
+                [
+                  'case',
+                  ['any', ...selectedFeatureExpressions],
+                  12,
+                  ['any', ...hoveredFeatureExpressions],
+                  10,
+                  0
+                ],
+                5,
+                [
+                  'case',
+                  ['any', ...selectedFeatureExpressions],
+                  12,
+                  ['any', ...hoveredFeatureExpressions],
+                  10,
+                  0
+                ],
+                8,
+                [
+                  'case',
+                  ['any', ...selectedFeatureExpressions],
+                  10,
+                  ['any', ...hoveredFeatureExpressions],
+                  8,
+                  0
+                ],
+                12,
+                [
+                  'case',
+                  ['any', ...selectedFeatureExpressions],
+                  8,
+                  ['any', ...hoveredFeatureExpressions],
+                  6,
+                  0
+                ]
               ] as NonNullable<CircleLayerSpecification['paint']>['circle-radius'],
               'circle-color': [
                 'case',
@@ -4563,6 +4644,7 @@ function WorldMap({
                 >
                   <button
                     type="button"
+                    data-mask-id={mask.id}
                     className={`map-opacity-mask-handle is-${handle.kind}`}
                     aria-label={t(
                       handle.kind === 'center'
@@ -4583,6 +4665,30 @@ function WorldMap({
                             : 'Modifier la hauteur'
                     )}
                     onClick={(event) => event.stopPropagation()}
+                    aria-keyshortcuts="ArrowUp ArrowDown ArrowLeft ArrowRight"
+                    onKeyDown={(event) => {
+                      const keyMovement: Record<string, [number, number]> = {
+                        ArrowLeft: [-1, 0],
+                        ArrowRight: [1, 0],
+                        ArrowUp: [0, -1],
+                        ArrowDown: [0, 1]
+                      }
+                      const movement = keyMovement[event.key]
+                      if (!movement || !mapInstance) return
+                      event.preventDefault()
+                      event.stopPropagation()
+                      const distance = event.shiftKey ? 10 : 2
+                      const handlePoint = mapInstance.project([handle.longitude, handle.latitude])
+                      const location = mapInstance.unproject([
+                        handlePoint.x + movement[0] * distance,
+                        handlePoint.y + movement[1] * distance
+                      ])
+                      const patch = getOpacityMaskHandlePatch(baseMask, handle, [
+                        location.lng,
+                        location.lat
+                      ])
+                      if (patch) onOpacityMaskGeometryChange?.(baseMask.id, patch)
+                    }}
                     onPointerDown={(event) =>
                       handleOpacityMaskHandlePointerDown(baseMask, handle, event)
                     }
@@ -4606,7 +4712,21 @@ function WorldMap({
                 : t(
                     'Clique sur un territoire pour le choisir, ou maintiens ⌘ ou Ctrl pour en sélectionner plusieurs.'
                   )
-              : t('Clique sur la carte pour placer le masque.')}
+              : t('Clique sur la carte pour placer le centre du masque.')}
+            {bindings['map.placeMaskAtCenter'] && (
+              <>
+                {' '}
+                {t('Placer un masque au centre de la carte')}{' '}
+                <kbd>{formatShortcutBinding(bindings['map.placeMaskAtCenter'])}</kbd>
+              </>
+            )}
+            {opacityMaskSelectionCount > 0 && bindings['map.confirmMaskSelection'] && (
+              <>
+                {' '}
+                {t('Confirmer les territoires du masque')}{' '}
+                <kbd>{formatShortcutBinding(bindings['map.confirmMaskSelection'])}</kbd>
+              </>
+            )}
           </span>
           <kbd>Esc</kbd>
         </div>
@@ -4617,6 +4737,7 @@ function WorldMap({
           <button
             className="map-comparison-action"
             type="button"
+            data-shortcut-action="map.confirmMaskSelection"
             title={t('Valider les territoires sélectionnés pour le masque')}
             aria-label={`${t('Valider la sélection du masque')} (${opacityMaskSelectionCount})`}
             onClick={onOpacityMaskSelectionConfirm}
@@ -4769,18 +4890,11 @@ function WorldMap({
         <button
           className="map-control-button map-projection-control"
           type="button"
+          data-shortcut-action="map.toggleGlobe"
           title={t(globeMode || cameraOrbitMode ? 'Passer au plan' : 'Passer au globe')}
           aria-label={t(globeMode || cameraOrbitMode ? 'Passer au plan' : 'Passer au globe')}
           aria-pressed={globeMode || cameraOrbitMode}
-          onClick={() => {
-            if (cameraOrbitMode) {
-              toggleCameraOrbitMode()
-              if (globeMode) onToggleGlobeMode()
-            } else {
-              if (!globeMode) resetPerspectiveCorrection()
-              onToggleGlobeMode()
-            }
-          }}
+          onClick={toggleMapProjection}
         >
           {globeMode || cameraOrbitMode ? (
             <svg viewBox="0 0 24 24" aria-hidden="true">
@@ -4866,6 +4980,7 @@ function WorldMap({
         <button
           className="map-control-button"
           type="button"
+          data-shortcut-action="map.zoomIn"
           title={t('Zoom avant')}
           aria-label={t('Zoom avant')}
           onClick={() => mapRef.current?.getMap().zoomIn({ duration: 250 })}
@@ -4875,6 +4990,7 @@ function WorldMap({
         <button
           className="map-control-button"
           type="button"
+          data-shortcut-action="map.zoomOut"
           title={t('Zoom arrière')}
           aria-label={t('Zoom arrière')}
           onClick={() => mapRef.current?.getMap().zoomOut({ duration: 250 })}
@@ -5015,7 +5131,7 @@ function WorldMap({
         )}
       </div>
       {quizRevealCard && <div className="quiz-reveal-card-anchor">{quizRevealCard}</div>}
-      {(pointerCoordinates || isMatrixSkin) && (
+      {(pointerCoordinates || isMatrixSkin || mapLoaded) && (
         <div
           className={`map-coordinate-readout${isMatrixSkin ? ' matrix-map-readout' : ''}`}
           aria-live="off"
@@ -5032,14 +5148,50 @@ function WorldMap({
           ) : (
             isMatrixSkin && <span className="matrix-map-readout-idle">SURVOLE LA CARTE</span>
           )}
-          {isMatrixSkin && (
-            <small>
-              PROJ {globeMode || cameraOrbitMode ? 'SPHERE' : 'PLAN'} · Z {mapZoom.toFixed(2)}
-            </small>
-          )}
+          {mapLoaded && <MapZoomScale map={mapInstance} language={language} />}
+          {isMatrixSkin && <small>PROJ {globeMode || cameraOrbitMode ? 'SPHERE' : 'PLAN'}</small>}
         </div>
       )}
     </div>
+  )
+}
+
+function MapZoomScale({
+  map,
+  language
+}: {
+  map: MapLibreMap | null
+  language: AppLanguage
+}): JSX.Element {
+  const [zoom, setZoom] = useState(() => map?.getZoom() ?? worldMapBaseZoom)
+
+  useEffect(() => {
+    if (!map) return
+
+    let animationFrame: number | null = null
+    const updateZoom = (): void => {
+      if (animationFrame !== null) return
+      animationFrame = window.requestAnimationFrame(() => {
+        animationFrame = null
+        setZoom(map.getZoom())
+      })
+    }
+
+    map.on('zoom', updateZoom)
+    updateZoom()
+
+    return () => {
+      map.off('zoom', updateZoom)
+      if (animationFrame !== null) window.cancelAnimationFrame(animationFrame)
+    }
+  }, [map])
+
+  const scale = 2 ** (zoom - worldMapBaseZoom)
+  return (
+    <span className="map-zoom-readout">
+      <i>ZOOM</i>{' '}
+      {scale.toLocaleString(language, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}×
+    </span>
   )
 }
 
