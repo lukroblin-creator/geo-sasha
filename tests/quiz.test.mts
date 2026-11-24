@@ -9,10 +9,26 @@ import {
 import {
   advanceQuizSession,
   createQuizSession,
+  finishQuizSessionByTimeout,
   submitQuizAnswer,
-  submitQuizAnswerItems
+  submitQuizAnswerItems,
+  timeoutQuizQuestion
 } from '../src/renderer/src/data/quiz/useQuizSession.ts'
-import { summarizeQuizHistoryQuestions } from '../src/renderer/src/data/quiz/quizHistory.ts'
+import {
+  loadQuizHistory,
+  saveQuizHistoryEntry,
+  summarizeQuizHistoryQuestions
+} from '../src/renderer/src/data/quiz/quizHistory.ts'
+import { isQuizPreset } from '../src/renderer/src/data/quiz/quizPresetValidation.ts'
+import {
+  formatDuration,
+  getElapsedMilliseconds,
+  getQuizConfigurationKey,
+  getRemainingMilliseconds,
+  isQuizTimingSettings,
+  normalizeQuizTiming,
+  noQuizTiming
+} from '../src/renderer/src/data/quiz/quizTiming.ts'
 import { loadQuizProgress, saveCompletedQuiz } from '../src/renderer/src/data/quiz/progress.ts'
 import {
   loadCountryQuizStats,
@@ -196,8 +212,190 @@ test('le résumé d’historique conserve le pays, le résultat et les points', 
     correct: true,
     revealed: false,
     attempts: 2,
-    points: 0.5
+    points: 0.5,
+    status: 'completed'
   })
+})
+
+test('le minuteur de question expire sans accepter de réponse après expiration', (): void => {
+  const session = createQuizSession(['A', 'B'])
+  const expired = timeoutQuizQuestion(session)
+
+  assert.equal(expired.answerTimedOut, true)
+  assert.equal(expired.answerRevealed, true)
+  assert.equal(submitQuizAnswer(expired, true), expired)
+  const advanced = advanceQuizSession(expired)
+  assert.equal(advanced.questionHistory[0].timedOut, true)
+  assert.equal(advanced.questionIndex, 1)
+  assert.equal(advanced.answerTimedOut, false)
+})
+
+test('l’expiration globale conserve le score et marque les questions non atteintes', (): void => {
+  let session = createQuizSession(['A', 'B', 'C'])
+  session = submitQuizAnswer(session, true)
+  session = advanceQuizSession(session)
+  session = submitQuizAnswer(session, false)
+  const expired = finishQuizSessionByTimeout(session)
+
+  assert.equal(expired.completed, true)
+  assert.equal(expired.score, 1)
+  assert.deepEqual(
+    expired.questionHistory.map(({ correct, timedOut, notReached }) => ({
+      correct,
+      timedOut: timedOut ?? false,
+      notReached: notReached ?? false
+    })),
+    [
+      { correct: true, timedOut: false, notReached: false },
+      { correct: false, timedOut: true, notReached: false },
+      { correct: false, timedOut: false, notReached: true }
+    ]
+  )
+})
+
+test('les réglages et calculs de temps sont validés et déterministes', (): void => {
+  assert.equal(
+    isQuizTimingSettings({ mode: 'countdown', scope: 'question', limitSeconds: 30 }),
+    true
+  )
+  assert.equal(
+    isQuizTimingSettings({ mode: 'countdown', scope: 'question', limitSeconds: 2 }),
+    false
+  )
+  assert.deepEqual(normalizeQuizTiming({ mode: 'unknown' }), noQuizTiming)
+  assert.equal(getElapsedMilliseconds(100, 1250), 1150)
+  assert.equal(getRemainingMilliseconds(1200, 1250), 0)
+  assert.equal(formatDuration(65_000, 'fr'), '1:05')
+  assert.equal(
+    getQuizConfigurationKey({ b: 2, a: { y: 4, x: 3 } }),
+    getQuizConfigurationKey({ a: { x: 3, y: 4 }, b: 2 })
+  )
+})
+
+test('les historiques plus anciens sans chrono restent lisibles', (): void => {
+  setLocalStorage({
+    'world-atlas:quiz-history:v1': JSON.stringify([
+      {
+        id: 'old',
+        completedAt: '2026-01-01T00:00:00.000Z',
+        mode: 'flags',
+        score: 1,
+        total: 1,
+        presetId: null,
+        presetName: null,
+        region: 'world',
+        settings: [],
+        questions: []
+      }
+    ])
+  })
+  const [entry] = loadQuizHistory()
+  assert.equal(entry?.id, 'old')
+  assert.equal(entry?.timing, undefined)
+})
+
+test('l’historique reste consultable en mémoire si localStorage échoue', (): void => {
+  setLocalStorage({
+    'world-atlas:quiz-history:v1': JSON.stringify([
+      {
+        id: 'stored',
+        completedAt: '2026-01-01T00:00:00.000Z',
+        mode: 'flags',
+        score: 1,
+        total: 1,
+        presetId: null,
+        presetName: null,
+        region: 'world',
+        settings: [],
+        questions: []
+      }
+    ])
+  })
+  loadQuizHistory()
+  Object.defineProperty(globalThis, 'localStorage', {
+    configurable: true,
+    value: {
+      getItem(): never {
+        throw new Error('storage unavailable')
+      },
+      setItem(): never {
+        throw new Error('storage unavailable')
+      }
+    }
+  })
+
+  const updated = saveQuizHistoryEntry({
+    id: 'memory-only',
+    completedAt: '2026-01-02T00:00:00.000Z',
+    mode: 'flags',
+    score: 1,
+    total: 1,
+    presetId: null,
+    presetName: null,
+    region: 'world',
+    settings: [],
+    questions: []
+  })
+
+  assert.deepEqual(
+    updated.map(({ id }) => id),
+    ['memory-only', 'stored']
+  )
+  assert.deepEqual(loadQuizHistory(), updated)
+  setLocalStorage({ 'world-atlas:quiz-history:v1': JSON.stringify(updated) })
+})
+
+test('un preset valide conserve le minuteur et son périmètre', (): void => {
+  const preset = {
+    id: 'preset-capitales',
+    name: 'Capitales rapides',
+    region: 'europe',
+    questionCount: 10,
+    clues: { countryOnMap: false, flag: false, countryName: true, capital: false },
+    answers: { countryOnMap: false, countryName: false, capital: true, flag: false },
+    timing: { mode: 'countdown', scope: 'question', limitSeconds: 25 }
+  }
+  assert.equal(isQuizPreset(preset, ['world', 'europe'], []), true)
+  assert.equal(
+    isQuizPreset(
+      { ...preset, timing: { ...preset.timing, limitSeconds: 2 } },
+      ['world', 'europe'],
+      []
+    ),
+    false
+  )
+})
+
+test('un historique chronométré garde la configuration de comparaison et son bilan', (): void => {
+  const timing = {
+    settings: { mode: 'countdown', scope: 'session', limitSeconds: 300 },
+    elapsedMilliseconds: 300_000,
+    remainingMilliseconds: 0,
+    expired: true,
+    timedOutQuestions: 1,
+    notReachedQuestions: 2
+  }
+  setLocalStorage({
+    'world-atlas:quiz-history:v1': JSON.stringify([
+      {
+        id: 'timed-out-run',
+        completedAt: '2026-11-23T12:00:00.000Z',
+        mode: 'capitals',
+        score: 4,
+        total: 10,
+        presetId: 'preset-capitales',
+        presetName: 'Capitales rapides',
+        region: 'Europe',
+        settings: ['10 questions', 'Minuteur : partie entière · 300 s'],
+        questions: [],
+        comparisonKey: '{"configuration":"capitals-europe"}',
+        timing
+      }
+    ])
+  })
+  const [entry] = loadQuizHistory()
+  assert.equal(entry?.comparisonKey, '{"configuration":"capitals-europe"}')
+  assert.deepEqual(entry?.timing, timing)
 })
 
 test('la progression sauvegarde les scores séparément par quiz', (): void => {

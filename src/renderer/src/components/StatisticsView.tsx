@@ -10,6 +10,8 @@ import type { QuizMode, QuizProgress } from '../data/quiz/progress'
 import type { CountryQuizStatsByAlpha2 } from '../data/quiz/countryQuizStats'
 import type { QuizHistoryEntry } from '../data/quiz/quizHistory'
 import type { QuizPreset } from '../data/quiz/presets'
+import { formatDuration } from '../data/quiz/quizTiming'
+import { QuizRewardsPanel } from './QuizRewardsPanel'
 import { useLanguage, type AppLanguage } from '../data/i18n'
 import { AppModeSwitcher, type AppPrimaryMode } from './AppModeSwitcher'
 
@@ -99,13 +101,20 @@ export function StatisticsView({
   savedPresets
 }: StatisticsViewProps): React.JSX.Element {
   const { language, t } = useLanguage()
-  const [page, setPage] = useState<'countries' | 'history' | 'preset'>('countries')
+  const [page, setPage] = useState<'countries' | 'history' | 'preset' | 'best-times' | 'rewards'>(
+    'countries'
+  )
   const [selectedPresetKey, setSelectedPresetKey] = useState('')
   const [selectedAlpha2, setSelectedAlpha2] = useState<string | null>(null)
   const [selectedRegion, setSelectedRegion] = useState<QuizRegion | 'all'>('all')
   const [search, setSearch] = useState('')
   const [sort, setSort] = useState<'name' | 'lowest' | 'highest'>('lowest')
   const [showAdvancedStatistics, setShowAdvancedStatistics] = useState(false)
+  const [showPresetTimeChart, setShowPresetTimeChart] = useState(false)
+  const [selectedPresetTimingKey, setSelectedPresetTimingKey] = useState('')
+  const [bestTimeMode, setBestTimeMode] = useState<'all' | 'stopwatch' | 'countdown'>('all')
+  const [bestTimePreset, setBestTimePreset] = useState('all')
+  const [bestTimeConfiguration, setBestTimeConfiguration] = useState('all')
 
   const rows = useMemo(() => getCountryRows(countryStats, language), [countryStats, language])
   const playedRows = rows.filter((country) => country.answered > 0)
@@ -179,34 +188,101 @@ export function StatisticsView({
     : null
   const presetBest = presetPercentages.length ? Math.max(...presetPercentages) : null
   const presetLatest = presetPercentages[presetPercentages.length - 1] ?? null
+  const timedPresetHistory = quizHistory.filter(
+    (entry) =>
+      entry.presetId === activePresetKey &&
+      entry.timing &&
+      entry.timing.settings.mode !== 'none' &&
+      entry.comparisonKey
+  )
+  const presetTimingChoices = [
+    ...new Map(
+      timedPresetHistory.map((entry) => [
+        entry.comparisonKey!,
+        {
+          key: entry.comparisonKey!,
+          label: `${entry.timing!.settings.mode === 'stopwatch' ? t('Chrono') : `${t('Minuteur')} · ${t(entry.timing!.settings.scope === 'question' ? 'Par question' : 'Partie entière')} · ${entry.timing!.settings.limitSeconds} s`} · ${entry.region} · ${entry.settings.join(' · ')}`
+        }
+      ])
+    ).values()
+  ]
+  const activePresetTimingKey = presetTimingChoices.some(
+    ({ key }) => key === selectedPresetTimingKey
+  )
+    ? selectedPresetTimingKey
+    : (presetTimingChoices[0]?.key ?? '')
+  const presetTimeHistory = timedPresetHistory
+    .filter((entry) => entry.comparisonKey === activePresetTimingKey)
+    .sort((first, second) => first.completedAt.localeCompare(second.completedAt))
+  const timedHistory = quizHistory.filter(
+    (entry) => entry.timing && entry.timing.settings.mode !== 'none' && entry.comparisonKey
+  )
+  const bestTimeCandidates = timedHistory.filter(
+    (entry) =>
+      (bestTimeMode === 'all' || entry.timing?.settings.mode === bestTimeMode) &&
+      (bestTimePreset === 'all' || entry.presetId === bestTimePreset)
+  )
+  const bestTimeConfigChoices = [
+    ...new Map(
+      bestTimeCandidates.map((entry) => [
+        entry.comparisonKey!,
+        {
+          key: entry.comparisonKey!,
+          label: `${entry.presetName ?? t(modeLabels[entry.mode])} · ${entry.timing!.settings.mode === 'stopwatch' ? t('Chrono') : `${t('Minuteur')} · ${t(entry.timing!.settings.scope === 'question' ? 'Par question' : 'Partie entière')} · ${entry.timing!.settings.limitSeconds} s`} · ${entry.region} · ${entry.settings.join(' · ')}`
+        }
+      ])
+    ).values()
+  ]
+  const effectiveBestTimeConfiguration = bestTimeConfigChoices.some(
+    ({ key }) => key === bestTimeConfiguration
+  )
+    ? bestTimeConfiguration
+    : (bestTimeConfigChoices[0]?.key ?? 'all')
+  const bestTimeRows = bestTimeCandidates
+    .filter(
+      (entry) =>
+        effectiveBestTimeConfiguration === 'all' ||
+        entry.comparisonKey === effectiveBestTimeConfiguration
+    )
+    .filter(
+      (entry) =>
+        !entry.timing?.expired &&
+        (entry.timing?.timedOutQuestions ?? 0) === 0 &&
+        (entry.timing?.notReachedQuestions ?? 0) === 0
+    )
+    .sort(
+      (first, second) =>
+        (first.timing?.elapsedMilliseconds ?? Number.POSITIVE_INFINITY) -
+        (second.timing?.elapsedMilliseconds ?? Number.POSITIVE_INFINITY)
+    )
 
   const selectCountry = (alpha2: string): void => setSelectedAlpha2(alpha2)
 
   return (
     <main className="statistics-screen">
-      <header className="statistics-header">
-        <div>
-          <div className="breadcrumb">{t('VOTRE PROGRESSION / MONDE')}</div>
-          <h1>{t('Statistiques')}</h1>
-          <p>{t('Retrouve tes résultats par quiz et par pays.')}</p>
-        </div>
-        <div className="statistics-actions">
-          {page === 'countries' && (
-            <button
-              className="quiz-start-button"
-              type="button"
-              onClick={() => setShowAdvancedStatistics((current) => !current)}
-            >
-              {showAdvancedStatistics ? t('Statistiques essentielles') : t('Statistiques avancées')}
+      <AppModeSwitcher
+        active={null}
+        onChange={onModeChange}
+        pageTitle={t('Statistiques')}
+        pageActions={
+          <>
+            {page === 'countries' && (
+              <button
+                className="app-mode-statistics"
+                type="button"
+                onClick={() => setShowAdvancedStatistics((current) => !current)}
+              >
+                {showAdvancedStatistics
+                  ? t('Statistiques essentielles')
+                  : t('Statistiques avancées')}
+              </button>
+            )}
+            <button className="app-mode-statistics" type="button" onClick={onReturn}>
+              {t('Retour')}
             </button>
-          )}
-          <button className="quiz-start-button" type="button" onClick={onReturn}>
-            {t('Retour')}
-          </button>
-        </div>
-      </header>
-
-      <AppModeSwitcher active={null} onChange={onModeChange} />
+          </>
+        }
+      />
 
       <nav className="statistics-page-tabs" aria-label={t('Pages de statistiques')}>
         <button
@@ -229,6 +305,20 @@ export function StatisticsView({
           onClick={() => setPage('preset')}
         >
           {t('Évolution par preset')}
+        </button>
+        <button
+          type="button"
+          className={page === 'best-times' ? 'is-active' : ''}
+          onClick={() => setPage('best-times')}
+        >
+          {t('Meilleurs temps')}
+        </button>
+        <button
+          type="button"
+          className={page === 'rewards' ? 'is-active' : ''}
+          onClick={() => setPage('rewards')}
+        >
+          {t('Récompenses')}
         </button>
       </nav>
 
@@ -560,6 +650,37 @@ export function StatisticsView({
                       <small>
                         {entry.questions.length} {t('questions enregistrées')}
                       </small>
+                      {entry.timing && (
+                        <div className="quiz-history-timing">
+                          <strong>
+                            {t(entry.timing.settings.mode === 'stopwatch' ? 'Chrono' : 'Minuteur')}{' '}
+                            · {formatDuration(entry.timing.elapsedMilliseconds, language)}
+                          </strong>
+                          {entry.timing.settings.mode === 'countdown' && (
+                            <span>
+                              {t(
+                                entry.timing.settings.scope === 'question'
+                                  ? 'Par question'
+                                  : 'Partie entière'
+                              )}{' '}
+                              · {entry.timing.settings.limitSeconds} s
+                            </span>
+                          )}
+                          {entry.timing.remainingMilliseconds !== null && (
+                            <span>
+                              {t('Temps restant')} :{' '}
+                              {formatDuration(entry.timing.remainingMilliseconds, language)}
+                            </span>
+                          )}
+                          {(entry.timing.timedOutQuestions > 0 ||
+                            entry.timing.notReachedQuestions > 0) && (
+                            <span>
+                              {entry.timing.timedOutQuestions} {t('questions expirées')} ·{' '}
+                              {entry.timing.notReachedQuestions} {t('non atteintes')}
+                            </span>
+                          )}
+                        </div>
+                      )}
                     </article>
                   ))}
               </div>
@@ -572,7 +693,7 @@ export function StatisticsView({
               </div>
             )}
           </section>
-        ) : (
+        ) : page === 'preset' ? (
           <section className="quiz-history-page quiz-preset-history-page">
             <div className="statistics-section-heading">
               <div>
@@ -591,6 +712,19 @@ export function StatisticsView({
                   </option>
                 ))}
               </select>
+              {presetTimingChoices.length > 1 && (
+                <select
+                  aria-label={t('Choisir une configuration chronométrée')}
+                  value={activePresetTimingKey}
+                  onChange={(event) => setSelectedPresetTimingKey(event.target.value)}
+                >
+                  {presetTimingChoices.map((choice) => (
+                    <option key={choice.key} value={choice.key}>
+                      {choice.label}
+                    </option>
+                  ))}
+                </select>
+              )}
             </div>
             {presetHistory.length ? (
               <>
@@ -668,6 +802,93 @@ export function StatisticsView({
                     )}
                   </svg>
                 </div>
+                {timedPresetHistory.length > 0 && (
+                  <section className="quiz-preset-time-section">
+                    <label className="quiz-preset-time-toggle">
+                      <input
+                        type="checkbox"
+                        checked={showPresetTimeChart}
+                        onChange={(event) => setShowPresetTimeChart(event.target.checked)}
+                      />
+                      <span>{t('Afficher l’évolution du temps')}</span>
+                    </label>
+                    {showPresetTimeChart && presetTimeHistory.length > 0 && (
+                      <div className="quiz-preset-chart-panel">
+                        <h3>{t('Évolution du temps')}</h3>
+                        <svg
+                          viewBox="0 0 600 210"
+                          role="img"
+                          aria-label={t('Graphique de progression du temps')}
+                        >
+                          <path d="M42 15V180H580" className="quiz-preset-chart-axis" />
+                          {presetTimeHistory.length > 1 && (
+                            <polyline
+                              className="quiz-preset-time-chart-line"
+                              points={presetTimeHistory
+                                .map((entry, index) => {
+                                  const x = 52 + index * (516 / (presetTimeHistory.length - 1))
+                                  const values = presetTimeHistory.map(
+                                    (item) => item.timing?.elapsedMilliseconds ?? 0
+                                  )
+                                  const max = Math.max(1, ...values)
+                                  const y = 180 - (entry.timing!.elapsedMilliseconds / max) * 155
+                                  return `${x},${y}`
+                                })
+                                .join(' ')}
+                            />
+                          )}
+                          {presetTimeHistory.map((entry, index) => {
+                            const values = presetTimeHistory.map(
+                              (item) => item.timing?.elapsedMilliseconds ?? 0
+                            )
+                            const max = Math.max(1, ...values)
+                            const x =
+                              presetTimeHistory.length === 1
+                                ? 310
+                                : 52 + index * (516 / (presetTimeHistory.length - 1))
+                            const y = 180 - (entry.timing!.elapsedMilliseconds / max) * 155
+                            return (
+                              <circle
+                                key={entry.id}
+                                cx={x}
+                                cy={y}
+                                r="4"
+                                className="quiz-preset-time-chart-point"
+                              >
+                                <title>
+                                  {`${formatDuration(entry.timing!.elapsedMilliseconds, language)} · ${entry.timing!.timedOutQuestions + entry.timing!.notReachedQuestions} ${t('questions non terminées')}`}
+                                </title>
+                              </circle>
+                            )
+                          })}
+                        </svg>
+                        <div className="quiz-preset-time-records">
+                          <span>
+                            {t('Parties chronométrées')} : {presetTimeHistory.length}
+                          </span>
+                          <span>
+                            {t('Meilleur temps complet')} :{' '}
+                            {(() => {
+                              const eligible = presetTimeHistory.filter(
+                                (entry) =>
+                                  !entry.timing?.expired &&
+                                  (entry.timing?.timedOutQuestions ?? 0) === 0 &&
+                                  (entry.timing?.notReachedQuestions ?? 0) === 0
+                              )
+                              const best = Math.min(
+                                ...eligible.map(
+                                  (entry) =>
+                                    entry.timing?.elapsedMilliseconds ?? Number.POSITIVE_INFINITY
+                                )
+                              )
+                              return Number.isFinite(best) ? formatDuration(best, language) : '—'
+                            })()}
+                          </span>
+                        </div>
+                      </div>
+                    )}
+                  </section>
+                )}
                 <div className="quiz-history-list">
                   {[...presetHistory].reverse().map((entry) => (
                     <article className="quiz-history-card" key={entry.id}>
@@ -686,6 +907,30 @@ export function StatisticsView({
                           <span key={`${entry.id}:${index}`}>{setting}</span>
                         ))}
                       </div>
+                      {entry.timing && (
+                        <div className="quiz-history-timing">
+                          <strong>
+                            {t(entry.timing.settings.mode === 'stopwatch' ? 'Chrono' : 'Minuteur')}{' '}
+                            · {formatDuration(entry.timing.elapsedMilliseconds, language)}
+                          </strong>
+                          {entry.timing.settings.mode === 'countdown' && (
+                            <span>
+                              {t(
+                                entry.timing.settings.scope === 'question'
+                                  ? 'Par question'
+                                  : 'Partie entière'
+                              )}{' '}
+                              · {entry.timing.settings.limitSeconds} s
+                            </span>
+                          )}
+                          {entry.timing.remainingMilliseconds !== null && (
+                            <span>
+                              {t('Temps restant')} :{' '}
+                              {formatDuration(entry.timing.remainingMilliseconds, language)}
+                            </span>
+                          )}
+                        </div>
+                      )}
                     </article>
                   ))}
                 </div>
@@ -700,6 +945,117 @@ export function StatisticsView({
                 <p>
                   {t(
                     'Les scores apparaîtront ici après une partie lancée avec un preset sauvegardé.'
+                  )}
+                </p>
+              </div>
+            )}
+          </section>
+        ) : page === 'rewards' ? (
+          <QuizRewardsPanel history={quizHistory} />
+        ) : (
+          <section className="quiz-history-page quiz-best-times-page">
+            <div className="statistics-section-heading">
+              <div>
+                <h2>{t('Meilleurs temps')}</h2>
+                <p>{t('Compare uniquement des parties jouées avec la même configuration.')}</p>
+              </div>
+            </div>
+            <div className="quiz-best-time-filters">
+              <label>
+                <span>{t('Mode de temps')}</span>
+                <select
+                  value={bestTimeMode}
+                  onChange={(event) => {
+                    setBestTimeMode(event.target.value as typeof bestTimeMode)
+                    setBestTimeConfiguration('all')
+                  }}
+                >
+                  <option value="all">{t('Tous')}</option>
+                  <option value="stopwatch">{t('Chrono')}</option>
+                  <option value="countdown">{t('Minuteur')}</option>
+                </select>
+              </label>
+              <label>
+                <span>{t('Preset')}</span>
+                <select
+                  value={bestTimePreset}
+                  onChange={(event) => {
+                    setBestTimePreset(event.target.value)
+                    setBestTimeConfiguration('all')
+                  }}
+                >
+                  <option value="all">{t('Tous les presets')}</option>
+                  {presetChoices.map((preset) => (
+                    <option key={preset.id} value={preset.id}>
+                      {preset.name}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label>
+                <span>{t('Configuration exacte')}</span>
+                <select
+                  value={effectiveBestTimeConfiguration}
+                  onChange={(event) => setBestTimeConfiguration(event.target.value)}
+                  disabled={!bestTimeConfigChoices.length}
+                >
+                  {bestTimeConfigChoices.length ? (
+                    bestTimeConfigChoices.map((choice) => (
+                      <option key={choice.key} value={choice.key}>
+                        {choice.label}
+                      </option>
+                    ))
+                  ) : (
+                    <option value="all">{t('Aucune configuration chronométrée')}</option>
+                  )}
+                </select>
+              </label>
+            </div>
+            {bestTimeRows.length ? (
+              <div className="quiz-history-list">
+                {bestTimeRows.map((entry, index) => (
+                  <article className="quiz-history-card quiz-best-time-card" key={entry.id}>
+                    <div className="quiz-history-card-heading">
+                      <div>
+                        <strong>
+                          #{index + 1} ·{' '}
+                          {formatDuration(entry.timing!.elapsedMilliseconds, language)}
+                        </strong>
+                        <span>
+                          {entry.presetName ?? t(modeLabels[entry.mode])} ·{' '}
+                          {formatHistoryDate(entry.completedAt, language)}
+                        </span>
+                      </div>
+                      <b>
+                        {formatPoints(entry.score, language)} /{' '}
+                        {formatPoints(entry.total, language)}
+                      </b>
+                    </div>
+                    <div className="quiz-history-settings">
+                      <span>
+                        {t(entry.timing!.settings.mode === 'stopwatch' ? 'Chrono' : 'Minuteur')}
+                      </span>
+                      {entry.settings.map((setting, settingIndex) => (
+                        <span key={`${entry.id}:${settingIndex}`}>{setting}</span>
+                      ))}
+                    </div>
+                  </article>
+                ))}
+              </div>
+            ) : (
+              <div className="statistics-empty-selection">
+                <h2>
+                  {t(
+                    timedHistory.length
+                      ? 'Aucun temps complet pour cette configuration'
+                      : 'Aucun temps enregistré'
+                  )}
+                </h2>
+                <p>
+                  {t(
+                    timedHistory.length
+                      ? 'Les parties interrompues ou expirées restent dans l’historique, mais ne sont pas classées parmi les meilleurs temps.'
+                      : 'Les parties chronométrées terminées apparaîtront ici.'
                   )}
                 </p>
               </div>

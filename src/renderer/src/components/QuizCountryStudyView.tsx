@@ -7,7 +7,7 @@ import {
 } from '../data/geography/exploration'
 import { useLanguage } from '../data/i18n'
 import { MapFullscreenBar } from './MapFullscreenBar'
-import { SkinSelector } from './AppModeSwitcher'
+import { AppModeSwitcher, type AppPrimaryMode } from './AppModeSwitcher'
 
 type QuizCountryStudyViewProps = {
   place: ExplorationDetails
@@ -17,6 +17,7 @@ type QuizCountryStudyViewProps = {
   isFullscreen: boolean
   onToggleFullscreen: () => void
   onOpenStatistics: () => void
+  onModeChange: (mode: AppPrimaryMode) => void
   onReturnToQuiz: () => void
 }
 
@@ -28,6 +29,7 @@ export function QuizCountryStudyView({
   isFullscreen,
   onToggleFullscreen,
   onOpenStatistics,
+  onModeChange,
   onReturnToQuiz
 }: QuizCountryStudyViewProps): React.JSX.Element {
   const { t } = useLanguage()
@@ -59,40 +61,21 @@ export function QuizCountryStudyView({
           showSettings={false}
         />
       )}
-      <header className="exploration-header">
-        <div className="exploration-brand">
-          <div className="brand-icon">W</div>
-          <div>
-            <div className="brand-name">WORLD ATLAS</div>
-            <div className="brand-subtitle">{t('APPRENTISSAGE')}</div>
-          </div>
-        </div>
-
-        <div className="exploration-heading">
-          <div className="breadcrumb">{t('APPRENTISSAGE / QUIZ')}</div>
-          <h1>
-            {t('Découvrir')} {selectedPlace.name}
-          </h1>
-        </div>
-
-        <div className="exploration-header-actions">
-          <SkinSelector compact />
-          <button
-            className="home-back-button"
-            type="button"
-            data-shortcut-action="app.mode.statistics"
-            onClick={onOpenStatistics}
-          >
-            {t('Statistiques')}
-          </button>
-          <button className="quiz-study-return-button" type="button" onClick={onReturnToQuiz}>
-            {t('← Retour au quiz')}
-          </button>
-          <button className="home-back-button" type="button" onClick={onToggleFullscreen}>
-            {t(isFullscreen ? 'Quitter le plein écran' : 'Plein écran')}
-          </button>
-        </div>
-      </header>
+      {!isFullscreen && (
+        <AppModeSwitcher
+          active="quiz"
+          onChange={onModeChange}
+          pageTitle={`${t('Découvrir')} ${selectedPlace.name}`}
+          onOpenStatistics={onOpenStatistics}
+          onToggleFullscreen={onToggleFullscreen}
+          autoReveal
+          pageActions={
+            <button className="app-mode-statistics" type="button" onClick={onReturnToQuiz}>
+              {t('← Retour au quiz')}
+            </button>
+          }
+        />
+      )}
 
       <main className="exploration-workspace">
         <section

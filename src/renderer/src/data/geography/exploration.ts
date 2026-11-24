@@ -29,6 +29,7 @@ type ExplorationDataRecord = {
   populationYear: number | null
   populationSource?: string
   populationSourceUrl?: string
+  populationSecondarySourceUrl?: string
   metrics: {
     areaKm2: number
     perimeterKm: number
@@ -55,6 +56,7 @@ type TerritoryExplorationRecord = {
   populationYear: number | null
   populationSource: string
   populationSourceUrl?: string
+  populationSecondarySourceUrl?: string
   metrics: ExplorationDataRecord['metrics']
   metricsScope: string
   metricsSource: string
@@ -212,6 +214,7 @@ export type ExplorationDetails = {
   resources: ResourceIndustryFact[]
   populationSource: string
   populationSourceUrl: string | null
+  populationSecondarySourceUrl: string | null
   metricsSource: string | null
   metricsSourceUrl: string | null
   metricsSecondarySourceUrl: string | null
@@ -380,6 +383,7 @@ export function getExplorationDetails(
     populationSource:
       record?.populationSource ?? territoryRecord?.populationSource ?? 'Banque mondiale',
     populationSourceUrl: record?.populationSourceUrl ?? null,
+    populationSecondarySourceUrl: record?.populationSecondarySourceUrl ?? null,
     metricsSource: record?.metricsSource ?? null,
     metricsSourceUrl: record?.metricsSourceUrl ?? null,
     metricsSecondarySourceUrl: record?.metricsSecondarySourceUrl ?? null,

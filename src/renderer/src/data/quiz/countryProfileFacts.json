@@ -3096,12 +3096,6 @@
           "fr": "Putumayo",
           "rank": 0,
           "source": "World Bank Major Rivers"
-        },
-        {
-          "en": "Magdelena",
-          "fr": "Magdelena",
-          "rank": 0,
-          "source": "World Bank Major Rivers"
         }
       ],
       "politicalRegime": {
@@ -3134,12 +3128,28 @@
       "sourceUrl": "https://github.com/factbook/factbook.json/blob/master/south-america/co.json",
       "highestPoint": {
         "name": {
-          "en": "Pico Cristobal Colon",
-          "fr": "Pico Cristobal Colon"
+          "en": "Pico Cristóbal Colón",
+          "fr": "Pico Cristóbal Colón"
         },
-        "elevationMeters": 5730
+        "elevationMeters": 5775
       },
-      "governmentTypeYear": 2025
+      "governmentTypeYear": 2025,
+      "additionalSources": [
+        {
+          "label": {
+            "en": "IDEAM · glacial summit elevations, citing IGAC 2024",
+            "fr": "IDEAM · altitudes des sommets glaciaires, d’après IGAC 2024"
+          },
+          "url": "https://www.ideam.gov.co/nuestra-entidad/ecosistemas-e-informacion-ambiental/glaciares/sierra-nevada-de-santa-marta"
+        },
+        {
+          "label": {
+            "en": "Colombian Ministry of Environment · highest mountain",
+            "fr": "Ministère colombien de l’Environnement · point culminant"
+          },
+          "url": "https://archivo.minambiente.gov.co/index.php/noticias-minambiente/2170-colombia-pais-de-montanas"
+        }
+      ]
     },
     "KM": {
       "factbookCode": "CN",
@@ -15744,9 +15754,25 @@
           "en": "Mafinga Central",
           "fr": "Mafinga Central"
         },
-        "elevationMeters": 2330
+        "elevationMeters": 2339
       },
-      "governmentTypeYear": 2025
+      "governmentTypeYear": 2025,
+      "additionalSources": [
+        {
+          "label": {
+            "en": "Mafinga Town Council · highest peak",
+            "fr": "Conseil municipal de Mafinga · sommet culminant"
+          },
+          "url": "https://www.mafingacouncil.gov.zm/?page_id=2574"
+        },
+        {
+          "label": {
+            "en": "African Union · Zambia country profile",
+            "fr": "Union africaine · fiche pays Zambie"
+          },
+          "url": "https://au.int/sites/default/files/documents/42006-doc-Health_Advisory_Lusaka_July_2022_Final_Eng.pdf"
+        }
+      ]
     },
     "ZW": {
       "factbookCode": "ZI",

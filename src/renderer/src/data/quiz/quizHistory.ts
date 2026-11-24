@@ -1,4 +1,16 @@
 import type { QuizMode } from './progress'
+import { isQuizTimingSettings, type QuizTimingSettings } from './quizTiming.ts'
+
+export type QuizHistoryQuestionStatus = 'completed' | 'timed-out' | 'not-reached'
+
+export type QuizHistoryTiming = {
+  settings: QuizTimingSettings
+  elapsedMilliseconds: number
+  remainingMilliseconds: number | null
+  expired: boolean
+  timedOutQuestions: number
+  notReachedQuestions: number
+}
 
 export type QuizHistoryQuestion = {
   alpha2: string | null
@@ -10,6 +22,7 @@ export type QuizHistoryQuestion = {
   revealed: boolean
   attempts: number
   points: number
+  status?: QuizHistoryQuestionStatus
 }
 
 export type QuizHistoryEntry = {
@@ -23,6 +36,8 @@ export type QuizHistoryEntry = {
   region: string
   settings: string[]
   questions: QuizHistoryQuestion[]
+  comparisonKey?: string
+  timing?: QuizHistoryTiming
 }
 
 export type QuizHistorySourceRow = {
@@ -32,6 +47,8 @@ export type QuizHistorySourceRow = {
   selectedAnswer: string | null
   answerAttempts: Record<string, number>
   answerPoints: Record<string, number>
+  timedOut?: boolean
+  notReached?: boolean
 }
 
 export function summarizeQuizHistoryQuestions(
@@ -69,13 +86,15 @@ export function summarizeQuizHistoryQuestions(
       correct: row.correct,
       revealed: row.revealed,
       attempts: Math.max(0, ...Object.values(row.answerAttempts)),
-      points: Object.values(row.answerPoints).reduce((sum, points) => sum + points, 0)
+      points: Object.values(row.answerPoints).reduce((sum, points) => sum + points, 0),
+      status: row.notReached ? 'not-reached' : row.timedOut ? 'timed-out' : 'completed'
     }
   })
 }
 
 const STORAGE_KEY = 'world-atlas:quiz-history:v1'
 const HISTORY_LIMIT = 500
+let inMemoryQuizHistory: QuizHistoryEntry[] = []
 const quizModes: QuizMode[] = [
   'flags',
   'capitals',
@@ -97,7 +116,9 @@ function isHistoryQuestion(value: unknown): value is QuizHistoryQuestion {
     typeof question.correct === 'boolean' &&
     typeof question.revealed === 'boolean' &&
     typeof question.attempts === 'number' &&
-    typeof question.points === 'number'
+    typeof question.points === 'number' &&
+    (question.status === undefined ||
+      ['completed', 'timed-out', 'not-reached'].includes(String(question.status)))
   )
 }
 
@@ -119,23 +140,46 @@ function isHistoryEntry(value: unknown): value is QuizHistoryEntry {
     Array.isArray(entry.settings) &&
     entry.settings.every((setting) => typeof setting === 'string') &&
     Array.isArray(entry.questions) &&
-    entry.questions.every(isHistoryQuestion)
+    entry.questions.every(isHistoryQuestion) &&
+    (entry.comparisonKey === undefined || typeof entry.comparisonKey === 'string') &&
+    (entry.timing === undefined || isHistoryTiming(entry.timing))
+  )
+}
+
+function isHistoryTiming(value: unknown): value is QuizHistoryTiming {
+  if (!value || typeof value !== 'object') return false
+  const timing = value as Record<string, unknown>
+  return Boolean(
+    isQuizTimingSettings(timing.settings) &&
+    typeof timing.elapsedMilliseconds === 'number' &&
+    Number.isFinite(timing.elapsedMilliseconds) &&
+    (timing.expired === undefined || typeof timing.expired === 'boolean') &&
+    (timing.remainingMilliseconds === null ||
+      (typeof timing.remainingMilliseconds === 'number' &&
+        Number.isFinite(timing.remainingMilliseconds))) &&
+    typeof timing.timedOutQuestions === 'number' &&
+    Number.isInteger(timing.timedOutQuestions) &&
+    typeof timing.notReachedQuestions === 'number' &&
+    Number.isInteger(timing.notReachedQuestions)
   )
 }
 
 export function loadQuizHistory(): QuizHistoryEntry[] {
   try {
     const stored = localStorage.getItem(STORAGE_KEY)
-    if (!stored) return []
+    if (!stored) return inMemoryQuizHistory
     const parsed: unknown = JSON.parse(stored)
-    return Array.isArray(parsed) ? parsed.filter(isHistoryEntry).slice(0, HISTORY_LIMIT) : []
+    if (!Array.isArray(parsed)) return inMemoryQuizHistory
+    inMemoryQuizHistory = parsed.filter(isHistoryEntry).slice(0, HISTORY_LIMIT)
+    return inMemoryQuizHistory
   } catch {
-    return []
+    return inMemoryQuizHistory
   }
 }
 
 export function saveQuizHistoryEntry(entry: QuizHistoryEntry): QuizHistoryEntry[] {
   const updated = [entry, ...loadQuizHistory()].slice(0, HISTORY_LIMIT)
+  inMemoryQuizHistory = updated
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(updated))
   } catch {

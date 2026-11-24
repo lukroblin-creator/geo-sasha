@@ -149,6 +149,26 @@ const populationByAlpha2 = new Map(
     .map((row) => [row.country.id.toUpperCase(), { population: row.value, year: Number(row.date) }])
 )
 
+// Keep a fact as ND when an independent national series materially conflicts
+// with the international estimates. The source links remain attached to the
+// record so the discrepancy can be revisited without guessing which value wins.
+const countryFactOverrides = {
+  CO: {
+    population: null,
+    populationYear: null,
+    populationSource: 'ND · estimations contradictoires',
+    populationSourceUrl:
+      'https://www.dane.gov.co/index.php/estadisticas-por-tema/demografia-y-poblacion/proyecciones-de-poblacion',
+    populationSecondarySourceUrl: 'https://data.un.org/legacy/en/iso/co.html',
+    metrics: null,
+    metricsScope:
+      'ND · la valeur Natural Earth et la superficie de référence ONU ne concordent pas.',
+    metricsSource: 'Natural Earth / UNData',
+    metricsSourceUrl: 'https://data.un.org/legacy/en/iso/co.html',
+    metricsSecondarySourceUrl: mapUnitsUrl
+  }
+}
+
 function getCoreMapUnit(alpha2) {
   return mapUnits.find((unit) => {
     const properties = unit.properties ?? {}
@@ -341,6 +361,7 @@ for (const unit of territoryUnits) {
 }
 
 const records = catalog.map((country) => {
+  const factOverride = countryFactOverrides[country.alpha2] ?? {}
   const population = populationByAlpha2.get(country.alpha2)
   const geometry = geometryBySourceId.get(String(country.sourceFeatureId))
   const coreMapUnit = getCoreMapUnit(country.alpha2)
@@ -361,13 +382,36 @@ const records = catalog.map((country) => {
     sourceFeatureId: country.sourceFeatureId,
     alpha2: country.alpha2,
     capital: capitalBySourceId.get(String(country.sourceFeatureId))?.capitalName ?? null,
-    population: population?.population ?? null,
-    populationYear: population?.year ?? null,
-    metrics: metrics && metrics.areaKm2 > 0 ? metrics : null,
-    metricsScope: coreMapUnit
-      ? 'Territoire principal, hors dépendances et territoires éloignés.'
-      : 'Contour Natural Earth disponible ; la distinction métropole / territoires associés est incomplète.',
-    metricsSource: coreMapUnit ? 'Natural Earth 10m Admin 0 Map Units' : 'world-atlas 10m',
+    population: Object.hasOwn(factOverride, 'population')
+      ? factOverride.population
+      : (population?.population ?? null),
+    populationYear: Object.hasOwn(factOverride, 'populationYear')
+      ? factOverride.populationYear
+      : (population?.year ?? null),
+    ...(factOverride.populationSource ? { populationSource: factOverride.populationSource } : {}),
+    ...(factOverride.populationSourceUrl
+      ? { populationSourceUrl: factOverride.populationSourceUrl }
+      : {}),
+    ...(factOverride.populationSecondarySourceUrl
+      ? { populationSecondarySourceUrl: factOverride.populationSecondarySourceUrl }
+      : {}),
+    metrics: Object.hasOwn(factOverride, 'metrics')
+      ? factOverride.metrics
+      : metrics && metrics.areaKm2 > 0
+        ? metrics
+        : null,
+    metricsScope:
+      factOverride.metricsScope ??
+      (coreMapUnit
+        ? 'Territoire principal, hors dépendances et territoires éloignés.'
+        : 'Contour Natural Earth disponible ; la distinction métropole / territoires associés est incomplète.'),
+    metricsSource:
+      factOverride.metricsSource ??
+      (coreMapUnit ? 'Natural Earth 10m Admin 0 Map Units' : 'world-atlas 10m'),
+    ...(factOverride.metricsSourceUrl ? { metricsSourceUrl: factOverride.metricsSourceUrl } : {}),
+    ...(factOverride.metricsSecondarySourceUrl
+      ? { metricsSecondarySourceUrl: factOverride.metricsSecondarySourceUrl }
+      : {}),
     cities: countryKnowledge?.cities ?? [],
     mountains: metropolitanMountains
   }

@@ -1,6 +1,6 @@
 # Guide du projet World Atlas
 
-**Référence principale — dernière révision : 22 novembre 2026**
+**Référence principale — dernière révision : 23 novembre 2026**
 
 Ce guide est la référence principale de World Atlas. Il rassemble la direction produit, les ambitions, les priorités, le fonctionnement attendu et les règles de travail qui doivent guider les corrections et les évolutions. Il synthétise les demandes explicites de Lucas ; les propositions antérieures de l’assistant ne deviennent pas des exigences tant qu’elles n’ont pas été acceptées.
 
@@ -176,15 +176,15 @@ Les règles de quiz sensibles à vérifier en priorité sont : réponses partiel
 
 ### Priorité immédiate
 
-Stabiliser les fonctions existantes et corriger les erreurs ou régressions avant d’empiler de gros systèmes nouveaux. Confirmer les comportements de bout en bout : carte, quiz, masques, sélection, caméra, raccourcis, score et sauvegarde des résultats. Cette étape évite de rendre les futures récompenses et le mode chronométré plus difficiles à construire.
+Stabiliser les fonctions existantes et corriger les erreurs ou régressions avant d’empiler de gros systèmes nouveaux. Confirmer les comportements de bout en bout : carte, quiz, masques, sélection, caméra, raccourcis, score et sauvegarde des résultats. Cette étape facilite aussi l’évolution des fondations de récompenses.
 
-Au 22 novembre 2026, le travail en cours comprend notamment la personnalisation des raccourcis et son clavier visuel, les interactions entièrement au clavier, les vues enregistrées, les microterritoires, les drapeaux locaux, les descriptions de ressources, les textures polaires et plusieurs raffinements de quiz. Avant de démarrer un chantier indépendant, examiner l’état Git réel, vérifier ce lot puis créer un point de référence stable lorsque Lucas demande un commit.
+Au 23 novembre 2026, le travail en cours comprend notamment la personnalisation des raccourcis et son clavier visuel, les interactions entièrement au clavier, les vues enregistrées, les microterritoires, les drapeaux locaux, les descriptions de ressources, les textures polaires, plusieurs raffinements de quiz et le comparateur textuel. Avant de démarrer un chantier indépendant, examiner l’état Git réel, vérifier ce lot puis créer un point de référence stable lorsque Lucas demande un commit.
 
 ### Prochaines évolutions souhaitées
 
-Lucas souhaite avancer assez vite vers un système de récompenses et un mode chronométré complet. Ils doivent s’appuyer sur les sessions, les scores et les statistiques existants plutôt que former un système parallèle.
+Le mode chronométré est intégré aux quiz avec un Chrono de partie et un Minuteur par question ou pour la partie entière. Il enrichit les presets, l’historique et les statistiques existants, sans créer de comptabilité parallèle.
 
-Le chronomètre devra distinguer au minimum le temps par question du temps global de partie. Les récompenses devront dériver des événements déjà enregistrés — score, vitesse, précision, séries, difficulté et progression — afin de ne pas créer une seconde comptabilité incompatible avec l’historique.
+Les premières fondations d’un système de récompenses sont dérivées de l’historique existant : précision, séries sans aide, polyvalence, amélioration d’un score sur une configuration identique et rapidité chronométrée. Elles ne créent pas de comptabilité parallèle. Les défis, apparences et autres déblocages restent des évolutions ultérieures ; la difficulté ne reçoit pas de mesure dédiée tant que les modes et réglages ne fournissent pas une base comparable.
 
 ### Direction à plus long terme
 

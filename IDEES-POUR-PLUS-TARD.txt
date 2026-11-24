@@ -26,11 +26,7 @@ Skin Sacha et quiz surprise
 - Enchaîner immédiatement avec un quiz très rythmé : un pays apparaît et le joueur dispose de six secondes pour donner sa capitale.
 - Pousser au maximum l’animation, les visuels et le son afin que cette séquence ressemble à un événement surprise complet dans l’application.
 
-Recherche et filtres
-- Ajouter des filtres avec autocomplétion.
-
-Chronomètre et récompenses
-- Créer un mode chronométré complet, avec des variantes comme un temps limité par question, un temps total pour toute la partie et des réglages adaptés aux différents types de quiz.
+Récompenses
 - Mettre en place un système de récompenses lié aux performances du joueur : score, rapidité, précision, séries de bonnes réponses, progression et difficulté choisie.
 - Utiliser les récompenses pour valoriser la progression et permettre, à terme, de débloquer des éléments comme des badges, des défis, des apparences ou d’autres contenus à définir.
 

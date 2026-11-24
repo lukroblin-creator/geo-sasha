@@ -1,19 +1,27 @@
 import { useKeyboardShortcut } from '../data/keyboardShortcuts'
-import { useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import WorldMap from './WorldMapLoader'
 import { SkinSelector } from './AppModeSwitcher'
 import { useLanguage } from '../data/i18n'
 import { scoreDrawnBorders } from '../data/quiz/drawBordersQuiz'
 import { quizRegions, type ContinentId } from '../data/quiz/countryContinents'
+import {
+  formatDuration,
+  type QuizTimingOutcome,
+  type QuizTimingSettings
+} from '../data/quiz/quizTiming'
 
 type DrawBordersQuizViewProps = {
   continents: ContinentId[]
   countryAlpha2: string | null
   onStop: () => void
   onRestart: () => void
-  onCompleted: (score: number) => void
+  onCompleted: (score: number, outcome?: QuizTimingOutcome) => void
   globeMode: boolean
   onToggleGlobeMode: () => void
+  timing: QuizTimingSettings
+  timerMilliseconds: number
+  timeExpired: boolean
 }
 
 export function DrawBordersQuizView({
@@ -23,19 +31,31 @@ export function DrawBordersQuizView({
   onRestart,
   onCompleted,
   globeMode,
-  onToggleGlobeMode
+  onToggleGlobeMode,
+  timing,
+  timerMilliseconds,
+  timeExpired
 }: DrawBordersQuizViewProps): React.JSX.Element {
   const { language, t } = useLanguage()
   const [strokes, setStrokes] = useState<[number, number][][]>([])
   const [tool, setTool] = useState<'draw' | 'erase' | 'pan'>('draw')
   const [score, setScore] = useState<number | null>(null)
 
-  const finish = (): void => {
+  const finish = useCallback((): void => {
     if (score !== null) return
     const nextScore = scoreDrawnBorders(strokes, continents, countryAlpha2)
     setScore(nextScore)
-    onCompleted(nextScore)
-  }
+    onCompleted(
+      nextScore,
+      timeExpired ? { timedOutQuestions: 0, notReachedQuestions: 1, expired: true } : undefined
+    )
+  }, [continents, countryAlpha2, onCompleted, score, strokes, timeExpired])
+
+  useEffect(() => {
+    if (!timeExpired) return
+    const timeout = window.setTimeout(finish, 0)
+    return () => window.clearTimeout(timeout)
+  }, [finish, timeExpired])
 
   useKeyboardShortcut('quiz.stop', onStop)
   useKeyboardShortcut('quiz.restart', onRestart, score !== null)
@@ -58,6 +78,12 @@ export function DrawBordersQuizView({
                     .join(' · ')}
           </p>
         </div>
+        {timing.mode !== 'none' && (
+          <strong className="special-quiz-timer">
+            {timing.mode === 'stopwatch' ? t('Chrono') : t('Temps restant')} ·{' '}
+            {formatDuration(timerMilliseconds, language)}
+          </strong>
+        )}
         <div className="special-quiz-header-actions">
           <SkinSelector compact />
           <button type="button" data-shortcut-action="quiz.stop" onClick={onStop}>

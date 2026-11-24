@@ -12,6 +12,7 @@ import {
   type QuizRegion
 } from './countryContinents'
 import type { CountryQuizQuestionResult } from './countryQuizStats'
+import type { QuizTimingSettings } from './quizTiming'
 
 export type QuizSetup = {
   region: QuizRegion
@@ -20,6 +21,7 @@ export type QuizSetup = {
   answers: QuizAnswers
   supplementalClues?: SupplementalQuizFactSettings
   supplementalAnswers?: SupplementalQuizFactSettings
+  timing?: QuizTimingSettings
 }
 
 export type QuizGameMode = 'base' | 'estimation' | 'draw-borders'

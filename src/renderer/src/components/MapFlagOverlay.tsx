@@ -935,15 +935,17 @@ export const MapFlagOverlay = memo(function MapFlagOverlay({
     [allFlagFeatures]
   )
   const [flagImageRevision, setFlagImageRevision] = useState(0)
-  const flagImageRefreshFrameRef = useRef<number | null>(null)
+  const flagImageRefreshTimeoutRef = useRef<number | null>(null)
 
   useEffect(() => {
     const refreshFlagImages = (): void => {
-      if (flagImageRefreshFrameRef.current !== null) return
-      flagImageRefreshFrameRef.current = window.requestAnimationFrame(() => {
-        flagImageRefreshFrameRef.current = null
+      if (flagImageRefreshTimeoutRef.current !== null) {
+        window.clearTimeout(flagImageRefreshTimeoutRef.current)
+      }
+      flagImageRefreshTimeoutRef.current = window.setTimeout(() => {
+        flagImageRefreshTimeoutRef.current = null
         setFlagImageRevision((current) => current + 1)
-      })
+      }, 80)
     }
     const unsubscribe = visibleFlagCodes.map((alpha2) =>
       subscribeToFlagImage(alpha2, refreshFlagImages)
@@ -954,8 +956,8 @@ export const MapFlagOverlay = memo(function MapFlagOverlay({
 
   useEffect(
     () => () => {
-      if (flagImageRefreshFrameRef.current !== null) {
-        window.cancelAnimationFrame(flagImageRefreshFrameRef.current)
+      if (flagImageRefreshTimeoutRef.current !== null) {
+        window.clearTimeout(flagImageRefreshTimeoutRef.current)
       }
     },
     []

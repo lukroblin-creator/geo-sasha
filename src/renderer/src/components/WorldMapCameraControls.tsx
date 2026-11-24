@@ -40,14 +40,10 @@ export function WorldMapCameraControls({
         type="button"
         data-shortcut-action="map.toggleCameraOrbit"
         title={t(
-          cameraFreeMode
-            ? 'Caméra libre : ancrage détaché'
-            : 'Caméra 3D — rotation libre autour du globe'
+          cameraFreeMode ? 'Caméra libre : ancrage détaché' : 'Mode caméra — En construction'
         )}
         aria-label={t(
-          cameraFreeMode
-            ? 'Caméra libre : ancrage détaché'
-            : 'Caméra 3D — rotation libre autour du globe'
+          cameraFreeMode ? 'Caméra libre : ancrage détaché' : 'Mode caméra — En construction'
         )}
         aria-pressed={cameraOrbitMode}
         onClick={onToggleOrbit}
@@ -58,6 +54,7 @@ export function WorldMapCameraControls({
           <circle cx="12" cy="12" r="1.5" />
         </svg>
       </button>
+      <span className="map-camera-construction-badge">{t('En construction')}</span>
       <button
         className="map-control-button map-camera-menu-toggle"
         type="button"

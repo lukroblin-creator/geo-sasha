@@ -101,6 +101,15 @@ import {
   type MapLayerDensities
 } from './data/geography/mapLayerDensity'
 import { mountainRanges } from './data/geography/physical/mountainRanges'
+import {
+  formatDuration,
+  getElapsedMilliseconds,
+  getQuizConfigurationKey,
+  getRemainingMilliseconds,
+  noQuizTiming,
+  type QuizTimingOutcome,
+  type QuizTimingSettings
+} from './data/quiz/quizTiming'
 
 type MapLayerId = 'borders' | 'rivers' | 'mountains' | 'labels' | 'flags' | 'summits'
 type MapLayerVisibility = Record<MapLayerId, boolean>
@@ -109,6 +118,8 @@ type QuizRunSnapshot = {
   presetName: string | null
   region: string
   settings: string[]
+  comparisonKey: string
+  timing: QuizTimingSettings
 }
 function normalizeCountrySourceFeatureId(sourceFeatureId: string | number): string {
   const value = String(sourceFeatureId)
@@ -219,6 +230,18 @@ function App(): React.JSX.Element {
   const [quizGameMode, setQuizGameMode] = useState<QuizGameMode>(
     initialDefaultQuizPreset?.gameMode ?? 'base'
   )
+  const [quizTiming, setQuizTiming] = useState<QuizTimingSettings>(
+    initialDefaultQuizPreset?.timing ?? noQuizTiming
+  )
+  const [activeQuizTiming, setActiveQuizTiming] = useState<QuizTimingSettings>(noQuizTiming)
+  const [timerNow, setTimerNow] = useState(0)
+  const [specialTimerExpired, setSpecialTimerExpired] = useState(false)
+  const timerStartedAtRef = useRef<number | null>(null)
+  const timerStoppedAtRef = useRef<number | null>(null)
+  const questionTimerStartedAtRef = useRef<number | null>(null)
+  const questionTimerKeyRef = useRef<string | null>(null)
+  const questionTimerRemainingRef = useRef(0)
+  const timerExpirationRef = useRef<string | null>(null)
   const [estimationRegion, setEstimationRegion] = useState<QuizRegion>(
     initialDefaultQuizPreset?.estimationRegion ?? 'world'
   )
@@ -309,12 +332,16 @@ function App(): React.JSX.Element {
   const createRunSnapshot = (
     region: QuizRegion,
     settings: string[],
-    preset?: QuizPreset
+    preset?: QuizPreset,
+    configuration: unknown = { gameMode: quizGameMode, region, settings },
+    timing: QuizTimingSettings = quizTiming
   ): QuizRunSnapshot => ({
     presetId: preset?.id ?? null,
     presetName: preset?.name ?? null,
     region: t(quizRegions.find((item) => item.id === region)?.label ?? 'Tous les continents'),
-    settings
+    settings,
+    comparisonKey: getQuizConfigurationKey({ configuration, timing }),
+    timing: { ...timing }
   })
 
   const createBaseRunSnapshot = (setup: QuizSetup, preset?: QuizPreset): QuizRunSnapshot => {
@@ -332,14 +359,32 @@ function App(): React.JSX.Element {
         .filter(({ id }) => supplementalAnswers[id])
         .map(({ label }) => t(label))
     ]
+    const effectiveTiming = setup.timing ?? quizTiming
     return createRunSnapshot(
       setup.region,
       [
         `${t('Nombre de pays')} : ${Math.min(setup.questionCount, getAvailableQuizQuestionCount(setup.region))}`,
         `${t('Indices')} : ${clueLabels.join(', ') || '—'}`,
-        `${t('Réponses')} : ${answerLabels.join(', ') || '—'}`
+        `${t('Réponses')} : ${answerLabels.join(', ') || '—'}`,
+        ...(effectiveTiming.mode === 'none'
+          ? []
+          : [
+              effectiveTiming.mode === 'stopwatch'
+                ? `${t('Chrono')} : ${t('Temps total')}`
+                : `${t('Minuteur')} : ${t(effectiveTiming.scope === 'question' ? 'Par question' : 'Partie entière')} · ${effectiveTiming.limitSeconds} s`
+            ])
       ],
-      preset
+      preset,
+      {
+        gameMode: 'base',
+        region: setup.region,
+        questionCount: Math.min(setup.questionCount, getAvailableQuizQuestionCount(setup.region)),
+        clues: setup.clues,
+        answers: setup.answers,
+        supplementalClues,
+        supplementalAnswers
+      },
+      effectiveTiming
     )
   }
 
@@ -348,7 +393,9 @@ function App(): React.JSX.Element {
     score: number,
     total: number,
     snapshot: QuizRunSnapshot | null,
-    questions: QuizHistoryQuestion[]
+    questions: QuizHistoryQuestion[],
+    timing: QuizHistoryEntry['timing'] = undefined,
+    comparisonKey = snapshot?.comparisonKey
   ): QuizHistoryEntry => ({
     id: `game-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
     completedAt: new Date().toISOString(),
@@ -359,8 +406,51 @@ function App(): React.JSX.Element {
     presetName: snapshot?.presetName ?? null,
     region: snapshot?.region ?? t('Tous les continents'),
     settings: snapshot?.settings ?? [],
-    questions
+    questions,
+    ...(comparisonKey ? { comparisonKey } : {}),
+    ...(timing ? { timing } : {})
   })
+
+  const startQuizClock = (settings: QuizTimingSettings): void => {
+    const now = performance.now()
+    setActiveQuizTiming({ ...settings })
+    timerStartedAtRef.current = now
+    timerStoppedAtRef.current = null
+    questionTimerStartedAtRef.current = null
+    questionTimerKeyRef.current = null
+    questionTimerRemainingRef.current = settings.limitSeconds * 1000
+    timerExpirationRef.current = null
+    setSpecialTimerExpired(false)
+    setTimerNow(now)
+  }
+
+  const getCurrentQuizTimingHistory = (
+    questions: readonly QuizHistorySourceRow[]
+  ): QuizHistoryEntry['timing'] => {
+    if (activeQuizTiming.mode === 'none' || timerStartedAtRef.current === null) return undefined
+    const endedAt = timerStoppedAtRef.current ?? performance.now()
+    const elapsedMilliseconds = getElapsedMilliseconds(timerStartedAtRef.current, endedAt)
+    const timedOutQuestions = questions.filter((question) => question.timedOut).length
+    const notReachedQuestions = questions.filter((question) => question.notReached).length
+    const remainingMilliseconds =
+      activeQuizTiming.mode === 'countdown' && activeQuizTiming.scope === 'session'
+        ? getRemainingMilliseconds(
+            timerStartedAtRef.current + activeQuizTiming.limitSeconds * 1000,
+            endedAt
+          )
+        : null
+    return {
+      settings: { ...activeQuizTiming },
+      elapsedMilliseconds,
+      remainingMilliseconds,
+      expired:
+        remainingMilliseconds === 0 &&
+        activeQuizTiming.mode === 'countdown' &&
+        activeQuizTiming.scope === 'session',
+      timedOutQuestions,
+      notReachedQuestions
+    }
+  }
 
   const appendQuizHistory = (entry: QuizHistoryEntry): void => {
     setQuizHistory(saveQuizHistoryEntry(entry))
@@ -734,6 +824,9 @@ function App(): React.JSX.Element {
     total: number,
     questionHistory: readonly QuizHistorySourceRow[]
   ): void => {
+    const endedAt = performance.now()
+    timerStoppedAtRef.current = endedAt
+    setTimerNow(endedAt)
     setQuizProgress(saveCompletedQuiz(mode, score))
     appendQuizHistory(
       createHistoryEntry(
@@ -741,7 +834,8 @@ function App(): React.JSX.Element {
         score,
         total,
         activeQuizHistorySnapshot,
-        summarizeQuizHistoryQuestions(questionHistory, language)
+        summarizeQuizHistoryQuestions(questionHistory, language),
+        getCurrentQuizTimingHistory(questionHistory)
       )
     )
   }
@@ -757,6 +851,88 @@ function App(): React.JSX.Element {
     onCompleted: recordCompletedQuiz
   })
   const currentQuizQuestion = quiz.session.questionOrder[quiz.session.questionIndex]
+  useEffect(() => {
+    if (
+      !isQuizRunning ||
+      appView !== 'quiz' ||
+      activeQuizTiming.mode === 'none' ||
+      (quizGameMode === 'base' && quiz.session.completed) ||
+      timerStartedAtRef.current === null
+    ) {
+      return
+    }
+
+    const tick = (): void => {
+      const now = performance.now()
+      setTimerNow(now)
+
+      if (activeQuizTiming.mode !== 'countdown') return
+      if (activeQuizTiming.scope === 'session') {
+        const key = 'session'
+        const deadline = timerStartedAtRef.current! + activeQuizTiming.limitSeconds * 1000
+        if (now >= deadline && timerExpirationRef.current !== key) {
+          timerExpirationRef.current = key
+          if (quizGameMode === 'base') {
+            recordCurrentQuestionResult()
+            quiz.finishByTimeout()
+          } else {
+            setSpecialTimerExpired(true)
+          }
+        }
+        return
+      }
+
+      if (quizGameMode !== 'base') return
+      const questionKey = `${sessionGeneration}:${quiz.session.questionIndex}`
+      const questionFinished = quiz.session.answerCorrect === true || quiz.session.answerRevealed
+      if (questionFinished) {
+        questionTimerStartedAtRef.current = null
+        questionTimerKeyRef.current = questionKey
+        return
+      }
+      if (questionTimerKeyRef.current !== questionKey) {
+        questionTimerKeyRef.current = questionKey
+        questionTimerStartedAtRef.current = now
+        questionTimerRemainingRef.current = activeQuizTiming.limitSeconds * 1000
+        timerExpirationRef.current = null
+        return
+      }
+      const startedAt = questionTimerStartedAtRef.current
+      if (startedAt === null) return
+      const deadline = startedAt + activeQuizTiming.limitSeconds * 1000
+      questionTimerRemainingRef.current = getRemainingMilliseconds(deadline, now)
+      if (now >= deadline && timerExpirationRef.current !== questionKey) {
+        timerExpirationRef.current = questionKey
+        quiz.timeoutCurrent()
+      }
+    }
+
+    tick()
+    const interval = window.setInterval(tick, 100)
+    return () => window.clearInterval(interval)
+  }, [
+    activeQuizTiming,
+    appView,
+    isQuizRunning,
+    quizGameMode,
+    quiz.session.answerCorrect,
+    quiz.session.answerRevealed,
+    quiz.session.completed,
+    quiz.session.questionIndex,
+    sessionGeneration
+  ])
+
+  const activeTimerMilliseconds =
+    activeQuizTiming.mode === 'countdown'
+      ? activeQuizTiming.scope === 'session'
+        ? getRemainingMilliseconds(
+            (timerStartedAtRef.current ?? timerNow) + activeQuizTiming.limitSeconds * 1000,
+            timerStoppedAtRef.current ?? timerNow
+          )
+        : getRemainingMilliseconds(timerNow + questionTimerRemainingRef.current, timerNow)
+      : timerStartedAtRef.current === null
+        ? 0
+        : getElapsedMilliseconds(timerStartedAtRef.current, timerStoppedAtRef.current ?? timerNow)
   const quizRevealTargetFeatureIds = useMemo(
     () =>
       quiz.session.answerRevealed && (currentQuizQuestion?.countryAnswerGroup.length ?? 0) > 1
@@ -893,6 +1069,7 @@ function App(): React.JSX.Element {
     clearSelectedPreset = false,
     presetOverride?: QuizPreset
   ): void => {
+    const selectedTiming = setup.timing ?? quizTiming
     const hasClue =
       Object.values(setup.clues).some(Boolean) ||
       Object.values(setup.supplementalClues ?? {}).some(Boolean)
@@ -918,6 +1095,7 @@ function App(): React.JSX.Element {
       ) === questionCount &&
       JSON.stringify(candidatePreset.clues) === JSON.stringify(setup.clues) &&
       JSON.stringify(candidatePreset.answers) === JSON.stringify(setup.answers) &&
+      JSON.stringify(candidatePreset.timing ?? noQuizTiming) === JSON.stringify(selectedTiming) &&
       matchesSupplementalQuizSettings(candidatePreset.supplementalClues, setup.supplementalClues) &&
       matchesSupplementalQuizSettings(
         candidatePreset.supplementalAnswers,
@@ -1003,9 +1181,8 @@ function App(): React.JSX.Element {
     const quizQuestions = getQuizQuestionsForRegion(questionsForRun, setup.region, questionCount)
     if (!quizQuestions.length) return
 
-    setActiveQuizHistorySnapshot(
-      createBaseRunSnapshot({ ...setup, questionCount: quizQuestions.length }, matchedPreset)
-    )
+    const runSetup = { ...setup, timing: selectedTiming, questionCount: quizQuestions.length }
+    setActiveQuizHistorySnapshot(createBaseRunSnapshot(runSetup, matchedPreset))
     setReviewQuizCountryAlpha2(null)
     setQuizRegion(setup.region)
     setQuizGameMode('base')
@@ -1036,6 +1213,7 @@ function App(): React.JSX.Element {
     setShowExpandedQuizCountry(false)
     setFullscreenAnswersOpen(false)
     setIsQuizRunning(true)
+    startQuizClock(selectedTiming)
     setIsQuizSetupOpen(false)
     setIsPresetQuickMenuOpen(false)
     quiz.restart(quizQuestions, getQuizAnswerWeights(setup.answers, setup.supplementalAnswers))
@@ -1045,6 +1223,7 @@ function App(): React.JSX.Element {
     if (quizGameMode === 'estimation') {
       const questions = createEstimationQuestions(estimationRegion, estimationAlpha2s, language)
       const preset = savedQuizPresets.find((item) => item.id === selectedQuizPresetId)
+      startQuizClock(quizTiming)
       setActiveQuizHistorySnapshot(
         createRunSnapshot(
           estimationRegion,
@@ -1052,7 +1231,9 @@ function App(): React.JSX.Element {
             `${t('Mode')} : ${t('Mode estimation')}`,
             `${t('Pays sélectionnés')} : ${estimationAlpha2s.length || t('Tous')}`
           ],
-          preset
+          preset,
+          { gameMode: 'estimation', region: estimationRegion, alpha2s: [...estimationAlpha2s] },
+          quizTiming
         )
       )
       setEstimationQuestions(questions)
@@ -1064,6 +1245,7 @@ function App(): React.JSX.Element {
     }
     if (quizGameMode === 'draw-borders') {
       const preset = savedQuizPresets.find((item) => item.id === selectedQuizPresetId)
+      startQuizClock(quizTiming)
       setActiveQuizHistorySnapshot(
         createRunSnapshot(
           quizRegion,
@@ -1071,7 +1253,14 @@ function App(): React.JSX.Element {
             `${t('Mode')} : ${t('Dessine les frontières')}`,
             `${t('Zone')} : ${drawCountryAlpha2 ?? drawContinents.map((id) => t(quizRegions.find((region) => region.id === id)?.label ?? id)).join(', ')}`
           ],
-          preset
+          preset,
+          {
+            gameMode: 'draw-borders',
+            region: quizRegion,
+            continents: [...drawContinents],
+            countryAlpha2: drawCountryAlpha2
+          },
+          quizTiming
         )
       )
       setIsQuizRunning(true)
@@ -1086,13 +1275,14 @@ function App(): React.JSX.Element {
       clues: quizClues,
       answers: quizAnswers,
       supplementalClues: supplementalQuizClues,
-      supplementalAnswers: supplementalQuizAnswers
+      supplementalAnswers: supplementalQuizAnswers,
+      timing: quizTiming
     })
   }
 
   const startRandomQuiz = (): void => {
     setQuizGameMode('base')
-    startQuizWithSetup(createRandomQuizSetup(), true)
+    startQuizWithSetup({ ...createRandomQuizSetup(), timing: noQuizTiming }, true)
   }
 
   const startQuizPreset = (presetId: string): void => {
@@ -1119,7 +1309,8 @@ function App(): React.JSX.Element {
           clues: preset.clues,
           answers: preset.answers,
           supplementalClues: preset.supplementalClues ?? {},
-          supplementalAnswers: preset.supplementalAnswers ?? {}
+          supplementalAnswers: preset.supplementalAnswers ?? {},
+          timing: preset.timing ?? noQuizTiming
         },
         false,
         preset
@@ -1144,6 +1335,8 @@ function App(): React.JSX.Element {
     setActiveSupplementalQuizAnswers(preset.supplementalAnswers ?? {})
     setActiveQuizRegion(preset.region)
     setActiveQuizQuestionCount(questionCount)
+    setQuizTiming(preset.timing ?? noQuizTiming)
+    startQuizClock(preset.timing ?? noQuizTiming)
     setSelectedQuizCountry(null)
     setSelectedMapCountry(null)
     setMapProximity(null)
@@ -1167,7 +1360,20 @@ function App(): React.JSX.Element {
           `${t('Mode')} : ${t(gameMode === 'estimation' ? 'Mode estimation' : 'Dessine les frontières')}`,
           `${t('Nombre de questions')} : ${gameMode === 'estimation' ? preset.estimationAlpha2s?.length || getAvailableQuizQuestionCount(preset.estimationRegion ?? 'world') : preset.drawCountryAlpha2 ? 1 : (preset.drawContinents?.length ?? 0)}`
         ],
-        preset
+        preset,
+        gameMode === 'estimation'
+          ? {
+              gameMode,
+              region: preset.estimationRegion ?? 'world',
+              alpha2s: preset.estimationAlpha2s ?? []
+            }
+          : {
+              gameMode,
+              region: preset.region,
+              continents: preset.drawContinents ?? [],
+              countryAlpha2: preset.drawCountryAlpha2 ?? null
+            },
+        preset.timing ?? noQuizTiming
       )
     )
     setReviewQuizCountryAlpha2(null)
@@ -1189,6 +1395,9 @@ function App(): React.JSX.Element {
   }
 
   const stopSpecialQuiz = (): void => {
+    timerStartedAtRef.current = null
+    timerStoppedAtRef.current = null
+    questionTimerStartedAtRef.current = null
     setIsQuizRunning(false)
     setIsQuizSetupOpen(true)
     setFullscreenAnswersOpen(false)
@@ -1198,9 +1407,25 @@ function App(): React.JSX.Element {
     setAppView('quiz')
   }
 
-  const recordSpecialQuiz = (mode: 'estimation' | 'draw-borders', score: number): void => {
+  const recordSpecialQuiz = (
+    mode: 'estimation' | 'draw-borders',
+    score: number,
+    outcome?: QuizTimingOutcome
+  ): void => {
+    const timing = getCurrentQuizTimingHistory([])
+    const finalTiming = timing
+      ? {
+          ...timing,
+          ...(outcome ?? {}),
+          expired: outcome?.expired ?? specialTimerExpired
+        }
+      : timing
+    timerStoppedAtRef.current = performance.now()
+    setTimerNow(timerStoppedAtRef.current)
     setQuizProgress(saveCompletedQuiz(mode, score))
-    appendQuizHistory(createHistoryEntry(mode, score, 100, activeQuizHistorySnapshot, []))
+    appendQuizHistory(
+      createHistoryEntry(mode, score, 100, activeQuizHistorySnapshot, [], finalTiming)
+    )
   }
 
   const applyQuizPreset = (presetId: string): void => {
@@ -1210,6 +1435,7 @@ function App(): React.JSX.Element {
     if (!preset) return
 
     setQuizRegion(preset.region)
+    setQuizTiming(preset.timing ?? noQuizTiming)
     setQuizQuestionCount(
       Math.min(preset.questionCount, getAvailableQuizQuestionCount(preset.region))
     )
@@ -1274,6 +1500,7 @@ function App(): React.JSX.Element {
       supplementalClues: { ...supplementalQuizClues },
       supplementalAnswers: { ...supplementalQuizAnswers },
       gameMode: quizGameMode,
+      timing: { ...quizTiming },
       estimationRegion,
       estimationAlpha2s: [...estimationAlpha2s],
       drawContinents: [...drawContinents],
@@ -1383,11 +1610,44 @@ function App(): React.JSX.Element {
     return marks.find((mark) => Math.abs(value - mark) <= 1) ?? value
   }
 
+  const rejectLateQuestionAction = (): boolean => {
+    if (activeQuizTiming.mode !== 'countdown') return false
+    if (activeQuizTiming.scope === 'session') {
+      if (timerStartedAtRef.current === null) return false
+      const sessionKey = 'session'
+      const deadline = timerStartedAtRef.current + activeQuizTiming.limitSeconds * 1000
+      if (performance.now() < deadline) return false
+      if (timerExpirationRef.current !== sessionKey) {
+        timerExpirationRef.current = sessionKey
+        recordCurrentQuestionResult()
+        quiz.finishByTimeout()
+      }
+      return true
+    }
+    const questionKey = `${sessionGeneration}:${quiz.session.questionIndex}`
+    if (quiz.session.answerCorrect === true || quiz.session.answerRevealed) return false
+    if (questionTimerKeyRef.current !== questionKey || questionTimerStartedAtRef.current === null) {
+      questionTimerKeyRef.current = questionKey
+      questionTimerStartedAtRef.current = performance.now()
+      questionTimerRemainingRef.current = activeQuizTiming.limitSeconds * 1000
+      return false
+    }
+    const deadline = questionTimerStartedAtRef.current + activeQuizTiming.limitSeconds * 1000
+    if (performance.now() < deadline) return false
+    questionTimerRemainingRef.current = 0
+    if (timerExpirationRef.current !== questionKey) {
+      timerExpirationRef.current = questionKey
+      quiz.timeoutCurrent()
+    }
+    return true
+  }
+
   const handleCountrySelected = (
     sourceFeatureId: string | number,
     name: string,
     entityId: string | null
   ): boolean => {
+    if (rejectLateQuestionAction()) return false
     const question = quiz.session.questionOrder[quiz.session.questionIndex]
     if (
       !isQuizRunning ||
@@ -1444,6 +1704,7 @@ function App(): React.JSX.Element {
     number,
     number
   ]): MapProximityResult | null => {
+    if (rejectLateQuestionAction()) return null
     const question = quiz.session.questionOrder[quiz.session.questionIndex]
     if (
       !isQuizRunning ||
@@ -1463,6 +1724,7 @@ function App(): React.JSX.Element {
 
   const revealQuizAnswer = (): void => {
     if (!isQuizRunning) return
+    if (rejectLateQuestionAction()) return
     const question = quiz.session.questionOrder[quiz.session.questionIndex]
     if (!question) return
 
@@ -1486,6 +1748,7 @@ function App(): React.JSX.Element {
 
   const submitCountryQuizAnswers = (outcomes: Record<string, boolean>): void => {
     if (!isQuizRunning) return
+    if (rejectLateQuestionAction()) return
     if (Object.keys(outcomes).length === 0) return
     quiz.answerItems(outcomes, JSON.stringify(outcomes))
     const allAnswersCorrect = Object.keys(quiz.session.answerWeights).every(
@@ -1502,6 +1765,7 @@ function App(): React.JSX.Element {
     foundValues: readonly string[]
   ): void => {
     if (!isQuizRunning) return
+    if (rejectLateQuestionAction()) return
     quiz.answerPartial(
       key,
       fractionEarned,
@@ -1559,6 +1823,9 @@ function App(): React.JSX.Element {
   }
 
   const stopQuiz = (): void => {
+    timerStartedAtRef.current = null
+    timerStoppedAtRef.current = null
+    questionTimerStartedAtRef.current = null
     recordCurrentQuestionResult()
     quiz.restart([])
     setSelectedQuizCountry(null)
@@ -1633,6 +1900,7 @@ function App(): React.JSX.Element {
         isFullscreen={isMapFullscreen}
         onToggleFullscreen={toggleMapFullscreen}
         onOpenStatistics={openStatistics}
+        onModeChange={openPrimaryMode}
         session={countryKnowledgeQuiz.session}
         onAnswer={answerCountryKnowledgeQuestion}
         onRevealAnswer={revealCountryKnowledgeAnswer}
@@ -1667,6 +1935,7 @@ function App(): React.JSX.Element {
         isFullscreen={isMapFullscreen}
         onToggleFullscreen={toggleMapFullscreen}
         onOpenStatistics={openStatistics}
+        onModeChange={openPrimaryMode}
         onReturnToQuiz={() => setShowExpandedQuizCountry(false)}
       />
     )
@@ -1793,9 +2062,12 @@ function App(): React.JSX.Element {
         questions={estimationQuestions}
         onStop={stopSpecialQuiz}
         onRestart={startNewQuiz}
-        onCompleted={(score) => recordSpecialQuiz('estimation', score)}
+        onCompleted={(score, outcome) => recordSpecialQuiz('estimation', score, outcome)}
         globeMode={globeMode}
         onToggleGlobeMode={toggleGlobeMode}
+        timing={activeQuizTiming}
+        timerMilliseconds={activeTimerMilliseconds}
+        timeExpired={specialTimerExpired}
       />
     )
   }
@@ -1808,9 +2080,12 @@ function App(): React.JSX.Element {
         countryAlpha2={drawCountryAlpha2}
         onStop={stopSpecialQuiz}
         onRestart={startNewQuiz}
-        onCompleted={(score) => recordSpecialQuiz('draw-borders', score)}
+        onCompleted={(score, outcome) => recordSpecialQuiz('draw-borders', score, outcome)}
         globeMode={globeMode}
         onToggleGlobeMode={toggleGlobeMode}
+        timing={activeQuizTiming}
+        timerMilliseconds={activeTimerMilliseconds}
+        timeExpired={specialTimerExpired}
       />
     )
   }
@@ -1858,6 +2133,12 @@ function App(): React.JSX.Element {
                   {t('sur')} {runningQuizTotal} · {t('Score :')}{' '}
                   {formatQuizScore(quiz.session.score, language)} / {runningQuizTotal}
                 </small>
+                {activeQuizTiming.mode !== 'none' && (
+                  <small className="quiz-live-timer" aria-live="off">
+                    {t(activeQuizTiming.mode === 'stopwatch' ? 'Chrono' : 'Temps restant')} ·{' '}
+                    {formatDuration(activeTimerMilliseconds, language)}
+                  </small>
+                )}
                 <div
                   className="quiz-live-progress-track"
                   role="progressbar"
@@ -1884,27 +2165,16 @@ function App(): React.JSX.Element {
                 </button>
               </div>
             </header>
-          ) : (
-            <header className="topbar">
-              <div>
-                <div className="breadcrumb">{t('APPRENTISSAGE / MONDE')}</div>
-                <h1>{t('Quizz monde')}</h1>
-              </div>
+          ) : null}
 
-              <div className="topbar-right">
-                <button
-                  className="home-back-button"
-                  type="button"
-                  data-shortcut-action="app.mode.statistics"
-                  onClick={openStatistics}
-                >
-                  {t('Statistiques')}
-                </button>
-              </div>
-            </header>
+          {!isQuizRunning && (
+            <AppModeSwitcher
+              active="quiz"
+              onChange={openPrimaryMode}
+              pageTitle={t('Quizz monde')}
+              onOpenStatistics={openStatistics}
+            />
           )}
-
-          {!isQuizRunning && <AppModeSwitcher active="quiz" onChange={openPrimaryMode} />}
 
           {!isQuizRunning && (
             <section className="quiz-setup-area" aria-label={t('Réglages de la partie')}>
@@ -2025,7 +2295,13 @@ function App(): React.JSX.Element {
                       <span>{t('MODE DE JEU')}</span>
                       <select
                         value={quizGameMode}
-                        onChange={(event) => setQuizGameMode(event.target.value as QuizGameMode)}
+                        onChange={(event) => {
+                          const nextMode = event.target.value as QuizGameMode
+                          setQuizGameMode(nextMode)
+                          if (nextMode === 'draw-borders') {
+                            setQuizTiming((current) => ({ ...current, scope: 'session' }))
+                          }
+                        }}
                       >
                         <option value="base">{t('Base')}</option>
                         <option value="estimation">{t('Estimation')}</option>
@@ -2060,6 +2336,82 @@ function App(): React.JSX.Element {
                       </label>
                     )}
                   </div>
+
+                  {
+                    <section className="quiz-timing-settings" aria-label={t('Chronométrage')}>
+                      <div>
+                        <span className="quiz-content-picker-caption">{t('CHRONOMÉTRAGE')}</span>
+                        <div
+                          className="quiz-timing-mode-options"
+                          role="group"
+                          aria-label={t('Mode de temps')}
+                        >
+                          {(['none', 'stopwatch', 'countdown'] as const).map((mode) => (
+                            <button
+                              key={mode}
+                              type="button"
+                              className={quizTiming.mode === mode ? 'is-active' : ''}
+                              aria-pressed={quizTiming.mode === mode}
+                              onClick={() =>
+                                setQuizTiming((current) => ({
+                                  ...current,
+                                  mode,
+                                  ...(mode === 'stopwatch' ? { scope: 'session' } : {})
+                                }))
+                              }
+                            >
+                              {t(
+                                mode === 'none'
+                                  ? 'Sans chrono'
+                                  : mode === 'stopwatch'
+                                    ? 'Chrono'
+                                    : 'Minuteur'
+                              )}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                      {quizTiming.mode === 'countdown' && (
+                        <div className="quiz-timing-options">
+                          <label>
+                            <span>{t('Portée')}</span>
+                            <select
+                              value={quizTiming.scope}
+                              onChange={(event) =>
+                                setQuizTiming((current) => ({
+                                  ...current,
+                                  scope: event.target.value as QuizTimingSettings['scope']
+                                }))
+                              }
+                            >
+                              <option value="question" disabled={quizGameMode === 'draw-borders'}>
+                                {t('Par question')}
+                              </option>
+                              <option value="session">{t('Partie entière')}</option>
+                            </select>
+                          </label>
+                          <label>
+                            <span>{t('Durée en secondes')}</span>
+                            <input
+                              type="number"
+                              min={5}
+                              max={7200}
+                              step={5}
+                              value={quizTiming.limitSeconds}
+                              onChange={(event) => {
+                                const limitSeconds = Number(event.target.value)
+                                if (!Number.isInteger(limitSeconds)) return
+                                setQuizTiming((current) => ({
+                                  ...current,
+                                  limitSeconds: Math.max(5, Math.min(7200, limitSeconds))
+                                }))
+                              }}
+                            />
+                          </label>
+                        </div>
+                      )}
+                    </section>
+                  }
 
                   {quizGameMode === 'base' ? (
                     <section
@@ -2672,18 +3024,10 @@ function App(): React.JSX.Element {
                   supplementalClues={activeSupplementalQuizClues}
                 />
               ) : (
-                <>
-                  <div>
-                    <div className="map-title">{t('Carte mondiale')}</div>
-                    <div className="map-subtitle">
-                      {t('Explorez le monde et apprenez à le reconnaître')}
-                    </div>
-                  </div>
-                  <div
-                    className="perspective-comparison-toolbar-slot"
-                    ref={setPerspectiveComparisonPortal}
-                  />
-                </>
+                <div
+                  className="perspective-comparison-toolbar-slot"
+                  ref={setPerspectiveComparisonPortal}
+                />
               )}
             </div>
 

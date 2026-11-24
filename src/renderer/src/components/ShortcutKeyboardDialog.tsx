@@ -3,9 +3,10 @@ import { useLanguage } from '../data/i18n'
 import {
   formatShortcutBinding,
   keyboardShortcutActions,
+  shortcutBindingFromEvent,
   useKeyboardShortcuts
 } from '../data/keyboardShortcuts'
-import type { ShortcutModifier } from '../data/keyboardShortcuts'
+import type { KeyboardShortcutActionId, ShortcutModifier } from '../data/keyboardShortcuts'
 import { shortcutMatchesKey } from '../data/shortcutKeys'
 import {
   keyboardKeyPair,
@@ -48,7 +49,7 @@ type InspectedKey = {
 
 export function ShortcutKeyboardDialog({ onClose }: { onClose: () => void }): React.JSX.Element {
   const { t, language } = useLanguage()
-  const { bindings, setCaptureMode } = useKeyboardShortcuts()
+  const { bindings, assignBinding, setCaptureMode } = useKeyboardShortcuts()
   const dialog = useRef<HTMLDialogElement>(null)
   const titleId = useId()
   const [layout, setLayout] = useState<KeyboardLayoutName>(() => initialLayout(language))
@@ -59,6 +60,8 @@ export function ShortcutKeyboardDialog({ onClose }: { onClose: () => void }): Re
     .filter((key) => pinned.includes(key) || held.includes(key))
   const [selectedCode, setSelectedCode] = useState('KeyC')
   const [focusCode, setFocusCode] = useState('KeyC')
+  const [recordingAction, setRecordingAction] = useState<KeyboardShortcutActionId | null>(null)
+  const [captureMessage, setCaptureMessage] = useState('')
   const shift = modifiers.includes('Shift')
   const isSoloModifier = (key: string): boolean => modifierButtons.some((item) => item.key === key)
   const sameLayer = (
@@ -211,6 +214,30 @@ export function ShortcutKeyboardDialog({ onClose }: { onClose: () => void }): Re
         if (event.target === event.currentTarget) onClose()
       }}
       onKeyDownCapture={(event) => {
+        if (recordingAction) {
+          if (event.key === 'Escape') {
+            event.preventDefault()
+            event.stopPropagation()
+            setRecordingAction(null)
+            setCaptureMessage(t('Modification annulée.'))
+            return
+          }
+          if (event.key === 'Tab' || isSoloModifier(event.key)) return
+          event.preventDefault()
+          event.stopPropagation()
+          const displaced = assignBinding(
+            recordingAction,
+            shortcutBindingFromEvent(event.nativeEvent)
+          )
+          setRecordingAction(null)
+          setSelectedCode(event.code)
+          setCaptureMessage(
+            displaced.length
+              ? t('Raccourci enregistré. Les commandes en conflit ont été libérées.')
+              : t('Raccourci enregistré.')
+          )
+          return
+        }
         const command = event.ctrlKey || event.altKey || event.metaKey
         if (!command && (!event.shiftKey || event.key === 'Tab')) return
         if (isSoloModifier(event.key) || !keyCodes.includes(event.code)) return
@@ -238,7 +265,21 @@ export function ShortcutKeyboardDialog({ onClose }: { onClose: () => void }): Re
         }
         event.stopPropagation()
       }}
-      onKeyUp={(event) => event.stopPropagation()}
+      onKeyUp={(event) => {
+        if (recordingAction && isSoloModifier(event.key)) {
+          const displaced = assignBinding(recordingAction, {
+            key: event.key,
+            modifiers: []
+          })
+          setRecordingAction(null)
+          setCaptureMessage(
+            displaced.length
+              ? t('Raccourci enregistré. Les commandes en conflit ont été libérées.')
+              : t('Raccourci enregistré.')
+          )
+        }
+        event.stopPropagation()
+      }}
     >
       <div className="shortcut-board-body">
         <header className="shortcut-board-header">
@@ -319,11 +360,29 @@ export function ShortcutKeyboardDialog({ onClose }: { onClose: () => void }): Re
           <section aria-live="polite">
             <h3>{t('Touche sélectionnée')}</h3>
             <kbd>{selectedBinding}</kbd>
+            {captureMessage && <p role="status">{captureMessage}</p>}
+            {recordingAction && (
+              <p className="shortcut-board-capture-status" role="status">
+                {t('Appuie sur la nouvelle touche ou combinaison. Échap annule.')}
+              </p>
+            )}
             {selected.actions.length > 0 ? (
               <ul>
                 {selected.actions.map((action) => (
                   <li key={action.id}>
-                    {t(action.label)} <small>{t(action.category)}</small>
+                    <span>
+                      {t(action.label)} <small>{t(action.category)}</small>
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setRecordingAction(action.id)
+                        setCaptureMessage('')
+                        setCaptureMode(true)
+                      }}
+                    >
+                      {t(recordingAction === action.id ? 'Écoute…' : 'Modifier')}
+                    </button>
                   </li>
                 ))}
               </ul>
@@ -340,6 +399,16 @@ export function ShortcutKeyboardDialog({ onClose }: { onClose: () => void }): Re
                 <li key={action.id}>
                   <span>{t(action.label)}</span>
                   <kbd>{formatShortcutBinding(bindings[action.id])}</kbd>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setRecordingAction(action.id)
+                      setCaptureMessage('')
+                      setCaptureMode(true)
+                    }}
+                  >
+                    {t(recordingAction === action.id ? 'Écoute…' : 'Modifier')}
+                  </button>
                 </li>
               ))}
             </ul>

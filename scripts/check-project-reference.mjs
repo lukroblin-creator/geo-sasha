@@ -35,7 +35,7 @@ const referenceFiles = [
 const errors = []
 
 for (const reference of referenceFiles) {
-  let content = ''
+  let content
   try {
     content = readFileSync(reference.path, 'utf8')
   } catch {

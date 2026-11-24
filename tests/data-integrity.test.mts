@@ -10,8 +10,15 @@ type CountryCatalogEntry = {
 type CountryRecord = {
   sourceFeatureId: string | number
   alpha2: string
-  metrics: Record<string, number>
+  metrics: Record<string, number> | null
   metricsSource: string
+  metricsSourceUrl?: string
+  metricsSecondarySourceUrl?: string
+  population: number | null
+  populationYear: number | null
+  populationSource?: string
+  populationSourceUrl?: string
+  populationSecondarySourceUrl?: string
   cities: { name: string; population: number }[]
   mountains: { name: string; elevationMeters: number }[]
 }
@@ -24,7 +31,14 @@ type TerritoryRecord = {
 
 type ProfileFacts = {
   sources: Record<string, { name: string; url: string }>
-  byAlpha2: Record<string, unknown>
+  byAlpha2: Record<
+    string,
+    {
+      highestPoint?: { name: { en: string }; elevationMeters: number | null }
+      additionalSources?: Array<{ url: string }>
+      rivers?: Array<{ en: string }>
+    }
+  >
   byTerritoryId: Record<string, unknown>
 }
 
@@ -75,8 +89,15 @@ test('les données pays et territoires gardent des identifiants reliés entre el
     const explored = explorationByCode.get(country.alpha2)
     assert.ok(explored, `Missing exploration data for ${country.alpha2}`)
     assert.equal(String(explored.sourceFeatureId), String(country.sourceFeatureId))
-    assert.ok(Object.keys(explored.metrics).length >= 4)
-    assert.ok(Object.values(explored.metrics).every((value) => Number.isFinite(value) && value > 0))
+    if (explored.metrics) {
+      assert.ok(Object.keys(explored.metrics).length >= 4)
+      assert.ok(
+        Object.values(explored.metrics).every((value) => Number.isFinite(value) && value > 0)
+      )
+    } else {
+      assert.ok(explored.metricsSourceUrl)
+      assert.ok(explored.metricsSecondarySourceUrl)
+    }
     assert.ok(explored.metricsSource.trim())
   }
 
@@ -98,6 +119,14 @@ test('les données pays et territoires gardent des identifiants reliés entre el
     )
   )
   assert.equal(catalogByCode.size, explorationByCode.size)
+
+  const colombia = explorationByCode.get('CO')
+  assert.ok(colombia)
+  assert.equal(colombia.population, null)
+  assert.equal(colombia.populationYear, null)
+  assert.ok(colombia.populationSourceUrl)
+  assert.ok(colombia.populationSecondarySourceUrl)
+  assert.equal(colombia.metrics, null)
 })
 
 test('les profils et données de connaissance couvrent le catalogue sans valeurs numériques incohérentes', (): void => {
@@ -114,6 +143,15 @@ test('les profils et données de connaissance couvrent le catalogue sans valeurs
     Object.values(profileFacts.sources).every(
       ({ name, url }) => name.trim() && /^https:\/\//.test(url)
     )
+  )
+
+  assert.equal(profileFacts.byAlpha2.CO.highestPoint?.elevationMeters, 5775)
+  assert.ok((profileFacts.byAlpha2.CO.additionalSources?.length ?? 0) >= 2)
+  assert.equal(profileFacts.byAlpha2.ZM.highestPoint?.elevationMeters, 2339)
+  assert.ok((profileFacts.byAlpha2.ZM.additionalSources?.length ?? 0) >= 2)
+  assert.equal(
+    profileFacts.byAlpha2.CO.rivers?.filter(({ en }) => en.toLowerCase().includes('magdal')).length,
+    1
   )
 
   for (const country of knowledge) {

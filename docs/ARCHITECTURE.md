@@ -1,6 +1,6 @@
 # Architecture de World Atlas
 
-**Dernière révision : 23 novembre 2026**
+**Dernière révision : 24 novembre 2026**
 
 ## Vue d’ensemble
 
@@ -11,13 +11,18 @@ Le point d’entrée du renderer installe quatre contextes globaux : langue, ski
 Le renderer est organisé par domaine :
 
 - `components/` contient les vues et les contrôles visibles : exploration, quiz, statistiques, comparateur et gestion des calques.
+- `AppModeSwitcher.tsx` porte la navigation compacte commune, les commandes système et le titre de page ; certaines vues cartographiques la révèlent à partir du bord haut de fenêtre.
 - `WorldMapLoader.tsx` charge le moteur cartographique uniquement lorsqu'une vue qui contient une carte est affichée. Les contrôles de caméra et ses calculs d'orientation sont isolés dans `WorldMapCameraControls.tsx` et `worldMapCamera.ts`.
 - La sélection cartographique est répartie entre `worldMapCountrySelection.ts`, `useWorldMapCountrySelection.ts` et `data/geography/countryHitTesting.ts`.
 - Les masques utilisent `worldMapOpacityMasks.ts`, `worldMapMaskGeometry.ts` et `data/geography/opacityMaskLogic.ts`, tandis que `MapLayerManager.tsx` porte leur interface de pile.
 - Le rendu polaire du globe est isolé dans `worldMapPolarTexture.ts`, `polarTextureBlend.ts` et `useWorldMapGlobeTexture.ts`.
-- Le système de raccourcis est centralisé dans `data/keyboardShortcuts.tsx` et `data/shortcutKeys.ts`. `SettingsMenu.tsx` édite les associations ; `ShortcutKeyboardDialog.tsx` et `shortcutKeyboardLayout.ts` affichent le clavier visuel.
+- Le système de raccourcis est centralisé dans `data/keyboardShortcuts.tsx` et `data/shortcutKeys.ts`. `SettingsMenu.tsx` et `ShortcutKeyboardDialog.tsx` éditent les associations via le même fournisseur ; `shortcutKeyboardLayout.ts` décrit le clavier visuel.
 - `data/geography/` regroupe les entités, géométries, données physiques et règles de calques.
+- `data/geography/explorationViews.ts` place la vue système « Global » devant les vues personnelles sans modifier leur stockage.
+- `data/geography/countryComparatorTextQuery.ts` analyse et complète les requêtes textuelles du comparateur ; `CountryComparatorView.tsx` traduit ces expressions en critères du comparateur existant.
 - `data/quiz/` regroupe les questions, les réponses, les presets, les sessions et les statistiques de quiz.
+- `data/quiz/quizRewards.ts` calcule les accomplissements de manière déterministe depuis l’historique ; `QuizRewardsPanel.tsx` les présente dans les statistiques sans stockage distinct.
+- `data/quiz/quizTiming.ts` porte les réglages, calculs de durée et clés stables de comparaison ; `quizPresetValidation.ts` valide les presets sans dépendre de leur interface de stockage.
 - `workers/` contient le travail déporté, notamment celui des étiquettes cartographiques.
 - `assets/map-layers/` contient les textures hors ligne de la carte.
 
@@ -39,7 +44,13 @@ Le modèle d’ordre et d’opacité des calques est défini dans `data/geograph
 
 `ExplorationView.tsx` orchestre les calques, masques et vues enregistrées. Une vue sérialise également la caméra, la projection, les comparaisons et la sélection courante. `WorldMap.tsx` fournit l’état de caméra et reçoit une demande de restauration ; le stockage ne doit donc pas être déplacé dans la carte sans redéfinir cette interface.
 
+La vue système « Global » est construite dans `ExplorationView.tsx` à partir des réglages cartographiques par défaut et reste séparée des vues personnelles persistées. Les notifications de chargement d’images de drapeaux sont regroupées dans `MapFlagOverlay.tsx` pour éviter de recalculer l’ensemble des couches SVG à chaque événement rapproché.
+
 Pour les quiz, `data/quiz/` fournit les données et la logique de session. `QuizPanels.tsx` gère la saisie et le retour des réponses. `App.tsx` relie ces réponses à la carte, aux scores, aux statistiques et à l’historique.
+
+`App.tsx` démarre et arrête les horloges des parties, transmet le temps aux modes spéciaux, et associe chaque résultat à un instantané de configuration. `useQuizSession.ts` applique les expirations au quiz classique ; les vues Estimation et Dessine les frontières traitent leurs propres résultats d’expiration. `StatisticsView.tsx` compare les durées par clé stable de configuration et exclut les parties expirées ou incomplètes du classement.
+
+`StatisticsView.tsx` transmet l’historique conservé au calcul pur de `quizRewards.ts`. `QuizRewardsPanel.tsx` affiche les accomplissements obtenus et leur progression ; aucun résultat ni déblocage n’est stocké en parallèle de l’historique.
 
 ## Persistance locale
 
@@ -50,6 +61,9 @@ La persistance passe actuellement par `localStorage`, avec des clés versionnée
 - presets et preset par défaut dans `data/quiz/presets.ts` ;
 - progression dans `data/quiz/progress.ts`, avec migration des anciennes versions ;
 - historique dans `data/quiz/quizHistory.ts` ;
+- copie en mémoire de l’historique de quiz de la session courante, utilisée si `localStorage` est indisponible ;
+- accomplissements calculés à la demande depuis les 500 entrées d’historique conservées ;
+- réglages temporels optionnels dans les presets et durée/configuration temporelles optionnelles dans l’historique de partie ; les enregistrements antérieurs restent valides sans migration destructive ;
 - statistiques de quiz pays dans `data/quiz/countryQuizStats.ts` ;
 - vues enregistrées dans `ExplorationView.tsx` ;
 - préférence de disposition du clavier visuel dans `ShortcutKeyboardDialog.tsx`.
@@ -86,7 +100,8 @@ Lancer `npm run verify` avant de valider une modification. Cette commande vérif
 
 `npm run lint:map` reste disponible pour vérifier rapidement les règles de hitzone, les masques et leur hook sans lancer toute la suite.
 
-- `tests/quiz.test.mts` couvre les règles de quiz et la progression.
+- `tests/quiz.test.mts` couvre les règles de quiz, la progression, les expirations de session, les clés de configuration, les réglages temporels des presets et la lecture des historiques anciens.
+- `tests/quiz-rewards.test.mts` couvre les seuils d’accomplissement, les points partiels, les séries, les entrées historiques incomplètes, les expirations, les records par configuration et les récompenses chronométrées.
 - `tests/data-integrity.test.mts` vérifie les liens entre catalogues, profils, territoires et les principales contraintes structurelles des données. Il ne remplace pas une vérification documentaire des faits.
 - `tests/map-interaction.test.mts` couvre les règles déterministes de hitzone, de présélection clavier et de transparence des masques.
 - `tests/map-camera.test.mts` couvre les conversions d'orientation et les rotations composées de la caméra.

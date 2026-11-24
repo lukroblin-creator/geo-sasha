@@ -11,7 +11,7 @@ import { useLanguage } from '../data/i18n'
 import { CorrectAnswerBanner, QuizReview } from './QuizPanels'
 import { useAdvanceQuestionOnEnter } from './useAdvanceQuestionOnEnter'
 import { MapFullscreenBar } from './MapFullscreenBar'
-import { SkinSelector } from './AppModeSwitcher'
+import { AppModeSwitcher, type AppPrimaryMode } from './AppModeSwitcher'
 import countryCatalog from '../data/quiz/countryCatalog.json'
 import { getExplorationDetails } from '../data/geography/exploration'
 import { QuizReviewCountryCard } from './QuizPanels'
@@ -23,6 +23,7 @@ type CountryKnowledgeQuizViewProps = {
   isFullscreen: boolean
   onToggleFullscreen: () => void
   onOpenStatistics: () => void
+  onModeChange: (mode: AppPrimaryMode) => void
   session: QuizSession<CountryKnowledgeQuestion>
   onAnswer: (answer: string) => void
   onRevealAnswer: () => void
@@ -38,6 +39,7 @@ export function CountryKnowledgeQuizView({
   isFullscreen,
   onToggleFullscreen,
   onOpenStatistics,
+  onModeChange,
   session,
   onAnswer,
   onRevealAnswer,
@@ -84,41 +86,26 @@ export function CountryKnowledgeQuizView({
           showSettings={false}
         />
       )}
-      <header className="statistics-header">
-        <div>
-          <div className="breadcrumb">{t('APPRENTISSAGE / QUIZ PAYS')}</div>
-          <h1>
-            {t('À la découverte de')} {countryName}
-          </h1>
-          <p>
-            {t(
-              'Réponds à des questions sur sa capitale, ses villes, ses reliefs, sa devise, ses langues officielles, son alphabet et son domaine internet.'
-            )}
-          </p>
-        </div>
-        <div className="statistics-actions">
-          <SkinSelector compact />
-          <button
-            className="home-back-button"
-            type="button"
-            data-shortcut-action="app.mode.statistics"
-            onClick={onOpenStatistics}
-          >
-            {t('Statistiques')}
-          </button>
-          <button
-            className="home-back-button"
-            type="button"
-            data-shortcut-action="quiz.stop"
-            onClick={onStop}
-          >
-            {t('Arrêter le quiz')}
-          </button>
-          <button className="home-back-button" type="button" onClick={onToggleFullscreen}>
-            {t(isFullscreen ? 'Quitter le plein écran' : 'Plein écran')}
-          </button>
-        </div>
-      </header>
+      {!isFullscreen && (
+        <AppModeSwitcher
+          active="country-select"
+          onChange={onModeChange}
+          pageTitle={`${t('À la découverte de')} ${countryName}`}
+          onOpenStatistics={onOpenStatistics}
+          onToggleFullscreen={onToggleFullscreen}
+          autoReveal
+          pageActions={
+            <button
+              className="app-mode-statistics"
+              type="button"
+              data-shortcut-action="quiz.stop"
+              onClick={onStop}
+            >
+              {t('Arrêter le quiz')}
+            </button>
+          }
+        />
+      )}
 
       <div className="country-knowledge-content">
         <section className="country-knowledge-map" aria-label={`${t('Carte')} ${countryName}`}>

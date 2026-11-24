@@ -12,6 +12,7 @@ export type QuizSession<Question> = {
   answerPoints: Record<string, number>
   answerCorrect: boolean | null
   answerRevealed: boolean
+  answerTimedOut: boolean
   selectedAnswer: string | null
   questionHistory: Array<{
     question: Question
@@ -21,6 +22,8 @@ export type QuizSession<Question> = {
     answerResults: Record<string, boolean | null>
     answerAttempts: Record<string, number>
     answerPoints: Record<string, number>
+    timedOut?: boolean
+    notReached?: boolean
   }>
   completed: boolean
 }
@@ -60,6 +63,7 @@ export function createQuizSession<Question>(
     answerPoints: Object.fromEntries(Object.keys(normalizedWeights).map((key) => [key, 0])),
     answerCorrect: null,
     answerRevealed: false,
+    answerTimedOut: false,
     selectedAnswer: null,
     questionHistory: [],
     completed: false
@@ -190,6 +194,60 @@ export function revealQuizAnswer<Question>(session: QuizSession<Question>): Quiz
   return { ...session, answerRevealed: true }
 }
 
+export function timeoutQuizQuestion<Question>(
+  session: QuizSession<Question>
+): QuizSession<Question> {
+  if (session.completed || session.answerCorrect === true || session.answerRevealed) return session
+  return { ...session, answerRevealed: true, answerTimedOut: true }
+}
+
+function questionHistoryRow<Question>(
+  session: QuizSession<Question>,
+  question: Question,
+  status: { timedOut?: boolean; notReached?: boolean } = {}
+): QuizSession<Question>['questionHistory'][number] {
+  return {
+    question,
+    correct: session.answerCorrect === true,
+    revealed: session.answerRevealed,
+    selectedAnswer: session.selectedAnswer,
+    answerResults: { ...session.answerResults },
+    answerAttempts: { ...session.answerAttempts },
+    answerPoints: { ...session.answerPoints },
+    ...(status.timedOut ? { timedOut: true } : {}),
+    ...(status.notReached ? { notReached: true } : {})
+  }
+}
+
+export function finishQuizSessionByTimeout<Question>(
+  session: QuizSession<Question>
+): QuizSession<Question> {
+  if (session.completed) return session
+  const questionHistory = [...session.questionHistory]
+  const currentQuestion = session.questionOrder[session.questionIndex]
+  if (currentQuestion) {
+    questionHistory.push(
+      questionHistoryRow(session, currentQuestion, {
+        timedOut: session.answerCorrect !== true && !session.answerRevealed
+      })
+    )
+  }
+  const unansweredSession: QuizSession<Question> = {
+    ...session,
+    answerCorrect: null,
+    answerRevealed: false,
+    answerTimedOut: false,
+    selectedAnswer: null,
+    answerResults: Object.fromEntries(Object.keys(session.answerWeights).map((key) => [key, null])),
+    answerAttempts: Object.fromEntries(Object.keys(session.answerWeights).map((key) => [key, 0])),
+    answerPoints: Object.fromEntries(Object.keys(session.answerWeights).map((key) => [key, 0]))
+  }
+  for (const question of session.questionOrder.slice(session.questionIndex + 1)) {
+    questionHistory.push(questionHistoryRow(unansweredSession, question, { notReached: true }))
+  }
+  return { ...session, questionHistory, completed: true }
+}
+
 export function advanceQuizSession<Question>(
   session: QuizSession<Question>
 ): QuizSession<Question> {
@@ -202,15 +260,7 @@ export function advanceQuizSession<Question>(
       ? session.questionHistory
       : [
           ...session.questionHistory,
-          {
-            question,
-            correct: session.answerCorrect === true,
-            revealed: session.answerRevealed,
-            selectedAnswer: session.selectedAnswer,
-            answerResults: { ...session.answerResults },
-            answerAttempts: { ...session.answerAttempts },
-            answerPoints: { ...session.answerPoints }
-          }
+          questionHistoryRow(session, question, { timedOut: session.answerTimedOut })
         ]
 
   if (session.questionIndex === session.questionOrder.length - 1) {
@@ -227,6 +277,7 @@ export function advanceQuizSession<Question>(
     answerPoints: Object.fromEntries(Object.keys(session.answerWeights).map((key) => [key, 0])),
     answerCorrect: null,
     answerRevealed: false,
+    answerTimedOut: false,
     selectedAnswer: null
   }
 }
@@ -252,6 +303,8 @@ type UseQuizSessionResult<Question> = {
     outcome: 'progress' | 'correct' | 'incorrect',
     selectedAnswer?: string | null
   ) => void
+  timeoutCurrent: () => void
+  finishByTimeout: () => void
   revealAnswer: () => void
   next: () => void
   restart: (questions?: readonly Question[], answerWeights?: Record<string, number>) => void
@@ -297,6 +350,17 @@ export function useQuizSession<Question>({
     setSession(updated)
   }
 
+  const timeoutCurrent = (): void => {
+    setSession((current) => timeoutQuizQuestion(current))
+  }
+
+  const finishByTimeout = (): void => {
+    const updated = finishQuizSessionByTimeout(session)
+    if (updated === session) return
+    onCompleted(mode, updated.score, updated.questionHistory.length, updated.questionHistory)
+    setSession(updated)
+  }
+
   const revealAnswer = (): void => {
     setSession((current) => revealQuizAnswer(current))
   }
@@ -308,5 +372,15 @@ export function useQuizSession<Question>({
     setSession(createQuizSession(questions ?? questionBank(), answerWeights))
   }
 
-  return { session, answer, answerItems, answerPartial, revealAnswer, next, restart }
+  return {
+    session,
+    answer,
+    answerItems,
+    answerPartial,
+    timeoutCurrent,
+    finishByTimeout,
+    revealAnswer,
+    next,
+    restart
+  }
 }

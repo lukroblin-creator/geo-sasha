@@ -1,3 +1,5 @@
+import { useState } from 'react'
+import type { ReactNode } from 'react'
 import { useLanguage } from '../data/i18n'
 import type { KeyboardShortcutActionId } from '../data/keyboardShortcuts'
 import { useSkin } from '../data/skin'
@@ -8,6 +10,11 @@ export type AppPrimaryMode = 'quiz' | 'exploration' | 'country-select' | 'compar
 type AppModeSwitcherProps = {
   active: AppPrimaryMode | null
   onChange: (mode: AppPrimaryMode) => void
+  pageTitle?: string
+  onOpenStatistics?: () => void
+  onToggleFullscreen?: () => void
+  pageActions?: ReactNode
+  autoReveal?: boolean
 }
 
 const modes: {
@@ -44,10 +51,18 @@ export function SkinSelector({ compact = false }: { compact?: boolean }): React.
   )
 }
 
-export function AppModeSwitcher({ active, onChange }: AppModeSwitcherProps): React.JSX.Element {
+export function AppModeSwitcher({
+  active,
+  onChange,
+  pageTitle,
+  onOpenStatistics,
+  onToggleFullscreen,
+  pageActions,
+  autoReveal = false
+}: AppModeSwitcherProps): React.JSX.Element {
   const { t } = useLanguage()
   const { skin } = useSkin()
-  const activeModeLabel = modes.find((mode) => mode.id === active)?.label ?? 'Navigation'
+  const [manuallyRevealed, setManuallyRevealed] = useState(false)
   const modeButtons = (
     <div className="app-mode-buttons">
       {modes.map((mode) => (
@@ -66,19 +81,65 @@ export function AppModeSwitcher({ active, onChange }: AppModeSwitcherProps): Rea
   )
   return (
     <nav
-      className={`app-mode-switcher${skin === 'minimal' ? ' is-minimal' : skin === 'matrix' ? ' is-matrix' : ''}`}
+      className={`app-mode-switcher${skin === 'minimal' ? ' is-minimal' : skin === 'matrix' ? ' is-matrix' : ''}${autoReveal ? ' is-auto-reveal' : ''}${manuallyRevealed ? ' is-manually-revealed' : ''}`}
       aria-label={t('Modes de l’application')}
     >
-      {skin === 'minimal' ? (
-        <details className="app-mode-menu">
-          <summary>{t(activeModeLabel)}</summary>
+      {autoReveal && (
+        <button
+          className="app-mode-reveal"
+          type="button"
+          aria-expanded={manuallyRevealed}
+          onClick={() => setManuallyRevealed((shown) => !shown)}
+        >
+          {t('Navigation')}
+        </button>
+      )}
+      <div className="app-mode-primary">
+        <details
+          className="app-mode-menu"
+          onMouseEnter={(event) => {
+            event.currentTarget.open = true
+          }}
+          onMouseLeave={(event) => {
+            if (!event.currentTarget.matches(':focus-within')) event.currentTarget.open = false
+          }}
+          onBlur={(event) => {
+            if (!event.currentTarget.contains(event.relatedTarget as Node | null)) {
+              event.currentTarget.open = false
+            }
+          }}
+        >
+          <summary
+            aria-label={t('Navigation')}
+            onFocus={(event) => {
+              const menu = event.currentTarget.closest('details')
+              if (menu) menu.open = true
+            }}
+          >
+            {t('Navigation')} <span aria-hidden="true">⌄</span>
+          </summary>
           <div className="app-mode-menu-content">{modeButtons}</div>
         </details>
-      ) : (
-        <>{modeButtons}</>
-      )}
+        {pageTitle && <h1 className="app-mode-page-title">{pageTitle}</h1>}
+      </div>
 
       <div className="app-mode-system-controls">
+        {onOpenStatistics && (
+          <button
+            className="app-mode-statistics"
+            type="button"
+            data-shortcut-action="app.mode.statistics"
+            onClick={onOpenStatistics}
+          >
+            {t('Statistiques')}
+          </button>
+        )}
+        {onToggleFullscreen && (
+          <button className="app-mode-fullscreen" type="button" onClick={onToggleFullscreen}>
+            {t('Plein écran')}
+          </button>
+        )}
+        {pageActions}
         <div className="app-mode-status" role="status">
           <span className="status-dot" aria-hidden="true" />
           <span className="status-text">{t('Application locale')}</span>

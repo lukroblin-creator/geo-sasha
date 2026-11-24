@@ -7,8 +7,8 @@
   "geometrySourceUrl": "https://raw.githubusercontent.com/nvkelso/natural-earth-vector/master/geojson/ne_10m_admin_0_map_units.geojson",
   "geometryNote": "Area, perimeter and spans are approximate; coastlines vary with the source scale.",
   "unavailableReasons": {
-    "population": "Aucun chiffre de population n’est fourni pour cette entité dans la réponse de la Banque mondiale sélectionnée.",
-    "metrics": "La source cartographique ne fournit pas de contour exploitable pour calculer ces mesures.",
+    "population": "ND signifie qu’aucune valeur n’a été retenue lorsqu’une estimation internationale et une série officielle nationale comparable divergent.",
+    "metrics": "ND signifie qu’aucune mesure n’a été retenue lorsque les sources de référence et le calcul sur la géométrie cartographique divergent ou ne sont pas comparables.",
     "capital": "La source géographique ne fournit pas de capitale vérifiée pour ce territoire.",
     "cities": "Aucune grande ville vérifiée n’est incluse pour cette entité dans les données locales.",
     "mountains": "Aucun sommet vérifié n’est inclus pour cette entité dans les données locales.",
@@ -2392,16 +2392,11 @@
       "sourceFeatureId": 170,
       "alpha2": "CO",
       "capital": "Bogota",
-      "population": 53425635,
-      "populationYear": 2025,
-      "metrics": {
-        "areaKm2": 1140095,
-        "perimeterKm": 9091,
-        "northSouthKm": 1981,
-        "eastWestKm": 1646
-      },
-      "metricsScope": "Territoire principal, hors dépendances et territoires éloignés.",
-      "metricsSource": "Natural Earth 10m Admin 0 Map Units",
+      "population": null,
+      "populationYear": null,
+      "metrics": null,
+      "metricsScope": "ND · la valeur Natural Earth et la superficie de référence ONU ne concordent pas.",
+      "metricsSource": "Natural Earth / UNData",
       "cities": [
         {
           "name": "Bogota",
@@ -2477,7 +2472,12 @@
           "name": "Cerro Maine Hanarí",
           "elevationMeters": 860
         }
-      ]
+      ],
+      "populationSource": "ND · estimations contradictoires",
+      "populationSourceUrl": "https://www.dane.gov.co/index.php/estadisticas-por-tema/demografia-y-poblacion/proyecciones-de-poblacion",
+      "populationSecondarySourceUrl": "https://data.un.org/legacy/en/iso/co.html",
+      "metricsSourceUrl": "https://data.un.org/legacy/en/iso/co.html",
+      "metricsSecondarySourceUrl": "https://raw.githubusercontent.com/nvkelso/natural-earth-vector/master/geojson/ne_10m_admin_0_map_units.geojson"
     },
     {
       "sourceFeatureId": 174,

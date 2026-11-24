@@ -9,7 +9,6 @@ import { ExplorationPlaceDetails } from './ExplorationPlaceDetails'
 import { useLanguage } from '../data/i18n'
 import { useKeyboardShortcut } from '../data/keyboardShortcuts'
 import { AppModeSwitcher, type AppPrimaryMode } from './AppModeSwitcher'
-import { SettingsMenu } from './SettingsMenu'
 import { MapFullscreenBar } from './MapFullscreenBar'
 import { useSkin } from '../data/skin'
 import { MapLayerControls } from './MapLayerControls'
@@ -21,6 +20,7 @@ import {
   type MapLayerDensities
 } from '../data/geography/mapLayerDensity'
 import { mountainRanges } from '../data/geography/physical/mountainRanges'
+import { listExplorationViews } from '../data/geography/explorationViews'
 import countryCatalog from '../data/quiz/countryCatalog.json'
 import { getContinentIdForCountry, quizRegions } from '../data/quiz/countryContinents'
 import {
@@ -157,7 +157,6 @@ export function ExplorationView({
   const [showRivers, setShowRivers] = useState(false)
   const [showMountains, setShowMountains] = useState(false)
   const [showSummits, setShowSummits] = useState(false)
-  const [chromeCollapsed, setChromeCollapsed] = useState(false)
   const [mapIntroCollapsed, setMapIntroCollapsed] = useState(false)
   const [layerControlsCollapsed, setLayerControlsCollapsed] = useState(false)
   useKeyboardShortcut('map.toggleLayerControls', () =>
@@ -180,16 +179,51 @@ export function ExplorationView({
   const [selectedPlaceIdentity, setSelectedPlaceIdentity] =
     useState<SavedExplorationView['selectedPlace']>(null)
   const [savedViews, setSavedViews] = useState<SavedExplorationView[]>(readSavedExplorationViews)
-  const [savedViewName, setSavedViewName] = useState('')
+  const [savedViewName, setSavedViewName] = useState('Global')
   const [savedViewSuggestionsOpen, setSavedViewSuggestionsOpen] = useState(false)
   const [activeSavedViewSuggestionIndex, setActiveSavedViewSuggestionIndex] = useState(-1)
   const [savedViewMessage, setSavedViewMessage] = useState('')
   const [comparedCountries, setComparedCountries] = useState<string[]>([])
   const normalizedSavedViewName = savedViewName.trim().toLocaleLowerCase()
+  const globalView: SavedExplorationView = {
+    id: 'builtin-global',
+    name: t('Global'),
+    createdAt: '1970-01-01T00:00:00.000Z',
+    showBorders: true,
+    showTerritories: true,
+    showLabels: false,
+    showFlagTerritories: false,
+    showResources: false,
+    showRivers: false,
+    showMountains: false,
+    showSummits: false,
+    layerDensities: fullMapLayerDensities,
+    realLayer: null,
+    realLayerVariant: 'day',
+    globeMode: false,
+    showTopography: false,
+    layerOrder: defaultMapLayerOrder,
+    layerOpacities: defaultMapLayerOpacities,
+    opacityMasks: [],
+    comparedCountries: [],
+    selectedPlace: null,
+    camera: {
+      longitude: 0,
+      latitude: 0,
+      zoom: 1.5,
+      bearing: 0,
+      pitch: 0,
+      roll: 0,
+      orbitMode: false,
+      freeMode: false
+    }
+  }
+  const allSavedViews = listExplorationViews(globalView, savedViews)
   const selectedSavedView =
-    savedViews.find((view) => view.name.trim().toLocaleLowerCase() === normalizedSavedViewName) ??
-    null
-  const matchingSavedViews = savedViews.filter((view) =>
+    allSavedViews.find(
+      (view) => view.name.trim().toLocaleLowerCase() === normalizedSavedViewName
+    ) ?? null
+  const matchingSavedViews = allSavedViews.filter((view) =>
     view.name.toLocaleLowerCase().includes(normalizedSavedViewName)
   )
 
@@ -220,7 +254,7 @@ export function ExplorationView({
   const [cameraViewRequest, setCameraViewRequest] = useState<
     (typeof cameraView & { sequence: number }) | null
   >(null)
-  const explorationPanelsCollapsed = chromeCollapsed && layerControlsCollapsed && detailsCollapsed
+  const explorationPanelsCollapsed = mapIntroCollapsed && layerControlsCollapsed && detailsCollapsed
   const [focusEntityRequest, setFocusEntityRequest] = useState<{
     entityId: string
     sequence: number
@@ -263,7 +297,7 @@ export function ExplorationView({
       selectedPlace: selectedPlaceIdentity,
       camera: cameraView
     }
-    const nextViews = [view, ...savedViews]
+    const nextViews = [view, ...savedViews.filter((entry) => entry.id !== globalView.id)]
     persistSavedViews(nextViews, t('Vue enregistrée.'))
     setSavedViewName('')
     setSavedViewSuggestionsOpen(false)
@@ -311,6 +345,7 @@ export function ExplorationView({
   }
 
   const deleteSavedView = (viewId: string): void => {
+    if (viewId === globalView.id) return
     const view = savedViews.find((item) => item.id === viewId)
     if (!view) return
     const nextViews = savedViews.filter((item) => item.id !== viewId)
@@ -327,13 +362,13 @@ export function ExplorationView({
     ) {
       return
     }
-    if (event.key === 'ArrowDown' && savedViews.length > 0) {
+    if (event.key === 'ArrowDown' && allSavedViews.length > 0) {
       event.preventDefault()
       setSavedViewSuggestionsOpen(true)
       setActiveSavedViewSuggestionIndex((index) =>
         matchingSavedViews.length === 0 ? -1 : Math.min(index + 1, matchingSavedViews.length - 1)
       )
-    } else if (event.key === 'ArrowUp' && savedViews.length > 0) {
+    } else if (event.key === 'ArrowUp' && allSavedViews.length > 0) {
       event.preventDefault()
       setSavedViewSuggestionsOpen(true)
       setActiveSavedViewSuggestionIndex((index) =>
@@ -701,9 +736,8 @@ export function ExplorationView({
 
   return (
     <div
-      className={`exploration-screen${isFullscreen ? ' map-fullscreen-screen exploration-map-fullscreen' : ''}`}
+      className={`exploration-screen${explorationPanelsCollapsed ? ' is-panels-collapsed' : ''}${isFullscreen ? ' map-fullscreen-screen exploration-map-fullscreen' : ''}`}
     >
-      {chromeCollapsed && !isFullscreen && <SettingsMenu floating />}
       {isFullscreen && (
         <MapFullscreenBar
           title={t('Exploration')}
@@ -711,61 +745,15 @@ export function ExplorationView({
           onExit={onToggleFullscreen}
         />
       )}
-      {chromeCollapsed && !isFullscreen && (
-        <button
-          className="exploration-panel-toggle exploration-panel-reopen exploration-chrome-reopen exploration-hover-reveal"
-          type="button"
-          aria-label={t('Afficher l’en-tête et la navigation')}
-          title={t('Afficher l’en-tête et la navigation')}
-          aria-expanded={false}
-          onClick={() => setChromeCollapsed(false)}
-        >
-          <span aria-hidden="true">☰</span>
-        </button>
-      )}
-      {!chromeCollapsed && (
-        <>
-          <header className="exploration-header">
-            <div className="exploration-brand">
-              <div className="brand-icon">W</div>
-              <div>
-                <div className="brand-name">WORLD ATLAS</div>
-                <div className="brand-subtitle">{t('Exploration')}</div>
-              </div>
-            </div>
-
-            <div className="exploration-heading">
-              <div className="breadcrumb">{t('EXPLORATION / MONDE')}</div>
-              <h1>{t('Explorer le monde')}</h1>
-            </div>
-
-            <div className="exploration-header-actions">
-              <button
-                className="home-back-button"
-                type="button"
-                data-shortcut-action="app.mode.statistics"
-                onClick={onOpenStatistics}
-              >
-                {t('Statistiques')}
-              </button>
-              <button className="home-back-button" type="button" onClick={onToggleFullscreen}>
-                {t(isFullscreen ? 'Quitter le plein écran' : 'Plein écran')}
-              </button>
-            </div>
-            <button
-              className="exploration-panel-toggle exploration-zone-collapse"
-              type="button"
-              aria-label={t('Masquer l’en-tête et la navigation')}
-              title={t('Masquer l’en-tête et la navigation')}
-              aria-expanded={true}
-              onClick={() => setChromeCollapsed(true)}
-            >
-              <span aria-hidden="true">⌃</span>
-            </button>
-          </header>
-
-          <AppModeSwitcher active="exploration" onChange={onModeChange} />
-        </>
+      {!isFullscreen && (
+        <AppModeSwitcher
+          active="exploration"
+          onChange={onModeChange}
+          pageTitle={t('Explorer le monde')}
+          onOpenStatistics={onOpenStatistics}
+          onToggleFullscreen={onToggleFullscreen}
+          autoReveal
+        />
       )}
 
       <main className="exploration-workspace">
@@ -800,13 +788,13 @@ export function ExplorationView({
                         setActiveSavedViewSuggestionIndex(-1)
                       }}
                       onFocus={() => {
-                        if (savedViews.length > 0) setSavedViewSuggestionsOpen(true)
+                        if (allSavedViews.length > 0) setSavedViewSuggestionsOpen(true)
                       }}
                       placeholder={t('Nom de la vue')}
                       aria-label={t('Nom de la vue à enregistrer')}
                       role="combobox"
                       aria-autocomplete="list"
-                      aria-expanded={savedViewSuggestionsOpen && savedViews.length > 0}
+                      aria-expanded={savedViewSuggestionsOpen && allSavedViews.length > 0}
                       aria-controls="exploration-saved-view-list"
                       aria-activedescendant={
                         activeSavedViewSuggestionIndex >= 0
@@ -815,7 +803,7 @@ export function ExplorationView({
                       }
                       autoComplete="off"
                     />
-                    {savedViews.length > 0 && (
+                    {allSavedViews.length > 0 && (
                       <button
                         type="button"
                         className="exploration-saved-view-toggle"
@@ -831,7 +819,7 @@ export function ExplorationView({
                         <span aria-hidden="true">⌄</span>
                       </button>
                     )}
-                    {savedViewSuggestionsOpen && savedViews.length > 0 && (
+                    {savedViewSuggestionsOpen && allSavedViews.length > 0 && (
                       <ul
                         className="exploration-saved-view-suggestions"
                         id="exploration-saved-view-list"
@@ -853,16 +841,18 @@ export function ExplorationView({
                               >
                                 {view.name}
                               </button>
-                              <button
-                                type="button"
-                                className="exploration-saved-view-delete"
-                                aria-label={`${t('Supprimer la vue sélectionnée')} : ${view.name}`}
-                                title={`${t('Supprimer la vue sélectionnée')} : ${view.name}`}
-                                onMouseDown={(event) => event.preventDefault()}
-                                onClick={() => deleteSavedView(view.id)}
-                              >
-                                ×
-                              </button>
+                              {view.id !== globalView.id && (
+                                <button
+                                  type="button"
+                                  className="exploration-saved-view-delete"
+                                  aria-label={`${t('Supprimer la vue sélectionnée')} : ${view.name}`}
+                                  title={`${t('Supprimer la vue sélectionnée')} : ${view.name}`}
+                                  onMouseDown={(event) => event.preventDefault()}
+                                  onClick={() => deleteSavedView(view.id)}
+                                >
+                                  ×
+                                </button>
+                              )}
                             </li>
                           ))
                         ) : (

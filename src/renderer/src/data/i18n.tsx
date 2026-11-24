@@ -11,6 +11,14 @@ const translations: Record<Exclude<AppLanguage, 'fr'>, Record<string, string>> =
     'Quizz monde': 'World quiz',
     'Quiz du monde': 'World quiz',
     Statistiques: 'Statistics',
+    Modifier: 'Edit',
+    'Écoute…': 'Listening…',
+    'En construction': 'Under construction',
+    'Mode caméra — En construction': 'Camera mode — Under construction',
+    'Appuie sur la nouvelle touche ou combinaison. Échap annule.':
+      'Press the new key or combination. Escape cancels.',
+    'Raccourci enregistré. Les commandes en conflit ont été libérées.':
+      'Shortcut saved. Conflicting commands were unassigned.',
     'Plein écran': 'Full screen',
     'Application locale': 'Offline app',
     'PARTIE EN COURS': 'GAME IN PROGRESS',
@@ -76,6 +84,16 @@ const translations: Record<Exclude<AppLanguage, 'fr'>, Record<string, string>> =
       'Selecting an item in one column automatically removes it from the other. Choose at least one clue and one answer, then start a new game.',
     'Nouvelle partie': 'New game',
     'Lancer la partie': 'Start game',
+    CHRONOMÉTRAGE: 'TIMING',
+    'Mode de temps': 'Timing mode',
+    'Sans chrono': 'Untimed',
+    Chrono: 'Stopwatch',
+    Minuteur: 'Countdown',
+    Portée: 'Scope',
+    'Durée en secondes': 'Duration in seconds',
+    'Par question': 'Per question',
+    'Partie entière': 'Whole game',
+    'Temps restant': 'Time remaining',
     'MES PRESETS': 'MY PRESETS',
     'Charger un preset…': 'Load a preset…',
     Supprimer: 'Delete',
@@ -200,6 +218,50 @@ const translations: Record<Exclude<AppLanguage, 'fr'>, Record<string, string>> =
     'Tous les pays': 'All countries',
     'Aucun pays': 'No countries',
     'Ajouter un filtre': 'Add a filter',
+    Bloc: 'Blocks',
+    'Mode de saisie des filtres': 'Filter input mode',
+    'Écris tes filtres': 'Write your filters',
+    'Aide sur les mots reconnus': 'Help with recognized words',
+    'Syntaxe des filtres texte': 'Text filter syntax',
+    'Champs et valeurs : choisis-les dans les suggestions.':
+      'Fields and values: choose them from the suggestions.',
+    'Opérateurs texte : contient / contains / contiene ; est / equals / equal / is / es / exactement / exactly ; ne contient pas ; n’est pas / n’est / is not / isn’t / isnt / noes.':
+      'Text operators: contient / contains / contiene; est / equals / equal / is / es / exactement / exactly; ne contient pas; n’est pas / n’est / is not / isn’t / isnt / noes.',
+    'Opérateurs texte : contient / contains / contiene ; est / equals / equal / is / es / exactement / exactly ; ne + contains / contiene + pas ; n’est pas / n’est / is not / isn’t / isnt / noes. Raccourci continent : appartient, belongs [to], pertenece [a].':
+      'Text operators: contient / contains / contiene; est / equals / equal / is / es / exactement / exactly; ne + contains / contiene + pas; n’est pas / n’est / is not / isn’t / isnt / noes. Legacy continent shortcut: appartient, belongs [to], pertenece [a].',
+    'Opérateurs numériques : <, <=, >, >=, =, !=, ≠ ; entre / between. Suffixes : k, m / million / millions, bn / milliard / milliards. Virgule ou point décimal.':
+      'Numeric operators: <, <=, >, >=, =, !=, ≠; entre / between. Suffixes: k, m / million / millions, bn / milliard / milliards. Decimal comma or point.',
+    'Drapeaux : couleur / color / colour ; bandes / bands / franjas / rayures / stripes ; proportion / proportions / proporciones / ratio ; forme / shape / outline. Directions : horizontale(s) / horizontal / horizontally ; verticale(s) / vertical / vertically ; oblique(s) / diagonal(s) / diagonale(s).':
+      'Flags: couleur / color / colour; bandes / bands / franjas / rayures / stripes; proportion / proportions / proporciones / ratio; forme / shape / outline. Directions: horizontale(s) / horizontal / horizontally; verticale(s) / vertical / vertically; oblique(s) / diagonal(s) / diagonale(s).',
+    'Logique : et / and / y ; ou / or / o ; non / not / pas / no avant un critère ou un groupe entre parenthèses. Constantes : tous les pays / all countries / todos los paises ; aucun pays / no countries / ningun pais.':
+      'Logic: et / and / y; ou / or / o; non / not / pas / no before a criterion or a parenthesized group. Constants: tous les pays / all countries / todos los paises; aucun pays / no countries / ningun pais.',
+    'Écris champ + opérateur + valeur, par exemple : continent n’est pas Europe. Les parenthèses regroupent les critères ; ET est évalué avant OU. Les accents sont ignorés. Mets les valeurs composées de plusieurs mots entre guillemets, par exemple : capitale n’est pas "Port of Spain".':
+      'Write field + operator + value, for example: continent n’est pas Europe. Parentheses group criteria; AND is evaluated before OR. Accents are ignored. Put multiword values in quotes, for example: capitale n’est pas "Port of Spain".',
+    'Aide requête · champs':
+      'Fields: choose a field from the suggestions (they adapt to the available data). Values also come from suggestions.',
+    'Aide requête · opérateurs texte':
+      "Text: contient / contains / contiene; est / equals / equal / is / es / exactement / exactly; ne contient pas; n'est pas, n'est, is not, isn't, isnt, noes. “appartient”, “belongs” and “pertenece” remain accepted as legacy continent shortcuts.",
+    'Aide requête · opérateurs numériques':
+      'Numbers: <, <=, >, >=, =, !=, ≠; entre / between. Suffixes: k (thousand), m / million / millions, bn / milliard / milliards. Decimal comma or point is accepted.',
+    'Aide requête · opérateurs drapeau':
+      'Flags: couleur / color / colour; bandes / bands / franjas / rayures / stripes; proportion / proportions / proporciones / ratio; forme / shape / outline. Band directions: horizontale(s) / horizontal / horizontally; verticale(s) / vertical / vertically; oblique(s) / diagonal(s) / diagonale(s).',
+    'Aide requête · logique':
+      'Logic: et / and / y; ou / or / o; non / not / pas / no before a criterion or a parenthesized group. “tous les pays” / “all countries” / “todos los paises” and “aucun pays” / “no countries” / “ningun pais” are constants.',
+    'Aide requête · syntaxe':
+      'Write field + operator + value, for example: continent n\'est pas Europe. Parentheses group criteria; AND is evaluated before OR. Accents are ignored. Put multiword values in quotes, for example: capitale n\'est pas "Port of Spain".',
+    'Exemple : continent est Europe et population > 50 000 000':
+      'Example: continent is Europe and population > 50,000,000',
+    'Utilise les champs, opérateurs et valeurs proposés. ET, OU et les parenthèses combinent les critères.':
+      'Use suggested fields, operators, and values. AND, OR, “is not”, and parentheses combine criteria.',
+    'Utilise les champs, opérateurs et valeurs proposés. ET, OU, « n’est pas » et les parenthèses combinent les critères.':
+      'Use suggested fields, operators, and values. AND, OR, “is not”, and parentheses combine criteria.',
+    'Une forme dessinée non reconnue ou une combinaison trop complexe ne peut pas être convertie automatiquement. Modifier la requête remplacera les critères actifs.':
+      'An unrecognized drawn shape or overly complex combination cannot be converted automatically. Editing the query will replace the active criteria.',
+    'Requête incomplète ou syntaxe inconnue.': 'Incomplete query or unknown syntax.',
+    'Couleur de drapeau inconnue :': 'Unknown flag color:',
+    'Inverser ce critère': 'Negate this criterion',
+    non: 'not',
+    'Forme de drapeau inconnue :': 'Unknown flag shape:',
     Caractéristique: 'Characteristic',
     'Choisir une caractéristique': 'Choose a characteristic',
     'Valeur numérique': 'Number',
@@ -884,7 +946,12 @@ const translations: Record<Exclude<AppLanguage, 'fr'>, Record<string, string>> =
     'des répondants': 'of respondents',
     'Sources et date des données': 'Sources and data dates',
     'ND signifie que les sources intégrées ne fournissent pas de donnée exploitable pour ce champ. Les classifications politiques, enquêtes et classements musicaux sont datés.':
-      'ND means the integrated sources do not provide a usable value for this field. Political classifications, surveys, and music charts are dated.',
+      'ND means no value was retained because the integrated sources do not provide usable or sufficiently consistent data. Political classifications, surveys, and music charts are dated.',
+    'Source de comparaison de la population': 'Population comparison source',
+    'Source de comparaison': 'Comparison source',
+    'ND · estimations contradictoires': 'ND · conflicting estimates',
+    'ND · la valeur Natural Earth et la superficie de référence ONU ne concordent pas.':
+      'ND · the Natural Earth area and the UN reference area do not agree.',
     'Fiche source du CIA World Factbook': 'CIA World Factbook source record',
     'archive mise à jour le 22 janvier 2026': 'archive updated January 22, 2026',
     'classification politique 2025': '2025 political classification',
@@ -929,6 +996,7 @@ const translations: Record<Exclude<AppLanguage, 'fr'>, Record<string, string>> =
     'GEOGRAPHY TRAINER': 'GEOGRAPHY TRAINER',
     'Progression du quiz': 'Quiz progress',
     parties: 'games',
+    questions: 'questions',
     'bonne réponse': 'correct answer',
     'Sélectionne un pays': 'Select a country',
     Drapeaux: 'Flags',
@@ -1023,6 +1091,67 @@ const translations: Record<Exclude<AppLanguage, 'fr'>, Record<string, string>> =
     'Progression par pays': 'Country progress',
     'Historique des parties': 'Game history',
     'Évolution par preset': 'Preset progress',
+    'Meilleurs temps': 'Best times',
+    Récompenses: 'Rewards',
+    'Récompenses et progression': 'Rewards and progress',
+    'Les accomplissements reflètent tes parties terminées et leurs résultats.':
+      'Achievements reflect your completed games and their results.',
+    'accomplissements obtenus': 'achievements earned',
+    Obtenus: 'Earned',
+    'À découvrir': 'To unlock',
+    'À débloquer': 'Not yet unlocked',
+    'Obtenu le': 'Earned on',
+    'Aucune progression à afficher': 'No progress to show yet',
+    'Termine une partie de quiz pour voir apparaître tes premiers accomplissements.':
+      'Complete a quiz game to see your first achievements here.',
+    'Les récompenses complètent les statistiques et ne remplacent pas tes scores détaillés.':
+      'Rewards add context to your statistics; they do not replace your detailed scores.',
+    'Les récompenses complètent les statistiques et ne remplacent pas tes scores détaillés. Elles décrivent des réussites dans World Atlas, pas tout ton niveau géographique.':
+      'Rewards add context to your statistics and do not replace your detailed scores. They reflect achievements in World Atlas, not your overall geographic knowledge.',
+    'Premier tour': 'First steps',
+    'Termine une première partie de quiz.': 'Complete your first quiz game.',
+    'Esprit polyvalent': 'Versatile learner',
+    'Termine des quiz dans trois modes différents.': 'Complete quizzes in three different modes.',
+    'Précision confirmée': 'Accurate answers',
+    'Atteins au moins 90 % des points sur une partie terminée.':
+      'Earn at least 90% of the points in a completed game.',
+    'Endurance géographique': 'Geography marathon',
+    'Termine une partie contenant au moins 25 questions.':
+      'Complete a game containing at least 25 questions.',
+    'Série appliquée': 'Answer streak',
+    'Réussis cinq réponses de suite du premier coup, sans révéler la solution.':
+      'Get five answers in a row right on the first try without revealing the answer.',
+    'Nouveau record': 'Personal best',
+    'Améliore ton score sur une configuration déjà jouée.':
+      'Improve your score on a configuration you have played before.',
+    'Rapide et précis': 'Quick and accurate',
+    'Termine un quiz chronométré avec au moins 85 % des points et en 15 secondes par question en moyenne.':
+      'Complete a timed quiz with at least 85% of the points and an average of 15 seconds per question or less.',
+    Découverte: 'Getting started',
+    Maîtrise: 'Mastery',
+    Régularité: 'Consistency',
+    Progression: 'Progress',
+    'Contre-la-montre': 'Time trial',
+    'Compare uniquement des parties jouées avec la même configuration.':
+      'Compare only games played with the same configuration.',
+    'Configuration exacte': 'Exact configuration',
+    'Tous les presets': 'All presets',
+    'Aucune configuration chronométrée': 'No timed configurations',
+    'Aucun temps enregistré': 'No times recorded',
+    'Aucun temps complet pour cette configuration': 'No complete times for this configuration',
+    'Les parties chronométrées terminées apparaîtront ici.':
+      'Completed timed games will appear here.',
+    'Les parties interrompues ou expirées restent dans l’historique, mais ne sont pas classées parmi les meilleurs temps.':
+      'Interrupted or expired games remain in history but are not ranked among the best times.',
+    'Afficher l’évolution du temps': 'Show time progress',
+    'Évolution du temps': 'Time progress',
+    'Graphique de progression du temps': 'Time progress chart',
+    'Parties chronométrées': 'Timed games',
+    'Meilleur temps complet': 'Best completed time',
+    'questions non terminées': 'unfinished questions',
+    'questions expirées': 'questions timed out',
+    'non atteintes': 'not reached',
+    'Choisir une configuration chronométrée': 'Choose a timed configuration',
     'Retrouve les réglages et les scores de tes parties terminées.':
       'Review the settings and scores from completed games.',
     'Aucune partie enregistrée': 'No games recorded yet',
@@ -1044,6 +1173,7 @@ const translations: Record<Exclude<AppLanguage, 'fr'>, Record<string, string>> =
     'Nombre de pays': 'Countries',
     'Pays étudié': 'Country studied',
     'Nombre de questions': 'Questions',
+    'Chrono ·': 'Stopwatch ·',
     'Mode estimation': 'Estimation mode',
     'Dessine les frontières': 'Draw the borders',
     Zone: 'Area'
@@ -1118,6 +1248,16 @@ const translations: Record<Exclude<AppLanguage, 'fr'>, Record<string, string>> =
       'Al marcar un elemento en una columna, se quita automáticamente de la otra. Elige al menos una pista y una respuesta y empieza una partida nueva.',
     'Nouvelle partie': 'Nueva partida',
     'Lancer la partie': 'Empezar partida',
+    CHRONOMÉTRAGE: 'CRONOMETRAJE',
+    'Mode de temps': 'Modo de tiempo',
+    'Sans chrono': 'Sin cronómetro',
+    'Contre-la-montre': 'Contrarreloj',
+    Minuteur: 'Temporizador',
+    Portée: 'Alcance',
+    'Durée en secondes': 'Duración en segundos',
+    'Par question': 'Por pregunta',
+    'Partie entière': 'Partida completa',
+    'Temps restant': 'Tiempo restante',
     'MES PRESETS': 'MIS PRESETS',
     'Charger un preset…': 'Cargar un preset…',
     Supprimer: 'Eliminar',
@@ -1242,6 +1382,50 @@ const translations: Record<Exclude<AppLanguage, 'fr'>, Record<string, string>> =
     'Tous les pays': 'Todos los países',
     'Aucun pays': 'Ningún país',
     'Ajouter un filtre': 'Añadir un filtro',
+    Bloc: 'Bloques',
+    'Mode de saisie des filtres': 'Modo de entrada de filtros',
+    'Écris tes filtres': 'Escribe tus filtros',
+    'Aide sur les mots reconnus': 'Ayuda sobre las palabras reconocidas',
+    'Syntaxe des filtres texte': 'Sintaxis de los filtros de texto',
+    'Champs et valeurs : choisis-les dans les suggestions.':
+      'Campos y valores: elígelos entre las sugerencias.',
+    'Opérateurs texte : contient / contains / contiene ; est / equals / equal / is / es / exactement / exactly ; ne contient pas ; n’est pas / n’est / is not / isn’t / isnt / noes.':
+      'Operadores de texto: contient / contains / contiene; est / equals / equal / is / es / exactement / exactly; ne contient pas; n’est pas / n’est / is not / isn’t / isnt / noes.',
+    'Opérateurs texte : contient / contains / contiene ; est / equals / equal / is / es / exactement / exactly ; ne + contains / contiene + pas ; n’est pas / n’est / is not / isn’t / isnt / noes. Raccourci continent : appartient, belongs [to], pertenece [a].':
+      'Operadores de texto: contient / contains / contiene; est / equals / equal / is / es / exactement / exactly; ne + contains / contiene + pas; n’est pas / n’est / is not / isn’t / isnt / noes. Atajo heredado para continentes: appartient, belongs [to], pertenece [a].',
+    'Opérateurs numériques : <, <=, >, >=, =, !=, ≠ ; entre / between. Suffixes : k, m / million / millions, bn / milliard / milliards. Virgule ou point décimal.':
+      'Operadores numéricos: <, <=, >, >=, =, !=, ≠; entre / between. Sufijos: k, m / million / millions, bn / milliard / milliards. Coma o punto decimal.',
+    'Drapeaux : couleur / color / colour ; bandes / bands / franjas / rayures / stripes ; proportion / proportions / proporciones / ratio ; forme / shape / outline. Directions : horizontale(s) / horizontal / horizontally ; verticale(s) / vertical / vertically ; oblique(s) / diagonal(s) / diagonale(s).':
+      'Banderas: couleur / color / colour; bandes / bands / franjas / rayures / stripes; proportion / proportions / proporciones / ratio; forme / shape / outline. Direcciones: horizontale(s) / horizontal / horizontally; verticale(s) / vertical / vertically; oblique(s) / diagonal(s) / diagonale(s).',
+    'Logique : et / and / y ; ou / or / o ; non / not / pas / no avant un critère ou un groupe entre parenthèses. Constantes : tous les pays / all countries / todos los paises ; aucun pays / no countries / ningun pais.':
+      'Lógica: et / and / y; ou / or / o; non / not / pas / no antes de un criterio o grupo entre paréntesis. Constantes: tous les pays / all countries / todos los paises; aucun pays / no countries / ningun pais.',
+    'Écris champ + opérateur + valeur, par exemple : continent n’est pas Europe. Les parenthèses regroupent les critères ; ET est évalué avant OU. Les accents sont ignorés. Mets les valeurs composées de plusieurs mots entre guillemets, par exemple : capitale n’est pas "Port of Spain".':
+      'Escribe campo + operador + valor, por ejemplo: continent n’est pas Europe. Los paréntesis agrupan criterios; AND se evalúa antes que OR. Se ignoran los acentos. Escribe entre comillas los valores de varias palabras, por ejemplo: capitale n’est pas "Port of Spain".',
+    'Aide requête · champs':
+      'Campos: elige un campo entre las sugerencias (se adaptan a los datos disponibles). Los valores también aparecen en las sugerencias.',
+    'Aide requête · opérateurs texte':
+      "Texto: contient / contains / contiene; est / equals / equal / is / es / exactement / exactly; ne contient pas; n'est pas, n'est, is not, isn't, isnt, noes. “appartient”, “belongs” y “pertenece” siguen aceptándose como atajos heredados para continentes.",
+    'Aide requête · opérateurs numériques':
+      'Números: <, <=, >, >=, =, !=, ≠; entre / between. Sufijos: k (mil), m / million / millions, bn / milliard / milliards. Se acepta coma o punto decimal.',
+    'Aide requête · opérateurs drapeau':
+      'Banderas: couleur / color / colour; bandes / bands / franjas / rayures / stripes; proportion / proportions / proporciones / ratio; forme / shape / outline. Dirección de franjas: horizontale(s) / horizontal / horizontally; verticale(s) / vertical / vertically; oblique(s) / diagonal(s) / diagonale(s).',
+    'Aide requête · logique':
+      'Lógica: et / and / y; ou / or / o; non / not / pas / no antes de un criterio o grupo entre paréntesis. “tous les pays” / “all countries” / “todos los paises” y “aucun pays” / “no countries” / “ningun pais” son constantes.',
+    'Aide requête · syntaxe':
+      'Escribe campo + operador + valor, por ejemplo: continent n\'est pas Europe. Los paréntesis agrupan criterios; AND se evalúa antes que OR. Se ignoran los acentos. Escribe entre comillas los valores de varias palabras, por ejemplo: capitale n\'est pas "Port of Spain".',
+    'Exemple : continent est Europe et population > 50 000 000':
+      'Ejemplo: continente es Europa y población > 50 000 000',
+    'Utilise les champs, opérateurs et valeurs proposés. ET, OU et les parenthèses combinent les critères.':
+      'Usa los campos, operadores y valores sugeridos. Y, O, “no es” y los paréntesis combinan los criterios.',
+    'Utilise les champs, opérateurs et valeurs proposés. ET, OU, « n’est pas » et les parenthèses combinent les critères.':
+      'Usa los campos, operadores y valores sugeridos. Y, O, “no es” y los paréntesis combinan los criterios.',
+    'Une forme dessinée non reconnue ou une combinaison trop complexe ne peut pas être convertie automatiquement. Modifier la requête remplacera les critères actifs.':
+      'Una forma dibujada no reconocida o una combinación demasiado compleja no se puede convertir automáticamente. Al editar la consulta se reemplazarán los criterios activos.',
+    'Requête incomplète ou syntaxe inconnue.': 'Consulta incompleta o sintaxis desconocida.',
+    'Couleur de drapeau inconnue :': 'Color de bandera desconocido:',
+    'Inverser ce critère': 'Invertir este criterio',
+    non: 'no',
+    'Forme de drapeau inconnue :': 'Forma de bandera desconocida:',
     Caractéristique: 'Característica',
     'Choisir une caractéristique': 'Elegir una característica',
     'Valeur numérique': 'Valor numérico',
@@ -1325,6 +1509,14 @@ const translations: Record<Exclude<AppLanguage, 'fr'>, Record<string, string>> =
     Général: 'General',
     'Catégories de paramètres': 'Categorías de ajustes',
     Navigation: 'Navegación',
+    Modifier: 'Editar',
+    'Écoute…': 'Escuchando…',
+    'En construction': 'En construcción',
+    'Mode caméra — En construction': 'Modo cámara — En construcción',
+    'Appuie sur la nouvelle touche ou combinaison. Échap annule.':
+      'Pulsa la nueva tecla o combinación. Esc cancela.',
+    'Raccourci enregistré. Les commandes en conflit ont été libérées.':
+      'Atajo guardado. Se desactivaron los comandos en conflicto.',
     'Carte et caméra': 'Mapa y cámara',
     'Ouvrir Quizz monde': 'Abrir Quiz mundial',
     'Ouvrir Exploration': 'Abrir Exploración',
@@ -1943,7 +2135,12 @@ const translations: Record<Exclude<AppLanguage, 'fr'>, Record<string, string>> =
     'des répondants': 'de los encuestados',
     'Sources et date des données': 'Fuentes y fecha de los datos',
     'ND signifie que les sources intégrées ne fournissent pas de donnée exploitable pour ce champ. Les classifications politiques, enquêtes et classements musicaux sont datés.':
-      'ND significa que las fuentes integradas no proporcionan un valor utilizable para este campo. Las clasificaciones políticas, encuestas y listas musicales tienen fecha.',
+      'ND significa que no se conservó ningún valor porque las fuentes integradas no ofrecen datos utilizables o suficientemente coherentes. Las clasificaciones políticas, encuestas y listas musicales tienen fecha.',
+    'Source de comparaison de la population': 'Fuente de comparación de población',
+    'Source de comparaison': 'Fuente de comparación',
+    'ND · estimations contradictoires': 'ND · estimaciones contradictorias',
+    'ND · la valeur Natural Earth et la superficie de référence ONU ne concordent pas.':
+      'ND · el área de Natural Earth y el área de referencia de la ONU no coinciden.',
     'Fiche source du CIA World Factbook': 'Ficha fuente del CIA World Factbook',
     'archive mise à jour le 22 janvier 2026': 'archivo actualizado el 22 de enero de 2026',
     'classification politique 2025': 'clasificación política de 2025',
@@ -1988,6 +2185,7 @@ const translations: Record<Exclude<AppLanguage, 'fr'>, Record<string, string>> =
     'GEOGRAPHY TRAINER': 'ENTRENADOR DE GEOGRAFÍA',
     'Progression du quiz': 'Progreso del cuestionario',
     parties: 'partidas',
+    questions: 'preguntas',
     'bonne réponse': 'respuesta correcta',
     'Sélectionne un pays': 'Selecciona un país',
     Drapeaux: 'Banderas',
@@ -2084,6 +2282,69 @@ const translations: Record<Exclude<AppLanguage, 'fr'>, Record<string, string>> =
     'Progression par pays': 'Progreso por país',
     'Historique des parties': 'Historial de partidas',
     'Évolution par preset': 'Progreso por preset',
+    'Meilleurs temps': 'Mejores tiempos',
+    Récompenses: 'Recompensas',
+    'Récompenses et progression': 'Recompensas y progreso',
+    'Les accomplissements reflètent tes parties terminées et leurs résultats.':
+      'Los logros reflejan tus partidas completadas y sus resultados.',
+    'accomplissements obtenus': 'logros obtenidos',
+    Obtenus: 'Obtenidos',
+    'À découvrir': 'Por desbloquear',
+    'À débloquer': 'Aún sin desbloquear',
+    'Obtenu le': 'Obtenido el',
+    'Aucune progression à afficher': 'Aún no hay progreso para mostrar',
+    'Termine une partie de quiz pour voir apparaître tes premiers accomplissements.':
+      'Completa una partida para ver tus primeros logros aquí.',
+    'Les récompenses complètent les statistiques et ne remplacent pas tes scores détaillés.':
+      'Las recompensas complementan las estadísticas; no sustituyen tus puntuaciones detalladas.',
+    'Les récompenses complètent les statistiques et ne remplacent pas tes scores détaillés. Elles décrivent des réussites dans World Atlas, pas tout ton niveau géographique.':
+      'Las recompensas complementan las estadísticas y no sustituyen tus puntuaciones detalladas. Reflejan logros en World Atlas, no todo tu conocimiento geográfico.',
+    'Premier tour': 'Primeros pasos',
+    'Termine une première partie de quiz.': 'Completa tu primera partida.',
+    'Esprit polyvalent': 'Aprendiz versátil',
+    'Termine des quiz dans trois modes différents.':
+      'Completa cuestionarios en tres modos distintos.',
+    'Précision confirmée': 'Respuestas precisas',
+    'Atteins au moins 90 % des points sur une partie terminée.':
+      'Consigue al menos el 90 % de los puntos en una partida completada.',
+    'Endurance géographique': 'Maratón geográfico',
+    'Termine une partie contenant au moins 25 questions.':
+      'Completa una partida con al menos 25 preguntas.',
+    'Série appliquée': 'Racha de aciertos',
+    'Réussis cinq réponses de suite du premier coup, sans révéler la solution.':
+      'Acierta cinco respuestas seguidas al primer intento y sin revelar la solución.',
+    'Nouveau record': 'Récord personal',
+    'Améliore ton score sur une configuration déjà jouée.':
+      'Mejora tu puntuación en una configuración que ya hayas jugado.',
+    'Rapide et précis': 'Rápido y preciso',
+    'Termine un quiz chronométré avec au moins 85 % des points et en 15 secondes par question en moyenne.':
+      'Completa un cuestionario cronometrado con al menos el 85 % de los puntos y un promedio máximo de 15 segundos por pregunta.',
+    Découverte: 'Primeros pasos',
+    Maîtrise: 'Dominio',
+    Régularité: 'Constancia',
+    Progression: 'Progreso',
+    Chrono: 'Cronómetro',
+    'Compare uniquement des parties jouées avec la même configuration.':
+      'Compara solo partidas jugadas con la misma configuración.',
+    'Configuration exacte': 'Configuración exacta',
+    'Tous les presets': 'Todos los presets',
+    'Aucune configuration chronométrée': 'No hay configuraciones cronometradas',
+    'Aucun temps enregistré': 'No hay tiempos registrados',
+    'Aucun temps complet pour cette configuration':
+      'No hay tiempos completos para esta configuración',
+    'Les parties chronométrées terminées apparaîtront ici.':
+      'Las partidas cronometradas completadas aparecerán aquí.',
+    'Les parties interrompues ou expirées restent dans l’historique, mais ne sont pas classées parmi les meilleurs temps.':
+      'Las partidas interrumpidas o agotadas quedan en el historial, pero no se clasifican entre los mejores tiempos.',
+    'Afficher l’évolution du temps': 'Mostrar evolución del tiempo',
+    'Évolution du temps': 'Evolución del tiempo',
+    'Graphique de progression du temps': 'Gráfico de evolución del tiempo',
+    'Parties chronométrées': 'Partidas cronometradas',
+    'Meilleur temps complet': 'Mejor tiempo completado',
+    'questions non terminées': 'preguntas sin terminar',
+    'questions expirées': 'preguntas agotadas',
+    'non atteintes': 'no alcanzadas',
+    'Choisir une configuration chronométrée': 'Elige una configuración cronometrada',
     'Retrouve les réglages et les scores de tes parties terminées.':
       'Consulta los ajustes y puntuaciones de tus partidas terminadas.',
     'Aucune partie enregistrée': 'Todavía no hay partidas',

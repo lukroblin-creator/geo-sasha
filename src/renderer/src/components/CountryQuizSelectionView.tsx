@@ -50,28 +50,14 @@ export function CountryQuizSelectionView({
           onExit={onToggleFullscreen}
         />
       )}
-      <header className="statistics-header">
-        <div>
-          <div className="breadcrumb">{t('APPRENTISSAGE / QUIZ PAYS')}</div>
-          <h1>{t('Choisir un pays à travailler')}</h1>
-          <p>{t('Utilise la recherche ou sélectionne un pays sur la carte.')}</p>
-        </div>
-        <div className="statistics-actions">
-          <button
-            className="home-back-button"
-            type="button"
-            data-shortcut-action="app.mode.statistics"
-            onClick={onOpenStatistics}
-          >
-            {t('Statistiques')}
-          </button>
-          <button className="home-back-button" type="button" onClick={onToggleFullscreen}>
-            {t('Plein écran')}
-          </button>
-        </div>
-      </header>
-
-      <AppModeSwitcher active="country-select" onChange={onModeChange} />
+      <AppModeSwitcher
+        active="country-select"
+        onChange={onModeChange}
+        pageTitle={t('Choisir un pays à travailler')}
+        onOpenStatistics={onOpenStatistics}
+        onToggleFullscreen={onToggleFullscreen}
+        autoReveal
+      />
 
       <div className="country-quiz-selection-content">
         <section className="country-quiz-selection-map">

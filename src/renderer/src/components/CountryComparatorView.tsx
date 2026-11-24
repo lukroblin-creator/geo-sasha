@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { AppModeSwitcher, type AppPrimaryMode } from './AppModeSwitcher'
 import { useLanguage } from '../data/i18n'
 import { useKeyboardShortcut } from '../data/keyboardShortcuts'
@@ -23,6 +23,14 @@ import {
   type ExplorationDetails
 } from '../data/geography/exploration'
 import type { ResourceIndustryFact, LocalizedResourceText } from '../data/geography/resources'
+import {
+  flattenComparatorQueryExpression,
+  getComparatorQuerySuggestions,
+  parseComparatorTextQuery,
+  serializeComparatorQueryValue,
+  serializeComparatorTruthRelation,
+  type ComparatorQueryTarget
+} from '../data/geography/countryComparatorTextQuery'
 
 type CompareCountry = {
   alpha2: string
@@ -102,6 +110,7 @@ type FilterTarget = {
 type ComparatorFilter = {
   id: string
   targetId: string
+  negated: boolean
   operator: NumericOperator
   value: string
   upperValue: string
@@ -117,6 +126,7 @@ type ComparatorFilter = {
 
 type ComparatorFilterRegion = 'both' | 'aOnly' | 'bOnly' | 'neither'
 type ComparatorFilterGroup = { id: string; startFilterId: string; endFilterId: string }
+type FilterEditorMode = 'bloc' | 'texte'
 type ComparatorFilterExpressionToken =
   | { kind: 'value'; value: boolean }
   | { kind: 'operator'; regions: ComparatorFilterRegion[] }
@@ -245,6 +255,7 @@ function createComparatorFilter(id: string, targetId = ''): ComparatorFilter {
   return {
     id,
     targetId,
+    negated: false,
     operator: 'gt',
     value: '',
     upperValue: '',
@@ -284,6 +295,19 @@ export function CountryComparatorView({
     )
   )
   const [filters, setFilters] = useState<ComparatorFilter[]>([])
+  const [filterEditorMode, setFilterEditorMode] = useState<FilterEditorMode>('bloc')
+  const [textFilterQuery, setTextFilterQuery] = useState('')
+  const [isTextQueryHelpOpen, setIsTextQueryHelpOpen] = useState(false)
+  const [textQueryConstant, setTextQueryConstant] = useState<boolean | null>(null)
+  const [textFilterError, setTextFilterError] = useState<string | null>(null)
+  const [textFilterNotice, setTextFilterNotice] = useState<string | null>(null)
+  const [textSuggestionsOpen, setTextSuggestionsOpen] = useState(false)
+  const [activeTextSuggestionIndex, setActiveTextSuggestionIndex] = useState(0)
+  const textFilterInputRef = useRef<HTMLInputElement>(null)
+  const textSuggestionsListRef = useRef<HTMLUListElement>(null)
+  const textSuggestionsScrollFrameRef = useRef<number | null>(null)
+  const textSuggestionsScrollSpeedRef = useRef(0)
+  const textSuggestionsLastFrameTimeRef = useRef<number | null>(null)
   const [excludedFilteredAlpha2, setExcludedFilteredAlpha2] = useState<string[]>([])
   const [simpleFilterLogic, setSimpleFilterLogic] = useState<'union' | 'intersection'>('union')
   const [isAdvancedFilterOpen, setIsAdvancedFilterOpen] = useState(false)
@@ -308,6 +332,16 @@ export function CountryComparatorView({
     'capital',
     'continent'
   ])
+  const queryTargets = useMemo<ComparatorQueryTarget[]>(
+    () =>
+      filterTargets.map((target) => ({
+        id: target.id,
+        label: t(target.label),
+        kind: target.kind,
+        aliases: [target.id, target.field]
+      })),
+    [t]
+  )
 
   const countries = useMemo<CompareCountry[]>(() => {
     const countryNames = new Intl.DisplayNames([language], { type: 'region' })
@@ -698,49 +732,63 @@ export function CountryComparatorView({
   const matchesFilter = (country: CompareCountry, filter: ComparatorFilter): boolean => {
     const target = filterTargets.find((candidate) => candidate.id === filter.targetId)
     if (!target) return false
-    if (target.kind === 'text') {
-      const query = normalizeSearch(filter.textValue)
-      return getTextFilterValues(country, target.id).some((value) => {
-        const candidate = normalizeSearch(value)
-        if (!candidate || candidate === 'nd') return false
-        return filter.textOperator === 'equals' ? candidate === query : candidate.includes(query)
-      })
-    }
-    if (target.kind === 'number') {
-      const first = Number(filter.value)
-      const second = Number(filter.upperValue)
-      return getNumericFilterValues(country, target.id).some((value) => {
-        if (filter.operator === 'lt') return value < first
-        if (filter.operator === 'gt') return value > first
-        if (filter.operator === 'eq') return value === first
-        if (filter.operator === 'lte') return value <= first
-        if (filter.operator === 'gte') return value >= first
-        return value >= Math.min(first, second) && value <= Math.max(first, second)
-      })
-    }
+    const matches = (): boolean => {
+      if (target.kind === 'text') {
+        const query = normalizeSearch(filter.textValue)
+        return getTextFilterValues(country, target.id).some((value) => {
+          const candidate = normalizeSearch(value)
+          if (!candidate || candidate === 'nd') return false
+          return filter.textOperator === 'equals' ? candidate === query : candidate.includes(query)
+        })
+      }
+      if (target.kind === 'number') {
+        const first = Number(filter.value)
+        const second = Number(filter.upperValue)
+        return getNumericFilterValues(country, target.id).some((value) => {
+          if (filter.operator === 'lt') return value < first
+          if (filter.operator === 'gt') return value > first
+          if (filter.operator === 'eq') return value === first
+          if (filter.operator === 'lte') return value <= first
+          if (filter.operator === 'gte') return value >= first
+          return value >= Math.min(first, second) && value <= Math.max(first, second)
+        })
+      }
 
-    const alpha2 = country.details.flagAlpha2 ?? country.alpha2
-    if (!flagHasAllColorFilters(alpha2, filter.flagColors)) return false
-    const bands = getFlagBandCounts(alpha2)
-    const matchesBands = filter.bandDirections.length
-      ? filter.bandDirections.every((direction) =>
-          filter.bandCount === 0 ? bands[direction] > 1 : bands[direction] === filter.bandCount
+      const alpha2 = country.details.flagAlpha2 ?? country.alpha2
+      if (!flagHasAllColorFilters(alpha2, filter.flagColors)) return false
+      const bands = getFlagBandCounts(alpha2)
+      const matchesBands = filter.bandDirections.length
+        ? filter.bandDirections.every((direction) =>
+            filter.bandCount === 0 ? bands[direction] > 1 : bands[direction] === filter.bandCount
+          )
+        : filter.bandCount === 0 ||
+          Math.max(bands.horizontal, bands.vertical, bands.oblique) === filter.bandCount
+      if (!matchesBands) return false
+      if (filter.polygon) return flagOutlineMatches(alpha2, filter.polygon)
+      if (filter.ratioRange) {
+        const ratio = getFlagAspectRatio(alpha2)?.ratio
+        if (
+          getFlagOutline(alpha2) ||
+          ratio === undefined ||
+          ratio < filter.ratioRange.minimum ||
+          ratio > filter.ratioRange.maximum
         )
-      : filter.bandCount === 0 ||
-        Math.max(bands.horizontal, bands.vertical, bands.oblique) === filter.bandCount
-    if (!matchesBands) return false
-    if (filter.polygon) return flagOutlineMatches(alpha2, filter.polygon)
-    if (filter.ratioRange) {
-      const ratio = getFlagAspectRatio(alpha2)?.ratio
-      if (
-        getFlagOutline(alpha2) ||
-        ratio === undefined ||
-        ratio < filter.ratioRange.minimum ||
-        ratio > filter.ratioRange.maximum
-      )
-        return false
+          return false
+      }
+      return true
     }
-    return true
+    const matched = matches()
+    if (
+      filter.negated &&
+      ((target.kind === 'text' &&
+        !getTextFilterValues(country, target.id).some((value) => {
+          const candidate = normalizeSearch(value)
+          return candidate.length > 0 && candidate !== 'nd'
+        })) ||
+        (target.kind === 'number' && getNumericFilterValues(country, target.id).length === 0))
+    )
+      return false
+    return filter.negated ? !matched : matched
   }
 
   const filterOptionValues = useMemo(() => {
@@ -763,6 +811,132 @@ export function CountryComparatorView({
       })
     return byTarget
   }, [countries, getTextFilterValues, language])
+
+  const queryValueOptions = useMemo(() => {
+    const values = new Map(filterOptionValues)
+    filterTargets
+      .filter((target) => target.kind === 'number')
+      .forEach((target) => {
+        values.set(
+          target.id,
+          [
+            ...new Set(
+              countries.flatMap((country) =>
+                getNumericFilterValues(country, target.id).map((value) => String(value))
+              )
+            )
+          ].sort((first, second) => Number(first) - Number(second))
+        )
+      })
+    values.set(
+      'flag',
+      flagNamedColorOptions.map((option) => t(option.label))
+    )
+    values.set(
+      'flag-shape',
+      countries
+        .filter((country) => getFlagOutline(country.details.flagAlpha2 ?? country.alpha2))
+        .map((country) => country.name)
+        .sort((first, second) => first.localeCompare(second, language))
+    )
+    values.set(
+      'flag-band-count',
+      [
+        ...new Set(
+          countries.flatMap((country) => {
+            const counts = getFlagBandCounts(country.alpha2)
+            return [counts.horizontal, counts.vertical, counts.oblique]
+          })
+        )
+      ]
+        .sort((first, second) => first - second)
+        .map(String)
+    )
+    values.set(
+      'flag-ratio',
+      [
+        ...new Set(
+          countries.flatMap((country) => {
+            const ratio = getFlagAspectRatio(country.alpha2)?.ratio
+            return ratio === undefined ? [] : [ratio.toFixed(2)]
+          })
+        )
+      ].sort((first, second) => Number(first) - Number(second))
+    )
+    return values
+  }, [countries, filterOptionValues, language, t])
+  const textFilterSuggestions =
+    filterEditorMode === 'texte'
+      ? getComparatorQuerySuggestions(textFilterQuery, queryTargets, queryValueOptions)
+      : []
+  const highlightedTextFilterSuggestion =
+    textFilterSuggestions.length > 0
+      ? textFilterSuggestions[Math.min(activeTextSuggestionIndex, textFilterSuggestions.length - 1)]
+      : undefined
+
+  useEffect(() => {
+    if (!textSuggestionsOpen) return
+
+    const closeSuggestionsOnOutsidePointer = (event: PointerEvent): void => {
+      const target = event.target
+      if (!(target instanceof Node)) return
+      if (
+        textFilterInputRef.current?.contains(target) ||
+        textSuggestionsListRef.current?.contains(target)
+      )
+        return
+
+      setTextSuggestionsOpen(false)
+    }
+
+    document.addEventListener('pointerdown', closeSuggestionsOnOutsidePointer)
+    return () => document.removeEventListener('pointerdown', closeSuggestionsOnOutsidePointer)
+  }, [textSuggestionsOpen])
+
+  useEffect(() => {
+    if (textSuggestionsOpen) return
+    if (textSuggestionsScrollFrameRef.current !== null) {
+      cancelAnimationFrame(textSuggestionsScrollFrameRef.current)
+      textSuggestionsScrollFrameRef.current = null
+    }
+    textSuggestionsScrollSpeedRef.current = 0
+    textSuggestionsLastFrameTimeRef.current = null
+  }, [textSuggestionsOpen])
+
+  useEffect(
+    () => () => {
+      if (textSuggestionsScrollFrameRef.current !== null) {
+        cancelAnimationFrame(textSuggestionsScrollFrameRef.current)
+      }
+    },
+    []
+  )
+
+  useEffect(() => {
+    const list = textSuggestionsListRef.current
+    if (!list || !textSuggestionsOpen || textFilterSuggestions.length === 0) return
+
+    if (activeTextSuggestionIndex === 0) {
+      list.scrollTop = 0
+      return
+    }
+
+    const selectedIndex = Math.min(activeTextSuggestionIndex, textFilterSuggestions.length - 1)
+    const selected = list.querySelector<HTMLElement>(
+      `#country-comparator-text-suggestion-${selectedIndex}`
+    )
+    if (!selected) return
+
+    const listBounds = list.getBoundingClientRect()
+    const selectedBounds = selected.getBoundingClientRect()
+    if (selectedBounds.bottom > listBounds.bottom) {
+      list.scrollTop = selected.offsetTop
+    } else if (selectedBounds.top < listBounds.top) {
+      list.scrollTop = selected.offsetTop
+    } else if (selectedBounds.bottom > listBounds.top + list.clientHeight / 2) {
+      list.scrollTop += selected.offsetHeight
+    }
+  }, [activeTextSuggestionIndex, textFilterSuggestions.length, textSuggestionsOpen])
 
   const activeFilters = filters.filter(isFilterActive)
   const activeFilterGroups = filterGroups.flatMap((group) => {
@@ -822,6 +996,7 @@ export function CountryComparatorView({
   const describeFilter = (filter: ComparatorFilter, index: number): string => {
     const target = filterTargets.find((candidate) => candidate.id === filter.targetId)
     if (!target) return `${t('Filtre')} ${index + 1}`
+    const negationPrefix = filter.negated ? `${t('non')} ` : ''
     if (target.kind === 'number') {
       const operator =
         numericOperators.find((item) => item.id === filter.operator)?.label ?? filter.operator
@@ -831,11 +1006,11 @@ export function CountryComparatorView({
         new Intl.NumberFormat(language, { maximumFractionDigits: 2 }).format(value)
       const values =
         filter.operator === 'between' ? `${format(first)}–${format(second)}` : format(first)
-      return `${t(target.label)} ${t(operator)} ${values}${target.unit ? ` ${t(target.unit)}` : ''}`
+      return `${negationPrefix}${t(target.label)} ${t(operator)} ${values}${target.unit ? ` ${t(target.unit)}` : ''}`
     }
     if (target.kind === 'text') {
       const operator = filter.textOperator === 'equals' ? '=' : t('contient')
-      return `${t(target.label)} ${operator} « ${filter.textValue.trim()} »`
+      return `${negationPrefix}${t(target.label)} ${operator} « ${filter.textValue.trim()} »`
     }
     const colors = filter.flagColors.map((color) =>
       color.kind === 'named'
@@ -861,7 +1036,7 @@ export function CountryComparatorView({
       filter.polygon ? t('forme dessinée') : null,
       filter.ratioRange ? t('proportions sélectionnées') : null
     ].filter((part): part is string => Boolean(part))
-    return `${t('Drapeau')} : ${parts.join(' · ') || t('critères de drapeau')}`
+    return `${negationPrefix}${t('Drapeau')} : ${parts.join(' · ') || t('critères de drapeau')}`
   }
 
   const describeRelation = (left: ComparatorFilter, right: ComparatorFilter): string => {
@@ -937,7 +1112,9 @@ export function CountryComparatorView({
         if (activeFilters.length === 1) return matchesFilter(country, activeFilters[0])
         return evaluateAdvancedFilterExpression(country)
       })
-    : []
+    : textQueryConstant === true
+      ? countries
+      : []
   const filteredAlpha2 = filteredCountries
     .map((country) => country.alpha2)
     .filter(
@@ -991,6 +1168,7 @@ export function CountryComparatorView({
   }
 
   const addFilter = (): void => {
+    setTextQueryConstant(null)
     const id = `comparator-filter-${nextFilterId.current++}`
     setFilters((current) => [...current, createComparatorFilter(id)])
   }
@@ -1103,12 +1281,304 @@ export function CountryComparatorView({
   )
 
   const setFilterTarget = (filterId: string, targetId: string): void => {
+    setTextQueryConstant(null)
     setFilters((current) =>
       current.map((filter) =>
         filter.id === filterId ? createComparatorFilter(filterId, targetId) : filter
       )
     )
     setExcludedFilteredAlpha2([])
+  }
+
+  const applyTextFilterQuery = (query: string): void => {
+    setTextFilterQuery(query)
+    setActiveTextSuggestionIndex(0)
+    setTextFilterError(null)
+    setTextFilterNotice(null)
+    if (!query.trim()) {
+      setTextQueryConstant(null)
+      setFilters([])
+      setFilterRelationOverrides({})
+      setCustomRelationEditors({})
+      setFilterGroups([])
+      setExcludedFilteredAlpha2([])
+      return
+    }
+
+    const parsed = parseComparatorTextQuery(query, queryTargets)
+    if (!parsed.expression) {
+      setTextFilterError(parsed.error ? t(parsed.error) : null)
+      return
+    }
+
+    const flattened = flattenComparatorQueryExpression(parsed.expression)
+    if (flattened.constant !== undefined) {
+      setFilters([])
+      setSimpleFilterLogic('union')
+      setFilterRelationOverrides({})
+      setCustomRelationEditors({})
+      setFilterGroups([])
+      setExcludedFilteredAlpha2([])
+      setTextQueryConstant(flattened.constant)
+      return
+    }
+    const unknownFlagColor = flattened.clauses.find((clause) => {
+      if (clause.operator !== 'flagColor') return false
+      return (
+        !flagNamedColorOptions.some(
+          (item) => normalizeSearch(t(item.label)) === normalizeSearch(clause.value)
+        ) && !/^#[0-9a-f]{6}$/i.test(clause.value)
+      )
+    })
+    if (unknownFlagColor) {
+      setTextFilterError(`${t('Couleur de drapeau inconnue :')} ${unknownFlagColor.value}`)
+      return
+    }
+    const unknownFlagShape = flattened.clauses.find(
+      (clause) =>
+        clause.operator === 'flagShape' &&
+        !countries.some(
+          (country) => normalizeSearch(country.name) === normalizeSearch(clause.value)
+        )
+    )
+    if (unknownFlagShape) {
+      setTextFilterError(`${t('Forme de drapeau inconnue :')} ${unknownFlagShape.value}`)
+      return
+    }
+    const nextFilters = flattened.clauses.map((clause, index) => {
+      const target = filterTargets.find((item) => item.id === clause.targetId)
+      const filter = createComparatorFilter(`query-filter-${index + 1}`, clause.targetId)
+      filter.negated = Boolean(clause.negated)
+      if (!target) return filter
+      if (clause.operator === 'flagColor') {
+        const namedColor = flagNamedColorOptions.find(
+          (item) => normalizeSearch(t(item.label)) === normalizeSearch(clause.value)
+        )
+        if (namedColor) {
+          filter.flagColors = [{ kind: 'named', id: namedColor.id as FlagNamedColorFilterId }]
+        } else if (/^#[0-9a-f]{6}$/i.test(clause.value)) {
+          filter.flagColors = [{ kind: 'wheel', color: clause.value }]
+        }
+      } else if (clause.operator === 'flagShape') {
+        const country = countries.find(
+          (item) => normalizeSearch(item.name) === normalizeSearch(clause.value)
+        )
+        const alpha2 = country?.details.flagAlpha2 ?? country?.alpha2
+        const points = alpha2 ? getFlagOutline(alpha2) : null
+        if (alpha2 && points)
+          filter.polygon = { points, ratio: getFlagAspectRatio(alpha2)?.ratio ?? 1 }
+      } else if (clause.operator === 'flagBand') {
+        filter.bandCount = Number(clause.value)
+        filter.bandDirections = clause.bandDirection ? [clause.bandDirection] : []
+      } else if (clause.operator === 'flagRatio') {
+        filter.ratioRange = {
+          minimum: Number(clause.value),
+          maximum: Number(clause.upperValue)
+        }
+      } else if (target.kind === 'number') {
+        filter.operator = clause.operator as NumericOperator
+        filter.value = clause.value
+        filter.upperValue = clause.upperValue ?? ''
+      } else {
+        filter.textOperator = clause.operator === 'contains' ? 'contains' : 'equals'
+        filter.textValue = clause.value
+      }
+      return filter
+    })
+
+    const nextOverrides = Object.fromEntries(
+      flattened.relations.flatMap((relation, index) => {
+        const left = nextFilters[index]
+        const right = nextFilters[index + 1]
+        if (!left || !right) return []
+        return [
+          [`${left.id}::${right.id}`, relation === 'and' ? ['both'] : ['both', 'aOnly', 'bOnly']]
+        ]
+      })
+    ) as Record<string, ComparatorFilterRegion[]>
+    const nextGroups = flattened.groups.flatMap((group, index) => {
+      const start = nextFilters[group.startIndex]
+      const end = nextFilters[group.endIndex]
+      return start && end
+        ? [{ id: `query-group-${index + 1}`, startFilterId: start.id, endFilterId: end.id }]
+        : []
+    })
+    setFilters(nextFilters)
+    setTextQueryConstant(null)
+    setSimpleFilterLogic('union')
+    setFilterRelationOverrides(nextOverrides)
+    setCustomRelationEditors({})
+    setFilterGroups(nextGroups)
+    setExcludedFilteredAlpha2([])
+  }
+
+  const serializeCurrentFilters = (): string | null => {
+    if (activeFilters.length === 0)
+      return textQueryConstant === null ? '' : textQueryConstant ? 'tous les pays' : 'aucun pays'
+    const targetLabel = (id: string): string =>
+      queryTargets.find((target) => target.id === id)?.label.toLocaleLowerCase() ?? id
+    const serializedFilters = activeFilters.map((filter) => {
+      const target = filterTargets.find((item) => item.id === filter.targetId)
+      if (!target) return null
+      if (target.kind === 'number') {
+        if (filter.operator === 'between')
+          return `${targetLabel(filter.targetId)} entre ${filter.value} et ${filter.upperValue}`
+        const operator = { lt: '<', gt: '>', eq: '=', lte: '<=', gte: '>=' }[filter.operator]
+        return operator ? `${targetLabel(filter.targetId)} ${operator} ${filter.value}` : null
+      }
+      if (target.kind === 'text') {
+        const operator = filter.textOperator === 'contains' ? 'contient' : 'est'
+        return `${targetLabel(filter.targetId)} ${operator} ${serializeComparatorQueryValue(filter.textValue.trim())}`
+      }
+
+      const flagClauses: string[] = []
+      const flagLabel = targetLabel('flag')
+      const flagColorOperator = language === 'fr' ? 'couleur' : 'color'
+      if (filter.polygon) {
+        const matchingOutline = countries.find((country) =>
+          flagOutlineMatches(
+            country.details.flagAlpha2 ?? country.alpha2,
+            filter.polygon as FlagPolygonDrawing
+          )
+        )
+        if (!matchingOutline) return null
+        flagClauses.push(
+          `${flagLabel} forme ${serializeComparatorQueryValue(matchingOutline.name)}`
+        )
+      }
+      for (const color of filter.flagColors) {
+        const label =
+          color.kind === 'named'
+            ? t(flagNamedColorOptions.find((item) => item.id === color.id)?.label ?? color.id)
+            : color.color
+        flagClauses.push(
+          `${flagLabel} ${flagColorOperator} ${serializeComparatorQueryValue(label)}`
+        )
+      }
+      if (filter.bandCount > 0 || filter.bandDirections.length > 0) {
+        if (filter.bandDirections.length === 0) {
+          flagClauses.push(`${flagLabel} ${t('bandes')} ${filter.bandCount}`)
+        } else {
+          for (const direction of filter.bandDirections) {
+            const localizedDirection = t(
+              direction === 'horizontal'
+                ? 'horizontales'
+                : direction === 'vertical'
+                  ? 'verticales'
+                  : 'obliques'
+            )
+            flagClauses.push(
+              `${flagLabel} ${t('bandes')} ${localizedDirection} ${filter.bandCount}`
+            )
+          }
+        }
+      }
+      if (filter.ratioRange)
+        flagClauses.push(
+          `${flagLabel} proportions entre ${filter.ratioRange.minimum} et ${filter.ratioRange.maximum}`
+        )
+      return flagClauses.length ? flagClauses.join(' et ') : null
+    })
+    if (serializedFilters.some((value) => value === null)) return null
+    const serializedFilterExpressions = serializedFilters.map((expression, index) =>
+      activeFilters[index]?.negated ? `non (${expression ?? ''})` : expression
+    )
+
+    const relationLabels = activeFilters.slice(0, -1).map((filter, index) => {
+      const next = activeFilters[index + 1]
+      if (!next) return null
+      const regions = getFilterRelationRegions(filter, next)
+      if (regions.length === 1 && regions[0] === 'both') return 'et'
+      if (
+        regions.length === 3 &&
+        regions.includes('both') &&
+        regions.includes('aOnly') &&
+        regions.includes('bOnly')
+      )
+        return 'ou'
+      return null
+    })
+    if (relationLabels.some((value) => value === null)) {
+      type SerializationEvent =
+        | { kind: 'open' | 'close' }
+        | { kind: 'condition'; value: string }
+        | { kind: 'relation'; regions: ComparatorFilterRegion[] }
+      const events: SerializationEvent[] = []
+      activeFilters.forEach((filter, index) => {
+        activeFilterGroups
+          .filter((group) => group.startIndex === index)
+          .sort((first, second) => second.endIndex - first.endIndex)
+          .forEach(() => events.push({ kind: 'open' }))
+        events.push({ kind: 'condition', value: serializedFilterExpressions[index] ?? '' })
+        activeFilterGroups
+          .filter((group) => group.endIndex === index)
+          .sort((first, second) => second.startIndex - first.startIndex)
+          .forEach(() => events.push({ kind: 'close' }))
+        const next = activeFilters[index + 1]
+        if (next)
+          events.push({
+            kind: 'relation',
+            regions: getFilterRelationRegions(filter, next)
+          })
+      })
+
+      let eventIndex = 0
+      const parsePrimary = (): string | null => {
+        if (events[eventIndex]?.kind === 'open') {
+          eventIndex += 1
+          const expression = parseExpression()
+          if (!expression || events[eventIndex]?.kind !== 'close') return null
+          eventIndex += 1
+          return `(${expression})`
+        }
+        const event = events[eventIndex++]
+        return event?.kind === 'condition' ? event.value : null
+      }
+      const parseExpression = (): string | null => {
+        let expression = parsePrimary()
+        while (expression && events[eventIndex]?.kind === 'relation') {
+          const relation = events[eventIndex++]
+          const right = parsePrimary()
+          if (!relation || relation.kind !== 'relation' || !right) return null
+          expression = serializeComparatorTruthRelation(expression, right, relation.regions)
+          if (!expression || expression.length > 20_000) return null
+        }
+        return expression
+      }
+      const expression = parseExpression()
+      return expression && eventIndex === events.length ? expression : null
+    }
+
+    return activeFilters
+      .map((_, index) => {
+        const openings = activeFilterGroups.filter((group) => group.startIndex === index).length
+        const closings = activeFilterGroups.filter((group) => group.endIndex === index).length
+        const clause = serializedFilterExpressions[index] ?? ''
+        return `${'('.repeat(openings)}${clause}${')'.repeat(closings)}${relationLabels[index] ? ` ${relationLabels[index]} ` : ''}`
+      })
+      .join('')
+      .trim()
+  }
+
+  const changeFilterEditorMode = (nextMode: FilterEditorMode): void => {
+    if (nextMode === filterEditorMode) return
+    if (nextMode === 'texte') {
+      const serialized = serializeCurrentFilters()
+      setTextFilterQuery(serialized ?? '')
+      setTextFilterError(null)
+      setTextFilterNotice(
+        serialized === null
+          ? t(
+              'Une forme dessinée non reconnue ou une combinaison trop complexe ne peut pas être convertie automatiquement. Modifier la requête remplacera les critères actifs.'
+            )
+          : null
+      )
+    } else {
+      setTextFilterError(null)
+      setTextFilterNotice(null)
+      setTextSuggestionsOpen(false)
+    }
+    setFilterEditorMode(nextMode)
   }
 
   const renderList = (
@@ -1465,6 +1935,11 @@ export function CountryComparatorView({
         sourceRows.set(`metrics-${details.metricsSource}`, t(details.metricsSource))
       if (details.populationSourceUrl)
         sourceRows.set(details.populationSourceUrl, t(details.populationSource))
+      if (details.populationSecondarySourceUrl)
+        sourceRows.set(
+          details.populationSecondarySourceUrl,
+          t('Source de comparaison de la population')
+        )
       if (details.metricsSourceUrl)
         sourceRows.set(details.metricsSourceUrl, t('Source officielle des dimensions'))
       if (details.metricsSecondarySourceUrl)
@@ -1584,6 +2059,14 @@ export function CountryComparatorView({
             ) : (
               t(details.populationSource)
             )}
+            {details.populationSecondarySourceUrl && (
+              <>
+                {' · '}
+                <a href={details.populationSecondarySourceUrl} target="_blank" rel="noreferrer">
+                  {t('Source de comparaison')}
+                </a>
+              </>
+            )}
           </small>
         )}
         {field !== 'population' && details.metricsScope && (
@@ -1615,32 +2098,13 @@ export function CountryComparatorView({
 
   return (
     <div className="country-comparator-screen">
-      <header className="statistics-header country-comparator-header">
-        <div className="country-comparator-brand">
-          <div className="brand-icon">W</div>
-          <div>
-            <div className="brand-name">WORLD ATLAS</div>
-            <div className="brand-subtitle">{t('Comparateur')}</div>
-          </div>
-        </div>
-        <div>
-          <div className="breadcrumb">{t('COMPARAISON / MONDE')}</div>
-          <h1>{t('Comparer des pays')}</h1>
-          <p>{t('Choisis les pays et les informations à comparer.')}</p>
-        </div>
-        <div className="statistics-actions">
-          <button
-            className="home-back-button"
-            type="button"
-            data-shortcut-action="app.mode.statistics"
-            onClick={onOpenStatistics}
-          >
-            {t('Statistiques')}
-          </button>
-        </div>
-      </header>
-
-      <AppModeSwitcher active="comparator" onChange={onModeChange} />
+      <AppModeSwitcher
+        active="comparator"
+        onChange={onModeChange}
+        pageTitle={t('Comparer des pays')}
+        onOpenStatistics={onOpenStatistics}
+        autoReveal
+      />
 
       <main className="country-comparator-content">
         <section className="country-comparator-setup">
@@ -1759,624 +2223,919 @@ export function CountryComparatorView({
                 </small>
               </div>
               <div className="country-comparator-filter-actions">
-                <button type="button" onClick={addFilter}>
-                  ＋ {t('Ajouter un filtre')}
-                </button>
+                <div
+                  className="country-comparator-filter-mode"
+                  role="group"
+                  aria-label={t('Mode de saisie des filtres')}
+                >
+                  <button
+                    type="button"
+                    aria-pressed={filterEditorMode === 'bloc'}
+                    onClick={() => changeFilterEditorMode('bloc')}
+                  >
+                    {t('Bloc')}
+                  </button>
+                  <button
+                    type="button"
+                    aria-pressed={filterEditorMode === 'texte'}
+                    onClick={() => changeFilterEditorMode('texte')}
+                  >
+                    {t('Texte')}
+                  </button>
+                </div>
+                {filterEditorMode === 'bloc' && (
+                  <button type="button" onClick={addFilter}>
+                    ＋ {t('Ajouter un filtre')}
+                  </button>
+                )}
               </div>
             </div>
 
-            {filters.map((filter, filterIndex) => {
-              const target = filterTargets.find((candidate) => candidate.id === filter.targetId)
-              const textOptions =
-                target?.kind === 'text' ? (filterOptionValues.get(target.id) ?? []) : []
-              const hasDraftColor = filter.flagColors.some(
-                (item) =>
-                  item.kind === 'wheel' &&
-                  item.color.toLowerCase() === filter.colorDraft.toLowerCase()
-              )
-              return (
-                <div className="country-comparator-filter-card" key={filter.id}>
-                  <div className="country-comparator-filter-card-heading">
-                    <div
-                      className="country-comparator-filter-index"
-                      aria-label={`${t('Filtre')} ${filterIndex + 1}`}
-                    >
-                      <span>{t('Filtre')}</span>
-                      <strong>{filterIndex + 1}</strong>
-                    </div>
-                    <label>
-                      <span>{t('Caractéristique')}</span>
-                      <select
-                        value={filter.targetId}
-                        onChange={(event) => setFilterTarget(filter.id, event.target.value)}
-                      >
-                        <option value="">{t('Choisir une caractéristique')}</option>
-                        {filterTargets.map((option) => (
-                          <option key={option.id} value={option.id}>
-                            {t(option.label)}
-                            {option.kind === 'flag'
-                              ? ''
-                              : option.kind === 'number'
-                                ? ` · ${t('Valeur numérique')}`
-                                : ` · ${t('Texte')}`}
-                          </option>
-                        ))}
-                      </select>
-                    </label>
-                    <button
-                      type="button"
-                      className="country-comparator-filter-remove"
-                      aria-label={t('Supprimer ce filtre')}
-                      title={t('Supprimer ce filtre')}
-                      onClick={() => removeFilter(filter.id)}
-                    >
-                      ×
-                    </button>
-                  </div>
-
-                  {target?.kind === 'number' && (
-                    <div className="country-comparator-filter-number">
-                      <label>
-                        <span>{t('Opérateur')}</span>
-                        <select
-                          value={filter.operator}
-                          onChange={(event) =>
-                            updateFilter(filter.id, (current) => ({
-                              ...current,
-                              operator: event.target.value as NumericOperator
-                            }))
-                          }
+            {filterEditorMode === 'bloc' ? (
+              <>
+                {filters.map((filter, filterIndex) => {
+                  const target = filterTargets.find((candidate) => candidate.id === filter.targetId)
+                  const textOptions =
+                    target?.kind === 'text' ? (filterOptionValues.get(target.id) ?? []) : []
+                  const hasDraftColor = filter.flagColors.some(
+                    (item) =>
+                      item.kind === 'wheel' &&
+                      item.color.toLowerCase() === filter.colorDraft.toLowerCase()
+                  )
+                  return (
+                    <div className="country-comparator-filter-card" key={filter.id}>
+                      <div className="country-comparator-filter-card-heading">
+                        <div
+                          className="country-comparator-filter-index"
+                          aria-label={`${t('Filtre')} ${filterIndex + 1}`}
                         >
-                          {numericOperators.map((operator) => (
-                            <option key={operator.id} value={operator.id}>
-                              {t(operator.label)}
-                            </option>
-                          ))}
-                        </select>
-                      </label>
-                      <label>
-                        <span>
-                          {filter.operator === 'between' ? t('Valeur minimale') : t('Valeur')}
-                        </span>
-                        <div className="country-comparator-filter-number-input">
-                          <input
-                            type="number"
-                            step="any"
-                            value={filter.value}
-                            onChange={(event) =>
-                              updateFilter(filter.id, (current) => ({
-                                ...current,
-                                value: event.target.value
-                              }))
-                            }
-                            placeholder="0"
-                          />
-                          {target.unit && <small>{target.unit}</small>}
+                          <span>{t('Filtre')}</span>
+                          <strong>{filterIndex + 1}</strong>
                         </div>
-                      </label>
-                      {filter.operator === 'between' && (
                         <label>
-                          <span>{t('Valeur maximale')}</span>
-                          <div className="country-comparator-filter-number-input">
-                            <input
-                              type="number"
-                              step="any"
-                              value={filter.upperValue}
-                              onChange={(event) =>
-                                updateFilter(filter.id, (current) => ({
-                                  ...current,
-                                  upperValue: event.target.value
-                                }))
-                              }
-                              placeholder="0"
-                            />
-                            {target.unit && <small>{target.unit}</small>}
-                          </div>
-                        </label>
-                      )}
-                    </div>
-                  )}
-
-                  {target?.kind === 'text' && (
-                    <div className="country-comparator-filter-text">
-                      <label>
-                        <span>{t('Correspondance')}</span>
-                        <select
-                          value={filter.textOperator}
-                          onChange={(event) =>
-                            updateFilter(filter.id, (current) => ({
-                              ...current,
-                              textOperator: event.target.value as TextOperator
-                            }))
-                          }
-                        >
-                          <option value="contains">{t('contient')}</option>
-                          <option value="equals">{t('est exactement')}</option>
-                        </select>
-                      </label>
-                      <label>
-                        <span>{t('Valeur à rechercher')}</span>
-                        <input
-                          type="search"
-                          list={`country-comparator-filter-options-${filter.id}`}
-                          value={filter.textValue}
-                          onChange={(event) =>
-                            updateFilter(filter.id, (current) => ({
-                              ...current,
-                              textValue: event.target.value
-                            }))
-                          }
-                          placeholder={t('Saisir ou choisir une valeur')}
-                          autoComplete="off"
-                        />
-                        <datalist id={`country-comparator-filter-options-${filter.id}`}>
-                          {textOptions.map((option) => (
-                            <option key={normalizeSearch(option)} value={option} />
-                          ))}
-                        </datalist>
-                      </label>
-                    </div>
-                  )}
-
-                  {target?.kind === 'flag' && (
-                    <div className="country-comparator-flag-filter">
-                      <div className="country-comparator-flag-color-row">
-                        <label>
-                          <span>{t('Couleur personnalisée')}</span>
-                          <input
-                            type="color"
-                            value={filter.colorDraft}
-                            onChange={(event) =>
-                              updateFilter(filter.id, (current) => ({
-                                ...current,
-                                colorDraft: event.target.value
-                              }))
-                            }
-                            aria-label={t('Choisir une couleur de drapeau')}
-                          />
-                        </label>
-                        <button
-                          type="button"
-                          disabled={hasDraftColor}
-                          onClick={() =>
-                            updateFilter(filter.id, (current) => ({
-                              ...current,
-                              flagColors: hasDraftColor
-                                ? current.flagColors
-                                : [
-                                    ...current.flagColors,
-                                    { kind: 'wheel', color: current.colorDraft }
-                                  ]
-                            }))
-                          }
-                        >
-                          {t('Ajouter la couleur')}
-                        </button>
-                      </div>
-                      <div
-                        className="country-comparator-flag-color-options"
-                        aria-label={t('Couleurs du drapeau')}
-                      >
-                        {flagNamedColorOptions.map((option) => {
-                          const active = filter.flagColors.some(
-                            (item) => item.kind === 'named' && item.id === option.id
-                          )
-                          return (
-                            <button
-                              key={option.id}
-                              type="button"
-                              className={active ? 'is-active' : undefined}
-                              aria-pressed={active}
-                              onClick={() =>
-                                updateFilter(filter.id, (current) => ({
-                                  ...current,
-                                  flagColors: active
-                                    ? current.flagColors.filter(
-                                        (item) => item.kind !== 'named' || item.id !== option.id
-                                      )
-                                    : [
-                                        ...current.flagColors,
-                                        { kind: 'named', id: option.id as FlagNamedColorFilterId }
-                                      ]
-                                }))
-                              }
-                            >
-                              <i style={{ backgroundColor: option.swatch }} />
-                              {t(option.label)}
-                            </button>
-                          )
-                        })}
-                      </div>
-                      {filter.flagColors.length > 0 && (
-                        <div className="country-comparator-flag-active-colors">
-                          <span>{t('Toutes les couleurs sélectionnées sont requises')}</span>
-                          {filter.flagColors.map((item, index) => {
-                            const title =
-                              item.kind === 'named'
-                                ? t(
-                                    flagNamedColorOptions.find((option) => option.id === item.id)
-                                      ?.label ?? item.id
-                                  )
-                                : item.color
-                            return (
-                              <button
-                                key={`${item.kind}-${item.kind === 'named' ? item.id : item.color}-${index}`}
-                                type="button"
-                                title={`${t('Retirer le filtre')} ${title}`}
-                                aria-label={`${t('Retirer le filtre de couleur')} ${title}`}
-                                style={{
-                                  backgroundColor:
-                                    item.kind === 'named'
-                                      ? flagNamedColorOptions.find(
-                                          (option) => option.id === item.id
-                                        )?.swatch
-                                      : item.color
-                                }}
-                                onClick={() =>
-                                  updateFilter(filter.id, (current) => ({
-                                    ...current,
-                                    flagColors: current.flagColors.filter(
-                                      (_, colorIndex) => colorIndex !== index
-                                    )
-                                  }))
-                                }
-                              />
-                            )
-                          })}
-                        </div>
-                      )}
-                      <label className="country-comparator-flag-band-count">
-                        <span>
-                          {t('Nombre de bandes')} ·{' '}
-                          {filter.bandCount === 0 ? t('Tous') : filter.bandCount}
-                        </span>
-                        <input
-                          type="range"
-                          min={0}
-                          max={maxFlagBandCount}
-                          step={1}
-                          value={filter.bandCount}
-                          onChange={(event) =>
-                            updateFilter(filter.id, (current) => ({
-                              ...current,
-                              bandCount: Number(event.target.value)
-                            }))
-                          }
-                        />
-                      </label>
-                      <div className="country-comparator-flag-directions">
-                        {(
-                          [
-                            ['horizontal', 'Horizontales'],
-                            ['vertical', 'Verticales'],
-                            ['oblique', 'Obliques']
-                          ] as const
-                        ).map(([direction, label]) => (
-                          <label key={direction}>
-                            <input
-                              type="checkbox"
-                              checked={filter.bandDirections.includes(direction)}
-                              onChange={() =>
-                                updateFilter(filter.id, (current) => ({
-                                  ...current,
-                                  bandDirections: current.bandDirections.includes(direction)
-                                    ? current.bandDirections.filter((item) => item !== direction)
-                                    : [...current.bandDirections, direction]
-                                }))
-                              }
-                            />
-                            {t(label)}
-                          </label>
-                        ))}
-                      </div>
-                      <FlagRatioFilter
-                        availableRatios={availableFlagRatios}
-                        availablePolygonShapes={availablePolygonShapes}
-                        selectedRatioRange={filter.ratioRange}
-                        selectedPolygon={filter.polygon}
-                        onRatioRangeChange={(range) =>
-                          updateFilter(filter.id, (current) => ({ ...current, ratioRange: range }))
-                        }
-                        onPolygonChange={(polygon) =>
-                          updateFilter(filter.id, (current) => ({ ...current, polygon }))
-                        }
-                        disabled={false}
-                      />
-                    </div>
-                  )}
-                </div>
-              )
-            })}
-
-            {activeFilters.length >= 2 && (
-              <div className="country-comparator-filter-controls">
-                <label className="country-comparator-filter-simple-mode">
-                  <span>{t('Logique')}</span>
-                  <select
-                    value={hasAdvancedFilterRules ? 'advanced' : simpleFilterLogic}
-                    onChange={(event) => {
-                      const nextLogic = event.target.value
-                      if (nextLogic !== 'union' && nextLogic !== 'intersection') return
-                      setSimpleFilterLogic(nextLogic)
-                      setFilterRelationOverrides({})
-                      setCustomRelationEditors({})
-                      setFilterGroups([])
-                      setExcludedFilteredAlpha2([])
-                    }}
-                  >
-                    <option value="union">{t('+ · Au moins un filtre')}</option>
-                    <option value="intersection">{t('ET · Tous les filtres')}</option>
-                    {hasAdvancedFilterRules && (
-                      <option value="advanced">{t('Avancé personnalisé')}</option>
-                    )}
-                  </select>
-                </label>
-                <button
-                  type="button"
-                  className="country-comparator-advanced-toggle"
-                  aria-label={t(
-                    isAdvancedFilterOpen
-                      ? 'Masquer le calculateur avancé'
-                      : 'Afficher le calculateur avancé'
-                  )}
-                  aria-expanded={isAdvancedFilterOpen}
-                  aria-controls="country-comparator-filter-calculator-content"
-                  onClick={() => setIsAdvancedFilterOpen((current) => !current)}
-                >
-                  {t('Avancé')} <span aria-hidden="true">{isAdvancedFilterOpen ? '⌃' : '⌄'}</span>
-                </button>
-              </div>
-            )}
-
-            {activeFilters.length >= 2 && (
-              <section
-                id="country-comparator-filter-calculator-content"
-                className="country-comparator-filter-calculator"
-                aria-label={t('Calculateur avancé')}
-                hidden={!isAdvancedFilterOpen}
-              >
-                <p className="country-comparator-filter-calculator-heading">
-                  {t(
-                    'Choisis une relation entre chaque paire ; sans parenthèses, les relations sont évaluées de gauche à droite.'
-                  )}
-                </p>
-                <div className="country-comparator-filter-relations">
-                  {activeFilters.slice(0, -1).map((filter, index) => {
-                    const nextFilter = activeFilters[index + 1]
-                    const relationKey = `${filter.id}::${nextFilter.id}`
-                    const regions = getFilterRelationRegions(filter, nextFilter)
-                    const matchingOperation = comparatorFilterOperations.find(
-                      (operation) =>
-                        operation.regions.length === regions.length &&
-                        operation.regions.every((region) => regions.includes(region))
-                    )
-                    const isCustom = customRelationEditors[relationKey] ?? !matchingOperation
-                    return (
-                      <div className="country-comparator-filter-relation" key={relationKey}>
-                        <span className="country-comparator-filter-relation-pair">
-                          {t('Filtre')} {index + 1} <span aria-hidden="true">↔</span> {t('Filtre')}{' '}
-                          {index + 2}
-                        </span>
-                        <label>
-                          <span>{t('Relation')}</span>
+                          <span>{t('Caractéristique')}</span>
                           <select
-                            value={
-                              customRelationEditors[relationKey]
-                                ? 'custom'
-                                : (matchingOperation?.id ?? 'custom')
-                            }
-                            onChange={(event) => {
-                              const operation = comparatorFilterOperations.find(
-                                (item) => item.id === event.target.value
-                              )
-                              setFilterRelationOverrides((current) => ({
-                                ...current,
-                                [relationKey]:
-                                  operation?.regions ?? simpleFilterRegions[simpleFilterLogic]
-                              }))
-                              setCustomRelationEditors((current) => ({
-                                ...current,
-                                [relationKey]: !operation
-                              }))
-                              setExcludedFilteredAlpha2([])
-                            }}
+                            value={filter.targetId}
+                            onChange={(event) => setFilterTarget(filter.id, event.target.value)}
                           >
-                            <option value="custom">{t('Personnalisée')}</option>
-                            {comparatorFilterOperations.map((operation) => (
-                              <option key={operation.id} value={operation.id}>
-                                {t(operation.label)}
+                            <option value="">{t('Choisir une caractéristique')}</option>
+                            {filterTargets.map((option) => (
+                              <option key={option.id} value={option.id}>
+                                {t(option.label)}
+                                {option.kind === 'flag'
+                                  ? ''
+                                  : option.kind === 'number'
+                                    ? ` · ${t('Valeur numérique')}`
+                                    : ` · ${t('Texte')}`}
                               </option>
                             ))}
                           </select>
                         </label>
-                        {isCustom && (
+                        <button
+                          type="button"
+                          className="country-comparator-filter-remove"
+                          aria-label={t('Supprimer ce filtre')}
+                          title={t('Supprimer ce filtre')}
+                          onClick={() => removeFilter(filter.id)}
+                        >
+                          ×
+                        </button>
+                      </div>
+
+                      {target && (
+                        <label className="country-comparator-filter-negation">
+                          <input
+                            type="checkbox"
+                            checked={filter.negated}
+                            onChange={(event) =>
+                              updateFilter(filter.id, (current) => ({
+                                ...current,
+                                negated: event.target.checked
+                              }))
+                            }
+                          />
+                          <span>{t('Inverser ce critère')}</span>
+                        </label>
+                      )}
+
+                      {target?.kind === 'number' && (
+                        <div className="country-comparator-filter-number">
+                          <label>
+                            <span>{t('Opérateur')}</span>
+                            <select
+                              value={filter.operator}
+                              onChange={(event) =>
+                                updateFilter(filter.id, (current) => ({
+                                  ...current,
+                                  operator: event.target.value as NumericOperator
+                                }))
+                              }
+                            >
+                              {numericOperators.map((operator) => (
+                                <option key={operator.id} value={operator.id}>
+                                  {t(operator.label)}
+                                </option>
+                              ))}
+                            </select>
+                          </label>
+                          <label>
+                            <span>
+                              {filter.operator === 'between' ? t('Valeur minimale') : t('Valeur')}
+                            </span>
+                            <div className="country-comparator-filter-number-input">
+                              <input
+                                type="number"
+                                step="any"
+                                value={filter.value}
+                                onChange={(event) =>
+                                  updateFilter(filter.id, (current) => ({
+                                    ...current,
+                                    value: event.target.value
+                                  }))
+                                }
+                                placeholder="0"
+                              />
+                              {target.unit && <small>{target.unit}</small>}
+                            </div>
+                          </label>
+                          {filter.operator === 'between' && (
+                            <label>
+                              <span>{t('Valeur maximale')}</span>
+                              <div className="country-comparator-filter-number-input">
+                                <input
+                                  type="number"
+                                  step="any"
+                                  value={filter.upperValue}
+                                  onChange={(event) =>
+                                    updateFilter(filter.id, (current) => ({
+                                      ...current,
+                                      upperValue: event.target.value
+                                    }))
+                                  }
+                                  placeholder="0"
+                                />
+                                {target.unit && <small>{target.unit}</small>}
+                              </div>
+                            </label>
+                          )}
+                        </div>
+                      )}
+
+                      {target?.kind === 'text' && (
+                        <div className="country-comparator-filter-text">
+                          <label>
+                            <span>{t('Correspondance')}</span>
+                            <select
+                              value={filter.textOperator}
+                              onChange={(event) =>
+                                updateFilter(filter.id, (current) => ({
+                                  ...current,
+                                  textOperator: event.target.value as TextOperator
+                                }))
+                              }
+                            >
+                              <option value="contains">{t('contient')}</option>
+                              <option value="equals">{t('est exactement')}</option>
+                            </select>
+                          </label>
+                          <label>
+                            <span>{t('Valeur à rechercher')}</span>
+                            <input
+                              type="search"
+                              list={`country-comparator-filter-options-${filter.id}`}
+                              value={filter.textValue}
+                              onChange={(event) =>
+                                updateFilter(filter.id, (current) => ({
+                                  ...current,
+                                  textValue: event.target.value
+                                }))
+                              }
+                              placeholder={t('Saisir ou choisir une valeur')}
+                              autoComplete="off"
+                            />
+                            <datalist id={`country-comparator-filter-options-${filter.id}`}>
+                              {textOptions.map((option) => (
+                                <option key={normalizeSearch(option)} value={option} />
+                              ))}
+                            </datalist>
+                          </label>
+                        </div>
+                      )}
+
+                      {target?.kind === 'flag' && (
+                        <div className="country-comparator-flag-filter">
+                          <div className="country-comparator-flag-color-row">
+                            <label>
+                              <span>{t('Couleur personnalisée')}</span>
+                              <input
+                                type="color"
+                                value={filter.colorDraft}
+                                onChange={(event) =>
+                                  updateFilter(filter.id, (current) => ({
+                                    ...current,
+                                    colorDraft: event.target.value
+                                  }))
+                                }
+                                aria-label={t('Choisir une couleur de drapeau')}
+                              />
+                            </label>
+                            <button
+                              type="button"
+                              disabled={hasDraftColor}
+                              onClick={() =>
+                                updateFilter(filter.id, (current) => ({
+                                  ...current,
+                                  flagColors: hasDraftColor
+                                    ? current.flagColors
+                                    : [
+                                        ...current.flagColors,
+                                        { kind: 'wheel', color: current.colorDraft }
+                                      ]
+                                }))
+                              }
+                            >
+                              {t('Ajouter la couleur')}
+                            </button>
+                          </div>
                           <div
-                            className="country-comparator-filter-truth-grid"
-                            role="group"
-                            aria-label={t('Zones de résultat à inclure')}
+                            className="country-comparator-flag-color-options"
+                            aria-label={t('Couleurs du drapeau')}
                           >
-                            {comparatorFilterRegions.map((region) => {
-                              const checked = regions.includes(region.id)
+                            {flagNamedColorOptions.map((option) => {
+                              const active = filter.flagColors.some(
+                                (item) => item.kind === 'named' && item.id === option.id
+                              )
                               return (
-                                <label
-                                  key={region.id}
-                                  className={checked ? 'is-active' : undefined}
+                                <button
+                                  key={option.id}
+                                  type="button"
+                                  className={active ? 'is-active' : undefined}
+                                  aria-pressed={active}
+                                  onClick={() =>
+                                    updateFilter(filter.id, (current) => ({
+                                      ...current,
+                                      flagColors: active
+                                        ? current.flagColors.filter(
+                                            (item) => item.kind !== 'named' || item.id !== option.id
+                                          )
+                                        : [
+                                            ...current.flagColors,
+                                            {
+                                              kind: 'named',
+                                              id: option.id as FlagNamedColorFilterId
+                                            }
+                                          ]
+                                    }))
+                                  }
                                 >
-                                  <input
-                                    type="checkbox"
-                                    checked={checked}
-                                    onChange={() => {
-                                      setFilterRelationOverrides((current) => ({
-                                        ...current,
-                                        [relationKey]: checked
-                                          ? regions.filter((item) => item !== region.id)
-                                          : [...regions, region.id]
-                                      }))
-                                      setExcludedFilteredAlpha2([])
-                                    }}
-                                  />
-                                  <span>{t(region.label)}</span>
-                                </label>
+                                  <i style={{ backgroundColor: option.swatch }} />
+                                  {t(option.label)}
+                                </button>
                               )
                             })}
                           </div>
-                        )}
-                      </div>
-                    )
-                  })}
-                </div>
-                <div className="country-comparator-filter-groups">
-                  <strong>{t('Groupes parenthésés')}</strong>
-                  {activeFilterGroups.map((group, groupIndex) => (
-                    <div className="country-comparator-filter-group-row" key={group.id}>
-                      <strong>
-                        {t('Parenthèse')} {groupIndex + 1}
-                      </strong>
-                      <label>
-                        <span>{t('Du filtre')}</span>
-                        <select
-                          value={group.startFilterId}
-                          onChange={(event) =>
-                            updateFilterGroupEndpoint(group.id, 'start', event.target.value)
-                          }
-                        >
-                          {activeFilters
-                            .map((filter, index) => ({ filter, index }))
-                            .filter(
-                              ({ index }) =>
-                                index < group.endIndex &&
-                                !groupWouldCrossExisting(index, group.endIndex, group.id)
-                            )
-                            .map(({ filter, index }) => (
-                              <option
-                                key={filter.id}
-                                value={filter.id}
-                              >{`${t('Filtre')} ${index + 1}`}</option>
+                          {filter.flagColors.length > 0 && (
+                            <div className="country-comparator-flag-active-colors">
+                              <span>{t('Toutes les couleurs sélectionnées sont requises')}</span>
+                              {filter.flagColors.map((item, index) => {
+                                const title =
+                                  item.kind === 'named'
+                                    ? t(
+                                        flagNamedColorOptions.find(
+                                          (option) => option.id === item.id
+                                        )?.label ?? item.id
+                                      )
+                                    : item.color
+                                return (
+                                  <button
+                                    key={`${item.kind}-${item.kind === 'named' ? item.id : item.color}-${index}`}
+                                    type="button"
+                                    title={`${t('Retirer le filtre')} ${title}`}
+                                    aria-label={`${t('Retirer le filtre de couleur')} ${title}`}
+                                    style={{
+                                      backgroundColor:
+                                        item.kind === 'named'
+                                          ? flagNamedColorOptions.find(
+                                              (option) => option.id === item.id
+                                            )?.swatch
+                                          : item.color
+                                    }}
+                                    onClick={() =>
+                                      updateFilter(filter.id, (current) => ({
+                                        ...current,
+                                        flagColors: current.flagColors.filter(
+                                          (_, colorIndex) => colorIndex !== index
+                                        )
+                                      }))
+                                    }
+                                  />
+                                )
+                              })}
+                            </div>
+                          )}
+                          <label className="country-comparator-flag-band-count">
+                            <span>
+                              {t('Nombre de bandes')} ·{' '}
+                              {filter.bandCount === 0 ? t('Tous') : filter.bandCount}
+                            </span>
+                            <input
+                              type="range"
+                              min={0}
+                              max={maxFlagBandCount}
+                              step={1}
+                              value={filter.bandCount}
+                              onChange={(event) =>
+                                updateFilter(filter.id, (current) => ({
+                                  ...current,
+                                  bandCount: Number(event.target.value)
+                                }))
+                              }
+                            />
+                          </label>
+                          <div className="country-comparator-flag-directions">
+                            {(
+                              [
+                                ['horizontal', 'Horizontales'],
+                                ['vertical', 'Verticales'],
+                                ['oblique', 'Obliques']
+                              ] as const
+                            ).map(([direction, label]) => (
+                              <label key={direction}>
+                                <input
+                                  type="checkbox"
+                                  checked={filter.bandDirections.includes(direction)}
+                                  onChange={() =>
+                                    updateFilter(filter.id, (current) => ({
+                                      ...current,
+                                      bandDirections: current.bandDirections.includes(direction)
+                                        ? current.bandDirections.filter(
+                                            (item) => item !== direction
+                                          )
+                                        : [...current.bandDirections, direction]
+                                    }))
+                                  }
+                                />
+                                {t(label)}
+                              </label>
                             ))}
-                        </select>
-                      </label>
-                      <label>
-                        <span>{t('Au filtre')}</span>
-                        <select
-                          value={group.endFilterId}
-                          onChange={(event) =>
-                            updateFilterGroupEndpoint(group.id, 'end', event.target.value)
-                          }
-                        >
-                          {activeFilters
-                            .map((filter, index) => ({ filter, index }))
-                            .filter(
-                              ({ index }) =>
-                                index > group.startIndex &&
-                                !groupWouldCrossExisting(group.startIndex, index, group.id)
-                            )
-                            .map(({ filter, index }) => (
-                              <option
-                                key={filter.id}
-                                value={filter.id}
-                              >{`${t('Filtre')} ${index + 1}`}</option>
-                            ))}
-                        </select>
-                      </label>
-                      <button
-                        type="button"
-                        aria-label={`${t('Retirer le groupe')} ${group.startIndex + 1}–${group.endIndex + 1}`}
-                        onClick={() => {
-                          setFilterGroups((current) =>
-                            current.filter((item) => item.id !== group.id)
-                          )
+                          </div>
+                          <FlagRatioFilter
+                            availableRatios={availableFlagRatios}
+                            availablePolygonShapes={availablePolygonShapes}
+                            selectedRatioRange={filter.ratioRange}
+                            selectedPolygon={filter.polygon}
+                            onRatioRangeChange={(range) =>
+                              updateFilter(filter.id, (current) => ({
+                                ...current,
+                                ratioRange: range
+                              }))
+                            }
+                            onPolygonChange={(polygon) =>
+                              updateFilter(filter.id, (current) => ({ ...current, polygon }))
+                            }
+                            disabled={false}
+                          />
+                        </div>
+                      )}
+                    </div>
+                  )
+                })}
+
+                {activeFilters.length >= 2 && (
+                  <div className="country-comparator-filter-controls">
+                    <label className="country-comparator-filter-simple-mode">
+                      <span>{t('Logique')}</span>
+                      <select
+                        value={hasAdvancedFilterRules ? 'advanced' : simpleFilterLogic}
+                        onChange={(event) => {
+                          const nextLogic = event.target.value
+                          if (nextLogic !== 'union' && nextLogic !== 'intersection') return
+                          setSimpleFilterLogic(nextLogic)
+                          setFilterRelationOverrides({})
+                          setCustomRelationEditors({})
+                          setFilterGroups([])
                           setExcludedFilteredAlpha2([])
                         }}
                       >
-                        ×
-                      </button>
-                    </div>
-                  ))}
-                  <div className="country-comparator-filter-group-builder">
-                    <label>
-                      <span>{t('Du filtre')}</span>
-                      <select
-                        value={selectedGroupStart?.id ?? ''}
-                        onChange={(event) => setGroupStartFilterId(event.target.value)}
-                      >
-                        {activeFilters.map((filter, index) => (
-                          <option
-                            key={filter.id}
-                            value={filter.id}
-                          >{`${t('Filtre')} ${index + 1}`}</option>
-                        ))}
+                        <option value="union">{t('+ · Au moins un filtre')}</option>
+                        <option value="intersection">{t('ET · Tous les filtres')}</option>
+                        {hasAdvancedFilterRules && (
+                          <option value="advanced">{t('Avancé personnalisé')}</option>
+                        )}
                       </select>
                     </label>
-                    <label>
-                      <span>{t('Au filtre')}</span>
-                      <select
-                        value={selectedGroupEnd?.id ?? ''}
-                        onChange={(event) => setGroupEndFilterId(event.target.value)}
-                      >
-                        {activeFilters.map((filter, index) => (
-                          <option
-                            key={filter.id}
-                            value={filter.id}
-                          >{`${t('Filtre')} ${index + 1}`}</option>
-                        ))}
-                      </select>
-                    </label>
-                    <button type="button" disabled={!canAddFilterGroup} onClick={addFilterGroup}>
-                      ＋ {t('Ajouter une parenthèse')}
+                    <button
+                      type="button"
+                      className="country-comparator-advanced-toggle"
+                      aria-label={t(
+                        isAdvancedFilterOpen
+                          ? 'Masquer le calculateur avancé'
+                          : 'Afficher le calculateur avancé'
+                      )}
+                      aria-expanded={isAdvancedFilterOpen}
+                      aria-controls="country-comparator-filter-calculator-content"
+                      onClick={() => setIsAdvancedFilterOpen((current) => !current)}
+                    >
+                      {t('Avancé')}{' '}
+                      <span aria-hidden="true">{isAdvancedFilterOpen ? '⌃' : '⌄'}</span>
                     </button>
                   </div>
-                </div>
-              </section>
-            )}
-
-            {activeFilters.length > 0 && (
-              <div className="country-comparator-filter-summary" aria-live="polite">
-                <span>
-                  {filteredAlpha2.length} {t('pays ajoutés au comparateur')} ·{' '}
-                  {filteredCountries.length} {t('correspondances')}
-                </span>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setFilters([])
-                    setFilterRelationOverrides({})
-                    setCustomRelationEditors({})
-                    setFilterGroups([])
-                    setIsAdvancedFilterOpen(false)
-                    setExcludedFilteredAlpha2([])
-                  }}
-                >
-                  {t('Effacer les filtres')}
-                </button>
-              </div>
-            )}
-            {activeFilters.length > 0 && (
-              <details className="country-comparator-filter-explanation">
-                <summary>
-                  {t('Comprendre les correspondances')} · {filteredCountries.length}
-                </summary>
-                <p className="country-comparator-filter-expression">{filterExpressionSummary}</p>
-                {filteredCountries.length > 0 ? (
-                  <ul>
-                    {filteredCountries.map((country) => (
-                      <li key={country.alpha2}>
-                        <strong>{country.name}</strong>
-                        <span>
-                          {activeFilters
-                            .map((filter, index) =>
-                              matchesFilter(country, filter)
-                                ? `${t('Filtre')} ${index + 1} ✓`
-                                : `${t('Filtre')} ${index + 1} —`
-                            )
-                            .join(' · ')}
-                        </span>
-                      </li>
-                    ))}
-                  </ul>
-                ) : (
-                  <p>{t('Aucun pays ne correspond à cette combinaison.')}</p>
                 )}
-              </details>
+
+                {activeFilters.length >= 2 && (
+                  <section
+                    id="country-comparator-filter-calculator-content"
+                    className="country-comparator-filter-calculator"
+                    aria-label={t('Calculateur avancé')}
+                    hidden={!isAdvancedFilterOpen}
+                  >
+                    <p className="country-comparator-filter-calculator-heading">
+                      {t(
+                        'Choisis une relation entre chaque paire ; sans parenthèses, les relations sont évaluées de gauche à droite.'
+                      )}
+                    </p>
+                    <div className="country-comparator-filter-relations">
+                      {activeFilters.slice(0, -1).map((filter, index) => {
+                        const nextFilter = activeFilters[index + 1]
+                        const relationKey = `${filter.id}::${nextFilter.id}`
+                        const regions = getFilterRelationRegions(filter, nextFilter)
+                        const matchingOperation = comparatorFilterOperations.find(
+                          (operation) =>
+                            operation.regions.length === regions.length &&
+                            operation.regions.every((region) => regions.includes(region))
+                        )
+                        const isCustom = customRelationEditors[relationKey] ?? !matchingOperation
+                        return (
+                          <div className="country-comparator-filter-relation" key={relationKey}>
+                            <span className="country-comparator-filter-relation-pair">
+                              {t('Filtre')} {index + 1} <span aria-hidden="true">↔</span>{' '}
+                              {t('Filtre')} {index + 2}
+                            </span>
+                            <label>
+                              <span>{t('Relation')}</span>
+                              <select
+                                value={
+                                  customRelationEditors[relationKey]
+                                    ? 'custom'
+                                    : (matchingOperation?.id ?? 'custom')
+                                }
+                                onChange={(event) => {
+                                  const operation = comparatorFilterOperations.find(
+                                    (item) => item.id === event.target.value
+                                  )
+                                  setFilterRelationOverrides((current) => ({
+                                    ...current,
+                                    [relationKey]:
+                                      operation?.regions ?? simpleFilterRegions[simpleFilterLogic]
+                                  }))
+                                  setCustomRelationEditors((current) => ({
+                                    ...current,
+                                    [relationKey]: !operation
+                                  }))
+                                  setExcludedFilteredAlpha2([])
+                                }}
+                              >
+                                <option value="custom">{t('Personnalisée')}</option>
+                                {comparatorFilterOperations.map((operation) => (
+                                  <option key={operation.id} value={operation.id}>
+                                    {t(operation.label)}
+                                  </option>
+                                ))}
+                              </select>
+                            </label>
+                            {isCustom && (
+                              <div
+                                className="country-comparator-filter-truth-grid"
+                                role="group"
+                                aria-label={t('Zones de résultat à inclure')}
+                              >
+                                {comparatorFilterRegions.map((region) => {
+                                  const checked = regions.includes(region.id)
+                                  return (
+                                    <label
+                                      key={region.id}
+                                      className={checked ? 'is-active' : undefined}
+                                    >
+                                      <input
+                                        type="checkbox"
+                                        checked={checked}
+                                        onChange={() => {
+                                          setFilterRelationOverrides((current) => ({
+                                            ...current,
+                                            [relationKey]: checked
+                                              ? regions.filter((item) => item !== region.id)
+                                              : [...regions, region.id]
+                                          }))
+                                          setExcludedFilteredAlpha2([])
+                                        }}
+                                      />
+                                      <span>{t(region.label)}</span>
+                                    </label>
+                                  )
+                                })}
+                              </div>
+                            )}
+                          </div>
+                        )
+                      })}
+                    </div>
+                    <div className="country-comparator-filter-groups">
+                      <strong>{t('Groupes parenthésés')}</strong>
+                      {activeFilterGroups.map((group, groupIndex) => (
+                        <div className="country-comparator-filter-group-row" key={group.id}>
+                          <strong>
+                            {t('Parenthèse')} {groupIndex + 1}
+                          </strong>
+                          <label>
+                            <span>{t('Du filtre')}</span>
+                            <select
+                              value={group.startFilterId}
+                              onChange={(event) =>
+                                updateFilterGroupEndpoint(group.id, 'start', event.target.value)
+                              }
+                            >
+                              {activeFilters
+                                .map((filter, index) => ({ filter, index }))
+                                .filter(
+                                  ({ index }) =>
+                                    index < group.endIndex &&
+                                    !groupWouldCrossExisting(index, group.endIndex, group.id)
+                                )
+                                .map(({ filter, index }) => (
+                                  <option
+                                    key={filter.id}
+                                    value={filter.id}
+                                  >{`${t('Filtre')} ${index + 1}`}</option>
+                                ))}
+                            </select>
+                          </label>
+                          <label>
+                            <span>{t('Au filtre')}</span>
+                            <select
+                              value={group.endFilterId}
+                              onChange={(event) =>
+                                updateFilterGroupEndpoint(group.id, 'end', event.target.value)
+                              }
+                            >
+                              {activeFilters
+                                .map((filter, index) => ({ filter, index }))
+                                .filter(
+                                  ({ index }) =>
+                                    index > group.startIndex &&
+                                    !groupWouldCrossExisting(group.startIndex, index, group.id)
+                                )
+                                .map(({ filter, index }) => (
+                                  <option
+                                    key={filter.id}
+                                    value={filter.id}
+                                  >{`${t('Filtre')} ${index + 1}`}</option>
+                                ))}
+                            </select>
+                          </label>
+                          <button
+                            type="button"
+                            aria-label={`${t('Retirer le groupe')} ${group.startIndex + 1}–${group.endIndex + 1}`}
+                            onClick={() => {
+                              setFilterGroups((current) =>
+                                current.filter((item) => item.id !== group.id)
+                              )
+                              setExcludedFilteredAlpha2([])
+                            }}
+                          >
+                            ×
+                          </button>
+                        </div>
+                      ))}
+                      <div className="country-comparator-filter-group-builder">
+                        <label>
+                          <span>{t('Du filtre')}</span>
+                          <select
+                            value={selectedGroupStart?.id ?? ''}
+                            onChange={(event) => setGroupStartFilterId(event.target.value)}
+                          >
+                            {activeFilters.map((filter, index) => (
+                              <option
+                                key={filter.id}
+                                value={filter.id}
+                              >{`${t('Filtre')} ${index + 1}`}</option>
+                            ))}
+                          </select>
+                        </label>
+                        <label>
+                          <span>{t('Au filtre')}</span>
+                          <select
+                            value={selectedGroupEnd?.id ?? ''}
+                            onChange={(event) => setGroupEndFilterId(event.target.value)}
+                          >
+                            {activeFilters.map((filter, index) => (
+                              <option
+                                key={filter.id}
+                                value={filter.id}
+                              >{`${t('Filtre')} ${index + 1}`}</option>
+                            ))}
+                          </select>
+                        </label>
+                        <button
+                          type="button"
+                          disabled={!canAddFilterGroup}
+                          onClick={addFilterGroup}
+                        >
+                          ＋ {t('Ajouter une parenthèse')}
+                        </button>
+                      </div>
+                    </div>
+                  </section>
+                )}
+
+                {(activeFilters.length > 0 || textQueryConstant !== null) && (
+                  <div className="country-comparator-filter-summary" aria-live="polite">
+                    <span>
+                      {filteredAlpha2.length} {t('pays ajoutés au comparateur')} ·{' '}
+                      {filteredCountries.length} {t('correspondances')}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setFilters([])
+                        setTextQueryConstant(null)
+                        setFilterRelationOverrides({})
+                        setCustomRelationEditors({})
+                        setFilterGroups([])
+                        setIsAdvancedFilterOpen(false)
+                        setExcludedFilteredAlpha2([])
+                      }}
+                    >
+                      {t('Effacer les filtres')}
+                    </button>
+                  </div>
+                )}
+                {(activeFilters.length > 0 || textQueryConstant !== null) && (
+                  <details className="country-comparator-filter-explanation">
+                    <summary>
+                      {t('Comprendre les correspondances')} · {filteredCountries.length}
+                    </summary>
+                    <p className="country-comparator-filter-expression">
+                      {filterExpressionSummary}
+                    </p>
+                    {filteredCountries.length > 0 ? (
+                      <ul>
+                        {filteredCountries.map((country) => (
+                          <li key={country.alpha2}>
+                            <strong>{country.name}</strong>
+                            <span>
+                              {activeFilters
+                                .map((filter, index) =>
+                                  matchesFilter(country, filter)
+                                    ? `${t('Filtre')} ${index + 1} ✓`
+                                    : `${t('Filtre')} ${index + 1} —`
+                                )
+                                .join(' · ')}
+                            </span>
+                          </li>
+                        ))}
+                      </ul>
+                    ) : (
+                      <p>{t('Aucun pays ne correspond à cette combinaison.')}</p>
+                    )}
+                  </details>
+                )}
+              </>
+            ) : (
+              <div className="country-comparator-text-query">
+                <div className="country-comparator-text-query-label-row">
+                  <label htmlFor="country-comparator-text-query">{t('Écris tes filtres')}</label>
+                  <button
+                    type="button"
+                    className="country-comparator-text-query-help-toggle"
+                    aria-label={t('Aide sur les mots reconnus')}
+                    aria-expanded={isTextQueryHelpOpen}
+                    aria-controls="country-comparator-text-query-reference"
+                    onClick={() => setIsTextQueryHelpOpen((open) => !open)}
+                  >
+                    ?
+                  </button>
+                </div>
+                {isTextQueryHelpOpen && (
+                  <aside
+                    className="country-comparator-text-query-reference"
+                    id="country-comparator-text-query-reference"
+                    aria-label={t('Syntaxe des filtres texte')}
+                  >
+                    <p>{t('Champs et valeurs : choisis-les dans les suggestions.')}</p>
+                    <p>
+                      {t(
+                        'Opérateurs texte : contient / contains / contiene ; est / equals / equal / is / es / exactement / exactly ; ne + contains / contiene + pas ; n’est pas / n’est / is not / isn’t / isnt / noes. Raccourci continent : appartient, belongs [to], pertenece [a].'
+                      )}
+                    </p>
+                    <p>
+                      {t(
+                        'Opérateurs numériques : <, <=, >, >=, =, !=, ≠ ; entre / between. Suffixes : k, m / million / millions, bn / milliard / milliards. Virgule ou point décimal.'
+                      )}
+                    </p>
+                    <p>
+                      {t(
+                        'Drapeaux : couleur / color / colour ; bandes / bands / franjas / rayures / stripes ; proportion / proportions / proporciones / ratio ; forme / shape / outline. Directions : horizontale(s) / horizontal / horizontally ; verticale(s) / vertical / vertically ; oblique(s) / diagonal(s) / diagonale(s).'
+                      )}
+                    </p>
+                    <p>
+                      {t(
+                        'Logique : et / and / y ; ou / or / o ; non / not / pas / no avant un critère ou un groupe entre parenthèses. Constantes : tous les pays / all countries / todos los paises ; aucun pays / no countries / ningun pais.'
+                      )}
+                    </p>
+                    <p>
+                      {t(
+                        'Écris champ + opérateur + valeur, par exemple : continent n’est pas Europe. Les parenthèses regroupent les critères ; ET est évalué avant OU. Les accents sont ignorés. Mets les valeurs composées de plusieurs mots entre guillemets, par exemple : capitale n’est pas "Port of Spain".'
+                      )}
+                    </p>
+                  </aside>
+                )}
+                <div className="country-comparator-text-query-input-wrap">
+                  <input
+                    id="country-comparator-text-query"
+                    ref={textFilterInputRef}
+                    type="search"
+                    role="combobox"
+                    aria-autocomplete="list"
+                    aria-expanded={textSuggestionsOpen && textFilterSuggestions.length > 0}
+                    aria-controls="country-comparator-text-suggestions"
+                    aria-activedescendant={
+                      highlightedTextFilterSuggestion
+                        ? `country-comparator-text-suggestion-${activeTextSuggestionIndex}`
+                        : undefined
+                    }
+                    autoComplete="off"
+                    value={textFilterQuery}
+                    placeholder={t('Exemple : continent est Europe et population > 50 000 000')}
+                    onFocus={() => setTextSuggestionsOpen(true)}
+                    onChange={(event) => applyTextFilterQuery(event.target.value)}
+                    onKeyDown={(event) => {
+                      if (event.key === 'ArrowDown' && textFilterSuggestions.length > 0) {
+                        event.preventDefault()
+                        setTextSuggestionsOpen(true)
+                        setActiveTextSuggestionIndex(
+                          (index) => (index + 1) % textFilterSuggestions.length
+                        )
+                      } else if (event.key === 'ArrowUp' && textFilterSuggestions.length > 0) {
+                        event.preventDefault()
+                        setTextSuggestionsOpen(true)
+                        setActiveTextSuggestionIndex(
+                          (index) =>
+                            (index - 1 + textFilterSuggestions.length) %
+                            textFilterSuggestions.length
+                        )
+                      } else if (event.key === 'Enter' && highlightedTextFilterSuggestion) {
+                        event.preventDefault()
+                        applyTextFilterQuery(highlightedTextFilterSuggestion.insertion)
+                        setTextSuggestionsOpen(true)
+                      } else if (event.key === 'Escape') {
+                        setTextSuggestionsOpen(false)
+                      }
+                    }}
+                  />
+                  {textSuggestionsOpen && textFilterSuggestions.length > 0 && (
+                    <ul
+                      className="country-comparator-text-suggestions"
+                      id="country-comparator-text-suggestions"
+                      ref={textSuggestionsListRef}
+                      role="listbox"
+                      onPointerMove={(event) => {
+                        const list = event.currentTarget
+                        if (event.pointerType !== 'mouse') return
+
+                        const bounds = list.getBoundingClientRect()
+                        const edgeZoneRatio = 0.75
+                        const edgeZoneHeight = bounds.height * edgeZoneRatio
+                        const topPenetration = Math.max(
+                          0,
+                          Math.min(
+                            1,
+                            (bounds.top + edgeZoneHeight - event.clientY) / edgeZoneHeight
+                          )
+                        )
+                        const bottomPenetration = Math.max(
+                          0,
+                          Math.min(
+                            1,
+                            (event.clientY - (bounds.bottom - edgeZoneHeight)) / edgeZoneHeight
+                          )
+                        )
+                        const isNearCenter = Math.abs(topPenetration - bottomPenetration) < 0.02
+                        const penetration = isNearCenter
+                          ? 0
+                          : Math.max(topPenetration, bottomPenetration)
+                        const scrollDirection = isNearCenter
+                          ? 0
+                          : topPenetration > bottomPenetration
+                            ? -1
+                            : 1
+                        const firstSuggestion = list.querySelector('button')
+                        const suggestionRowHeight =
+                          firstSuggestion?.getBoundingClientRect().height ?? 32
+                        const edgeBoost = Math.max(0, (penetration - 0.85) / 0.15)
+                        const linesPerSecond = 2 * penetration ** 2 + edgeBoost ** 2
+                        textSuggestionsScrollSpeedRef.current =
+                          scrollDirection * suggestionRowHeight * linesPerSecond
+
+                        const isAtScrollEdge = (target: HTMLElement, speed: number): boolean =>
+                          speed < 0
+                            ? target.scrollTop <= 0
+                            : target.scrollTop + target.clientHeight >= target.scrollHeight
+
+                        if (
+                          textSuggestionsScrollSpeedRef.current === 0 ||
+                          isAtScrollEdge(list, textSuggestionsScrollSpeedRef.current)
+                        ) {
+                          if (textSuggestionsScrollFrameRef.current !== null) {
+                            cancelAnimationFrame(textSuggestionsScrollFrameRef.current)
+                            textSuggestionsScrollFrameRef.current = null
+                          }
+                          textSuggestionsLastFrameTimeRef.current = null
+                          return
+                        }
+
+                        if (textSuggestionsScrollFrameRef.current !== null) return
+
+                        const scrollGently = (time: number): void => {
+                          const currentList = textSuggestionsListRef.current
+                          const lastTime = textSuggestionsLastFrameTimeRef.current
+                          const speed = textSuggestionsScrollSpeedRef.current
+                          if (!currentList || speed === 0 || isAtScrollEdge(currentList, speed)) {
+                            textSuggestionsScrollFrameRef.current = null
+                            textSuggestionsLastFrameTimeRef.current = null
+                            return
+                          }
+
+                          if (lastTime !== null) {
+                            currentList.scrollTop += (speed * Math.min(time - lastTime, 40)) / 1000
+                          }
+                          textSuggestionsLastFrameTimeRef.current = time
+                          textSuggestionsScrollFrameRef.current =
+                            requestAnimationFrame(scrollGently)
+                        }
+
+                        textSuggestionsLastFrameTimeRef.current = null
+                        textSuggestionsScrollFrameRef.current = requestAnimationFrame(scrollGently)
+                      }}
+                      onPointerLeave={() => {
+                        textSuggestionsScrollSpeedRef.current = 0
+                        textSuggestionsLastFrameTimeRef.current = null
+                        if (textSuggestionsScrollFrameRef.current !== null) {
+                          cancelAnimationFrame(textSuggestionsScrollFrameRef.current)
+                          textSuggestionsScrollFrameRef.current = null
+                        }
+                      }}
+                    >
+                      {textFilterSuggestions.map((suggestion, index) => (
+                        <li key={`${suggestion.insertion}-${index}`}>
+                          <button
+                            type="button"
+                            id={`country-comparator-text-suggestion-${index}`}
+                            className={
+                              index === activeTextSuggestionIndex ? 'is-active' : undefined
+                            }
+                            role="option"
+                            aria-selected={index === activeTextSuggestionIndex}
+                            onMouseDown={(event) => event.preventDefault()}
+                            onClick={() => {
+                              applyTextFilterQuery(suggestion.insertion)
+                              setTextSuggestionsOpen(true)
+                              textFilterInputRef.current?.focus()
+                            }}
+                          >
+                            {suggestion.label}
+                          </button>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+                <p className="country-comparator-text-query-help">
+                  {t(
+                    'Utilise les champs, opérateurs et valeurs proposés. ET, OU, « n’est pas » et les parenthèses combinent les critères.'
+                  )}
+                </p>
+                {textFilterError && (
+                  <p className="country-comparator-text-query-error" role="status">
+                    {textFilterError}
+                  </p>
+                )}
+                {textFilterNotice && (
+                  <p className="country-comparator-text-query-notice" role="status">
+                    {textFilterNotice}
+                  </p>
+                )}
+                {activeFilters.length > 0 && (
+                  <div className="country-comparator-filter-summary" aria-live="polite">
+                    <span>
+                      {filteredAlpha2.length} {t('pays ajoutés au comparateur')} ·{' '}
+                      {filteredCountries.length} {t('correspondances')}
+                    </span>
+                    <button type="button" onClick={() => applyTextFilterQuery('')}>
+                      {t('Effacer les filtres')}
+                    </button>
+                  </div>
+                )}
+              </div>
             )}
           </div>
 
