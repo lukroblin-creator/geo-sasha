@@ -93,7 +93,7 @@ export function CountryKnowledgeQuizView({
           pageTitle={`${t('À la découverte de')} ${countryName}`}
           onOpenStatistics={onOpenStatistics}
           onToggleFullscreen={onToggleFullscreen}
-          autoReveal
+          collapsible
           pageActions={
             <button
               className="app-mode-statistics"

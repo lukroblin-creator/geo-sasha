@@ -20,6 +20,11 @@ separately; they reflect the history entries currently retained by
 `quizHistory.ts` (up to 500). The history module also keeps entries in memory
 for the current app session when `localStorage` is unavailable.
 
+`regionalStatistics.ts` filters saved country results by the continent catalog.
+It attributes Estimation and Draw Borders sessions regionally only when their
+stored configuration identifies one continent or a set of countries contained
+entirely within it.
+
 `countryCatalog.json` is the offline 195-country catalog used by quiz modes. Its
 numeric identifiers match the bundled Natural Earth country features.
 

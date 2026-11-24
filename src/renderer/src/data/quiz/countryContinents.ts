@@ -1,5 +1,5 @@
-import countryCatalog from './countryCatalog.json'
-import { shuffleItems } from './useQuizSession'
+import countryCatalog from './countryCatalog.json' with { type: 'json' }
+import { shuffleItems } from './useQuizSession.ts'
 
 export type ContinentId =
   'africa' | 'north-america' | 'south-america' | 'asia' | 'europe' | 'oceania'

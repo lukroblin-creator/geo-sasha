@@ -35,8 +35,8 @@ Le fichier `IDEES-POUR-PLUS-TARD.txt` ne crée aucune règle fonctionnelle. Une 
 
 ## Sélection des territoires
 
-- Une grande zone de clic ne doit pas empêcher la sélection d’un petit territoire voisin.
-- Les pays suffisamment grands utilisent leur polygone réel et ne reçoivent pas de hitzone artificielle. Une hitzone élargie est réservée aux très petits territoires, modulée par le zoom et réduite lorsqu’elle risquerait de recouvrir un voisin.
+- Une grande zone de clic ne doit pas empêcher la sélection d’un petit territoire voisin. À l’intérieur du polygone réel d’un grand pays, le clic sur ce pays garde la priorité sur toute hitzone voisine ; au moins 80 % de sa surface doit rester cliquable.
+- Les très petits territoires gardent une cible fantôme de même forme et orientation, agrandie de 1,5 fois. Lorsqu’ils sont entourés par la mer, leur hitzone peut s’étendre davantage dans l’eau, comme une marge autour de leur contour. Les hitzones élargies ne doivent pas détourner un clic situé dans le polygone réel d’un grand pays voisin.
 - Un micro-État entouré uniquement de grands pays peut bénéficier d’une aide plus généreuse, car elle ne rend pas un autre petit voisin inaccessible.
 - Le survol préselectionne le territoire sous le pointeur. Les flèches déplacent la présélection vers les voisins ; Maj parcourt les petits territoires proches du pointeur ; Entrée valide la présélection courante.
 - Si le pointeur se déplace, la sélection reprend normalement sous le pointeur. S’il reste immobile, Maj peut déplacer la présélection sans déplacer le pointeur.
@@ -88,11 +88,18 @@ Le fichier `IDEES-POUR-PLUS-TARD.txt` ne crée aucune règle fonctionnelle. Une 
 - La progression des accomplissements est dérivée des entrées d’historique actuellement conservées ; elle n’est pas stockée séparément. L’historique est limité à 500 parties, donc les accomplissements à vie devront être réévalués si cette limite est modifiée ou si une conservation à long terme est souhaitée.
 - Les seuils évaluent des performances dans World Atlas ; ils ne constituent pas une mesure complète du niveau géographique.
 
+## Statistiques par continent
+
+- Le filtre Continent de la page Progression par pays applique la même portée au résumé, aux modes détaillés, aux classements, au tableau et aux données colorées sur la carte. La carte cadre le continent choisi ; Monde entier restaure la vue mondiale.
+- Les statistiques par pays agrègent uniquement les données de quiz des pays attribués au continent sélectionné. Les sessions ne sont comptées régionalement que si les réponses ou la configuration historique permettent de les attribuer ; une session multirégionale peut apparaître dans chaque continent effectivement représenté.
+- Les modes Estimation et Dessine les frontières ne sont ventilés que si la configuration enregistrée identifie un seul continent ou un ensemble de pays entièrement dans ce continent. Une configuration mixte ou insuffisante n’est pas présentée comme un résultat régional.
+
 ## Exploration et caméra
 
-- Les pages partagent une navigation compacte qui porte le titre courant, l’accès aux statistiques et aux réglages. Sur Exploration, Quiz pays et Comparateur, elle se révèle depuis le bord supérieur ; son ouverture reste disponible au clavier et au tactile.
+- Les pages partagent une navigation compacte qui porte le titre courant, l’accès aux statistiques et aux réglages. Sur Exploration, Quiz pays et Comparateur, la barre reste visible et peut être repliée avec une flèche ; en mode replié, le bouton Navigation se place à l’autre extrémité de la barre.
+- Le menu Navigation reste ouvert au survol tant que le pointeur est sur le bouton ou ses choix. Un clic sur Navigation l’épingle ouvert jusqu’à un clic extérieur ou la touche Échap.
 - La vue mondiale de base apparaît dans les vues enregistrées sous le nom « Global ». C’est une vue système non supprimable ; les vues personnelles antérieures restent conservées.
-- Le contrôle de mode caméra porte la mention « En construction » tant que ce mode n’est pas finalisé.
+- Le contrôle de mode caméra reste compact. Lorsqu’il est activé, une notice lisible apparaît en haut de la carte et reste visible tant que le mode est actif.
 
 - En rotation orbitale, le point d’ancrage reste au centre de la Terre ; la rotation continue au-delà des pôles sans blocage ni saut d’angle.
 - Les gestes diagonaux ou circulaires du trackpad composent naturellement les deux axes ; ils ne sont pas réduits à quatre directions.

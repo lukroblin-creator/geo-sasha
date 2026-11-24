@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import type { ReactNode } from 'react'
 import { useLanguage } from '../data/i18n'
 import type { KeyboardShortcutActionId } from '../data/keyboardShortcuts'
@@ -14,7 +14,7 @@ type AppModeSwitcherProps = {
   onOpenStatistics?: () => void
   onToggleFullscreen?: () => void
   pageActions?: ReactNode
-  autoReveal?: boolean
+  collapsible?: boolean
 }
 
 const modes: {
@@ -58,11 +58,44 @@ export function AppModeSwitcher({
   onOpenStatistics,
   onToggleFullscreen,
   pageActions,
-  autoReveal = false
+  collapsible = false
 }: AppModeSwitcherProps): React.JSX.Element {
   const { t } = useLanguage()
   const { skin } = useSkin()
-  const [manuallyRevealed, setManuallyRevealed] = useState(false)
+  const [toolbarCollapsed, setToolbarCollapsed] = useState(false)
+  const [menuOpen, setMenuOpen] = useState(false)
+  const [menuPinned, setMenuPinned] = useState(false)
+  const menuRef = useRef<HTMLDetailsElement>(null)
+
+  useEffect(() => {
+    if (!menuOpen || !menuPinned) return
+
+    const closeOnOutsideClick = (event: PointerEvent): void => {
+      if (event.target instanceof Node && !menuRef.current?.contains(event.target)) {
+        setMenuOpen(false)
+        setMenuPinned(false)
+      }
+    }
+    const closeOnEscape = (event: KeyboardEvent): void => {
+      if (event.key === 'Escape') {
+        setMenuOpen(false)
+        setMenuPinned(false)
+      }
+    }
+
+    document.addEventListener('pointerdown', closeOnOutsideClick)
+    document.addEventListener('keydown', closeOnEscape)
+    return () => {
+      document.removeEventListener('pointerdown', closeOnOutsideClick)
+      document.removeEventListener('keydown', closeOnEscape)
+    }
+  }, [menuOpen, menuPinned])
+
+  const closeMenu = (): void => {
+    setMenuOpen(false)
+    setMenuPinned(false)
+  }
+
   const modeButtons = (
     <div className="app-mode-buttons">
       {modes.map((mode) => (
@@ -72,7 +105,10 @@ export function AppModeSwitcher({
           type="button"
           data-shortcut-action={mode.shortcutAction}
           aria-current={active === mode.id ? 'page' : undefined}
-          onClick={() => onChange(mode.id)}
+          onClick={() => {
+            closeMenu()
+            onChange(mode.id)
+          }}
         >
           {t(mode.label)}
         </button>
@@ -81,39 +117,49 @@ export function AppModeSwitcher({
   )
   return (
     <nav
-      className={`app-mode-switcher${skin === 'minimal' ? ' is-minimal' : skin === 'matrix' ? ' is-matrix' : ''}${autoReveal ? ' is-auto-reveal' : ''}${manuallyRevealed ? ' is-manually-revealed' : ''}`}
+      className={`app-mode-switcher${skin === 'minimal' ? ' is-minimal' : skin === 'matrix' ? ' is-matrix' : ''}${collapsible ? ' is-collapsible' : ''}${toolbarCollapsed ? ' is-collapsed' : ''}`}
       aria-label={t('Modes de l’application')}
     >
-      {autoReveal && (
+      {collapsible && (
         <button
-          className="app-mode-reveal"
+          className="app-mode-collapse"
           type="button"
-          aria-expanded={manuallyRevealed}
-          onClick={() => setManuallyRevealed((shown) => !shown)}
+          aria-label={t(toolbarCollapsed ? 'Déplier la barre supérieure' : 'Replier la barre supérieure')}
+          title={t(toolbarCollapsed ? 'Déplier la barre supérieure' : 'Replier la barre supérieure')}
+          aria-expanded={!toolbarCollapsed}
+          onClick={() => setToolbarCollapsed((collapsed) => !collapsed)}
         >
-          {t('Navigation')}
+          <span aria-hidden="true">{toolbarCollapsed ? '⌄' : '⌃'}</span>
         </button>
       )}
       <div className="app-mode-primary">
         <details
           className="app-mode-menu"
-          onMouseEnter={(event) => {
-            event.currentTarget.open = true
+          ref={menuRef}
+          open={menuOpen}
+          onMouseEnter={() => {
+            if (!menuPinned) setMenuOpen(true)
           }}
-          onMouseLeave={(event) => {
-            if (!event.currentTarget.matches(':focus-within')) event.currentTarget.open = false
+          onMouseLeave={() => {
+            if (!menuPinned) setMenuOpen(false)
           }}
           onBlur={(event) => {
-            if (!event.currentTarget.contains(event.relatedTarget as Node | null)) {
-              event.currentTarget.open = false
+            if (!menuPinned && !event.currentTarget.contains(event.relatedTarget as Node | null)) {
+              setMenuOpen(false)
             }
           }}
         >
           <summary
             aria-label={t('Navigation')}
-            onFocus={(event) => {
-              const menu = event.currentTarget.closest('details')
-              if (menu) menu.open = true
+            aria-expanded={menuOpen}
+            onClick={(event) => {
+              event.preventDefault()
+              const nextOpen = !menuPinned
+              setMenuPinned(nextOpen)
+              setMenuOpen(nextOpen)
+            }}
+            onFocus={() => {
+              if (!menuPinned) setMenuOpen(true)
             }}
           >
             {t('Navigation')} <span aria-hidden="true">⌄</span>

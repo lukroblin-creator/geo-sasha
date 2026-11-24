@@ -752,7 +752,7 @@ export function ExplorationView({
           pageTitle={t('Explorer le monde')}
           onOpenStatistics={onOpenStatistics}
           onToggleFullscreen={onToggleFullscreen}
-          autoReveal
+          collapsible
         />
       )}
 

@@ -137,24 +137,39 @@ test('un grand pays reste précis et ne reçoit pas de hitzone élargie', (): vo
   assert.equal(getCountryFeatureHit(screenMap, algeria, { x: 50, y: 50 }, 2_381_741)?.distance, 0)
 })
 
-test('la hitzone des petits pays s’élargit au dézoom et suit la distance au contour', (): void => {
+test('le Royaume-Uni ne reçoit pas le halo malgré la surface réduite de son territoire principal', (): void => {
+  const unitedKingdom = squareFeature(826, [0, 0, 2, 2])
+  assert.equal(getCountryFeatureHit(screenMap, unitedKingdom, { x: 10, y: 1 }, 14_188), null)
+})
+
+test('la hitzone des petits pays suit un fantôme de même forme agrandi de moitié', (): void => {
   const tinyCountry = squareFeature(480, [0, 0, 1, 1])
   assert.equal(getTinyTerritoryHitRadius(0), 14)
   assert.equal(getTinyTerritoryHitRadius(6), 4)
-  assert.equal(getCountryFeatureHit(screenMap, tinyCountry, { x: 5, y: 0.5 }, 1_000)?.distance, 4)
-  assert.equal(
-    getCountryFeatureHit(
-      { ...screenMap, getZoom: () => 6 },
-      tinyCountry,
-      { x: 5.5, y: 0.5 },
-      1_000
-    ),
-    null
-  )
+  const ghostHit = getCountryFeatureHit(screenMap, tinyCountry, { x: 1.2, y: 0.5 }, 1_000)
+  assert.equal(ghostHit?.isGhostHit, true)
+  assert.equal(getCountryFeatureHit(screenMap, tinyCountry, { x: 1.3, y: 0.5 }, 1_000), null)
 })
 
-test('les très petits pays bordés uniquement par de grands pays ont une hitzone élargie', (): void => {
-  const largeNeighbor = squareFeature(380, [0, 0, 20, 20])
+test('la hitzone maritime peut dépasser le fantôme sans voler le clic dans un grand pays', (): void => {
+  const island = squareFeature(833, [5, 5, 6, 6])
+  const largeNeighbor = squareFeature(826, [0, 0, 20, 20])
+  const seaHit = getCountryFeatureHit(screenMap, island, { x: 2, y: 5.5 }, 1_000, 24)
+  assert.equal(seaHit?.isGhostHit, true)
+
+  const selected = chooseCountryFeatureAtPoint(
+    screenMap,
+    { x: 4, y: 5.5 },
+    [island, largeNeighbor],
+    largeNeighbor,
+    (feature) => (feature === largeNeighbor ? 1_000_000 : 1_000),
+    (feature) => (feature === island ? 24 : 0)
+  )
+  assert.equal(selected, largeNeighbor)
+})
+
+test('les très petits pays bordés uniquement par de grands pays gardent une hitzone élargie hors du voisin', (): void => {
+  const largeNeighbor = squareFeature(380, [0, 0, 4.6, 20])
   const enclave = squareFeature(674, [5, 5, 6, 6])
   const candidates = [largeNeighbor, enclave]
 
@@ -166,15 +181,28 @@ test('les très petits pays bordés uniquement par de grands pays ont une hitzon
 
   const selected = chooseCountryFeatureAtPoint(
     screenMap,
-    { x: 4, y: 5.5 },
+    { x: 4.8, y: 5.5 },
     candidates,
     largeNeighbor,
-    (feature) => (feature === largeNeighbor ? 1_000_000 : 1_000),
-    (feature) => getTinyTerritoryHitRadius(0, feature === enclave),
-    (feature) => feature === enclave
+    (feature) => (feature === largeNeighbor ? 1_000_000 : 1_000)
   )
 
   assert.equal(selected, enclave)
+})
+
+test('un pays voisin reste sélectionnable dans sa géométrie malgré le halo du micro-État', (): void => {
+  const largeNeighbor = squareFeature(380, [0, 0, 20, 20])
+  const enclave = squareFeature(674, [5, 5, 6, 6])
+
+  const selected = chooseCountryFeatureAtPoint(
+    screenMap,
+    { x: 4, y: 5.5 },
+    [largeNeighbor, enclave],
+    largeNeighbor,
+    (feature) => (feature === largeNeighbor ? 1_000_000 : 1_000)
+  )
+
+  assert.equal(selected, largeNeighbor)
 })
 
 test('Maj parcourt les petits territoires et reboucle sur le premier', (): void => {

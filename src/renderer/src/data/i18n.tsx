@@ -13,8 +13,7 @@ const translations: Record<Exclude<AppLanguage, 'fr'>, Record<string, string>> =
     Statistiques: 'Statistics',
     Modifier: 'Edit',
     'Écoute…': 'Listening…',
-    'En construction': 'Under construction',
-    'Mode caméra — En construction': 'Camera mode — Under construction',
+    'Ce mode caméra est encore en construction.': 'This camera mode is still under construction.',
     'Appuie sur la nouvelle touche ou combinaison. Échap annule.':
       'Press the new key or combination. Escape cancels.',
     'Raccourci enregistré. Les commandes en conflit ont été libérées.':
@@ -478,6 +477,8 @@ const translations: Record<Exclude<AppLanguage, 'fr'>, Record<string, string>> =
       'Hold ⌘ or Ctrl and click to select multiple items.',
     'Déplier le groupe': 'Expand group',
     'Replier le groupe': 'Collapse group',
+    'Déplier la barre supérieure': 'Expand the top bar',
+    'Replier la barre supérieure': 'Collapse the top bar',
     'Sous-calques': 'Sub-layers',
     'Rayon du cercle': 'Circle radius',
     Largeur: 'Width',
@@ -805,6 +806,10 @@ const translations: Record<Exclude<AppLanguage, 'fr'>, Record<string, string>> =
     'Statistiques essentielles': 'Essential statistics',
     'Parties terminées': 'Games completed',
     'Tous les types de quiz': 'All quiz types',
+    'Quiz liés à ce continent': 'Quizzes linked to this continent',
+    'Questions enregistrées ou configuration ciblée dans cette zone':
+      'Recorded questions or a quiz configuration focused on this area',
+    'Aucun résultat attribuable à ce continent': 'No result can be attributed to this continent',
     'Pays travaillés': 'Countries practiced',
     'Au moins une réponse enregistrée': 'At least one answer recorded',
     'Réponses évaluées': 'Answers scored',
@@ -1511,8 +1516,7 @@ const translations: Record<Exclude<AppLanguage, 'fr'>, Record<string, string>> =
     Navigation: 'Navegación',
     Modifier: 'Editar',
     'Écoute…': 'Escuchando…',
-    'En construction': 'En construcción',
-    'Mode caméra — En construction': 'Modo cámara — En construcción',
+    'Ce mode caméra est encore en construction.': 'Este modo de cámara aún está en construcción.',
     'Appuie sur la nouvelle touche ou combinaison. Échap annule.':
       'Pulsa la nueva tecla o combinación. Esc cancela.',
     'Raccourci enregistré. Les commandes en conflit ont été libérées.':
@@ -1655,6 +1659,8 @@ const translations: Record<Exclude<AppLanguage, 'fr'>, Record<string, string>> =
       'Mantén pulsado ⌘ o Ctrl y haz clic para seleccionar varios elementos.',
     'Déplier le groupe': 'Expandir grupo',
     'Replier le groupe': 'Contraer grupo',
+    'Déplier la barre supérieure': 'Expandir la barra superior',
+    'Replier la barre supérieure': 'Contraer la barra superior',
     'Sous-calques': 'Subcapas',
     'Rayon du cercle': 'Radio del círculo',
     Largeur: 'Ancho',
@@ -1990,6 +1996,10 @@ const translations: Record<Exclude<AppLanguage, 'fr'>, Record<string, string>> =
     'Statistiques essentielles': 'Estadísticas esenciales',
     'Parties terminées': 'Partidas completadas',
     'Tous les types de quiz': 'Todos los tipos de cuestionario',
+    'Quiz liés à ce continent': 'Cuestionarios vinculados a este continente',
+    'Questions enregistrées ou configuration ciblée dans cette zone':
+      'Preguntas registradas o una configuración de cuestionario centrada en esta zona',
+    'Aucun résultat attribuable à ce continent': 'No hay resultados atribuibles a este continente',
     'Pays travaillés': 'Países practicados',
     'Au moins une réponse enregistrée': 'Al menos una respuesta registrada',
     'Réponses évaluées': 'Respuestas evaluadas',

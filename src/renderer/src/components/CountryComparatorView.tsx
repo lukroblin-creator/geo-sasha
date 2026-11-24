@@ -2103,7 +2103,7 @@ export function CountryComparatorView({
         onChange={onModeChange}
         pageTitle={t('Comparer des pays')}
         onOpenStatistics={onOpenStatistics}
-        autoReveal
+        collapsible
       />
 
       <main className="country-comparator-content">

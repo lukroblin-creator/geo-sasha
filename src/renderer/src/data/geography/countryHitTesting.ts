@@ -18,6 +18,7 @@ export type CountryHitProjection = {
 export type NearbyCountryHit = {
   distance: number
   isTinyTerritory: boolean
+  isGhostHit?: boolean
   effectiveSize: number
 }
 
@@ -135,6 +136,13 @@ export function isPointInsideScreenRing(point: ScreenPoint, ring: ScreenPoint[])
   return inside
 }
 
+function scaleScreenRing(ring: ScreenPoint[], center: ScreenPoint, scale: number): ScreenPoint[] {
+  return ring.map((vertex) => ({
+    x: center.x + (vertex.x - center.x) * scale,
+    y: center.y + (vertex.y - center.y) * scale
+  }))
+}
+
 export function getTinyTerritoryHitRadius(
   zoom: number,
   surroundedByLargeCountries = false
@@ -170,7 +178,7 @@ export function getCountryFeatureHit(
   feature: CountryHitFeature,
   point: ScreenPoint,
   areaKm2: number | null,
-  tinyTerritoryHitRadius = getTinyTerritoryHitRadius(map.getZoom())
+  seaHitRadius = 0
 ): NearbyCountryHit | null {
   const geometry = feature.geometry
   const polygons =
@@ -181,6 +189,7 @@ export function getCountryFeatureHit(
         : []
   let nearestHit: NearbyCountryHit | null = null
   let nearestTinyTerritoryHit: NearbyCountryHit | null = null
+  let nearestGhostTerritoryHit: NearbyCountryHit | null = null
 
   for (const polygon of polygons) {
     const projectedRings = polygon.map((ring) =>
@@ -205,9 +214,20 @@ export function getCountryFeatureHit(
     const polygonWidth = Math.max(0, east - west)
     const polygonHeight = Math.max(0, south - north)
     const effectiveSize = Math.sqrt(polygonWidth * polygonHeight)
+    const center = { x: (west + east) / 2, y: (north + south) / 2 }
     const insideOuterRing = isPointInsideScreenRing(point, outerRing)
     const insideHole = projectedRings.slice(1).some((ring) => isPointInsideScreenRing(point, ring))
     let distance = insideOuterRing && !insideHole ? 0 : Number.POSITIVE_INFINITY
+    let insideGhost = false
+
+    if (effectiveSize <= 18 && (areaKm2 === null || areaKm2 <= 10_000)) {
+      const expandedOuterRing = scaleScreenRing(outerRing, center, 1.5)
+      const insideExpandedOuter = isPointInsideScreenRing(point, expandedOuterRing)
+      const insideExpandedHole = projectedRings
+        .slice(1)
+        .some((ring) => isPointInsideScreenRing(point, scaleScreenRing(ring, center, 1.5)))
+      insideGhost = insideExpandedOuter && !insideExpandedHole && distance !== 0
+    }
 
     if (distance !== 0) {
       for (const ring of projectedRings) {
@@ -224,19 +244,31 @@ export function getCountryFeatureHit(
     // receive an expanded hit target that can cover smaller neighbors.
     if (distance !== 0 && areaKm2 !== null && areaKm2 > 200_000) continue
 
-    if (effectiveSize <= 18) {
-      // A target may extend over neighboring land or water when the pointer halo
-      // touches the territory's visible outline.
-      const tinyTerritoryHitDistance = distance
-      if (
-        distance <= tinyTerritoryHitRadius &&
-        (!nearestTinyTerritoryHit || tinyTerritoryHitDistance < nearestTinyTerritoryHit.distance)
-      ) {
-        nearestTinyTerritoryHit = {
-          distance: tinyTerritoryHitDistance,
-          isTinyTerritory: true,
-          effectiveSize
+    if (effectiveSize <= 18 && (areaKm2 === null || areaKm2 <= 10_000)) {
+      const insideSeaHitArea = distance > 0 && distance <= seaHitRadius
+      if (insideGhost) {
+        if (!nearestGhostTerritoryHit || distance < nearestGhostTerritoryHit.distance) {
+          nearestGhostTerritoryHit = {
+            distance,
+            isTinyTerritory: true,
+            isGhostHit: true,
+            effectiveSize
+          }
         }
+      } else if (insideSeaHitArea) {
+        if (!nearestGhostTerritoryHit || distance < nearestGhostTerritoryHit.distance) {
+          nearestGhostTerritoryHit = {
+            distance,
+            isTinyTerritory: true,
+            isGhostHit: true,
+            effectiveSize
+          }
+        }
+      } else if (
+        distance === 0 &&
+        (!nearestTinyTerritoryHit || effectiveSize < nearestTinyTerritoryHit.effectiveSize)
+      ) {
+        nearestTinyTerritoryHit = { distance, isTinyTerritory: true, effectiveSize }
       }
       continue
     }
@@ -252,7 +284,7 @@ export function getCountryFeatureHit(
     .filter((hit): hit is NearbyCountryHit => hit !== null && hit.distance === 0)
     .sort((first, second) => first.effectiveSize - second.effectiveSize)
   if (exactHits[0]) return exactHits[0]
-  return nearestTinyTerritoryHit ?? nearestHit
+  return nearestTinyTerritoryHit ?? nearestGhostTerritoryHit ?? nearestHit
 }
 
 export function chooseCountryFeatureAtPoint<T extends CountryHitFeature>(
@@ -261,8 +293,7 @@ export function chooseCountryFeatureAtPoint<T extends CountryHitFeature>(
   candidates: T[],
   directFeature: T | undefined,
   getAreaKm2: (feature: T) => number | null,
-  getHitRadius?: (feature: T) => number,
-  isExpandedHitTarget?: (feature: T) => boolean
+  getSeaHitRadius: (feature: T) => number = () => 0
 ): T | undefined {
   let nearest: { feature: T; distance: number } | null = null
   let nearestTinyTerritory: { feature: T; distance: number } | null = null
@@ -277,42 +308,46 @@ export function chooseCountryFeatureAtPoint<T extends CountryHitFeature>(
       feature,
       point,
       getAreaKm2(feature),
-      getHitRadius?.(feature)
+      getSeaHitRadius(feature)
     )
     if (!hit) continue
-    if (hit.distance === 0 && (!nearestExact || hit.effectiveSize < nearestExact.effectiveSize)) {
+    if (
+      hit.distance === 0 &&
+      !hit.isGhostHit &&
+      (!nearestExact || hit.effectiveSize < nearestExact.effectiveSize)
+    ) {
       nearestExact = { feature, effectiveSize: hit.effectiveSize }
     }
     if (
       hit.distance === 0 &&
       hit.isTinyTerritory &&
+      !hit.isGhostHit &&
       (!nearestExactTinyTerritory || hit.effectiveSize < nearestExactTinyTerritory.effectiveSize)
     ) {
       nearestExactTinyTerritory = { feature, effectiveSize: hit.effectiveSize }
     }
     if (hit.isTinyTerritory) {
-      if (!nearestTinyTerritory || hit.distance < nearestTinyTerritory.distance) {
-        nearestTinyTerritory = { feature, distance: hit.distance }
-      }
       if (
-        hit.distance > 0 &&
-        isExpandedHitTarget?.(feature) &&
+        hit.isGhostHit &&
         (!nearestExpandedTinyTerritory || hit.distance < nearestExpandedTinyTerritory.distance)
       ) {
         nearestExpandedTinyTerritory = { feature, distance: hit.distance }
+      }
+      if (!nearestTinyTerritory || hit.distance < nearestTinyTerritory.distance) {
+        nearestTinyTerritory = { feature, distance: hit.distance }
       }
     } else if (!nearest || hit.distance < nearest.distance) {
       nearest = { feature, distance: hit.distance }
     }
   }
 
-  // Exact small-country containment always wins. A safe expanded target can
-  // overlap only a narrow edge of a large neighbor; all other exact land hits
-  // keep priority over the ordinary small-country halo.
+  // Exact containment always wins over expanded halos. This keeps a large
+  // neighboring country selectable even when a nearby microstate has a broad
+  // target at world scale.
   return (
     nearestExactTinyTerritory?.feature ??
-    nearestExpandedTinyTerritory?.feature ??
     nearestExact?.feature ??
+    nearestExpandedTinyTerritory?.feature ??
     directFeature ??
     nearestTinyTerritory?.feature ??
     nearest?.feature

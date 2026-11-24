@@ -3241,7 +3241,7 @@ function WorldMap({
     'interpolate',
     ['linear'],
     ['zoom'],
-    2,
+    2.98,
     1,
     3,
     0
@@ -3250,13 +3250,13 @@ function WorldMap({
     'interpolate',
     ['linear'],
     ['zoom'],
-    2,
+    2.98,
     0,
     3,
     1,
     4,
     1,
-    4.5,
+    4.98,
     1,
     5,
     0
@@ -3265,7 +3265,7 @@ function WorldMap({
     'interpolate',
     ['linear'],
     ['zoom'],
-    4.5,
+    4.98,
     0,
     5,
     1
@@ -3319,15 +3319,15 @@ function WorldMap({
     'fill-antialias': false
   }
   const borderOpacity110m = scaleZoomOpacityExpression(
-    ['interpolate', ['linear'], ['zoom'], 2, 1, 3, 0],
+    ['interpolate', ['linear'], ['zoom'], 2.9, 1, 3, 0],
     layerAlpha('borders')
   ) as NonNullable<LineLayerSpecification['paint']>['line-opacity']
   const borderOpacity50m = scaleZoomOpacityExpression(
-    ['interpolate', ['linear'], ['zoom'], 2, 0, 3, 1, 4, 1, 4.5, 1, 5, 0],
+    ['interpolate', ['linear'], ['zoom'], 2.9, 0, 3, 1, 4, 1, 4.9, 1, 5, 0],
     layerAlpha('borders')
   ) as NonNullable<LineLayerSpecification['paint']>['line-opacity']
   const borderOpacity10m = scaleZoomOpacityExpression(
-    ['interpolate', ['linear'], ['zoom'], 4.5, 0, 5, 1],
+    ['interpolate', ['linear'], ['zoom'], 4.9, 0, 5, 1],
     layerAlpha('borders')
   ) as NonNullable<LineLayerSpecification['paint']>['line-opacity']
 
@@ -4702,6 +4702,12 @@ function WorldMap({
               ))
             })}
       </Map>
+
+      {cameraOrbitMode && (
+        <div className="map-camera-construction-notice" role="status" aria-live="polite">
+          {t('Ce mode caméra est encore en construction.')}
+        </div>
+      )}
 
       {opacityMaskPlacement && (
         <div className="map-opacity-mask-placement-status" role="status" aria-live="polite">

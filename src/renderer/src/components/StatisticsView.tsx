@@ -2,10 +2,16 @@ import { useMemo, useState } from 'react'
 import WorldMap from './WorldMapLoader'
 import countryCatalog from '../data/quiz/countryCatalog.json'
 import {
+  getContinentIdForCountry,
   getContinentLabelForCountry,
   quizRegions,
   type QuizRegion
 } from '../data/quiz/countryContinents'
+import {
+  countHistorySessionsByMode,
+  getCountryStatsForRegion,
+  getQuizHistoryForContinent
+} from '../data/quiz/regionalStatistics'
 import type { QuizMode, QuizProgress } from '../data/quiz/progress'
 import type { CountryQuizStatsByAlpha2 } from '../data/quiz/countryQuizStats'
 import type { QuizHistoryEntry } from '../data/quiz/quizHistory'
@@ -106,7 +112,7 @@ export function StatisticsView({
   )
   const [selectedPresetKey, setSelectedPresetKey] = useState('')
   const [selectedAlpha2, setSelectedAlpha2] = useState<string | null>(null)
-  const [selectedRegion, setSelectedRegion] = useState<QuizRegion | 'all'>('all')
+  const [selectedContinent, setSelectedContinent] = useState<QuizRegion>('world')
   const [search, setSearch] = useState('')
   const [sort, setSort] = useState<'name' | 'lowest' | 'highest'>('lowest')
   const [showAdvancedStatistics, setShowAdvancedStatistics] = useState(false)
@@ -117,30 +123,45 @@ export function StatisticsView({
   const [bestTimeConfiguration, setBestTimeConfiguration] = useState('all')
 
   const rows = useMemo(() => getCountryRows(countryStats, language), [countryStats, language])
-  const playedRows = rows.filter((country) => country.answered > 0)
+  const scopedRows = rows.filter(
+    (country) =>
+      selectedContinent === 'world' ||
+      getContinentIdForCountry(country.alpha2) === selectedContinent
+  )
+  const playedRows = scopedRows.filter((country) => country.answered > 0)
+  const scopedCountryStats = useMemo(
+    () => getCountryStatsForRegion(countryStats, selectedContinent),
+    [countryStats, selectedContinent]
+  )
+  const regionalHistory = useMemo(
+    () =>
+      selectedContinent === 'world'
+        ? quizHistory
+        : getQuizHistoryForContinent(quizHistory, selectedContinent),
+    [quizHistory, selectedContinent]
+  )
+  const regionalSessionCounts = useMemo(
+    () => countHistorySessionsByMode(regionalHistory),
+    [regionalHistory]
+  )
   const totalAnswered = playedRows.reduce((sum, country) => sum + country.answered, 0)
   const totalCorrect = playedRows.reduce((sum, country) => sum + country.correct, 0)
   const totalPointsEarned = playedRows.reduce((sum, country) => sum + country.pointsEarned, 0)
   const totalPointsPossible = playedRows.reduce((sum, country) => sum + country.pointsPossible, 0)
   const overallRate = totalPointsPossible ? totalPointsEarned / totalPointsPossible : null
-  const totalCompletedSessions = Object.values(quizProgress).reduce(
-    (sum, mode) => sum + mode.completedSessions,
-    0
-  )
+  const totalCompletedSessions =
+    selectedContinent === 'world'
+      ? Object.values(quizProgress).reduce((sum, mode) => sum + mode.completedSessions, 0)
+      : regionalHistory.length
   const selectedCountry = selectedAlpha2
-    ? (rows.find((country) => country.alpha2 === selectedAlpha2) ?? null)
+    ? (scopedRows.find((country) => country.alpha2 === selectedAlpha2) ?? null)
     : null
-  const selectedStats = selectedAlpha2 ? countryStats[selectedAlpha2] : undefined
+  const selectedStats = selectedAlpha2 ? scopedCountryStats[selectedAlpha2] : undefined
   const countryBySourceId = new Map(
     countryCatalog.map((country) => [country.sourceFeatureId, country.alpha2])
   )
 
-  const filteredRows = rows
-    .filter(
-      (country) =>
-        selectedRegion === 'all' ||
-        country.continent === quizRegions.find((region) => region.id === selectedRegion)?.label
-    )
+  const filteredRows = scopedRows
     .filter((country) =>
       country.name.toLocaleLowerCase(language).includes(search.toLocaleLowerCase(language))
     )
@@ -322,14 +343,42 @@ export function StatisticsView({
         </button>
       </nav>
 
+      {page === 'countries' && (
+        <div className="statistics-continent-filter">
+          <label htmlFor="statistics-continent">{t('Continent')}</label>
+          <select
+            id="statistics-continent"
+            value={selectedContinent}
+            onChange={(event) => {
+              setSelectedContinent(event.target.value as QuizRegion)
+              setSelectedAlpha2(null)
+            }}
+          >
+            {quizRegions.map((region) => (
+              <option key={region.id} value={region.id}>
+                {t(region.label)}
+              </option>
+            ))}
+          </select>
+        </div>
+      )}
+
       <div className="statistics-content">
         {page === 'countries' ? (
           <>
             <section className="statistics-summary" aria-label={t('Résumé des résultats')}>
               <article className="statistics-card">
-                <span>{t('Parties terminées')}</span>
+                <span>
+                  {selectedContinent === 'world'
+                    ? t('Parties terminées')
+                    : t('Quiz liés à ce continent')}
+                </span>
                 <strong>{totalCompletedSessions}</strong>
-                <small>{t('Tous les types de quiz')}</small>
+                <small>
+                  {selectedContinent === 'world'
+                    ? t('Tous les types de quiz')
+                    : t('Questions enregistrées ou configuration ciblée dans cette zone')}
+                </small>
               </article>
               <article className="statistics-card">
                 <span>{t('Pays travaillés')}</span>
@@ -358,7 +407,7 @@ export function StatisticsView({
                 aria-label={t('Résultats par type de quiz')}
               >
                 {quizModes.map((mode) => {
-                  const modeStats = Object.values(countryStats).reduce(
+                  const modeStats = Object.values(scopedCountryStats).reduce(
                     (sum, country) => ({
                       answered: sum.answered + country.byMode[mode].answered,
                       correct: sum.correct + country.byMode[mode].correct,
@@ -367,26 +416,48 @@ export function StatisticsView({
                     }),
                     { answered: 0, correct: 0, pointsEarned: 0, pointsPossible: 0 }
                   )
+                  const regionalSpecialEntries = regionalHistory.filter(
+                    (entry) =>
+                      entry.mode === mode && (mode === 'estimation' || mode === 'draw-borders')
+                  )
+                  const regionalSpecialBest = regionalSpecialEntries.reduce<number | null>(
+                    (best, entry) =>
+                      entry.total > 0 ? Math.max(best ?? 0, entry.score / entry.total) : best,
+                    null
+                  )
+                  const isRegionalSpecialMode =
+                    selectedContinent !== 'world' &&
+                    (mode === 'estimation' || mode === 'draw-borders')
+                  const modeSessionCount =
+                    selectedContinent === 'world'
+                      ? quizProgress[mode].completedSessions
+                      : regionalSessionCounts[mode]
                   return (
                     <article className="statistics-mode-card" key={mode}>
                       <span>{t(modeLabels[mode])}</span>
                       <strong>
-                        {mode === 'estimation' || mode === 'draw-borders'
-                          ? percent(
-                              quizProgress[mode].completedSessions
-                                ? quizProgress[mode].bestScore / 100
-                                : null
-                            )
-                          : percent(
-                              modeStats.pointsPossible
-                                ? modeStats.pointsEarned / modeStats.pointsPossible
-                                : null
-                            )}
+                        {isRegionalSpecialMode
+                          ? percent(regionalSpecialBest)
+                          : mode === 'estimation' || mode === 'draw-borders'
+                            ? percent(
+                                quizProgress[mode].completedSessions
+                                  ? quizProgress[mode].bestScore / 100
+                                  : null
+                              )
+                            : percent(
+                                modeStats.pointsPossible
+                                  ? modeStats.pointsEarned / modeStats.pointsPossible
+                                  : null
+                              )}
                       </strong>
                       <small>
-                        {mode === 'estimation' || mode === 'draw-borders'
-                          ? `${t('Meilleur score')} · ${quizProgress[mode].completedSessions} ${t('parties')}`
-                          : `${modeStats.correct} ${t('questions entièrement réussies sur')} ${modeStats.answered} · ${quizProgress[mode].completedSessions} ${t('parties')}`}
+                        {isRegionalSpecialMode
+                          ? regionalSpecialEntries.length
+                            ? `${t('Meilleur score')} · ${regionalSpecialEntries.length} ${t('parties')}`
+                            : t('Aucun résultat attribuable à ce continent')
+                          : mode === 'estimation' || mode === 'draw-borders'
+                            ? `${t('Meilleur score')} · ${quizProgress[mode].completedSessions} ${t('parties')}`
+                            : `${modeStats.correct} ${t('questions entièrement réussies sur')} ${modeStats.answered} · ${modeSessionCount} ${t('parties')}`}
                       </small>
                     </article>
                   )
@@ -410,7 +481,9 @@ export function StatisticsView({
                     showLabels
                     globeMode={globeMode}
                     onToggleGlobeMode={onToggleGlobeMode}
-                    countryAccuracyByAlpha2={countryStats}
+                    countryAccuracyByAlpha2={scopedCountryStats}
+                    quizBaseRegion={selectedContinent}
+                    interactionResetKey={`statistics:${selectedContinent}`}
                     onCountrySelected={
                       showAdvancedStatistics
                         ? (sourceFeatureId) => {
@@ -548,22 +621,6 @@ export function StatisticsView({
                       value={search}
                       onChange={(event) => setSearch(event.target.value)}
                     />
-                    <select
-                      aria-label={t('Filtrer par continent')}
-                      value={selectedRegion}
-                      onChange={(event) =>
-                        setSelectedRegion(event.target.value as QuizRegion | 'all')
-                      }
-                    >
-                      <option value="all">{t('Tous les continents')}</option>
-                      {quizRegions
-                        .filter((region) => region.id !== 'world')
-                        .map((region) => (
-                          <option key={region.id} value={region.id}>
-                            {t(region.label)}
-                          </option>
-                        ))}
-                    </select>
                     <select
                       aria-label={t('Trier les pays')}
                       value={sort}

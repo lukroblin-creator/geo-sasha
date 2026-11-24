@@ -68,7 +68,7 @@ export function QuizCountryStudyView({
           pageTitle={`${t('Découvrir')} ${selectedPlace.name}`}
           onOpenStatistics={onOpenStatistics}
           onToggleFullscreen={onToggleFullscreen}
-          autoReveal
+          collapsible
           pageActions={
             <button className="app-mode-statistics" type="button" onClick={onReturnToQuiz}>
               {t('← Retour au quiz')}

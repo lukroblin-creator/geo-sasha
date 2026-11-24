@@ -4744,6 +4744,32 @@ select:focus-visible {
   color: #e4edf5;
 }
 
+.statistics-continent-filter {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  max-width: 1600px;
+  margin: 10px auto 0;
+  padding: 0 28px;
+}
+
+.statistics-continent-filter label {
+  color: #9eb1c3;
+  font-size: 11px;
+}
+
+.statistics-continent-filter select {
+  min-height: 32px;
+  padding: 0 9px;
+  border: 1px solid #394b5e;
+  border-radius: 6px;
+  background: #172432;
+  color: #e0e9f1;
+  font: inherit;
+  font-size: 11px;
+}
+
 .quiz-history-page {
   display: grid;
   gap: 14px;
@@ -11502,7 +11528,7 @@ html[data-skin='matrix'] #root .quiz-live-progress-track > span {
   background: #36ff72 !important;
 }
 
-/* Compact shared navigation; map-focused pages reveal it from the top edge. */
+/* Compact shared navigation; map-focused pages keep it visible and collapsible. */
 .app-mode-switcher {
   position: sticky;
   top: 0;
@@ -11568,7 +11594,7 @@ html[data-skin='matrix'] #root .quiz-live-progress-track > span {
 .app-mode-menu-content {
   position: absolute;
   z-index: 80;
-  top: calc(100% + 7px);
+  top: 100%;
   left: 0;
   display: grid;
   min-width: 190px;
@@ -11606,60 +11632,68 @@ html[data-skin='matrix'] #root .quiz-live-progress-track > span {
   background: #26394b;
 }
 
-.app-mode-switcher.is-auto-reveal {
-  position: fixed;
-  inset: 0 0 auto;
-  transform: translateY(calc(-100% + 7px));
-  transition: transform 180ms ease;
+.app-mode-switcher.is-collapsible {
+  position: sticky;
+  top: 0;
+  transform: none;
+  transition: none;
 }
 
-.app-mode-switcher.is-auto-reveal:hover,
-.app-mode-switcher.is-auto-reveal:focus-within,
-.app-mode-switcher.is-auto-reveal:has(.app-mode-menu[open]) {
-  transform: translateY(0);
+.app-mode-switcher.is-collapsible > .app-mode-primary {
+  order: 1;
 }
 
-.app-mode-switcher.is-auto-reveal.is-manually-revealed {
-  transform: translateY(0);
+.app-mode-switcher.is-collapsible > .app-mode-system-controls {
+  order: 2;
 }
 
-.app-mode-reveal {
-  display: none;
-}
-
-.app-mode-switcher.is-auto-reveal .app-mode-reveal {
-  position: absolute;
-  right: 12px;
-  bottom: -30px;
-  display: block;
-  min-height: 27px;
-  padding: 4px 9px;
+.app-mode-collapse {
+  display: grid;
+  width: 30px;
+  height: 30px;
+  flex: 0 0 30px;
+  place-items: center;
+  padding: 0;
   border: 1px solid #40566c;
-  border-radius: 0 0 7px 7px;
+  border-radius: 7px;
   background: #172330;
-  color: #e2edf5;
+  color: #dce7f0;
   font: inherit;
-  font-size: 10px;
   cursor: pointer;
 }
 
-.app-mode-switcher.is-auto-reveal:hover .app-mode-reveal,
-.app-mode-switcher.is-auto-reveal:focus-within .app-mode-reveal,
-.app-mode-switcher.is-auto-reveal.is-manually-revealed .app-mode-reveal {
-  display: none;
+.app-mode-collapse:hover {
+  border-color: #7896b3;
+  background: #26394b;
 }
 
-.app-mode-switcher.is-auto-reveal::after {
-  position: absolute;
-  right: 0;
-  bottom: -7px;
-  left: 0;
-  height: 7px;
-  content: '';
+.app-mode-collapse:focus-visible {
+  outline: 2px solid #9bc9ee;
+  outline-offset: 2px;
 }
 
-.app-mode-switcher.is-auto-reveal:hover::after,
-.app-mode-switcher.is-auto-reveal:focus-within::after {
+.app-mode-switcher.is-collapsible:not(.is-collapsed) > .app-mode-collapse {
+  order: 3;
+}
+
+.app-mode-switcher.is-collapsed {
+  min-height: 44px;
+  justify-content: space-between;
+  padding: 6px 12px;
+}
+
+.app-mode-switcher.is-collapsed > .app-mode-collapse {
+  order: 1;
+}
+
+.app-mode-switcher.is-collapsed > .app-mode-primary {
+  flex: 0 0 auto;
+  order: 0;
+  margin-right: auto;
+}
+
+.app-mode-switcher.is-collapsed .app-mode-page-title,
+.app-mode-switcher.is-collapsed > .app-mode-system-controls {
   display: none;
 }
 
@@ -11713,15 +11747,24 @@ html[data-skin='matrix'] #root .quiz-live-progress-track > span {
   background: transparent;
 }
 
-.map-camera-construction-badge {
-  padding: 3px 5px;
-  border: 1px solid #8a7346;
-  border-radius: 5px;
-  background: #30291d;
-  color: #f0d39a;
-  font-size: 9px;
-  line-height: 1.2;
-  white-space: nowrap;
+.map-camera-construction-notice {
+  position: absolute;
+  z-index: 12;
+  top: 58px;
+  left: 50%;
+  max-width: min(80%, 560px);
+  padding: 10px 16px;
+  transform: translateX(-50%);
+  border: 1px solid #a8813d;
+  border-radius: 8px;
+  background: rgb(49 39 24 / 96%);
+  box-shadow: 0 5px 18px rgb(0 0 0 / 34%);
+  color: #ffe0a0;
+  font-size: 14px;
+  font-weight: 650;
+  line-height: 1.4;
+  text-align: center;
+  pointer-events: none;
 }
 
 .map-camera-controls {

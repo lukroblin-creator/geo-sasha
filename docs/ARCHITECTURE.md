@@ -11,7 +11,7 @@ Le point d’entrée du renderer installe quatre contextes globaux : langue, ski
 Le renderer est organisé par domaine :
 
 - `components/` contient les vues et les contrôles visibles : exploration, quiz, statistiques, comparateur et gestion des calques.
-- `AppModeSwitcher.tsx` porte la navigation compacte commune, les commandes système et le titre de page ; certaines vues cartographiques la révèlent à partir du bord haut de fenêtre.
+- `AppModeSwitcher.tsx` porte la navigation compacte commune, les commandes système et le titre de page ; dans certaines vues, sa barre reste visible et repliable, avec un menu qui gère séparément le survol et l’épinglage au clic.
 - `WorldMapLoader.tsx` charge le moteur cartographique uniquement lorsqu'une vue qui contient une carte est affichée. Les contrôles de caméra et ses calculs d'orientation sont isolés dans `WorldMapCameraControls.tsx` et `worldMapCamera.ts`.
 - La sélection cartographique est répartie entre `worldMapCountrySelection.ts`, `useWorldMapCountrySelection.ts` et `data/geography/countryHitTesting.ts`.
 - Les masques utilisent `worldMapOpacityMasks.ts`, `worldMapMaskGeometry.ts` et `data/geography/opacityMaskLogic.ts`, tandis que `MapLayerManager.tsx` porte leur interface de pile.
@@ -22,6 +22,7 @@ Le renderer est organisé par domaine :
 - `data/geography/countryComparatorTextQuery.ts` analyse et complète les requêtes textuelles du comparateur ; `CountryComparatorView.tsx` traduit ces expressions en critères du comparateur existant.
 - `data/quiz/` regroupe les questions, les réponses, les presets, les sessions et les statistiques de quiz.
 - `data/quiz/quizRewards.ts` calcule les accomplissements de manière déterministe depuis l’historique ; `QuizRewardsPanel.tsx` les présente dans les statistiques sans stockage distinct.
+- `data/quiz/regionalStatistics.ts` filtre les statistiques pays et attribue les sessions aux continents uniquement lorsque l’historique contient des réponses ou une configuration suffisamment précise.
 - `data/quiz/quizTiming.ts` porte les réglages, calculs de durée et clés stables de comparaison ; `quizPresetValidation.ts` valide les presets sans dépendre de leur interface de stockage.
 - `workers/` contient le travail déporté, notamment celui des étiquettes cartographiques.
 - `assets/map-layers/` contient les textures hors ligne de la carte.
@@ -102,6 +103,7 @@ Lancer `npm run verify` avant de valider une modification. Cette commande vérif
 
 - `tests/quiz.test.mts` couvre les règles de quiz, la progression, les expirations de session, les clés de configuration, les réglages temporels des presets et la lecture des historiques anciens.
 - `tests/quiz-rewards.test.mts` couvre les seuils d’accomplissement, les points partiels, les séries, les entrées historiques incomplètes, les expirations, les records par configuration et les récompenses chronométrées.
+- `tests/regional-statistics.test.mts` couvre la portée pays par continent et l’attribution prudente des sessions des modes spéciaux.
 - `tests/data-integrity.test.mts` vérifie les liens entre catalogues, profils, territoires et les principales contraintes structurelles des données. Il ne remplace pas une vérification documentaire des faits.
 - `tests/map-interaction.test.mts` couvre les règles déterministes de hitzone, de présélection clavier et de transparence des masques.
 - `tests/map-camera.test.mts` couvre les conversions d'orientation et les rotations composées de la caméra.

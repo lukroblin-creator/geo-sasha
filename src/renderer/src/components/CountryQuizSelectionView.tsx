@@ -56,7 +56,7 @@ export function CountryQuizSelectionView({
         pageTitle={t('Choisir un pays à travailler')}
         onOpenStatistics={onOpenStatistics}
         onToggleFullscreen={onToggleFullscreen}
-        autoReveal
+        collapsible
       />
 
       <div className="country-quiz-selection-content">
