@@ -10,6 +10,11 @@ import {
   useKeyboardShortcuts
 } from '../data/keyboardShortcuts'
 import type { KeyboardShortcutActionId, ShortcutModifier } from '../data/keyboardShortcuts'
+import {
+  getMapMagnifierScrollPreference,
+  mapMagnifierScrollPreferenceEvent,
+  saveMapMagnifierScrollPreference
+} from './mapMagnifierUtils'
 
 export function SettingsMenu({
   floating = false
@@ -17,6 +22,9 @@ export function SettingsMenu({
   floating?: boolean
 }): React.JSX.Element | null {
   const { language, setLanguage, t } = useLanguage()
+  const [magnifierScrollPreference, setMagnifierScrollPreference] = useState(
+    getMapMagnifierScrollPreference
+  )
   const [open, setOpen] = useState(false)
   const [activePanel, setActivePanel] = useState<'general' | 'shortcuts'>('general')
   const [shortcutSearch, setShortcutSearch] = useState('')
@@ -27,6 +35,14 @@ export function SettingsMenu({
   const menuRef = useRef<HTMLDivElement>(null)
   const pendingModifiersRef = useRef<ShortcutModifier[]>([])
   const { bindings, assignBinding, resetBindings, setCaptureMode } = useKeyboardShortcuts()
+
+  useEffect(() => {
+    const syncPreference = (): void => {
+      setMagnifierScrollPreference(getMapMagnifierScrollPreference())
+    }
+    window.addEventListener(mapMagnifierScrollPreferenceEvent, syncPreference)
+    return () => window.removeEventListener(mapMagnifierScrollPreferenceEvent, syncPreference)
+  }, [])
 
   const closeMenu = (): void => {
     setOpen(false)
@@ -221,6 +237,21 @@ export function SettingsMenu({
                   <option value="fr">Français</option>
                   <option value="en">English</option>
                   <option value="es">Español</option>
+                </select>
+              </label>
+              <label className="settings-language-field">
+                <span>{t('Sens de défilement de la loupe')}</span>
+                <select
+                  value={magnifierScrollPreference}
+                  onChange={(event) => {
+                    const preference = event.target.value as typeof magnifierScrollPreference
+                    setMagnifierScrollPreference(preference)
+                    saveMapMagnifierScrollPreference(preference)
+                  }}
+                  aria-label={t('Choisir le sens de défilement de la loupe')}
+                >
+                  <option value="natural">{t('Naturel')}</option>
+                  <option value="inverted">{t('Inversé')}</option>
                 </select>
               </label>
             </div>

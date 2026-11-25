@@ -11,12 +11,19 @@ export type MapLayerControlItem = {
   border?: boolean
   disabled?: boolean
   fixedCount?: number
+  hideSummary?: boolean
+  adjacentToggle?: {
+    id: string
+    label: string
+    enabled: boolean
+  }
   subLayer?: {
     id: string
     label: string
     enabled: boolean
     density: number
     maximum: number
+    showDensity?: boolean
   }
 }
 
@@ -87,15 +94,28 @@ export function MapLayerControls({
                 }
               >
                 <span>{t(layer.label)}</span>
-                <small>
-                  {layer.fixedCount !== undefined
-                    ? `${layer.fixedCount} ${t('chaînes')}`
-                    : layer.enabled
-                      ? `${layer.density} / ${layer.maximum}`
-                      : t('Masquée')}
-                </small>
+                {!layer.hideSummary && (
+                  <small>
+                    {layer.fixedCount !== undefined
+                      ? `${layer.fixedCount} ${t('chaînes')}`
+                      : layer.enabled
+                        ? `${layer.density} / ${layer.maximum}`
+                        : t('Masquée')}
+                  </small>
+                )}
                 <span aria-hidden="true">{openLayerId === layer.id ? '⌃' : '⌄'}</span>
               </button>
+              {layer.adjacentToggle && (
+                <label className="map-layer-adjacent-toggle">
+                  <input
+                    type="checkbox"
+                    checked={layer.adjacentToggle.enabled}
+                    aria-label={t(layer.adjacentToggle.label)}
+                    onChange={(event) => onToggle(layer.adjacentToggle!.id, event.target.checked)}
+                  />
+                  <span>{t(layer.adjacentToggle.label)}</span>
+                </label>
+              )}
               {openLayerId === layer.id && (
                 <div className="map-layer-density-panel">
                   {layer.subLayer ? (
@@ -108,13 +128,15 @@ export function MapLayerControls({
                           onChange={(event) => onToggle(layer.subLayer!.id, event.target.checked)}
                         />
                         <span>{t(layer.subLayer.label)}</span>
-                        <strong>
-                          {layer.subLayer.enabled
-                            ? `${layer.subLayer.density} / ${layer.subLayer.maximum}`
-                            : t('Masqués')}
-                        </strong>
+                        {layer.subLayer.showDensity !== false && (
+                          <strong>
+                            {layer.subLayer.enabled
+                              ? `${layer.subLayer.density} / ${layer.subLayer.maximum}`
+                              : t('Masqués')}
+                          </strong>
+                        )}
                       </label>
-                      {layer.subLayer.enabled && (
+                      {layer.subLayer.enabled && layer.subLayer.showDensity !== false && (
                         <>
                           <label className="map-layer-density-subheading">
                             <span>{t('Sommets affichés')}</span>

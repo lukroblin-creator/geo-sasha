@@ -111,7 +111,15 @@ import {
   type QuizTimingSettings
 } from './data/quiz/quizTiming'
 
-type MapLayerId = 'borders' | 'rivers' | 'mountains' | 'labels' | 'flags' | 'summits'
+type MapLayerId =
+  | 'borders'
+  | 'rivers'
+  | 'mountains'
+  | 'labels'
+  | 'marineLabels'
+  | 'marineBorders'
+  | 'flags'
+  | 'summits'
 type MapLayerVisibility = Record<MapLayerId, boolean>
 type QuizRunSnapshot = {
   presetId: string | null
@@ -139,8 +147,22 @@ const mapLayerOptions: {
   label: string
   available: boolean
   title?: string
-  subLayer?: { id: MapLayerId; label: string }
+  subLayer?: { id: MapLayerId; label: string; showDensity?: boolean }
 }[] = [
+  {
+    id: 'borders',
+    label: 'Frontières',
+    available: true,
+    title: 'Afficher ou masquer les frontières des pays et territoires'
+  },
+  { id: 'labels', label: 'Noms des pays', available: true },
+  {
+    id: 'marineLabels',
+    label: 'Mer/Océans',
+    available: true,
+    title: 'Afficher les noms des mers et océans documentés',
+    subLayer: { id: 'marineBorders', label: 'Contours', showDensity: false }
+  },
   {
     id: 'rivers',
     label: 'Fleuves',
@@ -154,18 +176,11 @@ const mapLayerOptions: {
     title: 'Afficher les principales chaînes de montagnes documentées',
     subLayer: { id: 'summits', label: 'Sommets' }
   },
-  { id: 'labels', label: 'Noms des pays', available: true },
   {
     id: 'flags',
     label: 'Drapeaux',
     available: true,
     title: 'Intégrer le drapeau dans le contour des pays et territoires'
-  },
-  {
-    id: 'borders',
-    label: 'Frontières',
-    available: true,
-    title: 'Afficher ou masquer les frontières des pays et territoires'
   }
 ]
 
@@ -219,6 +234,8 @@ function App(): React.JSX.Element {
     mountains: false,
     summits: false,
     labels: false,
+    marineLabels: false,
+    marineBorders: false,
     flags: false
   })
   const [mapLayerDensities, setMapLayerDensities] =
@@ -313,6 +330,7 @@ function App(): React.JSX.Element {
   } | null>(null)
   const [selectedMapAnswerAlpha2s, setSelectedMapAnswerAlpha2s] = useState<string[]>([])
   const [mapProximity, setMapProximity] = useState<MapProximityResult | null>(null)
+  const borderlessMapPrecisionRef = useRef({ total: 0, samples: 0 })
   const [quizProgress, setQuizProgress] = useState(loadQuizProgress)
   const [quizHistory, setQuizHistory] = useState<QuizHistoryEntry[]>(loadQuizHistory)
   const [activeQuizHistorySnapshot, setActiveQuizHistorySnapshot] =
@@ -408,6 +426,11 @@ function App(): React.JSX.Element {
     settings: snapshot?.settings ?? [],
     questions,
     ...(comparisonKey ? { comparisonKey } : {}),
+    ...(mode !== 'estimation' &&
+    mode !== 'draw-borders' &&
+    borderlessMapPrecisionRef.current.samples > 0
+      ? { borderlessMapPrecision: { ...borderlessMapPrecisionRef.current } }
+      : {}),
     ...(timing ? { timing } : {})
   })
 
@@ -1080,6 +1103,8 @@ function App(): React.JSX.Element {
       return
     }
 
+    borderlessMapPrecisionRef.current = { total: 0, samples: 0 }
+
     const questionCount = Math.min(setup.questionCount, getAvailableQuizQuestionCount(setup.region))
     const candidatePreset =
       presetOverride ??
@@ -1687,7 +1712,7 @@ function App(): React.JSX.Element {
           : null
       )
       setMapProximity(null)
-      return true
+      return question.countryAnswerGroup.some((answer) => answer.alpha2 === country.alpha2)
     }
 
     setMapProximity(null)
@@ -1697,13 +1722,13 @@ function App(): React.JSX.Element {
       { countryOnMap: mapAnswerIsCorrect },
       JSON.stringify({ countryOnMap: sourceFeatureId })
     )
-    return true
+    return mapAnswerIsCorrect
   }
 
-  const handleQuizMapClick = ([longitude, latitude]: [
-    number,
-    number
-  ]): MapProximityResult | null => {
+  const handleQuizMapClick = (
+    [longitude, latitude]: [number, number],
+    clickedSourceFeatureId?: string | number
+  ): MapProximityResult | null => {
     if (rejectLateQuestionAction()) return null
     const question = quiz.session.questionOrder[quiz.session.questionIndex]
     if (
@@ -1717,7 +1742,15 @@ function App(): React.JSX.Element {
       return null
     }
 
-    const proximity = getMapProximityResult(question.sourceFeatureId, longitude, latitude)
+    const proximity =
+      clickedSourceFeatureId !== undefined &&
+      Number(clickedSourceFeatureId) === question.sourceFeatureId
+        ? { score: 100, distanceKm: 0 }
+        : getMapProximityResult(question.sourceFeatureId, longitude, latitude)
+    if (!mapLayers.borders) {
+      borderlessMapPrecisionRef.current.total += proximity.score
+      borderlessMapPrecisionRef.current.samples += 1
+    }
     setMapProximity(proximity)
     return proximity
   }
@@ -1945,7 +1978,12 @@ function App(): React.JSX.Element {
     <MapLayerControls
       layers={mapLayerOptions.map((layer) => {
         const densityId =
-          layer.id === 'borders' || layer.id === 'mountains' ? null : (layer.id as DensityLayerId)
+          layer.id === 'borders' ||
+          layer.id === 'mountains' ||
+          layer.id === 'marineLabels' ||
+          layer.id === 'marineBorders'
+            ? null
+            : (layer.id as DensityLayerId)
         return {
           id: layer.id,
           label: layer.label,
@@ -1959,9 +1997,11 @@ function App(): React.JSX.Element {
                 label: layer.subLayer.label,
                 enabled: mapLayers[layer.subLayer.id],
                 density: mapLayerDensities.mountains,
-                maximum: mapLayerDensityMaximums.mountains
+                maximum: mapLayerDensityMaximums.mountains,
+                showDensity: layer.subLayer.showDensity
               }
             : undefined,
+          hideSummary: layer.id === 'marineLabels',
           title: layer.title,
           border: layer.id === 'borders',
           disabled: !layer.available
@@ -1975,6 +2015,8 @@ function App(): React.JSX.Element {
         } else if (
           enabled &&
           layerId !== 'borders' &&
+          layerId !== 'marineLabels' &&
+          layerId !== 'marineBorders' &&
           layerId !== 'mountains' &&
           layerId !== 'summits'
         ) {
@@ -3035,6 +3077,8 @@ function App(): React.JSX.Element {
               <WorldMap
                 showBorders={mapLayers.borders}
                 showLabels={mapLayers.labels}
+                showMarineLabels={mapLayers.marineLabels}
+                showMarineBorders={mapLayers.marineBorders}
                 globeMode={globeMode}
                 onToggleGlobeMode={toggleGlobeMode}
                 showFlagTerritories={mapLayers.flags}
@@ -3046,6 +3090,7 @@ function App(): React.JSX.Element {
                   isQuizRunning || isQuizFullscreen ? null : perspectiveComparisonPortal
                 }
                 showSelectionFeedback={isQuizRunning && activeQuizAnswers.countryOnMap}
+                mapProximityAttempts={quiz.session.answerAttempts.countryOnMap ?? 0}
                 showWrongAnswerFeedback={
                   isQuizRunning &&
                   activeQuizAnswers.countryOnMap &&

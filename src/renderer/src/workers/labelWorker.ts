@@ -1,6 +1,12 @@
 import type { FeatureCollection, Geometry, Point } from 'geojson'
 
+import marineLabelData from '../data/geography/marineLabels.json'
 import { createVisibleCountryLabels } from '../data/geography/labels'
+import {
+  createVisibleMarineLabels,
+  type MarineLabelProperties
+} from '../data/geography/marineLabelAnchors'
+import { prepareMarineRegions } from '../data/geography/marineRegions'
 
 type LabelProperties = {
   name: string
@@ -20,6 +26,7 @@ type WorkerMessage =
       type: 'update'
       bbox: [number, number, number, number]
       zoom: number
+      includeMarineLabels: boolean
       requestId: number
     }
 
@@ -27,9 +34,13 @@ type WorkerResponse = {
   type: 'ready' | 'labels'
   requestId?: number
   labels?: FeatureCollection<Point, LabelProperties>
+  marineLabels?: FeatureCollection<Point, MarineLabelProperties>
 }
 
 let countries: FeatureCollection<Geometry> | null = null
+const marineAreas = prepareMarineRegions(
+  marineLabelData as unknown as Parameters<typeof prepareMarineRegions>[0]
+)
 
 const workerScope = self as unknown as {
   onmessage: ((event: MessageEvent<WorkerMessage>) => void) | null
@@ -53,11 +64,15 @@ workerScope.onmessage = (event: MessageEvent<WorkerMessage>) => {
     if (!countries) return
 
     const labels = createVisibleCountryLabels(countries, message.bbox, message.zoom)
+    const marineLabels = message.includeMarineLabels
+      ? createVisibleMarineLabels(marineAreas, message.bbox, message.zoom)
+      : { type: 'FeatureCollection' as const, features: [] }
 
     workerScope.postMessage({
       type: 'labels',
       requestId: message.requestId,
-      labels
+      labels,
+      marineLabels
     } satisfies WorkerResponse)
   }
 }

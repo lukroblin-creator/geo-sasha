@@ -1442,17 +1442,35 @@ select:focus-visible {
   fill: #ef4444;
   fill-opacity: 1;
   pointer-events: none;
-  animation: map-wrong-answer-fade 500ms ease-out forwards;
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: map-wrong-answer-feedback 420ms ease-out forwards;
 }
 
-@keyframes map-wrong-answer-fade {
-  0%,
-  11% {
+@keyframes map-wrong-answer-feedback {
+  0% {
     fill-opacity: 1;
+    transform: translateX(0);
+  }
+
+  12% {
+    fill-opacity: 1;
+    transform: translateX(-4px);
+  }
+
+  24% {
+    fill-opacity: 0.86;
+    transform: translateX(4px);
+  }
+
+  36% {
+    fill-opacity: 0.73;
+    transform: translateX(0);
   }
 
   100% {
     fill-opacity: 0;
+    transform: translateX(0);
   }
 }
 
@@ -1951,6 +1969,197 @@ select:focus-visible {
   width: min(310px, calc(100% - 28px));
 }
 
+.map-top-toolbar {
+  position: absolute;
+  z-index: 8;
+  top: 14px;
+  right: 14px;
+  left: 14px;
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  pointer-events: none;
+}
+
+.map-top-toolbar > .map-search {
+  position: relative;
+  inset: auto;
+  order: 0;
+  flex: 0 1 310px;
+  min-width: 0;
+  max-width: 310px;
+  width: auto;
+  pointer-events: auto;
+}
+
+.map-top-toolbar > .world-map-controls {
+  position: relative;
+  inset: auto;
+  order: 1;
+  flex: 0 0 auto;
+  pointer-events: auto;
+}
+
+.map-help {
+  position: relative;
+  order: 2;
+  flex: 0 0 auto;
+  pointer-events: auto;
+}
+
+.map-help-trigger {
+  display: grid;
+  width: 32px;
+  height: 32px;
+  place-items: center;
+  padding: 0;
+  border: 1px solid #354456;
+  border-radius: 50%;
+  background: #1b2937;
+  color: #c2cfdb;
+  font: inherit;
+  font-size: 17px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.map-help-trigger:hover,
+.map-help-trigger[aria-expanded='true'] {
+  border-color: #7895ae;
+  background: #2a3d51;
+  color: #f2f7fb;
+}
+
+.map-help-trigger:focus-visible,
+.map-help-popover button:focus-visible {
+  outline: 2px solid #a9c6de;
+  outline-offset: 2px;
+}
+
+.map-help-popover {
+  position: absolute;
+  z-index: 40;
+  top: calc(100% + 8px);
+  right: 0;
+  display: grid;
+  gap: 12px;
+  width: min(390px, calc(100vw - 36px));
+  max-height: min(72vh, 560px);
+  overflow: auto;
+  padding: 14px;
+  border: 1px solid #405a70;
+  border-radius: 10px;
+  background: rgb(21 34 48 / 97%);
+  box-shadow: 0 12px 34px rgb(0 0 0 / 38%);
+  color: #d4dfeb;
+  backdrop-filter: blur(12px);
+}
+
+.map-help-popover > header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.map-help-popover h2,
+.map-help-popover h3,
+.map-help-popover p {
+  margin: 0;
+}
+
+.map-help-popover h2 {
+  color: #eef5fb;
+  font-size: 14px;
+  line-height: 1.35;
+}
+
+.map-help-popover > header button {
+  display: grid;
+  width: 25px;
+  height: 25px;
+  flex: 0 0 auto;
+  place-items: center;
+  padding: 0;
+  border: 1px solid #40566a;
+  border-radius: 6px;
+  background: #1b2937;
+  color: inherit;
+  font-size: 18px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.map-help-popover article {
+  display: grid;
+  gap: 4px;
+}
+
+.map-help-popover h3 {
+  color: #a9c6de;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.map-help-popover p {
+  color: #bac8d6;
+  font-size: 11px;
+  line-height: 1.5;
+}
+
+html[data-skin='minimal'] #root .map-help-trigger {
+  border-color: #d5ccbd;
+  background: #fffdf8;
+  color: #39352e;
+}
+
+html[data-skin='minimal'] #root .map-help-popover {
+  border-color: #d5ccbd;
+  background: rgb(255 253 248 / 98%);
+  color: #39352e;
+}
+
+html[data-skin='minimal'] #root .map-help-popover h2 {
+  color: #29261f;
+}
+
+html[data-skin='minimal'] #root .map-help-popover h3 {
+  color: #6d5d42;
+}
+
+html[data-skin='minimal'] #root .map-help-popover p {
+  color: #554f46;
+}
+
+html[data-skin='matrix'] #root .map-help-trigger,
+html[data-skin='matrix'] #root .map-help-popover,
+html[data-skin='matrix'] #root .map-help-popover > header button {
+  border-color: #176b34;
+  border-radius: 0;
+  background: rgb(1 8 3 / 97%);
+  color: #aaffbf;
+}
+
+html[data-skin='matrix'] #root .map-help-popover h2,
+html[data-skin='matrix'] #root .map-help-popover h3 {
+  color: #65fa88;
+}
+
+html[data-skin='matrix'] #root .map-help-popover p {
+  color: #9bdba9;
+}
+
+@media (max-width: 400px) {
+  .map-top-toolbar {
+    flex-wrap: wrap;
+  }
+
+  .map-top-toolbar > .map-search {
+    flex: 0 1 310px;
+    min-width: min(180px, 100%);
+  }
+}
+
 .map-search-label {
   position: absolute;
   width: 1px;
@@ -2248,6 +2457,15 @@ select:focus-visible {
 .map-layer-density-trigger small {
   color: #7f96ab;
   font-size: 9px;
+  white-space: nowrap;
+}
+
+.map-layer-adjacent-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: #a9b7c5;
+  font-size: 10px;
   white-space: nowrap;
 }
 
@@ -5211,7 +5429,7 @@ select:focus-visible {
 
 .statistics-summary {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(5, minmax(0, 1fr));
   gap: 12px;
 }
 
@@ -6116,6 +6334,11 @@ select:focus-visible {
   font-size: 11px;
 }
 
+#settings-panel-general {
+  display: grid;
+  gap: 14px;
+}
+
 .settings-language-field select {
   min-height: 38px;
   padding: 0 30px 0 10px;
@@ -6653,6 +6876,141 @@ html[data-skin='matrix']
   border-radius: 0;
   background: rgb(1 8 3 / 96%);
   color: #aaffbf;
+}
+
+body.map-magnifier-pointer-locked,
+body.map-magnifier-pointer-locked * {
+  cursor: none !important;
+}
+
+.map-magnifier {
+  position: absolute;
+  z-index: 120;
+  overflow: hidden;
+  border-radius: 20px;
+  background: transparent;
+  pointer-events: none;
+}
+
+.map-magnifier::after {
+  position: absolute;
+  z-index: 2;
+  border-radius: inherit;
+  content: '';
+  inset: 0;
+  pointer-events: none;
+}
+
+.map-magnifier::after {
+  padding: 4px;
+  background:
+    radial-gradient(ellipse 44px 9px at 13% 0%, rgb(255 77 143 / 20%), transparent 78%),
+    radial-gradient(ellipse 36px 8px at 48% 0%, rgb(80 220 255 / 16%), transparent 80%),
+    radial-gradient(ellipse 10px 42px at 100% 35%, rgb(255 82 153 / 18%), transparent 80%),
+    radial-gradient(ellipse 9px 38px at 0% 72%, rgb(87 215 255 / 18%), transparent 80%),
+    radial-gradient(ellipse 42px 8px at 76% 100%, rgb(255 86 158 / 16%), transparent 82%);
+  filter: blur(0.7px) url(#map-magnifier-displacement);
+  mix-blend-mode: screen;
+  mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+  mask-composite: exclude;
+  -webkit-mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+}
+
+.map-magnifier > .maplibregl-map {
+  overflow: hidden;
+  border-radius: inherit;
+  filter: url(#map-magnifier-displacement);
+}
+
+.map-magnifier-filter-defs {
+  position: absolute;
+  width: 0;
+  height: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.map-magnifier-reticle {
+  position: absolute;
+  z-index: 3;
+  inset: 0;
+  color: rgb(239 248 255 / 62%);
+  pointer-events: none;
+}
+
+.map-magnifier-reticle-line {
+  position: absolute;
+  display: block;
+  border-radius: 1px;
+  background: currentColor;
+  opacity: 0.55;
+}
+
+.map-magnifier-reticle-line.is-vertical {
+  top: 0;
+  width: 0.5px;
+  height: 100%;
+}
+
+.map-magnifier-reticle-line.is-horizontal {
+  left: 0;
+  width: 100%;
+  height: 0.5px;
+}
+
+.map-magnifier-reticle-line.is-left {
+  left: calc(50% - 21px);
+}
+
+.map-magnifier-reticle-line.is-right {
+  left: calc(50% + 21px);
+}
+
+.map-magnifier-reticle-line.is-top {
+  top: calc(50% - 21px);
+}
+
+.map-magnifier-reticle-line.is-bottom {
+  top: calc(50% + 21px);
+}
+
+.map-magnifier-reticle-dot {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 4px;
+  height: 4px;
+  border: 1px solid rgb(9 20 29 / 70%);
+  border-radius: 50%;
+  background: rgb(255 255 255 / 94%);
+  box-shadow: 0 0 4px rgb(0 0 0 / 86%), 0 0 7px rgb(255 255 255 / 58%);
+  transform: translate(-50%, -50%);
+}
+
+.map-magnifier .maplibregl-ctrl-logo,
+.map-magnifier .maplibregl-ctrl-attrib {
+  display: none;
+}
+
+.map-magnifier-scale {
+  position: absolute;
+  z-index: 3;
+  right: 10px;
+  bottom: 9px;
+  padding: 3px 7px;
+  border: 1px solid rgb(255 255 255 / 28%);
+  border-radius: 999px;
+  background: rgb(15 24 32 / 58%);
+  color: rgb(255 255 255 / 88%);
+  font-size: 10px;
+  font-weight: 650;
+  line-height: 1.2;
+  text-shadow: 0 1px 3px rgb(0 0 0 / 48%);
 }
 
 html[data-skin='matrix'] #root .exploration-saved-view-suggestions {

@@ -161,6 +161,38 @@ export function getTinyTerritoryHitRadius(
   return Math.max(standardRadius, 24 - expandedZoomProgress * 16)
 }
 
+export function getSmallIslandSeaHitRadius(zoom: number): number {
+  // Use each rendered polygon's size (checked below) rather than the total
+  // area of an archipelago. This gives tiny islands a usable water margin
+  // without expanding the whole country or covering a neighbor's land.
+  const zoomProgress = Math.max(0, Math.min(1, zoom / 8))
+  return Math.max(8, 40 - zoomProgress * 32)
+}
+
+export function getLandNeighborHitRadius(
+  zoom: number,
+  neighborAreasKm2: readonly (number | null)[]
+): number {
+  const finiteAreas = neighborAreasKm2.filter(
+    (area): area is number => area !== null && Number.isFinite(area)
+  )
+  if (finiteAreas.length === 0) return 0
+
+  // When the nearest land neighbors are large, a tiny enclave needs more
+  // room around its outline. Smaller neighbors reduce that margin.
+  const smallestNeighborArea = Math.min(...finiteAreas)
+  const baseRadius =
+    smallestNeighborArea >= 200_000
+      ? 40
+      : smallestNeighborArea >= 50_000
+        ? 30
+        : smallestNeighborArea >= 20_000
+          ? 20
+          : 14
+  const zoomProgress = Math.max(0, Math.min(1, zoom / 8))
+  return Math.max(4, baseRadius * (1 - zoomProgress * 0.75))
+}
+
 export function hasOnlyLargeLandNeighbors(
   neighborAreasKm2: readonly (number | null)[],
   largeCountryAreaKm2 = 20_000
@@ -178,7 +210,8 @@ export function getCountryFeatureHit(
   feature: CountryHitFeature,
   point: ScreenPoint,
   areaKm2: number | null,
-  seaHitRadius = 0
+  seaHitRadius = 0,
+  hitShapeScale = 1.5
 ): NearbyCountryHit | null {
   const geometry = feature.geometry
   const polygons =
@@ -220,12 +253,18 @@ export function getCountryFeatureHit(
     let distance = insideOuterRing && !insideHole ? 0 : Number.POSITIVE_INFINITY
     let insideGhost = false
 
-    if (effectiveSize <= 18 && (areaKm2 === null || areaKm2 <= 10_000)) {
-      const expandedOuterRing = scaleScreenRing(outerRing, center, 1.5)
+    const hasSmallCountryShape = areaKm2 === null || areaKm2 <= 12_000
+    const hasSmallRenderedComponent = effectiveSize <= 18
+    const usesScaledHitShape =
+      hitShapeScale > 1 && (hasSmallRenderedComponent || hitShapeScale > 1.5)
+    if (usesScaledHitShape && (hasSmallRenderedComponent || hitShapeScale > 1.5)) {
+      const expandedOuterRing = scaleScreenRing(outerRing, center, hitShapeScale)
       const insideExpandedOuter = isPointInsideScreenRing(point, expandedOuterRing)
       const insideExpandedHole = projectedRings
         .slice(1)
-        .some((ring) => isPointInsideScreenRing(point, scaleScreenRing(ring, center, 1.5)))
+        .some((ring) =>
+          isPointInsideScreenRing(point, scaleScreenRing(ring, center, hitShapeScale))
+        )
       insideGhost = insideExpandedOuter && !insideExpandedHole && distance !== 0
     }
 
@@ -240,12 +279,24 @@ export function getCountryFeatureHit(
       }
     }
 
-    // Large countries remain selectable from their actual fill. They do not
-    // receive an expanded hit target that can cover smaller neighbors.
-    if (distance !== 0 && areaKm2 !== null && areaKm2 > 200_000) continue
+    const insideSeaHitArea = distance > 0 && distance <= seaHitRadius
 
-    if (effectiveSize <= 18 && (areaKm2 === null || areaKm2 <= 10_000)) {
-      const insideSeaHitArea = distance > 0 && distance <= seaHitRadius
+    // Large land areas remain selectable from their actual fill. A genuinely
+    // tiny island component may still use its sea margin, which does not cover
+    // the neighboring country's land.
+    if (
+      distance !== 0 &&
+      areaKm2 !== null &&
+      areaKm2 > 200_000 &&
+      !(hasSmallRenderedComponent && insideSeaHitArea)
+    ) {
+      continue
+    }
+
+    if (
+      (hasSmallRenderedComponent && (hasSmallCountryShape || insideSeaHitArea)) ||
+      (hitShapeScale > 1.5 && insideGhost)
+    ) {
       if (insideGhost) {
         if (!nearestGhostTerritoryHit || distance < nearestGhostTerritoryHit.distance) {
           nearestGhostTerritoryHit = {
@@ -293,11 +344,19 @@ export function chooseCountryFeatureAtPoint<T extends CountryHitFeature>(
   candidates: T[],
   directFeature: T | undefined,
   getAreaKm2: (feature: T) => number | null,
-  getSeaHitRadius: (feature: T) => number = () => 0
+  getSeaHitRadius: (feature: T) => number = () => 0,
+  getHitShapeScale: (feature: T) => number = () => 1.5
 ): T | undefined {
+  const identitiesWithAuthoritativeGeometry = new Set(
+    candidates
+      .filter((feature) => feature.properties?.hitTestResolution === '10m')
+      .map((feature) => getCountryFeatureIdentity(feature))
+      .filter((identity): identity is string => identity !== null)
+  )
   let nearest: { feature: T; distance: number } | null = null
   let nearestTinyTerritory: { feature: T; distance: number } | null = null
   let nearestExact: { feature: T; effectiveSize: number } | null = null
+  let nearestAuthoritativeExact: { feature: T; effectiveSize: number } | null = null
   let nearestExactTinyTerritory: { feature: T; effectiveSize: number } | null = null
   let nearestExpandedTinyTerritory: { feature: T; distance: number } | null = null
 
@@ -308,15 +367,27 @@ export function chooseCountryFeatureAtPoint<T extends CountryHitFeature>(
       feature,
       point,
       getAreaKm2(feature),
-      getSeaHitRadius(feature)
+      getSeaHitRadius(feature),
+      getHitShapeScale(feature)
     )
     if (!hit) continue
+    const identity = getCountryFeatureIdentity(feature)
+    const isAuthoritative = feature.properties?.hitTestResolution === '10m'
     if (
       hit.distance === 0 &&
       !hit.isGhostHit &&
+      (isAuthoritative || !identitiesWithAuthoritativeGeometry.has(identity ?? '')) &&
       (!nearestExact || hit.effectiveSize < nearestExact.effectiveSize)
     ) {
       nearestExact = { feature, effectiveSize: hit.effectiveSize }
+    }
+    if (
+      hit.distance === 0 &&
+      !hit.isGhostHit &&
+      feature.properties?.hitTestResolution === '10m' &&
+      (!nearestAuthoritativeExact || hit.effectiveSize < nearestAuthoritativeExact.effectiveSize)
+    ) {
+      nearestAuthoritativeExact = { feature, effectiveSize: hit.effectiveSize }
     }
     if (
       hit.distance === 0 &&
@@ -345,6 +416,7 @@ export function chooseCountryFeatureAtPoint<T extends CountryHitFeature>(
   // neighboring country selectable even when a nearby microstate has a broad
   // target at world scale.
   return (
+    nearestAuthoritativeExact?.feature ??
     nearestExactTinyTerritory?.feature ??
     nearestExact?.feature ??
     nearestExpandedTinyTerritory?.feature ??

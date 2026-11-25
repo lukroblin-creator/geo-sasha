@@ -1,6 +1,6 @@
 # Guide du projet World Atlas
 
-**Référence principale — dernière révision : 23 novembre 2026**
+**Référence principale — dernière révision : 25 novembre 2026**
 
 Ce guide est la référence principale de World Atlas. Il rassemble la direction produit, les ambitions, les priorités, le fonctionnement attendu et les règles de travail qui doivent guider les corrections et les évolutions. Il synthétise les demandes explicites de Lucas ; les propositions antérieures de l’assistant ne deviennent pas des exigences tant qu’elles n’ont pas été acceptées.
 
@@ -95,7 +95,7 @@ Les identifiants internes de World Atlas doivent rester stables et indépendants
 - L’exploration libre doit donner accès à une fiche géographique pour le pays ou le territoire réellement sélectionné.
 - La fiche vise à rassembler les informations utiles à la découverte : nom, drapeau, capitale, dix plus grandes villes repliables, population, densité, cours d’eau majeurs, points culminants, superficie, périmètre et continent. Elle pourra accueillir d’autres données ensuite.
 - Le choix sur la carte doit rester précis à tous les niveaux de zoom. Les grandes zones de clic ne doivent pas recouvrir les petits voisins et les rendre inaccessibles.
-- Le survol préselectionne l’entité sous le pointeur. Quand le pointeur reste immobile, les flèches déplacent la présélection vers les territoires voisins ; Maj permet de parcourir les petits territoires proches dans le périmètre du pointeur ; Entrée valide l’entité actuellement préselectionnée. Dès que le pointeur bouge, la sélection reprend normalement sous le pointeur. Ces commandes ne doivent pas intercepter la saisie dans un champ texte.
+- Le survol préselectionne l’entité sous le pointeur. Quand le pointeur reste immobile, les flèches déplacent la présélection vers les territoires voisins ; chaque appui sur Option parcourt tous les territoires de moins de 40 000 km² dans une zone circulaire centrée sur le territoire présélectionné et dont la surface équivaut à la moitié de celle de l’Europe ; Maj active la loupe. Entrée valide l’entité actuellement préselectionnée. Dès que le pointeur bouge, la sélection reprend normalement sous le pointeur. Ces commandes ne doivent pas intercepter la saisie dans un champ texte.
 - La présélection et la sélection doivent rester visibles au-dessus du calque le plus haut. Les repères d’aide sont réservés aux microterritoires qui seraient autrement invisibles ou impraticables ; un grand pays comme la France ne doit jamais recevoir ce repère.
 - Lorsqu’un quiz cible un petit territoire, la caméra zoome suffisamment pour le rendre identifiable tout en conservant des voisins comme repères spatiaux. Les micro-États sans polygone exploitable à l’échelle affichée doivent disposer d’un point ou d’une géométrie de secours cohérente.
 - En rotation orbitale 3D, la Terre reste ancrée au centre de l’écran ; le passage des pôles ne doit provoquer ni blocage, ni friction, ni saut d’angle. Les rotations peuvent continuer au-delà d’un tour complet. Le mode orbital, le déplacement de la carte et la rotation libre de la caméra doivent rester des outils distincts.

@@ -1,18 +1,22 @@
-import { useCallback, useEffect, useRef } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import type { Dispatch, SetStateAction } from 'react'
 import type { Map as MapLibreMap } from 'maplibre-gl'
 import type { MapLayerMouseEvent } from 'react-map-gl/maplibre'
 
 import {
   getKeyboardActivationFeature,
-  getNextCountryFeature
+  getNextCountryFeature,
+  getCountryFeatureIdentity
 } from '../data/geography/countryHitTesting'
-import { useKeyboardShortcuts } from '../data/keyboardShortcuts'
-import { normalizeSourceFeatureId } from '../data/geography/sourceFeatureIds'
+import {
+  keyboardShortcutMatchesEvent,
+  useHeldKeyboardShortcut,
+  useKeyboardShortcuts
+} from '../data/keyboardShortcuts'
 import {
   getCountryFeatureAtPoint,
   getDirectionalCountryFeature,
-  getSmallCountryFeaturesAroundPoint,
+  getSmallCountryFeaturesWithinCycleArea,
   isCountryFillFeature,
   type InteractiveCountryFeature
 } from './worldMapCountrySelection'
@@ -34,6 +38,8 @@ type UseWorldMapCountrySelectionOptions = {
   searchQuery: string
   countryClickHandlerRef: CountryClickHandlerRef
   setHoveredCountry: Dispatch<SetStateAction<HoveredCountry>>
+  onShiftKeyDown: (pointer: { x: number; y: number }) => void
+  onShiftKeyUp: () => void
 }
 
 type WorldMapCountrySelectionController = {
@@ -51,23 +57,110 @@ export function useWorldMapCountrySelection({
   searchIsOpen,
   searchQuery,
   countryClickHandlerRef,
-  setHoveredCountry
+  setHoveredCountry,
+  onShiftKeyDown,
+  onShiftKeyUp
 }: UseWorldMapCountrySelectionOptions): WorldMapCountrySelectionController {
-  const { hasActiveBinding } = useKeyboardShortcuts()
+  const { bindings, hasActiveBinding } = useKeyboardShortcuts()
+  const [pointerIsOverMap, setPointerIsOverMap] = useState(false)
   const hoverPointerRef = useRef<{ x: number; y: number } | null>(null)
   const keyboardPreselectionRef = useRef<{
     entityId: string | null
     sourceFeatureId: string | number
   } | null>(null)
   const keyboardPreselectionFeatureRef = useRef<InteractiveCountryFeature | null>(null)
+  const keyboardCycleCandidatesRef = useRef<InteractiveCountryFeature[] | null>(null)
   const keyboardSelectionActiveRef = useRef(false)
 
   const clearKeyboardPreselection = useCallback((): void => {
     keyboardSelectionActiveRef.current = false
     keyboardPreselectionRef.current = null
     keyboardPreselectionFeatureRef.current = null
+    keyboardCycleCandidatesRef.current = null
   }, [])
 
+  const activateMagnifier = useCallback(
+    (event: KeyboardEvent): void => {
+      if (perspectiveCorrectionEnabled || opacityMaskPlacement) return
+      const pointer =
+        hoverPointerRef.current ??
+        (map?.getContainer().matches(':hover')
+          ? { x: map.getCanvas().clientWidth / 2, y: map.getCanvas().clientHeight / 2 }
+          : null)
+      if (!pointer) return
+      const target = event.target instanceof Element ? event.target : null
+      if (target?.closest('dialog[open], [role="dialog"], .settings-menu-root')) return
+      if (
+        target?.matches('input, textarea, select, [contenteditable="true"]') ||
+        target?.matches('.map-search-input')
+      ) {
+        return
+      }
+      onShiftKeyDown(pointer)
+    },
+    [map, onShiftKeyDown, opacityMaskPlacement, perspectiveCorrectionEnabled]
+  )
+  useHeldKeyboardShortcut(
+    'map.magnifier',
+    activateMagnifier,
+    onShiftKeyUp,
+    Boolean(map && pointerIsOverMap && !perspectiveCorrectionEnabled && !opacityMaskPlacement)
+  )
+  const cycleNearbyTerritories = useCallback(
+    (event: KeyboardEvent): void => {
+      if (!map || perspectiveCorrectionEnabled || opacityMaskPlacement) return
+      const target = event.target instanceof Element ? event.target : null
+      if (target?.closest('dialog[open], [role="dialog"], .settings-menu-root')) return
+      if (
+        target?.matches('input, textarea, select, [contenteditable="true"]') ||
+        target?.matches('.map-search-input')
+      ) {
+        return
+      }
+      const pointer =
+        hoverPointerRef.current ??
+        (map.getContainer().matches(':hover')
+          ? { x: map.getCanvas().clientWidth / 2, y: map.getCanvas().clientHeight / 2 }
+          : null)
+      if (!pointer) return
+
+      const pointerFeature = getCountryFeatureAtPoint(map, pointer)
+      const currentFeature = keyboardPreselectionFeatureRef.current ?? pointerFeature
+      let candidates = keyboardCycleCandidatesRef.current
+      if (!keyboardSelectionActiveRef.current || !candidates) {
+        const uniqueFeatures = new Map<string, InteractiveCountryFeature>()
+        for (const feature of [
+          ...(currentFeature ? [currentFeature] : []),
+          ...(currentFeature ? getSmallCountryFeaturesWithinCycleArea(currentFeature) : [])
+        ]) {
+          const identity = getCountryFeatureIdentity(feature)
+          if (identity && !uniqueFeatures.has(identity)) uniqueFeatures.set(identity, feature)
+        }
+        candidates = [...uniqueFeatures.values()]
+        keyboardCycleCandidatesRef.current = candidates
+      }
+      if (candidates.length < 2) return
+      const nextFeature = getNextCountryFeature(
+        candidates,
+        currentFeature ? getCountryFeatureIdentity(currentFeature) : null
+      )
+      if (!nextFeature) return
+      const sourceFeatureId = nextFeature.properties?.sourceId
+      if (typeof sourceFeatureId !== 'string' && typeof sourceFeatureId !== 'number') return
+
+      keyboardSelectionActiveRef.current = true
+      keyboardPreselectionRef.current = {
+        sourceFeatureId,
+        entityId:
+          typeof nextFeature.properties?.entityId === 'string'
+            ? nextFeature.properties.entityId
+            : null
+      }
+      keyboardPreselectionFeatureRef.current = nextFeature
+      setHoveredCountry(keyboardPreselectionRef.current)
+    },
+    [map, opacityMaskPlacement, perspectiveCorrectionEnabled, setHoveredCountry]
+  )
   const updateHoveredFeature = useCallback(
     (feature: InteractiveCountryFeature | undefined): void => {
       const sourceFeatureId = feature?.properties?.sourceId
@@ -95,22 +188,27 @@ export function useWorldMapCountrySelection({
     [setHoveredCountry]
   )
 
-  const handleCountryHover = (event: MapLayerMouseEvent): void => {
-    hoverPointerRef.current = { x: event.point.x, y: event.point.y }
-    if (perspectiveCorrectionEnabled) {
-      clearKeyboardPreselection()
-      setHoveredCountry(null)
-      return
-    }
-    if (keyboardSelectionActiveRef.current) return
+  const handleCountryHover = useCallback(
+    (event: MapLayerMouseEvent): void => {
+      hoverPointerRef.current = { x: event.point.x, y: event.point.y }
+      if (perspectiveCorrectionEnabled) {
+        clearKeyboardPreselection()
+        setHoveredCountry(null)
+        return
+      }
+      if (keyboardSelectionActiveRef.current) return
 
-    const feature = map
-      ? getCountryFeatureAtPoint(map, event.point, event.features)
-      : event.features?.find(isCountryFillFeature)
-    updateHoveredFeature(feature)
-  }
+      const feature = map
+        ? getCountryFeatureAtPoint(map, event.point, event.features)
+        : event.features?.find(isCountryFillFeature)
+      updateHoveredFeature(feature)
+    },
+    [clearKeyboardPreselection, map, perspectiveCorrectionEnabled, setHoveredCountry, updateHoveredFeature]
+  )
 
   const handleCountryLeave = useCallback((): void => {
+    if (document.body?.classList.contains('map-magnifier-active')) return
+    setPointerIsOverMap(false)
     hoverPointerRef.current = null
     clearKeyboardPreselection()
     setHoveredCountry(null)
@@ -123,6 +221,7 @@ export function useWorldMapCountrySelection({
       const bounds = mapContainer.getBoundingClientRect()
       const point = { x: event.clientX - bounds.left, y: event.clientY - bounds.top }
       if (point.x < 0 || point.y < 0 || point.x > bounds.width || point.y > bounds.height) return
+      setPointerIsOverMap(true)
       const previousPoint = hoverPointerRef.current
       const pointerMoved =
         previousPoint !== null &&
@@ -139,21 +238,46 @@ export function useWorldMapCountrySelection({
         keyboardPreselectionFeatureRef.current = null
       }
     }
+    if (mapContainer.matches(':hover')) setPointerIsOverMap(true)
+    mapContainer.addEventListener('pointerenter', handleMapPointerMove)
     mapContainer.addEventListener('pointermove', handleMapPointerMove)
     mapContainer.addEventListener('pointerleave', handleCountryLeave)
 
     const handleCountryKeyboardNavigation = (event: KeyboardEvent): void => {
       if (perspectiveCorrectionEnabled || opacityMaskPlacement) return
-      const pointer = hoverPointerRef.current
+      const pointer =
+        hoverPointerRef.current ??
+        (mapContainer.matches(':hover')
+          ? { x: map.getCanvas().clientWidth / 2, y: map.getCanvas().clientHeight / 2 }
+          : null)
+      const isNearbyTerritoryShortcut = keyboardShortcutMatchesEvent(
+        event,
+        bindings['map.cycleNearbyTerritories']
+      )
+      if (isNearbyTerritoryShortcut && pointer) {
+        const target = event.target instanceof Element ? event.target : null
+        if (
+          target?.closest('dialog[open], [role="dialog"], .settings-menu-root') ||
+          target?.matches('input, textarea, select, [contenteditable="true"], .map-search-input')
+        ) {
+          return
+        }
+        event.preventDefault()
+        event.stopImmediatePropagation()
+        cycleNearbyTerritories(event)
+        return
+      }
       if (!pointer || event.defaultPrevented || event.isComposing) return
       const target = event.target instanceof Element ? event.target : null
+      if (target?.closest('dialog[open], [role="dialog"], .settings-menu-root')) return
+      if (hasActiveBinding(event)) return
+
       if (
-        target?.closest('dialog[open], [role="dialog"], .settings-menu-root') ||
-        (target?.closest('button, input, textarea, select, [contenteditable="true"]') &&
-          !target.matches('.map-search-input')) ||
-        hasActiveBinding(event)
-      )
+        target?.closest('button, input, textarea, select, [contenteditable="true"]') &&
+        !target.matches('.map-search-input')
+      ) {
         return
+      }
 
       if (event.key === 'Enter') {
         if (event.altKey || event.ctrlKey || event.shiftKey) return
@@ -168,6 +292,7 @@ export function useWorldMapCountrySelection({
         event.preventDefault()
         event.stopImmediatePropagation()
         keyboardSelectionActiveRef.current = true
+        keyboardCycleCandidatesRef.current = null
         const syntheticClick = {
           point: { x: pointer.x, y: pointer.y },
           lngLat: map.unproject([pointer.x, pointer.y]),
@@ -179,55 +304,6 @@ export function useWorldMapCountrySelection({
       }
 
       if (target?.matches('.map-search-input')) return
-
-      if (
-        event.key === 'Shift' &&
-        !event.repeat &&
-        !event.metaKey &&
-        !event.ctrlKey &&
-        !event.altKey
-      ) {
-        // Keep Shift from entering MapLibre's box-zoom/focus behavior. This
-        // interaction is handled whenever the pointer is over the map.
-        event.preventDefault()
-        event.stopImmediatePropagation()
-        const candidates = getSmallCountryFeaturesAroundPoint(map, pointer, 20)
-        if (candidates.length === 0) return
-        const pointerFeature = getCountryFeatureAtPoint(map, pointer)
-        const pointerSourceId = pointerFeature?.properties?.sourceId
-        const pointerCountry =
-          typeof pointerSourceId === 'string' || typeof pointerSourceId === 'number'
-            ? {
-                sourceFeatureId: pointerSourceId,
-                entityId:
-                  typeof pointerFeature?.properties?.entityId === 'string'
-                    ? pointerFeature.properties.entityId
-                    : null
-              }
-            : null
-        const current = keyboardPreselectionRef.current ?? pointerCountry
-        const currentIdentity = current
-          ? current.entityId
-            ? `entity:${current.entityId}`
-            : `source:${normalizeSourceFeatureId(current.sourceFeatureId)}`
-          : null
-        const nextFeature = getNextCountryFeature(candidates, currentIdentity)
-        if (!nextFeature) return
-        const sourceFeatureId = nextFeature.properties?.sourceId
-        if (typeof sourceFeatureId !== 'string' && typeof sourceFeatureId !== 'number') return
-        const nextCountry = {
-          sourceFeatureId,
-          entityId:
-            typeof nextFeature.properties?.entityId === 'string'
-              ? nextFeature.properties.entityId
-              : null
-        }
-        keyboardSelectionActiveRef.current = true
-        keyboardPreselectionRef.current = nextCountry
-        keyboardPreselectionFeatureRef.current = nextFeature
-        setHoveredCountry(nextCountry)
-        return
-      }
 
       if (
         !['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(event.key) ||
@@ -269,6 +345,7 @@ export function useWorldMapCountrySelection({
             ? nextFeature.properties.entityId
             : null
       }
+      keyboardCycleCandidatesRef.current = null
       keyboardSelectionActiveRef.current = true
       keyboardPreselectionRef.current = nextCountry
       keyboardPreselectionFeatureRef.current = nextFeature
@@ -277,12 +354,15 @@ export function useWorldMapCountrySelection({
     window.addEventListener('keydown', handleCountryKeyboardNavigation, true)
     return () => {
       mapContainer.removeEventListener('pointermove', handleMapPointerMove)
+      mapContainer.removeEventListener('pointerenter', handleMapPointerMove)
       mapContainer.removeEventListener('pointerleave', handleCountryLeave)
       window.removeEventListener('keydown', handleCountryKeyboardNavigation, true)
     }
   }, [
     countryClickHandlerRef,
     clearKeyboardPreselection,
+    bindings,
+    cycleNearbyTerritories,
     handleCountryLeave,
     hasActiveBinding,
     map,

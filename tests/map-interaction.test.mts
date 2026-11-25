@@ -6,6 +6,7 @@ import {
   chooseCountryFeatureAtPoint,
   chooseDirectionalCountryFeature,
   getCountryFeatureHit,
+  getLandNeighborHitRadius,
   getCountryFeatureIdentity,
   hasOnlyLargeLandNeighbors,
   getKeyboardActivationFeature,
@@ -24,6 +25,13 @@ import {
   getOpacityMaskHandlePatch,
   getOpacityMaskHandles
 } from '../src/renderer/src/components/worldMapMaskGeometry.ts'
+import {
+  getMapMagnifierZoom,
+  moveMapMagnifier,
+  scaleMapMagnifierSize,
+  MAP_MAGNIFIER_BASE_SIZE,
+  type MapMagnifierPoint
+} from '../src/renderer/src/components/mapMagnifierUtils.ts'
 import { createPolarBlendPixels } from '../src/renderer/src/components/polarTextureBlend.ts'
 
 const screenMap = {
@@ -63,6 +71,32 @@ function featureCollection(
     }))
   }
 }
+
+test('la loupe grossit la carte par huit et ralentit le mouvement au huitième', (): void => {
+  assert.equal(getMapMagnifierZoom(1.5), 4.5)
+  assert.equal(getMapMagnifierZoom(11), 14)
+
+  const position: MapMagnifierPoint = { x: 500, y: 300 }
+  const moved = moveMapMagnifier(
+    position,
+    { x: 100, y: 100 },
+    { x: 180, y: 20 },
+    MAP_MAGNIFIER_BASE_SIZE,
+    { width: 1_000, height: 800 }
+  )
+  assert.deepEqual(moved, { x: 510, y: 290 })
+})
+
+test('le pavé tactile redimensionne le rectangle sans changer ses proportions', (): void => {
+  const enlarged = scaleMapMagnifierSize(MAP_MAGNIFIER_BASE_SIZE, -100)
+  const reduced = scaleMapMagnifierSize(MAP_MAGNIFIER_BASE_SIZE, 100)
+
+  assert.ok(enlarged.width > MAP_MAGNIFIER_BASE_SIZE.width)
+  assert.ok(reduced.width < MAP_MAGNIFIER_BASE_SIZE.width)
+  assert.equal(enlarged.width / enlarged.height, MAP_MAGNIFIER_BASE_SIZE.width / MAP_MAGNIFIER_BASE_SIZE.height)
+  assert.equal(scaleMapMagnifierSize(MAP_MAGNIFIER_BASE_SIZE, 10_000).width, 220)
+  assert.equal(scaleMapMagnifierSize(MAP_MAGNIFIER_BASE_SIZE, -10_000).width, 560)
+})
 
 function pointInRing(point: [number, number], ring: Position[]): boolean {
   let inside = false
@@ -168,6 +202,81 @@ test('la hitzone maritime peut dépasser le fantôme sans voler le clic dans un 
   assert.equal(selected, largeNeighbor)
 })
 
+test('une hitzone insulaire ne se fait pas bloquer par un ancien contour côtier trop large', (): void => {
+  const island = squareFeature(833, [5, 5, 6, 6])
+  const coarseNeighbor = squareFeature(826, [0, 0, 20, 20])
+  const preciseNeighbor = squareFeature(826, [0, 0, 3, 20])
+  preciseNeighbor.properties = { ...preciseNeighbor.properties, hitTestResolution: '10m' }
+
+  const selected = chooseCountryFeatureAtPoint(
+    screenMap,
+    { x: 4, y: 5.5 },
+    [coarseNeighbor, preciseNeighbor, island],
+    coarseNeighbor,
+    (feature) => (feature === island ? 1_000 : 1_000_000),
+    (feature) => (feature === island ? 24 : 0)
+  )
+  assert.equal(selected, island)
+})
+
+test('les îles du territoire britannique de l’océan Indien gardent une hitzone maritime sans métrique locale', (): void => {
+  const biotIsland = squareFeature('086', [0, 0, 1, 1])
+  const hit = getCountryFeatureHit(screenMap, biotIsland, { x: 20, y: 0.5 }, null, 24)
+  assert.equal(hit?.isGhostHit, true)
+})
+
+test('un petit îlot reste ciblable en mer même si la superficie totale du pays est grande', (): void => {
+  const archipelago: CountryHitFeature = {
+    properties: { sourceId: 581 },
+    layer: { id: 'countries-fill-10m' },
+    geometry: {
+      type: 'MultiPolygon',
+      coordinates: [
+        [
+          [
+            [0, 0],
+            [1, 0],
+            [1, 1],
+            [0, 1],
+            [0, 0]
+          ]
+        ],
+        [
+          [
+            [100, 100],
+            [200, 100],
+            [200, 200],
+            [100, 200],
+            [100, 100]
+          ]
+        ]
+      ]
+    }
+  }
+
+  const marineHit = getCountryFeatureHit(screenMap, archipelago, { x: 3, y: 0.5 }, 900_000, 24)
+  assert.equal(marineHit?.isGhostHit, true)
+
+  const landHit = getCountryFeatureHit(screenMap, archipelago, { x: 150, y: 150 }, 900_000, 24)
+  assert.equal(landHit?.distance, 0)
+  assert.equal(landHit?.isGhostHit, undefined)
+})
+
+test('Liechtenstein peut avoir un fantôme quatre fois plus grand en gardant sa forme', (): void => {
+  const liechtenstein = squareFeature(438, [0, 0, 1, 1])
+  const farEdgeHit = getCountryFeatureHit(screenMap, liechtenstein, { x: 2.2, y: 0.5 }, 137, 0, 4)
+  assert.equal(farEdgeHit?.isGhostHit, true)
+  assert.equal(getCountryFeatureHit(screenMap, liechtenstein, { x: 2.6, y: 0.5 }, 137, 0, 4), null)
+})
+
+test('la hitzone terrestre augmente avec la taille des voisins et diminue au zoom', (): void => {
+  assert.equal(getLandNeighborHitRadius(0, [1_000_000, 400_000]), 40)
+  assert.equal(getLandNeighborHitRadius(0, [80_000, 60_000]), 30)
+  assert.equal(getLandNeighborHitRadius(0, [8_000, 4_000]), 14)
+  assert.equal(getLandNeighborHitRadius(8, [1_000_000]), 10)
+  assert.equal(getLandNeighborHitRadius(0, []), 0)
+})
+
 test('les très petits pays bordés uniquement par de grands pays gardent une hitzone élargie hors du voisin', (): void => {
   const largeNeighbor = squareFeature(380, [0, 0, 4.6, 20])
   const enclave = squareFeature(674, [5, 5, 6, 6])
@@ -205,7 +314,7 @@ test('un pays voisin reste sélectionnable dans sa géométrie malgré le halo d
   assert.equal(selected, largeNeighbor)
 })
 
-test('Maj parcourt les petits territoires et reboucle sur le premier', (): void => {
+test('le parcours des petits territoires reboucle sur le premier', (): void => {
   const guyana = squareFeature(254, [0, 0, 1, 1])
   const gabon = squareFeature(266, [2, 0, 3, 1])
   const ghana = squareFeature(288, [4, 0, 5, 1])

@@ -80,6 +80,21 @@ export const keyboardShortcutActions = [
     modifiers: []
   },
   {
+    id: 'map.magnifier',
+    category: 'Carte et caméra',
+    label: 'Activer la loupe en la maintenant',
+    key: 'Shift',
+    modifiers: [],
+    trigger: 'hold'
+  },
+  {
+    id: 'map.cycleNearbyTerritories',
+    category: 'Carte et caméra',
+    label: 'Parcourir les petits territoires proches',
+    key: 'Alt',
+    modifiers: []
+  },
+  {
     id: 'map.toggleGlobe',
     category: 'Carte et caméra',
     label: 'Basculer plan et globe',
@@ -212,7 +227,8 @@ type KeyboardShortcutContextValue = {
   resetBindings: () => void
   registerHandler: (
     actionId: KeyboardShortcutActionId,
-    handler: (event: KeyboardEvent) => void
+    handler: (event: KeyboardEvent) => void,
+    onRelease?: (event: KeyboardEvent) => void
   ) => () => void
   hasActiveBinding: (event: KeyboardEvent) => boolean
   setCaptureMode: (active: boolean) => void
@@ -231,6 +247,8 @@ const KeyboardShortcutContext = createContext<KeyboardShortcutContextValue | nul
 type ShortcutContext = 'quiz' | 'comparator' | 'exploration' | 'placingMask'
 
 function shortcutContexts(id: KeyboardShortcutActionId): readonly ShortcutContext[] {
+  if (id === 'map.magnifier' || id === 'map.cycleNearbyTerritories')
+    return ['quiz', 'comparator', 'exploration', 'placingMask']
   if (id.startsWith('quiz.')) return ['quiz']
   if (id.startsWith('comparator.')) return ['comparator']
   if (id === 'map.addMask' || id === 'map.editMask') return ['exploration']
@@ -312,6 +330,19 @@ export function shortcutBindingFromEvent(event: KeyboardEvent): KeyboardShortcut
   return captureShortcut(event, keyboardLayout?.get(event.code))
 }
 
+export function keyboardShortcutMatchesEvent(
+  event: KeyboardEvent,
+  binding: KeyboardShortcutBinding | null | undefined
+): boolean {
+  return shortcutMatchesKey(
+    binding,
+    event.code,
+    event.key,
+    eventModifiers(event),
+    keyboardLayout?.get(event.code)
+  )
+}
+
 export function formatShortcutBinding(
   binding: KeyboardShortcutBinding | null,
   unassignedLabel = 'Non attribué'
@@ -334,7 +365,11 @@ export function formatShortcutBinding(
         ? 'Entrée'
         : binding.key === 'Space'
           ? 'Espace'
-          : binding.key.toLocaleUpperCase()
+          : binding.key === 'Alt'
+            ? '⌥'
+          : binding.key === 'Shift'
+            ? '⇧'
+            : binding.key.toLocaleUpperCase()
   )
   return parts.join(' + ')
 }
@@ -352,7 +387,13 @@ export function KeyboardShortcutProvider({ children }: { children: ReactNode }):
   const bindingsRef = useRef(bindings)
   const captureModeRef = useRef(captureMode)
   const handlersRef = useRef(
-    new Map<KeyboardShortcutActionId, Set<(event: KeyboardEvent) => void>>()
+    new Map<
+      KeyboardShortcutActionId,
+      Set<{
+        handler: (event: KeyboardEvent) => void
+        onRelease?: (event: KeyboardEvent) => void
+      }>
+    >()
   )
 
   useEffect(() => {
@@ -365,12 +406,17 @@ export function KeyboardShortcutProvider({ children }: { children: ReactNode }):
   }, [bindings])
 
   const registerHandler = useCallback(
-    (actionId: KeyboardShortcutActionId, handler: (event: KeyboardEvent) => void) => {
+    (
+      actionId: KeyboardShortcutActionId,
+      handler: (event: KeyboardEvent) => void,
+      onRelease?: (event: KeyboardEvent) => void
+    ) => {
       const handlers = handlersRef.current.get(actionId) ?? new Set()
-      handlers.add(handler)
+      const registered = { handler, onRelease }
+      handlers.add(registered)
       handlersRef.current.set(actionId, handlers)
       return () => {
-        handlers.delete(handler)
+        handlers.delete(registered)
         if (handlers.size === 0) handlersRef.current.delete(actionId)
       }
     },
@@ -444,7 +490,11 @@ export function KeyboardShortcutProvider({ children }: { children: ReactNode }):
     )
       return
     const modifiers = eventModifiers(event)
-    if (isTextEditingTarget(event.target) && !modifiers.some((modifier) => modifier !== 'Shift'))
+    if (
+      isTextEditingTarget(event.target) &&
+      !(event.key === 'Shift' && !event.metaKey && !event.ctrlKey && !event.altKey) &&
+      !modifiers.some((modifier) => modifier !== 'Shift')
+    )
       return
     const baseKey = keyboardLayout?.get(event.code)
     return keyboardShortcutActions.find(
@@ -460,43 +510,83 @@ export function KeyboardShortcutProvider({ children }: { children: ReactNode }):
 
   useEffect(() => {
     let pendingModifier: string | null = null
+    let heldAction: { actionId: KeyboardShortcutActionId; key: string; code: string } | null = null
     const cancelModifier = (): void => {
       pendingModifier = null
     }
-    const dispatchShortcut = (event: KeyboardEvent): void => {
-      const action = findActiveAction(event)
+    const dispatchShortcut = (
+      event: KeyboardEvent,
+      actionId?: KeyboardShortcutActionId,
+      phase: 'trigger' | 'release' = 'trigger'
+    ): void => {
+      const action = actionId
+        ? keyboardShortcutActions.find((candidate) => candidate.id === actionId)
+        : findActiveAction(event)
       if (!action) return
       event.preventDefault()
       event.stopImmediatePropagation()
       const handlers = handlersRef.current.get(action.id)
       // The same command may appear in a panel and its fullscreen variant.
       const callbacks = handlers ? [...handlers] : []
-      callbacks[callbacks.length - 1]?.(event)
+      const callback = callbacks[callbacks.length - 1]
+      if (phase === 'release') callback?.onRelease?.(event)
+      else callback?.handler(event)
     }
     const keyDown = (event: KeyboardEvent): void => {
       if (event.repeat) return
       cancelModifier()
       if (isShortcutModifier(event.key)) {
+        const action = findActiveAction(event)
+        if (action && 'trigger' in action && action.trigger === 'hold') {
+          dispatchShortcut(event, action.id)
+          heldAction = { actionId: action.id, key: event.key, code: event.code }
+          return
+        }
         if (hasActiveBinding(event)) pendingModifier = event.key
+        return
+      }
+      const action = findActiveAction(event)
+      if (action && 'trigger' in action && action.trigger === 'hold') {
+        dispatchShortcut(event, action.id)
+        heldAction = { actionId: action.id, key: event.key, code: event.code }
         return
       }
       dispatchShortcut(event)
     }
     const keyUp = (event: KeyboardEvent): void => {
+      if (heldAction && (event.code === heldAction.code || event.key === heldAction.key)) {
+        const released = heldAction
+        heldAction = null
+        dispatchShortcut(event, released.actionId, 'release')
+        cancelModifier()
+        return
+      }
       if (event.key === pendingModifier) dispatchShortcut(event)
       cancelModifier()
+    }
+    const blur = (): void => {
+      cancelModifier()
+      if (!heldAction) return
+      const released = heldAction
+      heldAction = null
+      dispatchShortcut(
+        new KeyboardEvent('keyup', { key: released.key, code: released.code }),
+        released.actionId,
+        'release'
+      )
     }
     window.addEventListener('keydown', keyDown, true)
     window.addEventListener('keyup', keyUp, true)
     window.addEventListener('pointerdown', cancelModifier, true)
     window.addEventListener('wheel', cancelModifier, { capture: true, passive: true })
-    window.addEventListener('blur', cancelModifier)
+    window.addEventListener('blur', blur)
     return () => {
+      blur()
       window.removeEventListener('keydown', keyDown, true)
       window.removeEventListener('keyup', keyUp, true)
       window.removeEventListener('pointerdown', cancelModifier, true)
       window.removeEventListener('wheel', cancelModifier, true)
-      window.removeEventListener('blur', cancelModifier)
+      window.removeEventListener('blur', blur)
     }
   }, [findActiveAction, hasActiveBinding])
 
@@ -535,5 +625,28 @@ export function useKeyboardShortcut(
   useEffect(() => {
     if (!enabled) return
     return registerHandler(actionId, (event) => handlerRef.current(event))
+  }, [actionId, enabled, registerHandler])
+}
+
+export function useHeldKeyboardShortcut(
+  actionId: KeyboardShortcutActionId,
+  handler: (event: KeyboardEvent) => void,
+  onRelease: (event: KeyboardEvent) => void,
+  enabled = true
+): void {
+  const { registerHandler } = useKeyboardShortcuts()
+  const handlerRef = useRef(handler)
+  const releaseRef = useRef(onRelease)
+  useEffect(() => {
+    handlerRef.current = handler
+    releaseRef.current = onRelease
+  }, [handler, onRelease])
+  useEffect(() => {
+    if (!enabled) return
+    return registerHandler(
+      actionId,
+      (event) => handlerRef.current(event),
+      (event) => releaseRef.current(event)
+    )
   }, [actionId, enabled, registerHandler])
 }

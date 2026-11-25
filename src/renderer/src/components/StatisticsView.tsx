@@ -149,6 +149,16 @@ export function StatisticsView({
   const totalPointsEarned = playedRows.reduce((sum, country) => sum + country.pointsEarned, 0)
   const totalPointsPossible = playedRows.reduce((sum, country) => sum + country.pointsPossible, 0)
   const overallRate = totalPointsPossible ? totalPointsEarned / totalPointsPossible : null
+  const borderlessPrecision = quizHistory.reduce(
+    (aggregate, entry) => ({
+      total: aggregate.total + (entry.borderlessMapPrecision?.total ?? 0),
+      samples: aggregate.samples + (entry.borderlessMapPrecision?.samples ?? 0)
+    }),
+    { total: 0, samples: 0 }
+  )
+  const borderlessPrecisionRate = borderlessPrecision.samples
+    ? borderlessPrecision.total / borderlessPrecision.samples / 100
+    : null
   const totalCompletedSessions =
     selectedContinent === 'world'
       ? Object.values(quizProgress).reduce((sum, mode) => sum + mode.completedSessions, 0)
@@ -398,6 +408,13 @@ export function StatisticsView({
                 <span>{t('Réussite globale')}</span>
                 <strong>{percent(overallRate)}</strong>
                 <small>{t('Points obtenus selon les essais')}</small>
+              </article>
+              <article className="statistics-card statistics-card-highlight">
+                <span>{t('Sans frontières')}</span>
+                <strong>{percent(borderlessPrecisionRate)}</strong>
+                <small>
+                  {t('Précision moyenne des clics')} · {borderlessPrecision.samples} {t('clics')}
+                </small>
               </article>
             </section>
 

@@ -25,6 +25,11 @@ It attributes Estimation and Draw Borders sessions regionally only when their
 stored configuration identifies one continent or a set of countries contained
 entirely within it.
 
+Quiz history may include an optional aggregate of map-click proximity scores
+recorded while borders were hidden. The statistics screen derives its global
+“Sans frontières” average from these samples; older entries without the field
+remain valid and are not assigned a fabricated score.
+
 `countryCatalog.json` is the offline 195-country catalog used by quiz modes. Its
 numeric identifiers match the bundled Natural Earth country features.
 
@@ -78,8 +83,8 @@ country ranking is published, historical notes, and checked facts. The profile
 view does not request these data from the network.
 
 The primary facts come from the 2025 CIA World Factbook archive. Named rivers
-combine Natural Earth 1:10m river lines and the World Bank *Major Rivers of the
-World* dataset (CC BY 4.0). Country high points also use Natural Earth 10m
+combine Natural Earth 1:10m river lines and the World Bank _Major Rivers of the
+World_ dataset (CC BY 4.0). Country high points also use Natural Earth 10m
 elevation points where the Factbook has no value. Several previously empty river
 profiles are supplemented with cited national hydrology sources (Albania, Algeria,
 Andorra, Belize, Brunei, Cabo Verde, Cuba, Cyprus, Denmark, Djibouti, Dominica,

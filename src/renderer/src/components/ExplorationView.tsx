@@ -50,6 +50,8 @@ type SavedExplorationView = {
   showBorders: boolean
   showTerritories: boolean
   showLabels: boolean
+  showMarineLabels?: boolean
+  showMarineBorders?: boolean
   showFlagTerritories: boolean
   showResources: boolean
   showRivers: boolean
@@ -152,6 +154,8 @@ export function ExplorationView({
   const [showBorders, setShowBorders] = useState(true)
   const [showTerritories, setShowTerritories] = useState(true)
   const [showLabels, setShowLabels] = useState(false)
+  const [showMarineLabels, setShowMarineLabels] = useState(false)
+  const [showMarineBorders, setShowMarineBorders] = useState(false)
   const [showFlagTerritories, setShowFlagTerritories] = useState(false)
   const [showResources, setShowResources] = useState(false)
   const [showRivers, setShowRivers] = useState(false)
@@ -192,6 +196,8 @@ export function ExplorationView({
     showBorders: true,
     showTerritories: true,
     showLabels: false,
+    showMarineLabels: false,
+    showMarineBorders: false,
     showFlagTerritories: false,
     showResources: false,
     showRivers: false,
@@ -280,6 +286,8 @@ export function ExplorationView({
       showBorders,
       showTerritories,
       showLabels,
+      showMarineLabels,
+      showMarineBorders,
       showFlagTerritories,
       showResources,
       showRivers,
@@ -310,6 +318,8 @@ export function ExplorationView({
     setShowBorders(view.showBorders)
     setShowTerritories(view.showTerritories)
     setShowLabels(view.showLabels)
+    setShowMarineLabels(view.showMarineLabels ?? false)
+    setShowMarineBorders(view.showMarineBorders ?? false)
     setShowFlagTerritories(view.showFlagTerritories)
     setShowResources(view.showResources)
     setShowRivers(view.showRivers)
@@ -422,6 +432,8 @@ export function ExplorationView({
     }
     if (id === 'borders') setShowBorders(enabled)
     if (id === 'labels') setShowLabels(enabled)
+    if (id === 'marineLabels') setShowMarineLabels(enabled)
+    if (id === 'marineBorders') setShowMarineBorders(enabled)
     if (id === 'rivers') setShowRivers(enabled)
     if (id === 'mountains') setShowMountains(enabled)
     if (id === 'flags') setShowFlagTerritories(enabled)
@@ -655,6 +667,23 @@ export function ExplorationView({
             enabled: showLabels,
             density: layerDensities.labels,
             maximum: mapLayerDensityMaximums.labels
+          },
+          {
+            id: 'marineLabels',
+            label: 'Mer/Océans',
+            enabled: showMarineLabels,
+            density: 0,
+            maximum: 0,
+            hideSummary: true,
+            subLayer: {
+              id: 'marineBorders',
+              label: 'Contours',
+              enabled: showMarineBorders,
+              density: 0,
+              maximum: 0,
+              showDensity: false
+            },
+            title: 'Afficher les noms des mers et océans documentés'
           },
           {
             id: 'rivers',
@@ -932,6 +961,8 @@ export function ExplorationView({
               showBorders={showBorders}
               showTerritories={showTerritories}
               showLabels={showLabels}
+              showMarineLabels={showMarineLabels}
+              showMarineBorders={showMarineBorders}
               globeMode={globeMode}
               onToggleGlobeMode={onToggleGlobeMode}
               allowCameraOrbit

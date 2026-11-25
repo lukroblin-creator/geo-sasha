@@ -38,6 +38,8 @@ export type QuizHistoryEntry = {
   questions: QuizHistoryQuestion[]
   comparisonKey?: string
   timing?: QuizHistoryTiming
+  /** Aggregate click accuracy samples recorded while map borders were hidden. */
+  borderlessMapPrecision?: { total: number; samples: number }
 }
 
 export type QuizHistorySourceRow = {
@@ -142,6 +144,8 @@ function isHistoryEntry(value: unknown): value is QuizHistoryEntry {
     Array.isArray(entry.questions) &&
     entry.questions.every(isHistoryQuestion) &&
     (entry.comparisonKey === undefined || typeof entry.comparisonKey === 'string') &&
+    (entry.borderlessMapPrecision === undefined ||
+      isBorderlessMapPrecision(entry.borderlessMapPrecision)) &&
     (entry.timing === undefined || isHistoryTiming(entry.timing))
   )
 }
@@ -161,6 +165,22 @@ function isHistoryTiming(value: unknown): value is QuizHistoryTiming {
     Number.isInteger(timing.timedOutQuestions) &&
     typeof timing.notReachedQuestions === 'number' &&
     Number.isInteger(timing.notReachedQuestions)
+  )
+}
+
+function isBorderlessMapPrecision(
+  value: unknown
+): value is NonNullable<QuizHistoryEntry['borderlessMapPrecision']> {
+  if (!value || typeof value !== 'object') return false
+  const precision = value as Record<string, unknown>
+  return (
+    typeof precision.total === 'number' &&
+    Number.isFinite(precision.total) &&
+    precision.total >= 0 &&
+    typeof precision.samples === 'number' &&
+    Number.isInteger(precision.samples) &&
+    precision.samples > 0 &&
+    precision.total <= precision.samples * 100
   )
 }
 

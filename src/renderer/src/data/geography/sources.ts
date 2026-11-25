@@ -24,6 +24,14 @@ export const geographicDataSources: GeographicDataSource[] = [
     scale: '1:10,000,000'
   },
   {
+    id: 'natural-earth-marine-labels',
+    name: 'Natural Earth 10m marine geography labels',
+    provider: 'Natural Earth',
+    license: 'Public domain',
+    scale: '1:10,000,000',
+    resolution: 'Offline point labels for named seas and oceans, derived from marine area polygons'
+  },
+  {
     id: 'geonames-islands',
     name: 'GeoNames island gazetteer',
     provider: 'GeoNames',

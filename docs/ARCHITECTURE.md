@@ -1,6 +1,6 @@
 # Architecture de World Atlas
 
-**Dernière révision : 24 novembre 2026**
+**Dernière révision : 25 novembre 2026**
 
 ## Vue d’ensemble
 
@@ -14,13 +14,16 @@ Le renderer est organisé par domaine :
 - `AppModeSwitcher.tsx` porte la navigation compacte commune, les commandes système et le titre de page ; dans certaines vues, sa barre reste visible et repliable, avec un menu qui gère séparément le survol et l’épinglage au clic.
 - `WorldMapLoader.tsx` charge le moteur cartographique uniquement lorsqu'une vue qui contient une carte est affichée. Les contrôles de caméra et ses calculs d'orientation sont isolés dans `WorldMapCameraControls.tsx` et `worldMapCamera.ts`.
 - La sélection cartographique est répartie entre `worldMapCountrySelection.ts`, `useWorldMapCountrySelection.ts` et `data/geography/countryHitTesting.ts`.
+- `mapMagnifierUtils.ts` calcule le grossissement, le ralentissement du pointeur et les dimensions de la loupe ; `MapMagnifier.tsx` rend la vue cartographique agrandie partagée par les modes. `WorldMap.tsx` relie les gestes verticaux au zoom, les gestes horizontaux à la taille et utilise Pointer Lock pour garder un déplacement continu aux bords de fenêtre.
 - Les masques utilisent `worldMapOpacityMasks.ts`, `worldMapMaskGeometry.ts` et `data/geography/opacityMaskLogic.ts`, tandis que `MapLayerManager.tsx` porte leur interface de pile.
 - Le rendu polaire du globe est isolé dans `worldMapPolarTexture.ts`, `polarTextureBlend.ts` et `useWorldMapGlobeTexture.ts`.
 - Le système de raccourcis est centralisé dans `data/keyboardShortcuts.tsx` et `data/shortcutKeys.ts`. `SettingsMenu.tsx` et `ShortcutKeyboardDialog.tsx` éditent les associations via le même fournisseur ; `shortcutKeyboardLayout.ts` décrit le clavier visuel.
 - `data/geography/` regroupe les entités, géométries, données physiques et règles de calques.
+- `data/geography/marineLabels.json` fournit les géométries hors ligne des mers et océans. `marineRegions.ts` fusionne les entrées hémisphériques ayant le même nom localisé ; `marineLabelAnchors.ts`, appelé par `labelWorker.ts`, calcule leurs ancrages visibles ; `marineBoundaryAnimation.ts` produit le contour progressif survolé. `MapLayerControls.tsx` expose séparément les noms et le sous-calque des frontières marines ; `WorldMap.tsx` gère leur rendu MapLibre.
 - `data/geography/explorationViews.ts` place la vue système « Global » devant les vues personnelles sans modifier leur stockage.
 - `data/geography/countryComparatorTextQuery.ts` analyse et complète les requêtes textuelles du comparateur ; `CountryComparatorView.tsx` traduit ces expressions en critères du comparateur existant.
 - `data/quiz/` regroupe les questions, les réponses, les presets, les sessions et les statistiques de quiz.
+- `quizHistory.ts` conserve aussi les sommes et nombres d’échantillons de précision des clics faits frontières masquées ; `StatisticsView.tsx` en dérive la moyenne globale « Sans frontières ». Les anciens historiques restent valides sans ce champ facultatif.
 - `data/quiz/quizRewards.ts` calcule les accomplissements de manière déterministe depuis l’historique ; `QuizRewardsPanel.tsx` les présente dans les statistiques sans stockage distinct.
 - `data/quiz/regionalStatistics.ts` filtre les statistiques pays et attribue les sessions aux continents uniquement lorsque l’historique contient des réponses ou une configuration suffisamment précise.
 - `data/quiz/quizTiming.ts` porte les réglages, calculs de durée et clés stables de comparaison ; `quizPresetValidation.ts` valide les presets sans dépendre de leur interface de stockage.
@@ -37,7 +40,7 @@ La compilation de l'application ne constitue pas encore une préparation complè
 
 `App.tsx` orchestre les modes de l’application et conserve encore une grande partie de l’état partagé : quiz actif, sélection cartographique, presets, progression, historique et affichage des vues. Il transmet cet état aux composants par propriétés et reçoit les actions par callbacks.
 
-`KeyboardShortcutProvider` conserve les associations clavier, résout les conflits par contexte et distribue les gestionnaires enregistrés par identifiant d’action. Les composants ne doivent pas écouter globalement les mêmes touches en parallèle, sauf pour un comportement volontairement standard et protégé, comme l’avancement par Entrée lorsqu’aucun champ ni raccourci actif ne la consomme.
+`KeyboardShortcutProvider` conserve les associations clavier, résout les conflits par contexte et distribue les gestionnaires enregistrés par identifiant d’action. Le registre `keyboardShortcutActions` alimente automatiquement le menu de raccourcis et le clavier visuel ; tout raccourci configurable doit y être déclaré puis relié au fournisseur, y compris les actions maintenues qui ont un déclenchement et une libération. Les composants ne doivent pas écouter globalement les mêmes touches en parallèle, sauf pour un comportement volontairement standard et protégé, comme l’avancement par Entrée lorsqu’aucun champ ni raccourci actif ne la consomme.
 
 `WorldMap.tsx` est encore le moteur d'interaction cartographique côté interface. Il relie MapLibre aux données géographiques, aux calques visuels, aux masques, à la caméra, à la sélection de territoires et aux interactions propres aux quiz. Les règles de sélection et de hitzone, de masques, et les calculs mathématiques de caméra sont extraits dans des modules dédiés et testables. Les composants de vue consomment ces fonctions et affichent les contrôles associés.
 

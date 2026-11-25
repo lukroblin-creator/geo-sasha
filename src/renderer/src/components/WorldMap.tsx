@@ -3,7 +3,7 @@ import { createPortal } from 'react-dom'
 import type { PointerEvent as ReactPointerEvent } from 'react'
 import type { CSSProperties, JSX, ReactNode } from 'react'
 import Map, { Source, Layer, Marker } from 'react-map-gl/maplibre'
-import { LngLat } from 'maplibre-gl'
+import { LngLat, Point as MapLibrePoint } from 'maplibre-gl'
 
 import type { MapLayerMouseEvent, MapRef } from 'react-map-gl/maplibre'
 
@@ -17,7 +17,14 @@ import type {
   SymbolLayerSpecification
 } from 'maplibre-gl'
 
-import type { FeatureCollection, Geometry, Point, Position } from 'geojson'
+import type {
+  FeatureCollection,
+  Geometry,
+  LineString,
+  MultiLineString,
+  Point,
+  Position
+} from 'geojson'
 
 import { world10mMap, world10m } from '../data/world'
 import countryCatalog from '../data/quiz/countryCatalog.json'
@@ -37,9 +44,14 @@ import type {
   MapOpacityMaskDraft,
   ManagedMapLayerId
 } from '../data/geography/mapLayerManager'
+import type { MarineLabelProperties } from '../data/geography/marineLabelAnchors'
+import marineLabelData from '../data/geography/marineLabels.json'
+import { createMarineBoundaryAtProgress } from '../data/geography/marineBoundaryAnimation'
+import { prepareMarineRegions } from '../data/geography/marineRegions'
 import { defaultMapLayerOpacities, defaultMapLayerOrder } from '../data/geography/mapLayerManager'
 import type { MapProximityResult } from '../data/quiz/mapProximity'
 import { MapFlagOverlay } from './MapFlagOverlay'
+import { MapMagnifier } from './MapMagnifier'
 import { MapResourceOverlay } from './MapResourceOverlay'
 import { WorldMapCameraControls } from './WorldMapCameraControls'
 import { getResourceIndustryFactsForMapFeature } from '../data/geography/resources'
@@ -104,6 +116,17 @@ import {
 } from './worldMapOpacityMasks'
 import { globeEarthTextureCoordinates } from './worldMapPolarTexture'
 import { useWorldMapGlobeTexture } from './useWorldMapGlobeTexture'
+import {
+  adjustMapMagnifierZoom,
+  getMapMagnifierScrollPreference,
+  getMapMagnifierWheelAxis,
+  getMapMagnifierZoom,
+  MAP_MAGNIFIER_BASE_SIZE,
+  MAP_MAGNIFIER_SLOWDOWN,
+  scaleMapMagnifierSize,
+  type MapMagnifierPoint,
+  type MapMagnifierSize
+} from './mapMagnifierUtils'
 
 import {
   getEntityDisplayName,
@@ -204,6 +227,8 @@ type WorldMapProps = {
   showBorders: boolean
   showTerritories?: boolean
   showLabels: boolean
+  showMarineLabels?: boolean
+  showMarineBorders?: boolean
   globeMode?: boolean
   onToggleGlobeMode: () => void
   allowCameraOrbit?: boolean
@@ -281,7 +306,11 @@ type WorldMapProps = {
     }
   >
   onCountryDeselected?: () => void
-  onMapClick?: (position: [number, number]) => MapProximityResult | null
+  onMapClick?: (
+    position: [number, number],
+    sourceFeatureId?: string | number
+  ) => MapProximityResult | null
+  mapProximityAttempts?: number
   onCountrySelected?: (
     sourceFeatureId: string | number,
     name: string,
@@ -331,6 +360,40 @@ type WorkerResponse = {
   type: 'ready' | 'labels'
   requestId?: number
   labels?: FeatureCollection<Point, LabelProperties>
+  marineLabels?: FeatureCollection<Point, MarineLabelProperties>
+}
+
+type MarineBoundaryProperties = { marineId: string }
+type MarineOutlineProperties = MarineBoundaryProperties & { minZoom: number }
+
+const marineRegions = prepareMarineRegions(
+  marineLabelData as unknown as Parameters<typeof prepareMarineRegions>[0]
+)
+const marineGeometryById = new globalThis.Map(
+  marineRegions.features.map((area) => [area.properties.marineId ?? '', area.geometry])
+)
+const marineBoundaryLayerData: FeatureCollection<MultiLineString, MarineOutlineProperties> = {
+  type: 'FeatureCollection',
+  features: marineRegions.features.flatMap((area) => {
+    const geometry = area.geometry
+    const lines =
+      geometry.type === 'Polygon'
+        ? geometry.coordinates
+        : geometry.type === 'MultiPolygon'
+          ? geometry.coordinates.flat()
+          : null
+    if (!lines) return []
+    return [
+      {
+        type: 'Feature' as const,
+        geometry: { type: 'MultiLineString' as const, coordinates: lines as Position[][] },
+        properties: {
+          marineId: area.properties.marineId ?? '',
+          minZoom: area.properties.minZoom
+        }
+      }
+    ]
+  })
 }
 
 type WrongAnswerTarget = {
@@ -338,6 +401,13 @@ type WrongAnswerTarget = {
   entityId: string | null
   id: number
   interactionResetKey: string | number | undefined
+}
+
+type ActiveMapMagnifier = {
+  position: MapMagnifierPoint
+  size: MapMagnifierSize
+  center: [number, number]
+  zoom: number
 }
 
 const wrongAnswerFillLayerIds = [
@@ -361,6 +431,7 @@ type LabelUpdateRequest = {
   type: 'update'
   bbox: [number, number, number, number]
   zoom: number
+  includeMarineLabels: boolean
   requestId: number
 }
 
@@ -702,6 +773,8 @@ function WorldMap({
   showBorders,
   showTerritories = true,
   showLabels,
+  showMarineLabels = false,
+  showMarineBorders = false,
   globeMode = false,
   onToggleGlobeMode,
   allowCameraOrbit = false,
@@ -749,6 +822,7 @@ function WorldMap({
   countryAccuracyByAlpha2,
   onCountryDeselected,
   onMapClick,
+  mapProximityAttempts = 0,
   onCountrySelected
 }: WorldMapProps): JSX.Element {
   const { language, t } = useLanguage()
@@ -892,6 +966,18 @@ function WorldMap({
   const maskedRasterUrlSetRef = useRef(new Set<string>())
   const maskedRasterGenerationRef = useRef(0)
   const [mapInstance, setMapInstance] = useState<MapLibreMap | null>(null)
+  const [mapHelpOpen, setMapHelpOpen] = useState(false)
+  const mapHelpRef = useRef<HTMLDivElement>(null)
+  const [mapMagnifier, setMapMagnifier] = useState<ActiveMapMagnifier | null>(null)
+  const mapMagnifierRef = useRef<ActiveMapMagnifier | null>(null)
+  const magnifierPointerRef = useRef<MapMagnifierPoint | null>(null)
+  const magnifierMapRef = useRef<MapLibreMap | null>(null)
+  const magnifierPanRef = useRef<{ x: number; y: number; frame: number | null }>({
+    x: 0,
+    y: 0,
+    frame: null
+  })
+  const magnifierCameraChangedRef = useRef(false)
   const [mapZoom, setMapZoom] = useState(1.5)
   const [perspectiveCorrectionEnabled, setPerspectiveCorrectionEnabled] = useState(false)
   const [perspectiveDrag, setPerspectiveDrag] = useState<PerspectiveDrag | null>(null)
@@ -960,6 +1046,21 @@ function WorldMap({
     pointerCoordinatesForMap?.map === mapInstance ? pointerCoordinatesForMap.coordinates : null
   const [optionKeyPressed, setOptionKeyPressed] = useState(false)
   useEffect(() => {
+    if (!mapHelpOpen) return
+    const closeMapHelpOutside = (event: PointerEvent): void => {
+      if (!mapHelpRef.current?.contains(event.target as Node)) setMapHelpOpen(false)
+    }
+    const closeMapHelpOnEscape = (event: KeyboardEvent): void => {
+      if (event.key === 'Escape') setMapHelpOpen(false)
+    }
+    document.addEventListener('pointerdown', closeMapHelpOutside, true)
+    document.addEventListener('keydown', closeMapHelpOnEscape, true)
+    return () => {
+      document.removeEventListener('pointerdown', closeMapHelpOutside, true)
+      document.removeEventListener('keydown', closeMapHelpOnEscape, true)
+    }
+  }, [mapHelpOpen])
+  useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent): void => {
       if (event.key === 'Alt') setOptionKeyPressed(true)
     }
@@ -976,6 +1077,131 @@ function WorldMap({
       window.removeEventListener('blur', clearModifier)
     }
   }, [])
+  const setActiveMapMagnifier = useCallback((next: ActiveMapMagnifier | null): void => {
+    mapMagnifierRef.current = next
+    document.body?.classList.toggle('map-magnifier-active', next !== null)
+    document.body?.classList.toggle(
+      'map-magnifier-pointer-locked',
+      next !== null && document.pointerLockElement === mapInstance?.getCanvas()
+    )
+    if (!next) {
+      const pendingPan = magnifierPanRef.current
+      if (pendingPan.frame !== null) window.cancelAnimationFrame(pendingPan.frame)
+      pendingPan.x = 0
+      pendingPan.y = 0
+      pendingPan.frame = null
+    }
+    setMapMagnifier(next)
+  }, [mapInstance])
+  const handleMagnifierMapReady = useCallback((map: MapLibreMap | null): void => {
+    magnifierMapRef.current = map
+    const active = mapMagnifierRef.current
+    if (!map || !active || !mapInstance) return
+    const focus = mapInstance.unproject([active.position.x, active.position.y])
+    map.jumpTo({
+      center: [focus.lng, focus.lat],
+      zoom: active.zoom,
+      bearing: mapInstance.getBearing(),
+      pitch: mapInstance.getPitch(),
+      roll: mapInstance.getRoll()
+    })
+  }, [mapInstance])
+  const finalizeMagnifierCameraMove = useCallback((): void => {
+    if (!mapInstance || !magnifierCameraChangedRef.current) return
+    magnifierCameraChangedRef.current = false
+    mapInstance.fire('moveend')
+  }, [mapInstance])
+  const handleMagnifierShiftKeyDown = useCallback(
+    (pointer: MapMagnifierPoint): void => {
+      if (!mapInstance || perspectiveCorrectionEnabled) return
+      const size = { ...MAP_MAGNIFIER_BASE_SIZE }
+      const canvas = mapInstance.getCanvas()
+      // Keep the hidden system pointer exactly under the loupe reticle.
+      // Clamping the loupe center near the viewport edges made the two drift apart.
+      const position = pointer
+      const center = mapInstance.unproject([position.x, position.y])
+      magnifierPointerRef.current = pointer
+      try {
+        const pointerLockRequest = canvas.requestPointerLock()
+        if (pointerLockRequest instanceof Promise) {
+          void pointerLockRequest.catch(() => undefined)
+        }
+      } catch {
+        // The loupe remains usable with ordinary cursor tracking if pointer lock is unavailable.
+      }
+      setActiveMapMagnifier({
+        position,
+        size,
+        center: [center.lng, center.lat],
+        zoom: getMapMagnifierZoom(mapInstance.getZoom())
+      })
+    },
+    [mapInstance, perspectiveCorrectionEnabled, setActiveMapMagnifier]
+  )
+  const handleMagnifierShiftKeyUp = useCallback((): void => {
+    setActiveMapMagnifier(null)
+    magnifierPointerRef.current = null
+    if (mapInstance && document.pointerLockElement === mapInstance.getCanvas()) {
+      document.exitPointerLock()
+    }
+    finalizeMagnifierCameraMove()
+  }, [finalizeMagnifierCameraMove, mapInstance, setActiveMapMagnifier])
+  useEffect(() => {
+    const canvas = mapInstance?.getCanvas()
+    if (!canvas) return
+    const syncPointerLockState = (): void => {
+      document.body?.classList.toggle(
+        'map-magnifier-pointer-locked',
+        Boolean(mapMagnifierRef.current && document.pointerLockElement === canvas)
+      )
+    }
+    document.addEventListener('pointerlockchange', syncPointerLockState)
+    document.addEventListener('pointerlockerror', syncPointerLockState)
+    syncPointerLockState()
+    return () => {
+      document.removeEventListener('pointerlockchange', syncPointerLockState)
+      document.removeEventListener('pointerlockerror', syncPointerLockState)
+      document.body?.classList.remove('map-magnifier-pointer-locked')
+    }
+  }, [mapInstance])
+  useEffect(() => {
+    const clearMagnifier = (): void => {
+      handleMagnifierShiftKeyUp()
+    }
+    window.addEventListener('blur', clearMagnifier)
+    return () => {
+      window.removeEventListener('blur', clearMagnifier)
+      if (mapInstance && document.pointerLockElement === mapInstance.getCanvas()) {
+        document.exitPointerLock()
+      }
+    }
+  }, [handleMagnifierShiftKeyUp, mapInstance])
+  useEffect(() => {
+    const resizeMagnifier = (event: WheelEvent): void => {
+      const active = mapMagnifierRef.current
+      if (!active) return
+      event.preventDefault()
+      event.stopImmediatePropagation()
+      const axis = getMapMagnifierWheelAxis(event.deltaX, event.deltaY)
+      if (!axis) return
+      const direction = getMapMagnifierScrollPreference() === 'inverted' ? -1 : 1
+      const size =
+        axis === 'horizontal'
+          ? scaleMapMagnifierSize(active.size, -event.deltaX * direction)
+          : active.size
+      const zoom =
+        axis === 'vertical'
+          ? adjustMapMagnifierZoom(
+              active.zoom,
+              event.deltaY * direction,
+              mapInstance?.getZoom() ?? 0
+            )
+          : active.zoom
+      setActiveMapMagnifier({ ...active, size, zoom })
+    }
+    document.addEventListener('wheel', resizeMagnifier, { capture: true, passive: false })
+    return () => document.removeEventListener('wheel', resizeMagnifier, true)
+  }, [mapInstance, setActiveMapMagnifier])
   const opacityMaskHoverTargets = useMemo(
     () =>
       opacityMaskCollections.map(({ mask, data }) => ({
@@ -1056,6 +1282,7 @@ function WorldMap({
     proximity: MapProximityResult
     id: number
     interactionResetKey: string | number | undefined
+    showWithBorders: boolean
   } | null>(null)
   const [selectionBoundaryResetKey, setSelectionBoundaryResetKey] = useState<
     string | number | undefined | null
@@ -1107,8 +1334,138 @@ function WorldMap({
     searchIsOpen,
     searchQuery,
     countryClickHandlerRef,
-    setHoveredCountry
+    setHoveredCountry,
+    onShiftKeyDown: handleMagnifierShiftKeyDown,
+    onShiftKeyUp: handleMagnifierShiftKeyUp
   })
+  useEffect(() => {
+    if (!mapMagnifier || !mapInstance) return
+    clearKeyboardPreselection()
+    const point = mapMagnifier.position
+    const center = mapInstance.unproject([point.x, point.y])
+    const feature = getCountryFeatureAtPoint(mapInstance, point)
+    handleCountryHover({
+      type: 'mousemove',
+      target: mapInstance,
+      originalEvent: new MouseEvent('mousemove'),
+      point: new MapLibrePoint(point.x, point.y),
+      lngLat: center,
+      features: feature ? [feature] : [],
+      preventDefault: () => undefined,
+      defaultPrevented: false
+    } as unknown as MapLayerMouseEvent)
+  }, [clearKeyboardPreselection, handleCountryHover, mapInstance, mapMagnifier])
+  useEffect(() => {
+    if (!mapInstance) return
+    const handleRelativePointerMove = (event: MouseEvent | PointerEvent): void => {
+      const active = mapMagnifierRef.current
+      if (!active || (!event.movementX && !event.movementY)) return
+      const pendingPan = magnifierPanRef.current
+      pendingPan.x += event.movementX
+      pendingPan.y += event.movementY
+      if (pendingPan.frame === null) {
+        pendingPan.frame = window.requestAnimationFrame(() => {
+          const pan = magnifierPanRef.current
+          pan.frame = null
+          const x = pan.x
+          const y = pan.y
+          pan.x = 0
+          pan.y = 0
+          const currentMagnifier = mapMagnifierRef.current
+          if (!currentMagnifier) return
+          if (x || y) {
+            const zoomRatio = 2 ** (currentMagnifier.zoom - mapInstance.getZoom())
+            const movementScale = Math.max(MAP_MAGNIFIER_SLOWDOWN, zoomRatio)
+            const direction = getMapMagnifierScrollPreference() === 'inverted' ? 1 : -1
+            mapInstance.panBy(
+              [(x * direction) / movementScale, (y * direction) / movementScale],
+              { duration: 0 }
+            )
+            magnifierCameraChangedRef.current = true
+          }
+          const point = currentMagnifier.position
+          const center = mapInstance.unproject([point.x, point.y])
+          magnifierMapRef.current?.jumpTo({
+            center: [center.lng, center.lat],
+            zoom: currentMagnifier.zoom,
+            bearing: mapInstance.getBearing(),
+            pitch: mapInstance.getPitch(),
+            roll: mapInstance.getRoll()
+          })
+          clearKeyboardPreselection()
+          const feature = getCountryFeatureAtPoint(mapInstance, point)
+          handleCountryHover({
+            type: 'mousemove',
+            target: mapInstance,
+            originalEvent: event,
+            point: new MapLibrePoint(point.x, point.y),
+            lngLat: center,
+            features: feature ? [feature] : [],
+            preventDefault: () => undefined,
+            defaultPrevented: false
+          } as unknown as MapLayerMouseEvent)
+        })
+      }
+      event.stopImmediatePropagation()
+    }
+    const handleLockedPointerMove = (event: PointerEvent): void => {
+      if (document.pointerLockElement !== mapInstance.getCanvas()) return
+      handleRelativePointerMove(event)
+    }
+    const handleUnlockedMouseMove = (event: MouseEvent): void => {
+      if (document.pointerLockElement === mapInstance.getCanvas()) return
+      handleRelativePointerMove(event)
+    }
+    document.addEventListener('pointermove', handleLockedPointerMove, true)
+    document.addEventListener('mousemove', handleUnlockedMouseMove, true)
+    return () => {
+      document.removeEventListener('pointermove', handleLockedPointerMove, true)
+      document.removeEventListener('mousemove', handleUnlockedMouseMove, true)
+    }
+  }, [clearKeyboardPreselection, handleCountryHover, mapInstance])
+  useEffect(() => {
+    if (!mapInstance) return
+    const selectMagnifierTarget = (event: MouseEvent): void => {
+      const active = mapMagnifierRef.current
+      if (!active) return
+      if (event.button !== 0) return
+      const point = active.position
+      const center = mapInstance.unproject([point.x, point.y])
+      const preselectedFeature = keyboardPreselectionFeatureRef.current
+      const feature = preselectedFeature ?? getCountryFeatureAtPoint(mapInstance, point)
+      if (preselectedFeature) keyboardSelectionActiveRef.current = true
+      countryClickHandlerRef.current({
+        type: 'click',
+        target: mapInstance,
+        originalEvent: event,
+        point: new MapLibrePoint(point.x, point.y),
+        lngLat: center,
+        features: feature ? [feature] : [],
+        preventDefault: () => event.preventDefault(),
+        defaultPrevented: event.defaultPrevented
+      } as unknown as MapLayerMouseEvent)
+    }
+    const handleLoupePointerUp = (event: PointerEvent): void => {
+      if (!mapMagnifierRef.current) return
+      event.preventDefault()
+      event.stopImmediatePropagation()
+      selectMagnifierTarget(event)
+    }
+    const handleLoupeClick = (event: MouseEvent): void => {
+      if (!mapMagnifierRef.current) return
+      event.preventDefault()
+      event.stopImmediatePropagation()
+      // Pointer-origin clicks were already handled at pointerup. Keep this
+      // path for keyboard-generated clicks, which have detail === 0.
+      if (event.detail === 0) selectMagnifierTarget(event)
+    }
+    document.addEventListener('pointerup', handleLoupePointerUp, true)
+    document.addEventListener('click', handleLoupeClick, true)
+    return () => {
+      document.removeEventListener('pointerup', handleLoupePointerUp, true)
+      document.removeEventListener('click', handleLoupeClick, true)
+    }
+  }, [mapInstance])
   const comparisonSelectedCountries = useMemo<ComparisonMapSelection[]>(() => {
     if (!isComparisonSelectionControlled) return internalComparisonSelectedCountries
     return initialComparisonAlpha2Key
@@ -1907,6 +2264,17 @@ function WorldMap({
     type: 'FeatureCollection',
     features: []
   })
+  const [visibleMarineLabels, setVisibleMarineLabels] =
+    useState<FeatureCollection<Point, MarineLabelProperties>>({
+      type: 'FeatureCollection',
+      features: []
+    })
+  const [marineBoundaryLines, setMarineBoundaryLines] = useState<
+    FeatureCollection<LineString, MarineBoundaryProperties>
+  >({ type: 'FeatureCollection', features: [] })
+  const marineHoverNameRef = useRef<string | null>(null)
+  const marineHoverTimeoutRef = useRef<number | null>(null)
+  const marineAnimationFrameRef = useRef<number | null>(null)
 
   const scheduleFlagOverlayUpdate = useCallback((): void => {
     if (
@@ -2149,7 +2517,8 @@ function WorldMap({
       ? clickMarker
       : null
   const activeProximityMarker =
-    !showBorders && proximityMarker?.interactionResetKey === interactionResetKey
+    (!showBorders || proximityMarker?.showWithBorders) &&
+    proximityMarker?.interactionResetKey === interactionResetKey
       ? proximityMarker
       : null
   const activeWrongAnswerTarget =
@@ -2185,9 +2554,9 @@ function WorldMap({
 
     setWrongAnswerFrame(1, [0, 0])
     const startedAt = performance.now()
-    const holdDuration = 55
-    const totalDuration = 500
-    const movementDuration = 270
+    const holdDuration = 50
+    const totalDuration = 420
+    const movementDuration = 150
     const animate = (now: number): void => {
       const elapsed = now - startedAt
       const opacity =
@@ -2196,10 +2565,13 @@ function WorldMap({
           : Math.max(0, 1 - (elapsed - holdDuration) / (totalDuration - holdDuration))
       const movementElapsed = elapsed - holdDuration
       const movementProgress = Math.min(1, Math.max(0, movementElapsed / movementDuration))
-      const movementEnvelope = 1 - movementProgress
-      const horizontalNudge = isMinimalSkin
-        ? Math.sin(movementProgress * Math.PI * 4) * movementEnvelope * 4
-        : 0
+      const segmentProgress = movementProgress * 3
+      const segmentIndex = Math.min(2, Math.floor(segmentProgress))
+      const segmentFraction = Math.min(1, segmentProgress - segmentIndex)
+      const shakePositions = [0, -4, 4, 0]
+      const horizontalNudge =
+        shakePositions[segmentIndex]! +
+        (shakePositions[segmentIndex + 1]! - shakePositions[segmentIndex]!) * segmentFraction
       setWrongAnswerFrame(opacity, [horizontalNudge, 0])
 
       if (elapsed >= totalDuration) {
@@ -2219,7 +2591,7 @@ function WorldMap({
       }
       setWrongAnswerFrame(0, [0, 0])
     }
-  }, [activeWrongAnswerTarget, isMinimalSkin, mapLoaded])
+  }, [activeWrongAnswerTarget, mapLoaded])
 
   useEffect(() => {
     scheduleFlagOverlayUpdate()
@@ -2389,6 +2761,7 @@ function WorldMap({
         (globeMode || cameraOrbitMode) && zoom < GLOBE_TRANSITION_START_ZOOM
           ? GLOBE_TRANSITION_END_ZOOM
           : zoom,
+      includeMarineLabels: showMarineLabels,
       requestId
     }
 
@@ -2398,12 +2771,16 @@ function WorldMap({
     }
 
     sendLabelUpdate(request)
-  }, [cameraOrbitMode, globeMode, sendLabelUpdate])
+  }, [cameraOrbitMode, globeMode, sendLabelUpdate, showMarineLabels])
   const updateVisibleLabelsRef = useRef(updateVisibleLabels)
 
   useLayoutEffect(() => {
     updateVisibleLabelsRef.current = updateVisibleLabels
   }, [updateVisibleLabels])
+
+  useEffect(() => {
+    if (mapLoaded) updateVisibleLabels()
+  }, [mapLoaded, showMarineLabels, updateVisibleLabels])
 
   const focusOnQuizTarget = useCallback(
     (moveToTarget = true): void => {
@@ -2576,6 +2953,7 @@ function WorldMap({
           setVisibleLabels((current) =>
             haveSameLabels(current, message.labels!) ? current : message.labels!
           )
+          if (message.marineLabels) setVisibleMarineLabels(message.marineLabels)
         }
 
         const pendingUpdate = pendingLabelUpdateRef.current
@@ -2604,9 +2982,15 @@ function WorldMap({
     }
   }, [sendLabelUpdate])
 
-  const showMapProximityFeedback = (longitude: number, latitude: number): void => {
-    const proximity = onMapClick?.([longitude, latitude])
-    if (proximity === null || proximity === undefined || showBorders) return
+  const showMapProximityFeedback = (
+    longitude: number,
+    latitude: number,
+    attemptCount = mapProximityAttempts,
+    sourceFeatureId?: string | number
+  ): void => {
+    if (showBorders && attemptCount < 3) return
+    const proximity = onMapClick?.([longitude, latitude], sourceFeatureId)
+    if (proximity === null || proximity === undefined) return
 
     proximityMarkerIdRef.current += 1
     const markerId = proximityMarkerIdRef.current
@@ -2615,7 +2999,8 @@ function WorldMap({
       latitude,
       proximity,
       id: markerId,
-      interactionResetKey
+      interactionResetKey,
+      showWithBorders: showBorders
     })
 
     if (proximityMarkerTimeoutRef.current !== null) {
@@ -3081,12 +3466,26 @@ function WorldMap({
           interactionResetKey
         })
       }
-      showMapProximityFeedback(event.lngLat.lng, event.lngLat.lat)
+      showMapProximityFeedback(
+        event.lngLat.lng,
+        event.lngLat.lat,
+        mapProximityAttempts + 1,
+        sourceFeatureId
+      )
       return
     }
     if (accepted === true) {
-      clearMapProximityFeedback()
       setWrongAnswerTarget(null)
+      if (showSelectionFeedback) {
+        showMapProximityFeedback(
+          event.lngLat.lng,
+          event.lngLat.lat,
+          mapProximityAttempts + 1,
+          sourceFeatureId
+        )
+      } else {
+        clearMapProximityFeedback()
+      }
     }
 
     updateInteractionState({
@@ -3107,6 +3506,128 @@ function WorldMap({
       setSelectionBoundaryResetKey(interactionResetKey)
     }
   }
+
+  const clearMarineBoundaryHover = useCallback((): void => {
+    marineHoverNameRef.current = null
+    if (marineHoverTimeoutRef.current !== null) {
+      window.clearTimeout(marineHoverTimeoutRef.current)
+      marineHoverTimeoutRef.current = null
+    }
+    if (marineAnimationFrameRef.current !== null) {
+      window.cancelAnimationFrame(marineAnimationFrameRef.current)
+      marineAnimationFrameRef.current = null
+    }
+    setMarineBoundaryLines((current) =>
+      current.features.length ? { type: 'FeatureCollection', features: [] } : current
+    )
+  }, [])
+
+  const handleMarineLabelHover = (point: MapLibrePoint): void => {
+    if (!showMarineLabels || !mapInstance?.getLayer('marine-place-labels')) {
+      if (marineHoverNameRef.current) clearMarineBoundaryHover()
+      return
+    }
+
+    const feature = mapInstance.queryRenderedFeatures(point, {
+      layers: ['marine-place-labels']
+    })[0]
+    const marineId = String(feature?.properties?.marineId ?? '')
+    if (!marineId) {
+      if (marineHoverNameRef.current) clearMarineBoundaryHover()
+      return
+    }
+    if (marineHoverNameRef.current === marineId) return
+
+    clearMarineBoundaryHover()
+    marineHoverNameRef.current = marineId
+    marineHoverTimeoutRef.current = window.setTimeout(() => {
+      marineHoverTimeoutRef.current = null
+      if (marineHoverNameRef.current !== marineId) return
+      const geometry = marineGeometryById.get(marineId)
+      if (!geometry) return
+
+      const startedAt = performance.now()
+      let lastRenderedAt = startedAt - 34
+      const animate = (now: number): void => {
+        if (marineHoverNameRef.current !== marineId) return
+        const progress = Math.min((now - startedAt) / 1500, 1)
+        if (now - lastRenderedAt >= 1000 / 30 || progress === 1) {
+          lastRenderedAt = now
+          setMarineBoundaryLines(createMarineBoundaryAtProgress(geometry, marineId, progress))
+        }
+        if (progress < 1) marineAnimationFrameRef.current = window.requestAnimationFrame(animate)
+        else marineAnimationFrameRef.current = null
+      }
+      marineAnimationFrameRef.current = window.requestAnimationFrame(animate)
+    }, 500)
+  }
+
+  const handleWorldMapMouseMove = (event: MapLayerMouseEvent): void => {
+    if (mapMagnifierRef.current) return
+    handleMarineLabelHover(event.point)
+    magnifierPointerRef.current = { x: event.point.x, y: event.point.y }
+    handleCountryHover(event)
+  }
+
+  const handleWorldMapClick = (event: MapLayerMouseEvent): void => {
+    const active = mapMagnifierRef.current
+    if (!active || !mapInstance) {
+      handleCountryClick(event)
+      return
+    }
+    const targetPoint = active.position
+    const center = mapInstance.unproject([targetPoint.x, targetPoint.y])
+    const preselectedFeature = keyboardPreselectionFeatureRef.current
+    const feature = preselectedFeature ?? getCountryFeatureAtPoint(mapInstance, targetPoint)
+    if (preselectedFeature) keyboardSelectionActiveRef.current = true
+    const magnifierEvent = Object.create(event) as MapLayerMouseEvent
+    Object.assign(magnifierEvent, {
+      point: new MapLibrePoint(targetPoint.x, targetPoint.y),
+      lngLat: center,
+      features: feature ? [feature] : []
+    })
+    handleCountryClick(magnifierEvent)
+  }
+
+  useEffect(() => {
+    if (!mapInstance) return
+    const canvas = mapInstance.getCanvas()
+    const lockPointerUnderCurrentCursor = (event: PointerEvent): void => {
+      const active = mapMagnifierRef.current
+      if (!active || event.button !== 0 || document.pointerLockElement === canvas) return
+      const canvasBounds = canvas.getBoundingClientRect()
+      const pointer = {
+        x: event.clientX - canvasBounds.left,
+        y: event.clientY - canvasBounds.top
+      }
+      if (
+        pointer.x < 0 ||
+        pointer.y < 0 ||
+        pointer.x > canvas.clientWidth ||
+        pointer.y > canvas.clientHeight
+      ) {
+        return
+      }
+      const center = mapInstance.unproject([pointer.x, pointer.y])
+      const next = { ...active, position: pointer, center: [center.lng, center.lat] as [number, number] }
+      magnifierPointerRef.current = pointer
+      const pendingPan = magnifierPanRef.current
+      if (pendingPan.frame !== null) window.cancelAnimationFrame(pendingPan.frame)
+      pendingPan.x = 0
+      pendingPan.y = 0
+      pendingPan.frame = null
+      setActiveMapMagnifier(next)
+      try {
+        const request = canvas.requestPointerLock()
+        if (request instanceof Promise) void request.catch(() => undefined)
+      } catch {
+        // Keep the relative-movement fallback if pointer lock is denied.
+      }
+    }
+    document.addEventListener('pointerdown', lockPointerUnderCurrentCursor, true)
+    return () => document.removeEventListener('pointerdown', lockPointerUnderCurrentCursor, true)
+  }, [mapInstance, setActiveMapMagnifier])
+
   useLayoutEffect(() => {
     countryClickHandlerRef.current = handleCountryClick
   })
@@ -3410,6 +3931,55 @@ function WorldMap({
     return { ...labelsForMap, features: features.slice(0, Math.max(0, density.labels)) }
   }, [density.labels, labelsForMap, showResources])
 
+  const marineLabelsForMap = useMemo<
+    FeatureCollection<Point, { name: string; marineId: string }>
+  >(() => {
+    const features = visibleMarineLabels.features
+      .filter(
+        (label) =>
+          !globeLabelsActive ||
+          !mapInstance ||
+          isGlobeLabelVisible(
+            mapInstance,
+            label.geometry.coordinates as [number, number],
+            mapZoom,
+            GLOBE_TRANSITION_START_ZOOM,
+            GLOBE_TRANSITION_END_ZOOM
+          )
+      )
+      .map((label) => ({
+        ...label,
+        properties: {
+          name:
+            language === 'fr'
+              ? label.properties.nameFr
+              : language === 'es'
+                ? label.properties.nameEs
+                : label.properties.name,
+          marineId: label.properties.marineId
+        }
+      }))
+    return { type: 'FeatureCollection', features }
+  }, [globeLabelsActive, language, mapInstance, mapZoom, globeLabelRevision, visibleMarineLabels])
+
+  const marineBoundariesForMap = useMemo<
+    FeatureCollection<MultiLineString, MarineOutlineProperties>
+  >(
+    () => ({
+      ...marineBoundaryLayerData,
+      features: marineBoundaryLayerData.features.filter(
+        (feature) => feature.properties.minZoom <= mapZoom
+      )
+    }),
+    [mapZoom]
+  )
+
+  useEffect(() => {
+    if (showMarineLabels) return
+    const frame = window.requestAnimationFrame(clearMarineBoundaryHover)
+    return () => window.cancelAnimationFrame(frame)
+  }, [clearMarineBoundaryHover, showMarineLabels])
+
   const displayedRiverData = useMemo(
     () => ({
       ...riverData,
@@ -3695,7 +4265,7 @@ function WorldMap({
 
   return (
     <div
-      className={`world-map-shell${perspectiveCorrectionEnabled ? ' perspective-correction-active' : ''}${cameraOrbitMode ? ' camera-orbit-mode' : ''}${cameraOrbitMode && cameraPanMode ? ' camera-pan-mode' : ''}${perspectiveAdjusting ? ' is-adjusting-perspective' : ''}${drawingTool ? ' has-drawing-tool' : ''}${opacityMaskPlacement ? ` is-placing-opacity-mask mask-placement-${opacityMaskPlacementKind ?? 'circle'}` : ''}${opacityMaskPlacementPreview ? ' has-opacity-mask-preview' : ''}${hoveredCountry && !drawingTool && !perspectiveCorrectionEnabled && !opacityMaskPlacement ? ' has-country-hover' : ''}`}
+      className={`world-map-shell${mapMagnifier ? ' has-map-magnifier' : ''}${perspectiveCorrectionEnabled ? ' perspective-correction-active' : ''}${cameraOrbitMode ? ' camera-orbit-mode' : ''}${cameraOrbitMode && cameraPanMode ? ' camera-pan-mode' : ''}${perspectiveAdjusting ? ' is-adjusting-perspective' : ''}${drawingTool ? ' has-drawing-tool' : ''}${opacityMaskPlacement ? ` is-placing-opacity-mask mask-placement-${opacityMaskPlacementKind ?? 'circle'}` : ''}${opacityMaskPlacementPreview ? ' has-opacity-mask-preview' : ''}${hoveredCountry && !drawingTool && !perspectiveCorrectionEnabled && !opacityMaskPlacement ? ' has-country-hover' : ''}`}
     >
       <Map
         ref={mapRef}
@@ -3715,6 +4285,7 @@ function WorldMap({
           setResourceOverlayRevision((current) => current + 1)
         }}
         onMove={(event) => {
+          if (mapMagnifierRef.current) return
           if (cameraOrbitMode) {
             const map = mapRef.current?.getMap()
             if (map) {
@@ -3769,6 +4340,7 @@ function WorldMap({
           }
         }}
         onMoveEnd={() => {
+          if (mapMagnifierRef.current) return
           const map = mapRef.current?.getMap()
           if (map) {
             setMapZoom(map.getZoom())
@@ -3796,9 +4368,13 @@ function WorldMap({
           scheduleFlagOverlayUpdate()
           setResourceOverlayRevision((current) => current + 1)
         }}
-        onMouseMove={handleCountryHover}
+        onMouseMove={handleWorldMapMouseMove}
         onMouseDown={handlePerspectiveMouseDown}
-        onMouseLeave={handleCountryLeave}
+        onMouseLeave={() => {
+          if (mapMagnifierRef.current) return
+          clearMarineBoundaryHover()
+          handleCountryLeave()
+        }}
         initialViewState={{
           longitude: 0,
           latitude: 0,
@@ -3807,8 +4383,8 @@ function WorldMap({
         minZoom={0}
         maxZoom={12}
         mapStyle={mapStyle}
-        dragPan={!perspectiveCorrectionEnabled && (!cameraOrbitMode || cameraPanMode)}
-        scrollZoom={!perspectiveCorrectionEnabled && !cameraOrbitMode}
+        dragPan={!mapMagnifier && !perspectiveCorrectionEnabled && (!cameraOrbitMode || cameraPanMode)}
+        scrollZoom={!mapMagnifier && !perspectiveCorrectionEnabled && !cameraOrbitMode}
         doubleClickZoom={!perspectiveCorrectionEnabled}
         keyboard={!perspectiveCorrectionEnabled}
         boxZoom={!perspectiveCorrectionEnabled}
@@ -3816,7 +4392,7 @@ function WorldMap({
         touchZoomRotate={!perspectiveCorrectionEnabled && !cameraOrbitMode}
         touchPitch={!perspectiveCorrectionEnabled && !cameraOrbitMode}
         interactiveLayerIds={[...countryFillLayerIds, ...(showRivers ? physicalRiverLayerIds : [])]}
-        onClick={handleCountryClick}
+        onClick={handleWorldMapClick}
         style={{
           width: '100%',
           height: '100%'
@@ -3890,7 +4466,7 @@ function WorldMap({
               maxzoom={3}
               filter={wrongAnswerFeatureFilter}
               paint={{
-                'fill-color': isMinimalSkin ? '#e6a3a6' : '#ef4444',
+                'fill-color': '#ef4444',
                 'fill-translate': [0, 0],
                 'fill-translate-anchor': 'viewport',
                 'fill-antialias': false,
@@ -3944,7 +4520,7 @@ function WorldMap({
               maxzoom={5}
               filter={wrongAnswerFeatureFilter}
               paint={{
-                'fill-color': isMinimalSkin ? '#e6a3a6' : '#ef4444',
+                'fill-color': '#ef4444',
                 'fill-translate': [0, 0],
                 'fill-translate-anchor': 'viewport',
                 'fill-antialias': false,
@@ -3997,7 +4573,7 @@ function WorldMap({
               minzoom={4}
               filter={wrongAnswerFeatureFilter}
               paint={{
-                'fill-color': isMinimalSkin ? '#e6a3a6' : '#ef4444',
+                'fill-color': '#ef4444',
                 'fill-translate': [0, 0],
                 'fill-translate-anchor': 'viewport',
                 'fill-antialias': false,
@@ -4244,6 +4820,64 @@ function WorldMap({
         )}
 
         {/* Étiquettes indépendantes des résolutions */}
+        {showMarineBorders && (
+          <Source id="marine-boundaries" type="geojson" data={marineBoundariesForMap}>
+            <Layer
+              id="marine-boundaries-lines"
+              type="line"
+              layout={{ 'line-cap': 'round', 'line-join': 'round' }}
+              paint={{
+                'line-color': isMinimalSkin ? '#77736b' : isMatrixSkin ? '#176b34' : '#64748b',
+                'line-width': 0.7,
+                'line-opacity': 0.8
+              }}
+            />
+          </Source>
+        )}
+        {showMarineLabels && (
+          <Source id="marine-hover-boundaries" type="geojson" data={marineBoundaryLines}>
+            <Layer
+              id="marine-hover-boundary-line"
+              type="line"
+              layout={{ 'line-cap': 'round', 'line-join': 'round' }}
+              paint={{
+                'line-color': isMatrixSkin ? '#00e4f0' : '#8de4ff',
+                'line-width': ['interpolate', ['linear'], ['zoom'], 1, 1.2, 5, 2.2],
+                'line-opacity': 0.95,
+                'line-dasharray': [1.3, 1.1]
+              }}
+            />
+          </Source>
+        )}
+        {showMarineLabels && (
+          <Source id="marine-labels" type="geojson" data={marineLabelsForMap}>
+            <Layer
+              id="marine-place-labels"
+              type="symbol"
+              layout={{
+                'text-field': ['get', 'name'],
+                'text-font': ['Open Sans Regular'],
+                'text-size': ['interpolate', ['linear'], ['zoom'], 1, 9, 3, 10, 7, 11],
+                'text-max-width': 9,
+                'text-padding': 4,
+                'text-allow-overlap': false,
+                'text-ignore-placement': false
+              }}
+              paint={{
+                'text-color': isMinimalSkin ? '#527b8c' : isMatrixSkin ? '#00cddd' : '#79c9e5',
+                'text-halo-color': isMinimalSkin
+                  ? '#f6f2e9'
+                  : isMatrixSkin
+                    ? '#010803'
+                    : imageLayerActive
+                      ? '#173747'
+                      : '#071724',
+                'text-halo-width': 1.2,
+                'text-opacity': 0.92
+              }}
+            />
+          </Source>
+        )}
         {showLabels && !showFlagTerritories && (
           <Source id="country-labels" type="geojson" data={labelsForMapDisplay}>
             <Layer id="countries-labels" type="symbol" layout={labelLayout} paint={labelPaint} />
@@ -4571,7 +5205,7 @@ function WorldMap({
                   12,
                   ['any', ...hoveredFeatureExpressions],
                   10,
-                  0
+                  3.5
                 ],
                 5,
                 [
@@ -4580,7 +5214,7 @@ function WorldMap({
                   12,
                   ['any', ...hoveredFeatureExpressions],
                   10,
-                  0
+                  5
                 ],
                 8,
                 [
@@ -4605,16 +5239,33 @@ function WorldMap({
                 'case',
                 ['any', ...selectedFeatureExpressions],
                 isMinimalSkin ? '#20201d' : isMatrixSkin ? '#00d957' : '#e5a63b',
-                isMinimalSkin ? '#e8b856' : isMatrixSkin ? '#39de6f' : '#7dc9ff'
+                ['any', ...hoveredFeatureExpressions],
+                isMinimalSkin ? '#e8b856' : isMatrixSkin ? '#39de6f' : '#7dc9ff',
+                mapBackgroundColor
               ] as NonNullable<CircleLayerSpecification['paint']>['circle-color'],
               'circle-stroke-color': isMinimalSkin
                 ? '#fffdf8'
                 : isMatrixSkin
-                  ? '#010803'
-                  : '#101820',
-              'circle-stroke-width': 2,
-              'circle-opacity': 1,
-              'circle-stroke-opacity': 1
+                  ? '#39de6f'
+                  : '#7dc9ff',
+              'circle-stroke-width': [
+                'case',
+                ['any', ...selectedFeatureExpressions, ...hoveredFeatureExpressions],
+                2,
+                1.6
+              ] as NonNullable<CircleLayerSpecification['paint']>['circle-stroke-width'],
+              'circle-opacity': [
+                'case',
+                ['any', ...selectedFeatureExpressions, ...hoveredFeatureExpressions],
+                1,
+                ['interpolate', ['linear'], ['zoom'], 0, 0.85, 4.9, 0.85, 5, 0]
+              ] as NonNullable<CircleLayerSpecification['paint']>['circle-opacity'],
+              'circle-stroke-opacity': [
+                'case',
+                ['any', ...selectedFeatureExpressions, ...hoveredFeatureExpressions],
+                1,
+                ['interpolate', ['linear'], ['zoom'], 0, 0.9, 4.9, 0.9, 5, 0]
+              ] as NonNullable<CircleLayerSpecification['paint']>['circle-stroke-opacity']
             }}
           />
         </Source>
@@ -4892,6 +5543,7 @@ function WorldMap({
         </div>
       )}
 
+      <div className="map-top-toolbar">
       <div className="map-controls world-map-controls" aria-label={t('Contrôles de la carte')}>
         <button
           className="map-control-button map-projection-control"
@@ -5003,6 +5655,69 @@ function WorldMap({
         >
           −
         </button>
+      </div>
+
+      <div className="map-help" ref={mapHelpRef}>
+        <button
+          className="map-help-trigger"
+          type="button"
+          aria-label={t('Astuces de la carte')}
+          aria-expanded={mapHelpOpen}
+          aria-controls="map-help-popover"
+          title={t('Astuces de la carte')}
+          onClick={() => setMapHelpOpen((open) => !open)}
+        >
+          ?
+        </button>
+        {mapHelpOpen && (
+          <section
+            className="map-help-popover"
+            id="map-help-popover"
+            role="dialog"
+            aria-labelledby="map-help-heading"
+          >
+            <header>
+              <h2 id="map-help-heading">{t('Conseils pour sélectionner les territoires')}</h2>
+              <button
+                type="button"
+                aria-label={t('Fermer')}
+                onClick={() => setMapHelpOpen(false)}
+              >
+                ×
+              </button>
+            </header>
+            <article>
+              <h3>{t('Loupe')}</h3>
+              <p>
+                {t(
+                  'Maintiens Maj pour activer la loupe. Le viseur central correspond au point de survol et de sélection. Le défilement vertical règle le zoom ; le défilement horizontal à deux doigts règle la taille de la loupe.'
+                )}
+              </p>
+            </article>
+            <article>
+              <h3>{t('Petits pays et îles')}</h3>
+              <p>
+                {t(
+                  'Pour un petit pays insulaire, essaie de cliquer dans la mer juste à côté de ses terres. La zone de sélection est élargie autour des îles. Pour un archipel, vise l’île la plus proche. Les grandes terres voisines restent prioritaires à l’intérieur de leurs frontières.'
+                )}
+              </p>
+            </article>
+            <article>
+              <h3>{t('Navigation au clavier')}</h3>
+              <p>
+                {t(
+                  'Chaque appui sur Option parcourt les territoires de moins de 40 000 km² dans une zone équivalente à la moitié de la surface de l’Europe ; les flèches déplacent la présélection ; Entrée valide la présélection.'
+                )}
+              </p>
+            </article>
+            <article>
+              <h3>{t('Recherche')}</h3>
+              <p>
+                {t('Cherche un pays, un territoire ou une capitale dans le champ en haut à gauche.')}
+              </p>
+            </article>
+          </section>
+        )}
       </div>
 
       <div className="map-search">
@@ -5136,6 +5851,28 @@ function WorldMap({
           </div>
         )}
       </div>
+      </div>
+      {mapMagnifier && (
+        <MapMagnifier
+          center={mapMagnifier.center}
+          zoom={mapMagnifier.zoom}
+          position={mapMagnifier.position}
+          size={mapMagnifier.size}
+          zoomScale={2 ** (mapMagnifier.zoom - (mapInstance?.getZoom() ?? mapZoom))}
+          onMapReady={handleMagnifierMapReady}
+          globeProjection={cameraOrbitMode || (globeMode && mapZoom < GLOBE_TRANSITION_START_ZOOM)}
+          bearing={mapInstance?.getBearing() ?? cameraRotation.yaw}
+          pitch={mapInstance?.getPitch() ?? cameraRotation.pitch}
+          roll={mapInstance?.getRoll() ?? cameraRotation.roll}
+          backgroundColor={mapBackgroundColor}
+          fillColor={fillColor}
+          borderColor={isMinimalSkin ? '#77736b' : isMatrixSkin ? '#176b34' : '#64748b'}
+          showBorders={showBorders}
+          labelData={showLabels ? labelsForMapDisplay : null}
+          labelColor={String(labelPaint['text-color'] ?? '#ffffff')}
+          haloColor={String(labelPaint['text-halo-color'] ?? '#101820')}
+        />
+      )}
       {quizRevealCard && <div className="quiz-reveal-card-anchor">{quizRevealCard}</div>}
       {(pointerCoordinates || isMatrixSkin || mapLoaded) && (
         <div

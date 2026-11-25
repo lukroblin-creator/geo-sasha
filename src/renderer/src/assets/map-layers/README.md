@@ -7,3 +7,5 @@ Source: <https://www.naturalearthdata.com/downloads/50m-raster-data/50m-cross-bl
 Natural Earth raster data is public domain: <https://www.naturalearthdata.com/about/terms-of-use/>.
 
 This is a cartographic image, not an elevation grid. It can be displayed and composited as a map layer, but should not be used as height input for terrain displacement or to derive accurate surface normals.
+
+`src/renderer/src/data/geography/marineLabels.json` contains offline sea and ocean polygons, derived from Natural Earth's `ne_10m_geography_marine_polys` dataset (version 5.1.0). Entries split between northern and southern hemispheres are dissolved when they share the same localized name, removing the artificial equatorial seam. The label worker calculates each anchor from the portion visible in the current map viewport. English, French and Spanish names and scale ranks come from the source attributes. Natural Earth data is public domain.
